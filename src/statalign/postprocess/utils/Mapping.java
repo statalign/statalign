@@ -13,7 +13,8 @@ public class Mapping {
     public static int getUngappedPosition(String sequence, int gappedPos, char gapChar) {
         int ungappedPos = -1;
         int i = 0;
-        int end = Math.min(sequence.length() - 1, gappedPos);
+        
+        int end = Math.min(sequence.length()-1,gappedPos);
         for (i = 0; i <= end; i++) {
             if (sequence.charAt(i) != gapChar) {
                 ungappedPos++;

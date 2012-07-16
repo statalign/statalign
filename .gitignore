@@ -1,3 +1,4 @@
 *.jardesc
 *~
 *.fas*
+bin/
