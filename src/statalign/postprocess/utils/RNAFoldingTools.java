@@ -4,6 +4,13 @@ package statalign.postprocess.utils;
  * and open the template in the editor.
  */
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Stack;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -15,18 +22,26 @@ import java.util.logging.Logger;
 public class RNAFoldingTools {
 	
     public static void main(String[] args) {
-
+    	ArrayList<String> sequences = new ArrayList<String>();
+    	sequences.add("ACT--CC-");
+    	sequences.add("ACTC-CCG");
+    	sequences.add("ACTCTCCG");
+    	System.out.println(RNAFoldingTools.getReferenceSequence(sequences, 9));
+    	
+    	
     	// Generate an example "Base pairing probability" matrix
-    	String [] structures = {"((((...))))....", 
-    							"((((...))))(.).", 
-    							"((((...)))).(.)"};
+    	String [] structures = {"(((..(..))))(..)", 
+    							"(((..(..))))(..)", 
+    							"(((..(..))))(..)"};
     	double[][] basePairCount = getBasePairCountMatrix(structures);
-    	//double[] singleBaseCount = getSingleBaseCount(structures);
+    	double[] singleBaseCount = getSingleBaseCount(structures);
     	
     	// Perform the posterior decoding
     	RNAFoldingTools rnaTools = new RNAFoldingTools();
-    	int [] pairedSites = rnaTools.getPosteriorDecodingConsensusStructureMultiThreaded(basePairCount); // fails for this example, because not base-pairing probability matrix
+    	//int [] pairedSites = rnaTools.getPosteriorDecodingConsensusStructureMultiThreaded(basePairCount); // fails for this example, because not base-pairing probability matrix
     	//int [] pairedSites = rnaTools.getPosteriorDecodingConsensusStructureMultiThreaded(basePairCount, singleBaseCount); // this works
+    	
+    	int [] pairedSites = RNAFoldingTools.getPosteriorDecodingConsensusStructure(basePairCount, singleBaseCount);
     	
     	// Print the list of paired sites for the posterior decoding structure
     	for(int i = 0 ; i < pairedSites.length ; i++)
@@ -59,6 +74,34 @@ public class RNAFoldingTools {
         }
     }
     public static final double emptyValue = Double.MAX_VALUE;
+    
+    public static double [] getSingleBaseProb(double[][] basePairProb)
+    {
+    	double [] singleBaseProb = new double[basePairProb.length];
+    	for(int i = 0 ; i < basePairProb.length ; i++)
+    	{
+    		singleBaseProb[i] = 1;
+    		for(int j = 0 ; j < basePairProb[0].length ; j++)
+        	{
+    			singleBaseProb[i] -= basePairProb[i][j];
+        	}    		
+    	}
+    	return singleBaseProb;
+    }
+    
+    public static int [] getPosteriorDecodingConsensusStructure(double[][] basePairProb) {
+    	double [] singleBaseProb = new double[basePairProb.length];
+    	for(int i = 0 ; i < basePairProb.length ; i++)
+    	{
+    		singleBaseProb[i] = 1;
+    		for(int j = 0 ; j < basePairProb[0].length ; j++)
+        	{
+    			singleBaseProb[i] -= basePairProb[i][j];
+        	}    		
+    		System.out.println("S"+i+"\t"+singleBaseProb[i]);
+    	}
+    	return getPosteriorDecodingConsensusStructure(basePairProb, singleBaseProb);
+    }
 
     /**
      * A single-threaded method for generating the posterior-decoding structure.
@@ -75,8 +118,16 @@ public class RNAFoldingTools {
         }
         
         int[] pairedWith = new int[eMatrix.length];
-        recursePosteriorDecoding(basePairProb, singleBaseProb, eMatrix, 0, eMatrix.length - 1, pairedWith);
+        int[][] S = new int[basePairProb.length][basePairProb[0].length];
+        recursePosteriorDecoding(basePairProb, singleBaseProb, eMatrix, S, 0, eMatrix.length-1);
 
+        //printMatrix(eMatrix);
+        //System.out.println();
+        //printMatrix(S);
+        writeMatrix(S, new File("e.matrix"));
+        writeMatrix(S, new File("s.matrix"));
+        traceBack(S, 0, eMatrix.length - 1, pairedWith);
+        
         return pairedWith;
     }
 
@@ -107,10 +158,10 @@ public class RNAFoldingTools {
         	}    		
     	}
 
-    	for(int i = 0 ; i < singleBaseProb.length ; i++)
+    	/*for(int i = 0 ; i < singleBaseProb.length ; i++)
     	{
     		System.out.println((i+1)+"\t"+singleBaseProb[i]);
-    	}
+    	}*/
     	
     	return new MultiThreadedPosteriorDecoding(basePairProb, singleBaseProb);
     }
@@ -159,22 +210,144 @@ public class RNAFoldingTools {
             return eMatrix[i][j];
         }
 
+        
         double u1 = recursePosteriorDecoding(basePairProb, singleBaseProb, eMatrix, i + 1, j, pairedWith) + singleBaseProb[i];
-        double p1 = recursePosteriorDecoding(basePairProb, singleBaseProb, eMatrix, i + 1, j - 1, pairedWith) + basePairProb[i][j];
+        double p1 = recursePosteriorDecoding(basePairProb, singleBaseProb, eMatrix, i + 1, j - 1, pairedWith) + basePairProb[i][j]; // * 2
         double u2 = recursePosteriorDecoding(basePairProb, singleBaseProb, eMatrix, i, j - 1, pairedWith) + singleBaseProb[j];
         double p2 = 0;
         for (int k = i; k < j; k++) {
+        	// remember K
             p2 = Math.max(p2, recursePosteriorDecoding(basePairProb, singleBaseProb, eMatrix, i, k, pairedWith) + recursePosteriorDecoding(basePairProb, singleBaseProb, eMatrix, k + 1, j, pairedWith));
         }
 
         eMatrix[i][j] = Math.max(u1, Math.max(p1, Math.max(u2, p2)));
 
         if (p1 > u1 && p1 > u2 && p1 > p2 && pairedWith != null) {
-            pairedWith[i] = j + 1;
-            pairedWith[j] = i + 1;
+        	
+        	// if(pairedWith[i] == 0 && pairedWith[j] == 0)
+        	 //{
+	            pairedWith[i] = j + 1;
+	            pairedWith[j] = i + 1;
+        	 //}
+	            System.out.println("B"+i+"\t"+j);
         }
 
         return eMatrix[i][j];
+    }
+    
+    /**
+     * A recursive method that fills the dynamic programming matrix for generating the posterior decoding structure.
+     * @param basePairProb a NxN matrix of base-pairing probabilities.
+     * @param singleBaseProb a vector of length N representing the probability that a base at a position is unpaired.
+     * @param eMatrix the dynamic programming matrix for the posterior-decoding.
+     * @param i the start position of the window.
+     * @param j the end position of the window.
+     * @param pairedWith an array of paired positions. Where (i, array[i]) represents a pairing between nucleotides (i+1, array[i]), if array[i] = 0, then (i+1) is unpaired.
+     * @return the value of the eMatrix at position (i, j).
+     */
+    private static double recursePosteriorDecoding(double[][] basePairProb, double[] singleBaseProb, double[][] eMatrix, int [][] S, int i, int j) {
+        if (i > j) {
+            return 0;
+        }
+
+        if (eMatrix[i][j] != RNAFoldingTools.emptyValue) {
+            return eMatrix[i][j];
+        }
+
+        if (i == j) {
+            eMatrix[i][j] = singleBaseProb[i];
+            return eMatrix[i][j];
+        }
+
+        
+        double u1 = recursePosteriorDecoding(basePairProb, singleBaseProb, eMatrix, S, i + 1, j) + singleBaseProb[i];
+        double p1 = recursePosteriorDecoding(basePairProb, singleBaseProb, eMatrix, S, i + 1, j - 1) + 2*basePairProb[i][j]; // * 2
+        double u2 = recursePosteriorDecoding(basePairProb, singleBaseProb, eMatrix, S, i, j - 1) + singleBaseProb[j];
+        double p2 = 0;
+        int max_k = i;
+        for (int k = i; k < j; k++) {
+        	double p2k =  recursePosteriorDecoding(basePairProb, singleBaseProb, eMatrix, S, i, k) + recursePosteriorDecoding(basePairProb, singleBaseProb, eMatrix, S, k + 1, j);
+        	// remember K
+            if(p2k > p2)
+            {
+            	p2 = p2k;
+            	max_k = k;
+            }
+        }
+
+        /*
+        double max = 0;
+        if(p1 > u1 && p1 > p2 && p1 > u2)
+        {
+        	max = p1;
+        	S[i][j] = -3;
+        }
+        else
+        if(u1 > p2 && u1 > u2)
+        {
+        	max = u1;
+        	S[i][j] = -1;
+        }
+        else
+        if(p2 > u2)
+        {
+        	max = p2;
+        	S[i][j] = max_k;
+        }
+        else
+        {
+        	max = u2;
+        	S[i][j] = -2;
+        }*/
+        
+       
+        double max = 0;
+        if(u1 > p1 && u1 > p2 && u1 > u2)
+        {
+        	max = u1;
+        	S[i][j] = -1;
+        }
+        else
+    	if(u2 > p1 && u2 > p2)
+        {
+        	max = u2;
+        	S[i][j] = -2;
+        }
+        else
+        if(p1 > p2)
+        {
+        	max = p1;
+        	S[i][j] = -3;
+        }
+        else
+        {
+        	max = p2;
+        	S[i][j] = max_k;
+        }
+        
+        eMatrix[i][j] = max;
+        
+        return eMatrix[i][j];
+    }
+    
+    public static void traceBack(int [][] S, int i, int j, int [] pairedWith)
+    {
+    	if(i >= j)
+    	{
+    		// do nothing
+    	}
+    	else
+    	if(S[i][j] == -3)
+    	{
+    		pairedWith[i] = j + 1;
+    		pairedWith[j] = i + 1;
+    		traceBack(S, i+1, j-1, pairedWith);    		
+    	}
+    	else
+    	{
+    		traceBack(S, i, S[i][j], pairedWith);
+    		traceBack(S, S[i][j]+1, j, pairedWith);
+    	}
     }
 
     /**
@@ -239,6 +412,52 @@ public class RNAFoldingTools {
             }
             System.out.println();
         }
+    }
+    
+    /**
+     * A helper method which writes double matrices to files.
+     * For testing purposes only.
+     * @param matrix 
+     */
+    public static void writeMatrix(double[][] matrix, File file) {
+    	try
+    	{
+	    	BufferedWriter buffer = new BufferedWriter(new FileWriter(file));
+	        for (int i = 0; i < matrix.length; i++) {
+	            for (int j = 0; j < matrix[0].length; j++) {
+	            	buffer.write(pad(matrix[i][j] + "", 4) + "  ");
+	            }
+	            buffer.newLine();
+	        }
+	        buffer.close();
+    	}
+    	catch(IOException ex)
+    	{
+    		ex.printStackTrace();
+    	}
+    }
+    
+    /**
+     * A helper method which writes integer matrices to files.
+     * For testing purposes only.
+     * @param matrix 
+     */
+    public static void writeMatrix(int[][] matrix, File file) {
+    	try
+    	{
+	    	BufferedWriter buffer = new BufferedWriter(new FileWriter(file));
+	        for (int i = 0; i < matrix.length; i++) {
+	            for (int j = 0; j < matrix[0].length; j++) {
+	            	buffer.write(pad(matrix[i][j] + "", 4) + "  ");
+	            }
+	            buffer.newLine();
+	        }
+	        buffer.close();
+    	}
+    	catch(IOException ex)
+    	{
+    		ex.printStackTrace();
+    	}
     }
 
     /**
@@ -326,6 +545,7 @@ public class RNAFoldingTools {
         int divisionSize;
         int blockIncrement;
         double[][] eMatrix;
+        int[][] S;
 
         public MultiThreadedPosteriorDecoding(double[][] basePairCount, double[] singleBaseCount) {
             this.length = singleBaseCount.length;
@@ -345,6 +565,7 @@ public class RNAFoldingTools {
                     eMatrix[i][j] = RNAFoldingTools.emptyValue;
                 }
             }
+            this.S = new int[length][length];
             compute();
         }
 
@@ -368,7 +589,10 @@ public class RNAFoldingTools {
             }
 
             // recurse one last time *just* in case missed the 0,N case,
-            return RNAFoldingTools.recursePosteriorDecoding(basePairProb, singleBaseProb, eMatrix, 0, eMatrix.length - 1, pairedWith);
+            RNAFoldingTools.recursePosteriorDecoding(basePairProb, singleBaseProb, eMatrix, 0, eMatrix.length - 1, pairedWith);
+            
+            RNAFoldingTools.traceBack(S, 0, eMatrix.length-1, pairedWith);
+            return eMatrix[0][eMatrix.length-1];
         }
 
         /**
@@ -470,7 +694,7 @@ public class RNAFoldingTools {
             }
 
             public void run() {
-                RNAFoldingTools.recursePosteriorDecoding(basePairProb, singleBaseProb, eMatrix, this.x, this.y, pairedWith);
+                RNAFoldingTools.recursePosteriorDecoding(basePairProb, singleBaseProb, eMatrix, S, this.x, this.y);
                 computeNextSection();
 
                 if (this.x == 0 && this.y == MultiThreadedPosteriorDecoding.this.length - 1) {
@@ -556,5 +780,129 @@ public class RNAFoldingTools {
             }
         }
         return pairedSites;
+    }
+    
+    public static String getReferenceSequence(ArrayList<String> sequences, int refLength)
+    {
+    	int length = 0;
+    	for(int i = 0 ; i < sequences.size() ; i++)
+    	{
+    		length = Math.max(length, sequences.get(i).length());
+    	}
+    	
+    	int [] counts = new int[length];
+    	int maxCount = 0;
+    	boolean [] countUsed = new boolean[length];
+    	for(int i = 0 ; i < sequences.size() ; i++)
+    	{
+    		String seq = sequences.get(i);
+    		for(int j = 0 ; j < seq.length() ; j++)
+    		{
+    			if(seq.charAt(j) != '-')
+    			{
+    				counts[j] += 1;
+    				maxCount = Math.max(maxCount, counts[j]);
+    			}
+    		}
+    	}
+    	
+    	String referenceString = "";
+    	int n = 0;
+    	for(int k = maxCount ; k >= 0 ; k--)
+    	{
+	    	for(int i = 0 ; i < counts.length ; i++)
+	    	{
+	    		if(!countUsed[i] && counts[i] == k)
+	    		{
+	    			countUsed[i] = true;
+	    			n++;
+	    		}
+	    		
+	    		if(n == refLength)
+	    		{
+	    			break;
+	    		}
+	    	}
+	    	
+	    	if(n == refLength)
+	    	{
+	    		break;
+	    	}
+    	}
+    	
+    	String ref = "";
+    	for(int i = 0 ; i < countUsed.length ; i++)
+    	{
+    		if(countUsed[i])
+    		{
+    			ref += "N";
+    		}
+    		else
+    		{
+    			ref += "-";
+    		}
+    	}
+    	
+    	while(ref.length() < refLength)
+    	{
+    		ref += "X";
+    	}
+    	
+    	return ref;
+    	
+    }
+    
+    public static String getDotBracketStringFromCtFile(File ctFile)
+    {
+    	return RNAFoldingTools.getDotBracketStringFromPairedSites(RNAFoldingTools.getPairedSitesFromCtFile(ctFile));
+    }
+    
+    public static int [] getPairedSitesFromCtFile(File ctFile)
+    {
+    	try
+    	{
+	    	 BufferedReader buffer = new BufferedReader(new FileReader(ctFile));
+	
+	         String textline = null;
+	
+	         int [] pairedSites = null;
+	         while ((textline = buffer.readLine()) != null) {
+	             String[] split = textline.trim().split("(\\s)+");
+	             int length = Integer.parseInt(split[0]);
+	             pairedSites = new int[length];
+	             //String sequence = "";
+	             for (int i = 0; i < length && (textline = buffer.readLine()) != null; i++) {
+	                 String[] split2 = textline.trim().split("(\\s)+");
+	                 pairedSites[Integer.parseInt(split2[0])-1] =  Integer.parseInt(split2[4]);
+	             }
+	         }
+	
+	         buffer.close();
+	         
+	         return pairedSites;
+    	}
+    	catch(IOException ex)
+    	{
+    		ex.printStackTrace();
+    	}
+    	
+    	return null;
+    }
+    
+    public static int [] getPairedSitesFromDBNStringFile(File dbnFile)
+    {
+    	try
+    	{
+	    	 BufferedReader buffer = new BufferedReader(new FileReader(dbnFile));
+	    	 String textline = buffer.readLine();
+	    	 buffer.close();
+	    	 System.out.println(textline);
+	    	 return getPairedSitesFromDotBracketString(textline);
+    	}
+    	catch(IOException ex)
+    	{
+    		ex.printStackTrace();
+    	}
+    	return null;
     }
 }

@@ -13,8 +13,7 @@ public class Mapping {
     public static int getUngappedPosition(String sequence, int gappedPos, char gapChar) {
         int ungappedPos = -1;
         int i = 0;
-        
-        int end = Math.min(sequence.length()-1,gappedPos);
+        int end = Math.min(sequence.length() - 1, gappedPos);
         for (i = 0; i <= end; i++) {
             if (sequence.charAt(i) != gapChar) {
                 ungappedPos++;
@@ -25,6 +24,91 @@ public class Mapping {
         }
         return ungappedPos;
     }
+    
+    public static float [][] projectMatrix (String alignedSequence, float [][] matrix, char gapChar)
+	{		
+		String ungappedSequence = alignedSequence.replaceAll("-", "");
+		int projectedLength = ungappedSequence.length();
+		int [] gappedToUngapped = new int[alignedSequence.length()];
+		int [] ungappedToGapped = new int[projectedLength];
+		Arrays.fill(gappedToUngapped, -1);
+		Arrays.fill(ungappedToGapped, -1);
+		for(int i = 0 ; i < gappedToUngapped.length ; i++)
+		{			
+			if(gappedToUngapped[i] == -1)
+			{
+				int x = getUngappedPosition(alignedSequence, i, '-');
+				gappedToUngapped[i] = x;
+			}
+		}
+		
+		for(int i = 0 ; i < gappedToUngapped.length ; i++)
+		{	
+			if(gappedToUngapped[i] != -1 && ungappedToGapped[gappedToUngapped[i]] == -1)
+			{
+				ungappedToGapped[gappedToUngapped[i]] = i;
+			}
+		}
+		
+		/*
+		for(int i = 0 ; i < gappedToUngapped.length ; i++)
+		{	
+			System.out.println(i + " -> " + gappedToUngapped[i]);
+		}
+		System.out.println();
+		for(int i = 0 ; i < ungappedToGapped.length ; i++)
+		{	
+			System.out.println(i + " -> " + ungappedToGapped[i]);
+		}*/
+		
+		float [][] projectedMatrix = new float[projectedLength][projectedLength];
+		for(int i = 0 ; i < matrix.length ; i++)
+		{
+			for(int j = 0 ; j < matrix[0].length ; j++)
+			{
+				if(gappedToUngapped[i] != -1 && gappedToUngapped[j] != -1)
+				{
+					projectedMatrix[gappedToUngapped[i]][gappedToUngapped[j]] = matrix[i][j];
+				}
+			}
+		}
+		
+		/*
+		
+		// renormalize
+		double matrixSum = 0;
+		double projectSum = 0;
+		for(int i = 0 ; i < matrix.length ; i++)
+		{
+			for(int j = 0 ; j < matrix[0].length ; j++)
+			{
+				matrixSum += matrix[i][j];
+			}
+		}
+		
+		for(int i = 0 ; i < projectedMatrix.length ; i++)
+		{
+			for(int j = 0 ; j < projectedMatrix[0].length ; j++)
+			{
+				projectSum += projectedMatrix[i][j];
+			}
+		}
+		double scaleFactor = matrixSum / projectSum;
+		for(int i = 0 ; i < projectedMatrix.length ; i++)
+		{
+			for(int j = 0 ; j < projectedMatrix[0].length ; j++)
+			{
+				projectedMatrix[i][j] = (float)(scaleFactor*projectedMatrix[i][j]);
+				if(projectedMatrix[i][j] > 1)
+				{
+					System.out.println("Projected matrix > 1 " + i + ", " + j + " : " + projectedMatrix[i][j]);
+				}
+			}
+		}
+		*/
+		
+		return projectedMatrix;
+	}
 	
     /**
      * Given an aligned sequence of length n from an alignment of length n and a n*n matrix corresponding to the alignment. This method removes gaps from the sequence to generate a sequence of length m, where m <= n and projects the specified n*n matrix
@@ -33,7 +117,7 @@ public class Mapping {
      * @param matrix a n*n matrix.
      * @return the projected matrix.
      */
-	public static float [][] projectMatrix (String alignedSequence, float [][] matrix, char gapChar)
+	public static float [][] projectMatrix2 (String alignedSequence, float [][] matrix, char gapChar)
 	{		
 		String ungappedSequence = alignedSequence.replaceAll("-", "");
 		int projectedLength = ungappedSequence.length();
@@ -82,5 +166,161 @@ public class Mapping {
 		}
 		
 		return projectedMatrix;
+	}
+	
+	 public static float [] projectarray (String alignedSequence, float [] array, char gapChar)
+	 {		
+		String ungappedSequence = alignedSequence.replaceAll("-", "");
+		int projectedLength = ungappedSequence.length();
+		int [] gappedToUngapped = new int[alignedSequence.length()];
+		int [] ungappedToGapped = new int[projectedLength];
+		Arrays.fill(gappedToUngapped, -1);
+		Arrays.fill(ungappedToGapped, -1);
+		for(int i = 0 ; i < gappedToUngapped.length ; i++)
+		{			
+			if(gappedToUngapped[i] == -1)
+			{
+				int x = getUngappedPosition(alignedSequence, i, '-');
+				gappedToUngapped[i] = x;
+			}
+		}
+		
+		for(int i = 0 ; i < gappedToUngapped.length ; i++)
+		{	
+			if(gappedToUngapped[i] != -1 && ungappedToGapped[gappedToUngapped[i]] == -1)
+			{
+				ungappedToGapped[gappedToUngapped[i]] = i;
+			}
+		}
+		
+		/*
+		for(int i = 0 ; i < gappedToUngapped.length ; i++)
+		{	
+			System.out.println(i + " -> " + gappedToUngapped[i]);
+		}
+		System.out.println();
+		for(int i = 0 ; i < ungappedToGapped.length ; i++)
+		{	
+			System.out.println(i + " -> " + ungappedToGapped[i]);
+		}*/
+		
+		float [] projectedArray = new float[projectedLength];
+		for(int i = 0 ; i < array.length ; i++)
+		{
+			if(gappedToUngapped[i] != -1)
+			{
+				projectedArray[gappedToUngapped[i]] = array[i];
+			}
+		}
+		
+		return projectedArray;
+	}
+	
+	public static float [] projectArray2 (String alignedSequence, float [] array, char gapChar)
+	{		
+		String ungappedSequence = alignedSequence.replaceAll("-", "");
+		int projectedLength = ungappedSequence.length();
+		int [] gappedToUngapped = new int[alignedSequence.length()];
+		int [] ungappedToGapped = new int[projectedLength];
+		Arrays.fill(gappedToUngapped, -1);
+		Arrays.fill(ungappedToGapped, -1);
+		for(int i = 0 ; i < gappedToUngapped.length ; i++)
+		{			
+			if(gappedToUngapped[i] == -1)
+			{
+				int x = getUngappedPosition(alignedSequence, i, '-');
+				gappedToUngapped[i] = x;
+			}
+		}
+		
+		for(int i = 0 ; i < gappedToUngapped.length ; i++)
+		{	
+			if(gappedToUngapped[i] != -1 && ungappedToGapped[gappedToUngapped[i]] == -1)
+			{
+				ungappedToGapped[gappedToUngapped[i]] = i;
+			}
+		}
+		
+		/*
+		for(int i = 0 ; i < gappedToUngapped.length ; i++)
+		{	
+			System.out.println(i + " -> " + gappedToUngapped[i]);
+		}
+		System.out.println();
+		for(int i = 0 ; i < ungappedToGapped.length ; i++)
+		{	
+			System.out.println(i + " -> " + ungappedToGapped[i]);
+		}*/
+		
+		float [] projectedArray = new float[projectedLength];
+		for(int i = 0 ; i < projectedArray.length ; i++)
+		{
+				if(ungappedToGapped[i] != -1 && ungappedToGapped[i] < array.length)
+				{
+					projectedArray[i] = array[ungappedToGapped[i]];
+				}
+		}
+		
+		return projectedArray;
+	}
+	
+
+	
+	public static int [] getUngappedToGappedMapping(String alignedSequence)
+	{
+		String ungappedSequence = alignedSequence.replaceAll("-", "");
+		int projectedLength = ungappedSequence.length();
+		int [] gappedToUngapped = new int[alignedSequence.length()];
+		int [] ungappedToGapped = new int[projectedLength];
+		Arrays.fill(gappedToUngapped, -1);
+		Arrays.fill(ungappedToGapped, -1);
+		for(int i = 0 ; i < gappedToUngapped.length ; i++)
+		{			
+			if(gappedToUngapped[i] == -1)
+			{
+				int x = getUngappedPosition(alignedSequence, i, '-');
+				gappedToUngapped[i] = x;
+			}
+		}
+		
+		for(int i = 0 ; i < gappedToUngapped.length ; i++)
+		{	
+			if(gappedToUngapped[i] != -1 && ungappedToGapped[gappedToUngapped[i]] == -1)
+			{
+				ungappedToGapped[gappedToUngapped[i]] = i;
+			}
+		}
+		
+		
+		return ungappedToGapped;
+	}
+	
+	public static int [] getGappedToUngappedMapping(String alignedSequence)
+	{
+		String ungappedSequence = alignedSequence.replaceAll("-", "");
+		int projectedLength = ungappedSequence.length();
+		int [] gappedToUngapped = new int[alignedSequence.length()];
+		int [] ungappedToGapped = new int[projectedLength];
+		Arrays.fill(gappedToUngapped, -1);
+		Arrays.fill(ungappedToGapped, -1);
+		for(int i = 0 ; i < gappedToUngapped.length ; i++)
+		{			
+			if(gappedToUngapped[i] == -1)
+			{
+				int x = getUngappedPosition(alignedSequence, i, '-');
+				gappedToUngapped[i] = x;
+			}
+		}
+		
+		for(int i = 0 ; i < gappedToUngapped.length ; i++)
+		{	
+			if(gappedToUngapped[i] != -1 && ungappedToGapped[gappedToUngapped[i]] == -1)
+			{
+				ungappedToGapped[gappedToUngapped[i]] = i;
+			}
+		}
+		
+		
+		return gappedToUngapped;
 	}
 }
