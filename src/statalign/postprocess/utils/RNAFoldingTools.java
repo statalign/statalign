@@ -89,6 +89,10 @@ public class RNAFoldingTools {
     	return singleBaseProb;
     }
     
+    public static int [] getPosteriorDecodingConsensusStructure(float[][] basePairProb) {    
+    	return getPosteriorDecodingConsensusStructure(getDoubleMatrix(basePairProb));
+    }
+    
     public static int [] getPosteriorDecodingConsensusStructure(double[][] basePairProb) {
     	double [] singleBaseProb = new double[basePairProb.length];
     	for(int i = 0 ; i < basePairProb.length ; i++)
@@ -174,6 +178,11 @@ public class RNAFoldingTools {
     public int [] getPosteriorDecodingConsensusStructureMultiThreaded(double[][] basePairProb, double [] singleBaseProb)
     {
     	return performPosteriorDecodingMultiThreaded(basePairProb, singleBaseProb).pairedWith;
+    }
+    
+    
+    public int [] getPosteriorDecodingConsensusStructureMultiThreaded(float[][] basePairProb) {    
+    	return getPosteriorDecodingConsensusStructureMultiThreaded(getDoubleMatrix(basePairProb));
     }
     
     /**
@@ -317,7 +326,7 @@ public class RNAFoldingTools {
         if(p1 > p2)
         {
         	max = p1;
-        	S[i][j] = -3;
+        	S[i][j] = -3; // paired
         }
         else
         {
@@ -904,5 +913,51 @@ public class RNAFoldingTools {
     		ex.printStackTrace();
     	}
     	return null;
+    }
+    
+    public static double [][] loadMatrix(File bpFile)
+    {
+    	//File bpFile = new File("C:/Users/Michael/Dropbox/RNA and StatAlign/TestRNAData/TestRNAData1.dat.bp");		
+		double [][] bpMatrix = null;
+		try
+		{
+			BufferedReader buffer = new BufferedReader(new FileReader(bpFile));
+			String textline = buffer.readLine();
+			int length = textline.split("(\\s)+").length;
+			bpMatrix = new double[length][length];
+
+			for(int i = 0 ; i < length ; i++)
+			{
+				String [] split = textline.split("(\\s)+");
+				for(int j = 0 ; j < length ; j++)
+				{
+					bpMatrix[i][j] = Double.parseDouble(split[j]);
+				}
+				textline = buffer.readLine();
+			}
+			
+			buffer.close();
+
+		}
+		catch(IOException ex)
+		{
+			ex.printStackTrace();
+		}
+		
+		return bpMatrix;
+		
+    }
+    
+    public static double [][] getDoubleMatrix(float [][] matrix)
+    {
+    	double [][] doubleMatrix = new double[matrix.length][matrix[0].length];
+    	for(int i = 0 ; i < matrix.length ; i++)
+    	{
+    		for(int j = 0 ; j < matrix[0].length ; j++)
+    		{
+    			doubleMatrix[i][j] = matrix[i][j];
+    		}
+    	}
+    	return doubleMatrix;
     }
 }
