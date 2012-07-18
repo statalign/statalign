@@ -7,6 +7,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import statalign.postprocess.plugins.PPFold;
 import statalign.postprocess.utils.Mapping;
 import statalign.postprocess.utils.RNAFoldingTools;
 
@@ -15,8 +16,9 @@ public class Benchmarks
 {
 	public static void main(String[] args) {
 		
-		Benchmarks.testData();
-		//Benchmarks.automatedTest();
+		//Benchmarks.testData();
+		Benchmarks.automatedTest2();
+		//.automatedTest();
 		System.exit(0);
 		
 		String dir = "C:/Oxford/TestRNAData.tar/TestRNAData/";
@@ -63,10 +65,10 @@ public class Benchmarks
 	{
 		String name = "TestRNAData1";
 
-		String dir = "/host/Users/Michael/Dropbox/RNA and StatAlign/TestRNAData/";
-		String resultsDir = "/host/Users/Michael/Dropbox/RNA and StatAlign/TestRNAData/Results0/";
+		String dir = "/home/michael/Dropbox/RNA and StatAlign/TestRNAData/";
+		String resultsDir = "/home/michael/Dropbox/RNA and StatAlign/TestRNAData/Results0/";
 		File experimentalFile = new File(dir+name+".dat");
-		File ppfoldData = new File("/host/Oxford/test1_mpd.ct");
+		
 		
 		ExperimentalData experimentalData = Benchmarks.loadExperimentalStructure(experimentalFile);
 		StatAlignResult statalignResult = loadStatAlignResultFile(new File(resultsDir+"/"+name+".dat.res"));
@@ -74,7 +76,37 @@ public class Benchmarks
 		//System.out.println(statalignResult.sequence+"");
 		int [] pairedSitesExperimental = projectPairedSites(statalignResult.sequence, experimentalData.pairedSites);
 		int [] pairedSitesStatAlign = statalignResult.pairedSites;
+		File ppfoldData = new File("/home/michael/Dropbox/RNA and StatAlign/TestRNAData/StatAlign/1.ct");
+		
+		/*
+		double [][] bpMatrix = RNAFoldingTools.loadMatrix(new File("/home/michael/Dropbox/RNA and StatAlign/TestRNAData/StatAlign/1.bp"));
+		float [][] floatMatrix = new float[bpMatrix.length][bpMatrix[0].length];
+		for(int i = 0; i < bpMatrix.length ; i++)
+		{
+			for(int j = 0; j < bpMatrix[0].length ; j++)
+			{
+				floatMatrix[i][j] = (float) bpMatrix[i][j];
+			}
+		}
+		String s = "GGGCGCCCGAGGCCGCCCGCCCCGGGCACGCCACCGCAAG------GCAGACAGAGAAAAGCCCCAGCCAACACCACGCGCCCCGCAAGACGCCCAACACCAA-CCCGAGGCCCAAC-CCACGCCCCACAAACGCAGGCCAGCCCCCCACGCGCCGAAAGGCAAG---GAGAAGCAGGCCACGAAG";
+		float [][] projectMatrix = Mapping.projectMatrix(s, floatMatrix, '-');
+		double [][] doubleMatrix = new double[projectMatrix.length][projectMatrix[0].length];
+		for(int i = 0; i < doubleMatrix.length ; i++)
+		{
+			for(int j = 0; j < doubleMatrix[0].length ; j++)
+			{
+				doubleMatrix[i][j] = floatMatrix[i][j];
+			}
+		}
+		*/
+		//int [] pairedSitesPPfold = RNAFoldingTools.getPosteriorDecodingConsensusStructure(doubleMatrix);
+		
+		
+		System.out.println(RNAFoldingTools.getDotBracketStringFromPairedSites(RNAFoldingTools.getPairedSitesFromCtFile(ppfoldData)));
 		int [] pairedSitesPPfold = projectPairedSites("GGGCGCCCGAGGCCGCCCGCCCCGGGCACGCCACCGCAAG------GCAGACAGAGAAAAGCCCCAGCCAACACCACGCGCCCCGCAAGACGCCCAACACCAA-CCCGAGGCCCAAC-CCACGCCCCACAAACGCAGGCCAGCCCCCCACGCGCCGAAAGGCAAG---GAGAAGCAGGCCACGAAG", RNAFoldingTools.getPairedSitesFromCtFile(ppfoldData));
+
+		//File ppfoldData = new File("/host/Oxford/test1_mpd.ct");
+		//int [] pairedSitesPPfold = projectPairedSites("GGGCGCCCGAGGCCGCCCGCCCCGGGCACGCCACCGCAAG------GCAGACAGAGAAAAGCCCCAGCCAACACCACGCGCCCCGCAAGACGCCCAACACCAA-CCCGAGGCCCAAC-CCACGCCCCACAAACGCAGGCCAGCCCCCCACGCGCCGAAAGGCAAG---GAGAAGCAGGCCACGAAG", RNAFoldingTools.getPairedSitesFromCtFile(ppfoldData));
 		//printPairs(pairedSitesPPfold);
 		System.out.println("LENGTH:"+pairedSitesStatAlign.length);
 		
@@ -108,8 +140,8 @@ public class Benchmarks
 	
 	public static void automatedTest()
 	{
-		String dir = "/host/Users/Michael/Dropbox/RNA and StatAlign/TestRNAData/";
-		String resultsDir = "/host/Users/Michael/Dropbox/RNA and StatAlign/TestRNAData/Results0/";
+		String dir = "/home/michael/Dropbox/RNA and StatAlign/TestRNAData/";
+		String resultsDir = "/home/michael/Dropbox/RNA and StatAlign/TestRNAData/Results0/";
 		File [] files = new File(resultsDir).listFiles();
 		for(int i = 0 ; i < files.length ; i++)
 		{
@@ -128,6 +160,7 @@ public class Benchmarks
 				ExperimentalData experimentalData = Benchmarks.loadExperimentalStructure(experimentalFile);
 				StatAlignResult statalignResult = loadStatAlignResultFile(new File(resultsDir+"/"+name+".dat.res"));
 				
+				
 				String mappingSeq = "";
 				for(int j = 0 ;j < experimentalData.sequences.size() ; j++)
 				{
@@ -142,6 +175,7 @@ public class Benchmarks
 				
 				int [] pairedSitesExperimental = projectPairedSites(mappingSeq, experimentalData.pairedSites);
 				int [] pairedSitesStatAlign = statalignResult.pairedSites;
+				
 				int [] pairedSitesPPfold = projectPairedSites(mappingSeq, RNAFoldingTools.getPairedSitesFromCtFile(ppfoldData));
 				//printPairs(pairedSitesExperimental);
 				//printPairs(pairedSitesStatAlign);
@@ -180,6 +214,113 @@ public class Benchmarks
 		}
 	}
 	
+	public static void automatedTest2()
+	{
+		String dir = "/home/michael/Dropbox/RNA and StatAlign/TestRNAData/";
+		String resultsDir = "/home/michael/Dropbox/RNA and StatAlign/TestRNAData/ResultsWeighted/";
+		File [] files = new File(resultsDir).listFiles();
+		for(int i = 0 ; i < files.length ; i++)
+		{
+			String fullName = files[i].getName();
+			if(fullName.endsWith(".dat.res"))
+			{
+				String name = fullName.substring(0, fullName.length()-8);
+
+				
+				//File files = new File("C:/Users/Michael/Dropbox/RNA and StatAlign/TestRNAData/").listFiles();
+				File experimentalFile = new File(dir+name+".dat");
+				//File ourData = new File("C:/Users/Michael/Dropbox/RNA and StatAlign/TestRNAData/TestRNADATA1OURS");
+				//File statalignResultFile = new File("C:/Users/Michael/Dropbox/RNA and StatAlign/TestRNAData/TestRNAData1.dat.txt");
+				File ppfoldData = new File(dir+name+".dat.ct");
+				
+				ExperimentalData experimentalData = Benchmarks.loadExperimentalStructure(experimentalFile);
+				StatAlignResult statalignResult = loadStatAlignResultFile(new File(resultsDir+"/"+name+".dat.res"));
+				StatAlignResult statalignWeightedResult = loadStatAlignResultFile(new File(resultsDir+"/"+name+".dat.res.weighted"));
+				
+				String mappingSeq = "";
+				for(int j = 0 ;j < experimentalData.sequences.size() ; j++)
+				{
+					if(experimentalData.sequences.get(j).replaceAll("-", "").equals(statalignResult.sequence.replaceAll("-", "")))
+					{
+						mappingSeq = experimentalData.sequences.get(j);
+					}
+				}
+				
+				//System.out.println(mappingSeq);
+				//System.out.println(statalignResult.sequence);
+				
+				int [] pairedSitesExperimental = projectPairedSites(mappingSeq, experimentalData.pairedSites);
+				int [] pairedSitesStatAlign = statalignResult.pairedSites;
+				int [] pairedSitesStatAlignWeighted = statalignWeightedResult.pairedSites;
+				int [] pairedSitesPPfold = projectPairedSites(mappingSeq, RNAFoldingTools.getPairedSitesFromCtFile(ppfoldData));
+				//printPairs(pairedSitesExperimental);
+				//printPairs(pairedSitesStatAlign);
+				//printPairs(pairedSitesPPfold);
+				
+
+				//System.out.println("X:"+statalignResult.sequence);
+				//System.out.println("X:"+experimentalData.sequences.get(2));
+				System.out.println(">"+name + " (" + (statalignResult.sequence.replaceAll("-", "").length())+")");
+				System.out.println("  "+statalignResult.sequence.replaceAll("-", ""));
+				System.out.println("E:"+RNAFoldingTools.getDotBracketStringFromPairedSites(pairedSitesExperimental));
+				System.out.println("S:"+RNAFoldingTools.getDotBracketStringFromPairedSites(pairedSitesStatAlign));
+				System.out.println("  "+statalignResult.sequence.replaceAll("-", ""));
+				System.out.println("E:"+RNAFoldingTools.getDotBracketStringFromPairedSites(pairedSitesExperimental));
+				System.out.println("P:"+RNAFoldingTools.getDotBracketStringFromPairedSites(pairedSitesPPfold));
+				
+				
+				double sensExpStat = Benchmarks.calculateSensitivity(pairedSitesExperimental, pairedSitesStatAlign);
+				double sensExpPPfold = Benchmarks.calculateSensitivity(pairedSitesExperimental, pairedSitesPPfold);
+				double ppvExpStat = Benchmarks.calculatePPV(pairedSitesExperimental, pairedSitesStatAlign);
+				double ppvExpPPfold = Benchmarks.calculatePPV(pairedSitesExperimental, pairedSitesPPfold);
+				double fscExpStat = Benchmarks.calculateFScore(pairedSitesExperimental, pairedSitesStatAlign);
+				double fscExpPPfold = Benchmarks.calculateFScore(pairedSitesExperimental, pairedSitesPPfold);
+				double fscExpStatWeighted =Benchmarks.calculateFScore(pairedSitesExperimental, pairedSitesStatAlignWeighted);
+				
+				System.out.println(RNAFoldingTools.pad("", 14)+RNAFoldingTools.pad("StatAl", 10)+RNAFoldingTools.pad("PPfold", 10));
+				System.out.println(RNAFoldingTools.pad("Senstivity", 14)+RNAFoldingTools.pad(sensExpStat+"", 6)+"    "+RNAFoldingTools.pad(sensExpPPfold+"", 6));
+				System.out.println(RNAFoldingTools.pad("PPV", 14)+RNAFoldingTools.pad(ppvExpStat+"", 6)+"    "+RNAFoldingTools.pad(ppvExpPPfold+"", 6));
+				System.out.println(RNAFoldingTools.pad("F-score", 14)+RNAFoldingTools.pad(fscExpStat+"", 6)+"    "+RNAFoldingTools.pad(fscExpPPfold+"", 6));
+				System.out.print("StatAl: ");
+				printValues(pairedSitesExperimental, pairedSitesStatAlign);
+				System.out.print("PPfold: ");
+				printValues(pairedSitesExperimental, pairedSitesPPfold);
+				System.out.println("---------------------------------------------------------------------");
+				System.out.println();
+				
+				//System.out.println("XXXXXXXXXXXXXX"+resultsDir+name+".folds");
+				if(new File(resultsDir+name+".folds").exists())
+				{
+					ArrayList<String> structures = PPFold.loadFolds(new File(resultsDir+name+".folds"), 4);
+					ArrayList<String> values = new ArrayList<String>();
+					for(int k= 0 ; k < structures.size() ; k++)
+					{
+						String val = "" + Benchmarks.calculateFScore(pairedSitesExperimental, RNAFoldingTools.getPairedSitesFromDotBracketString(structures.get(k)));
+						values.add(val);
+					}
+					//System.out.println(values);
+					try
+					{
+						BufferedWriter buffer = new BufferedWriter(new FileWriter(resultsDir+name+".hist"));
+						buffer.write("ST="+fscExpStat+"\n");
+						buffer.write("STW="+fscExpStatWeighted+"\n");
+						buffer.write("PP="+fscExpPPfold+"\n");						
+						for(int l = 0 ; l < values.size() ; l++)
+						{
+							buffer.write(values.get(l)+"\n");
+						}
+						buffer.close();
+					}
+					catch(IOException ex)
+					{
+						ex.printStackTrace();
+					}
+					//System.out.println(structures);
+				}
+			}
+		}
+	}
+	
 	public static void printPairs(int [] pairedSites)
 	{
 		String ret = "";
@@ -201,7 +342,7 @@ public class Benchmarks
 			if(pairedSites[i] != 0) // if paired, map
 			{
 				int x = gappedToUngapped[i];
-				if(x != -1)
+				if(x != -1);
 				{
 					int y = Math.max(0, gappedToUngapped[pairedSites[i]-1]) + 1;
 					projectedPairedSites[x] = y;
