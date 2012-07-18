@@ -10,7 +10,6 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Stack;
 import java.util.logging.Level;
@@ -344,8 +343,6 @@ public class RNAFoldingTools {
     {
     	if(i >= j)
     	{
-
-        	System.out.println("i>=j"+i+","+j);
     		// do nothing
     	}
     	else
@@ -354,11 +351,9 @@ public class RNAFoldingTools {
     		pairedWith[i] = j + 1;
     		pairedWith[j] = i + 1;
     		traceBack(S, i+1, j-1, pairedWith);    		
-    		System.out.println(i+","+j);
     	}
     	else
     	{
-    		System.out.println("X"+S[i][j]);
     		traceBack(S, i, S[i][j], pairedWith);
     		traceBack(S, S[i][j]+1, j, pairedWith);
     	}
@@ -434,13 +429,12 @@ public class RNAFoldingTools {
      * @param matrix 
      */
     public static void writeMatrix(double[][] matrix, File file) {
-    	DecimalFormat df = new DecimalFormat("0.0000E0");
     	try
     	{
 	    	BufferedWriter buffer = new BufferedWriter(new FileWriter(file));
 	        for (int i = 0; i < matrix.length; i++) {
 	            for (int j = 0; j < matrix[0].length; j++) {
-	            	buffer.write(pad(df.format(matrix[i][j]) + "", 10) + "  ");
+	            	buffer.write(pad(matrix[i][j] + "", 4) + "  ");
 	            }
 	            buffer.newLine();
 	        }
