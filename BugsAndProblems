@@ -1,0 +1,15 @@
+ - Ajouter message d'erreur lors du chargement
+ - G�rer affichage partiel/hybridisation
+
+
+Problemes connus : 
+
+
+	probleme de focus => gene raccourcis clavier.
+
+	//cadre mal placé pour le mode Line donc deplacement spécial
+	
+	probleme lors de l'affichage d'un ARN sans base
+	
+	dans le AboutVarna, lors d'un click droit sur la figure,
+	il est possible de redemander un aboutVarna.

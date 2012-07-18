@@ -1,0 +1,1481 @@
+Manifest-Version: 1.0
+Main-Class: fr.orsay.lri.varna.applications.VARNAGUI
+
+Name: fr/orsay/lri/varna/exceptions/ExceptionModeleStyleBaseSyntaxErro
+ r.class
+SHA1-Digest: 0zIPc8CCwrGOzoHMgDFuUx5/MU8=
+
+Name: fr/orsay/lri/varna/models/rna/ModeleColorMap.class
+SHA1-Digest: m+Jk0q9Ykb4VUKL8KnE3yIxzQLQ=
+
+Name: fr/orsay/lri/varna/models/rna/VARNASecDraw$Portion.class
+SHA1-Digest: WMiXGnfjbdBNkm+R4S8GWwLhQaE=
+
+Name: fr/orsay/lri/varna/applications/VARNAGUI$2.class
+SHA1-Digest: 23GTq4GYTzgf3S0tDhHxRjHWriU=
+
+Name: fr/orsay/lri/varna/models/export/SVGExport.class
+SHA1-Digest: UAJ+46za41av2pUx5SGHzOa9eP8=
+
+Name: fr/orsay/lri/varna/models/BaseList.class
+SHA1-Digest: k1uoNN1P9wHmlFHcFPPBSaaErn8=
+
+Name: fr/orsay/lri/varna/views/VueAboutPanel.class
+SHA1-Digest: p3bc7ckwZoX+sWqu6gT6979zSAA=
+
+Name: fr/orsay/lri/varna/models/rna/ExtendedMB.java
+SHA1-Digest: UUnvXdalkShp52YOCYTkfRxQ/0U=
+
+Name: fr/orsay/lri/varna/views/VueMenu.java
+SHA1-Digest: 22hkOzLPLz/YBJB/fSW19QRY4b8=
+
+Name: fr/orsay/lri/varna/models/treealign/TreeAlignException.java
+SHA1-Digest: i5HXK/ELwKRfa6O+YKHick1OPH8=
+
+Name: fr/orsay/lri/varna/exceptions/ExceptionDrawingAlgorithm.java
+SHA1-Digest: eI6c1rMUCZv7spcbtRC1tz6GT8s=
+
+Name: fr/orsay/lri/varna/exceptions/ExceptionModeleStyleBaseSyntaxErro
+ r.java
+SHA1-Digest: QGQO1ZSJN2MJm0g9mRhfIPpnUQY=
+
+Name: fr/orsay/lri/varna/views/PrintTestFrame$1.class
+SHA1-Digest: woltLHxXT5OW8cZo4uDBeVFYOXc=
+
+Name: fr/orsay/lri/varna/views/VueLoadColorMapValues.class
+SHA1-Digest: JcoNcib145psZM1dgr+hMov1zAc=
+
+Name: fr/orsay/lri/varna/controlers/ControleurInterpolator.java
+SHA1-Digest: TjmpV7bPNCvjW8TVJn73H6xun0s=
+
+Name: fr/orsay/lri/varna/models/export/PolygonCommand.java
+SHA1-Digest: Hno4dLG9daFgY2/jMroazQX5Jto=
+
+Name: fr/orsay/lri/varna/models/templates/RNATemplate$VertexIterator.c
+ lass
+SHA1-Digest: X2q7k8gIY+ZSHdSwPZsJnKM9mmY=
+
+Name: fr/orsay/lri/varna/controlers/ControleurBlinkingThread.java
+SHA1-Digest: 7vKLZcGB4y0iZK+vU4gpK/0b3vQ=
+
+Name: fr/orsay/lri/varna/models/VARNAEdits$RotateRNAEdit.class
+SHA1-Digest: yM5JyAjPzLDjtxpVGyDn09q+WjY=
+
+Name: fr/orsay/lri/varna/applications/VARNAGUI$6.class
+SHA1-Digest: xgj+dr0Kzj8OQZN3ss4nm00pxTU=
+
+Name: fr/orsay/lri/varna/models/templates/RNATemplate$EdgeEndPointPosi
+ tion.class
+SHA1-Digest: s6ANPu86xwRDRnD+3w9lwcrNBlg=
+
+Name: fr/orsay/lri/varna/applications/SuperpositionDemo$1.class
+SHA1-Digest: AgO+9mdSHxYiBKCxL4XjbxoKv74=
+
+Name: fr/orsay/lri/varna/models/treealign/TreeAlign$TreeData.class
+SHA1-Digest: ZO+2zdxmJsXguq8MXcpiUpyV6Ns=
+
+Name: fr/orsay/lri/varna/exceptions/ExceptionDrawingAlgorithm.class
+SHA1-Digest: jcAKRgg1J57tg9wEAUXQVkfl5W4=
+
+Name: fr/orsay/lri/varna/interfaces/InterfaceVARNAListener.class
+SHA1-Digest: bNtxyobNEFr8on42kZUwSSPKD6w=
+
+Name: fr/orsay/lri/varna/models/treealign/RNATree2.java
+SHA1-Digest: ZOnH4PWf2DkimwuQ5pBnjFfJ/JM=
+
+Name: fr/orsay/lri/varna/exceptions/ExceptionFileFormatOrSyntax.class
+SHA1-Digest: x6ve8Te+vnl3+UQhdN5LWtsa1w4=
+
+Name: fr/orsay/lri/varna/models/treealign/TreeAlignLabelDistanceAsymme
+ tric.java
+SHA1-Digest: a8mk7uiAYCtzdlNi1wf9r8tMu9w=
+
+Name: fr/orsay/lri/varna/views/VueBPHeightIncrement.class
+SHA1-Digest: yWNpL9YI8S8UE4QAcTOuzmp4BhY=
+
+Name: fr/orsay/lri/varna/views/VueFont.java
+SHA1-Digest: ZiaifeTQJRDJZi+8OOCBq/ItetI=
+
+Name: fr/orsay/lri/varna/models/export/VueVARNAGraphics.java
+SHA1-Digest: aJt04GQT9+VSRUhmWqRTr/cmTlY=
+
+Name: fr/orsay/lri/varna/models/export/RectangleCommand.class
+SHA1-Digest: LjhG9YqQ5yVKWWzNa/hb6APD1lA=
+
+Name: fr/orsay/lri/varna/applications/FileNameExtensionFilter.java
+SHA1-Digest: 2ZtH/sRi3H/ywGBH50GJYBsmHC4=
+
+Name: fr/orsay/lri/varna/models/templates/RNATemplate$In1Is.class
+SHA1-Digest: oC9nGIfewgFvhisvsvAhwt2Uk9Q=
+
+Name: fr/orsay/lri/varna/views/VueColorMapStyle.class
+SHA1-Digest: 5ak9TvZ4PdYkP+KpcooIqZ5u7hI=
+
+Name: fr/orsay/lri/varna/applications/VARNAGUI$BackupHolder.class
+SHA1-Digest: v2+UOiJqsRXkUDWQGBZ6FlGNBdE=
+
+Name: fr/orsay/lri/varna/controlers/ControleurBPHeightIncrement.java
+SHA1-Digest: y+5WnCZXIP3H6g3numQEPfbBHUc=
+
+Name: fr/orsay/lri/varna/applications/templateEditor/TemplateEditor.ja
+ va
+SHA1-Digest: Vw9xzkGpVwMotIaFoFAgKMOO9O4=
+
+Name: fr/orsay/lri/varna/applications/templateEditor/TemplateEdits.cla
+ ss
+SHA1-Digest: hqNJOSX78LYj56+N2ceo4HkAc0I=
+
+Name: fr/orsay/lri/varna/controlers/ControleurZoom.class
+SHA1-Digest: qOjEFwV8BqcbXPjPRqKvcuk7iCc=
+
+Name: fr/orsay/lri/varna/applications/VARNAGUI$4.class
+SHA1-Digest: mxcd386MCjHFq2wIbbgM0Wrjnbg=
+
+Name: .project
+SHA1-Digest: fFQwWbavaZ2XsgY+GJdY7uctQeo=
+
+Name: fr/orsay/lri/varna/applications/templateEditor/MouseControler.ja
+ va
+SHA1-Digest: qoz7tujUAkU3m1m0d2cEssZjxok=
+
+Name: fr/orsay/lri/varna/components/BaseSpecialColorEditor.java
+SHA1-Digest: qhzLYPhLPCd9HuXK758d+LKhL8M=
+
+Name: fr/orsay/lri/varna/models/templates/RNANodeValueTemplateBrokenBa
+ sePair.java
+SHA1-Digest: XQ5sFIm+hwnRrgaXXN4NaDxCp5c=
+
+Name: fr/orsay/lri/varna/controlers/ControleurBorder.class
+SHA1-Digest: rv3qF9R1VOkMBmcbaQlVJHKTaEQ=
+
+Name: fr/orsay/lri/varna/controlers/ControleurSpaceBetweenBases.java
+SHA1-Digest: 5t15Xsa2A50RQ+gSI+VR5ogoTDw=
+
+Name: fr/orsay/lri/varna/views/VueFont.class
+SHA1-Digest: Q+MMSGG8KkfGycXsLOnlgs5cL8o=
+
+Name: fr/orsay/lri/varna/models/export/FillPolygonCommand.java
+SHA1-Digest: WJnV+zk/5eSl2QLg1f3hgC13pkA=
+
+Name: fr/orsay/lri/varna/models/templates/RNANodeValueTemplateBrokenBa
+ sePair.class
+SHA1-Digest: iI0CWIBeH1KgUmNpAPmgAkUIWxU=
+
+Name: fr/orsay/lri/varna/models/templates/RNATemplateMapping.java
+SHA1-Digest: 3Hg4JGpq4iwinKdWO1qZDhMcvQk=
+
+Name: fr/orsay/lri/varna/views/VueColorMapStyle$2.class
+SHA1-Digest: uwgGEZr97YqsHQz+w2i5bYEPiG0=
+
+Name: fr/orsay/lri/varna/models/treealign/TreeAlign.class
+SHA1-Digest: tdMDV92gJgMXFSg95ipUgDXRBZ4=
+
+Name: fr/orsay/lri/varna/exceptions/ExceptionExportFailed.class
+SHA1-Digest: sVyTAQAFovCh2B9SN3Gdp95HHvA=
+
+Name: fr/orsay/lri/varna/models/export/TextCommand.class
+SHA1-Digest: NpzLJavHFnzV6yrzQ/lrLCjh2T0=
+
+Name: fr/orsay/lri/varna/controlers/ControleurScriptParser$Function.cl
+ ass
+SHA1-Digest: TTf+1WLTsoLpsjdDAkYgcIaDgoM=
+
+Name: fr/orsay/lri/varna/models/naView/Base.class
+SHA1-Digest: uliIzqOI9WGdzLjwFz89x7Nqg0Y=
+
+Name: fr/orsay/lri/varna/models/naView/NAView.class
+SHA1-Digest: CNao5K/cvRnBC/1ci0XwdZLWV1w=
+
+Name: fr/orsay/lri/varna/views/VueManualInput.class
+SHA1-Digest: TFwEssvyQDWMrGw45LhVI+ugzCw=
+
+Name: fr/orsay/lri/varna/models/treealign/RNATree.class
+SHA1-Digest: WKJqPQatDPOoH52Nq5KYSwRsY3E=
+
+Name: fr/orsay/lri/varna/applications/templateEditor/Helix.class
+SHA1-Digest: Q0QHqrkNQvYJUFYS65FtfZOgrJI=
+
+Name: fr/orsay/lri/varna/applications/templateEditor/Connection.class
+SHA1-Digest: hsI0ciCQzFrDN3j+KAwcVkptWO8=
+
+Name: fr/orsay/lri/varna/exceptions/ExceptionJPEGEncoding.java
+SHA1-Digest: mNHO8U6+lSNP8cll9XQYC7KDy18=
+
+Name: fr/orsay/lri/varna/exceptions/ExceptionFileFormatOrSyntax.java
+SHA1-Digest: GunZPvWcYE9SOl9HDJY3xLxx9tg=
+
+Name: fr/orsay/lri/varna/models/annotations/ChemProbAnnotation$ChemPro
+ bAnnotationType.class
+SHA1-Digest: BjnVINnkhJQCJFBxYwXUuw360O4=
+
+Name: VARNA.class
+SHA1-Digest: rJyyaQhRml/9/osNphOO6L8Liew=
+
+Name: fr/orsay/lri/varna/views/PrintTest.java
+SHA1-Digest: CpckwCg5zQOUs9yNU9Qyh5FmONg=
+
+Name: fr/orsay/lri/varna/applications/NussinovDemo$2.class
+SHA1-Digest: 1AZ0vR6mqMKZuJez5sjj+s1qhUQ=
+
+Name: fr/orsay/lri/varna/components/GradientEditorPanel.class
+SHA1-Digest: /fpwnyXB6tY9rVXm7egqVpSE7kY=
+
+Name: fr/orsay/lri/varna/controlers/ControleurSliderLabel.class
+SHA1-Digest: EfcutA1QeaZYliv4E7wMYlwRpBg=
+
+Name: fr/orsay/lri/varna/views/VueAboutPanel.java
+SHA1-Digest: v14mshYUf97ZbZq93zuwlXk0Wfo=
+
+Name: fr/orsay/lri/varna/models/annotations/ChemProbAnnotation.java
+SHA1-Digest: aVwH5450qgeSZx/tcOUaSMtBN7w=
+
+Name: fr/orsay/lri/varna/models/naView/Region.java
+SHA1-Digest: qdslIwgfzh9sVpj2YsLI3JEC5N4=
+
+Name: fr/orsay/lri/varna/models/templates/RNATemplateAlign.class
+SHA1-Digest: YOmdEwqYHLhUnba13AyAxO99UGM=
+
+Name: fr/orsay/lri/varna/applications/VARNAcmd$ExitCode.class
+SHA1-Digest: HhJficE5p2Dgv2q58q4ncqwkKNs=
+
+Name: fr/orsay/lri/varna/models/export/PSExport.class
+SHA1-Digest: Il2RnLKPtc1B6b5vAFzzVg/85tM=
+
+Name: fr/orsay/lri/varna/models/treealign/RNANodeValue2WrongTypeExcept
+ ion.java
+SHA1-Digest: /bwkYnTsCggyz7wMCnHK/XSVGGg=
+
+Name: fr/orsay/lri/varna/views/VueSpaceBetweenBases.class
+SHA1-Digest: gPMiYirKlW3eKrDOC7K+Acd3Xn8=
+
+Name: fr/orsay/lri/varna/models/rna/ModeleBP$Stericity.class
+SHA1-Digest: 1qla1HzSJKgiJtTPgkOygruHY8U=
+
+Name: fr/orsay/lri/varna/models/rna/VARNASecDraw.class
+SHA1-Digest: Eac3pxsJs88w28yYwLTar/81jfc=
+
+Name: fr/orsay/lri/varna/factories/RNAFactory$RNAFileType.class
+SHA1-Digest: hWxOYJ00ZffcU2eC2dK+3Z/+kFk=
+
+Name: fr/orsay/lri/varna/views/VueAnnotation.class
+SHA1-Digest: 9F4u7J7p27w2EEi4V7bmP63UUqM=
+
+Name: fr/orsay/lri/varna/models/annotations/HighlightRegionAnnotation.
+ java
+SHA1-Digest: YATdg7gG0H1nHlHXZO15mfR7uLU=
+
+Name: fr/orsay/lri/varna/views/VueBases.java
+SHA1-Digest: 09RtVHFZXZouuuLqk5YKSBIjHHM=
+
+Name: fr/orsay/lri/varna/applications/VARNAGUI$3.class
+SHA1-Digest: ltHUplopHBUFgr2LlveUuLB/dKA=
+
+Name: fr/orsay/lri/varna/views/VueBorder.java
+SHA1-Digest: MwJQD7QWxjhRwIONnE/o2lmKr5E=
+
+Name: fr/orsay/lri/varna/models/treealign/TreeAlign$Aligner.class
+SHA1-Digest: VmNXx0MD9bGVrlpV+0t6++v9PvQ=
+
+Name: fr/orsay/lri/varna/views/VueMenu.class
+SHA1-Digest: d212KkmUe8EIsLB1oSAYaEKKCtg=
+
+Name: fr/orsay/lri/varna/views/VueNumPeriod.class
+SHA1-Digest: 1WJmtyd765gCj8b0+yYTua4L2l4=
+
+Name: fr/orsay/lri/varna/views/VueBaseValues$ValueTableModel.class
+SHA1-Digest: WOE6BwhSSWqnQV+wFRT8Ov+rfo0=
+
+Name: fr/orsay/lri/varna/applications/VARNAGUI.java
+SHA1-Digest: lE8wWDlAM8nqho8EzLfryU17rt0=
+
+Name: fr/orsay/lri/varna/models/rna/ModeleBPStyle.java
+SHA1-Digest: 9W/Zks41FwBCvxs8zPE7BUrWTzs=
+
+Name: fr/orsay/lri/varna/components/ReorderableJList.class
+SHA1-Digest: 7NpTeFneVHzm8jYlDw3BdhjnU3Q=
+
+Name: fr/orsay/lri/varna/models/VARNAEdits$HelixRotateEdit.class
+SHA1-Digest: eAEIANnWx3TCfjZk8HcsG/tmVEk=
+
+Name: fr/orsay/lri/varna/models/naView/Connection.class
+SHA1-Digest: byLplWQxUeRZ2A7ypxwXJRTUdDg=
+
+Name: fr/orsay/lri/varna/models/treealign/GraphvizDrawableNodeValue.cl
+ ass
+SHA1-Digest: nOEBErTpbKwZ5MrrQT/WOLimXb4=
+
+Name: fr/orsay/lri/varna/views/VueBases$1.class
+SHA1-Digest: fGTDHPbhbryIuvL6wq3mOCD/zLk=
+
+Name: fr/orsay/lri/varna/models/VARNAEdits$AddBPEdit.class
+SHA1-Digest: ZGGGirb/eFzHdx5EANTFWEn1yGg=
+
+Name: fr/orsay/lri/varna/applications/templateEditor/Helix.java
+SHA1-Digest: wSNWivkf95lc+020yzpHaW5Bs5A=
+
+Name: fr/orsay/lri/varna/models/naView/Loop.java
+SHA1-Digest: 5PJTWVoZmWRCjix6kgXNTw+s/Pk=
+
+Name: fr/orsay/lri/varna/models/CubicBezierCurve.class
+SHA1-Digest: xCN0Rypn53te3mlZP5oYZWOQ6Xw=
+
+Name: fr/orsay/lri/varna/factories/RNAFactory.java
+SHA1-Digest: a+T93Zs4tVHJfQr5GNRuo9KeQ2A=
+
+Name: fr/orsay/lri/varna/models/treealign/RNATree2$ConvertToMapping.cl
+ ass
+SHA1-Digest: bXCxK9ccKxfNBaWF4pPXh56nJ0w=
+
+Name: fr/orsay/lri/varna/controlers/ControleurInterpolator.class
+SHA1-Digest: QrWzY3TrezwvQv+Nz6pvB6/RBH0=
+
+Name: fr/orsay/lri/varna/interfaces/InterfaceVARNAObservable.java
+SHA1-Digest: efBNnId7GW4RRGKAmMCc0UdAWfU=
+
+Name: fr/orsay/lri/varna/interfaces/InterfaceVARNAListener.java
+SHA1-Digest: 72+wTM+LbyF5m+S6gxfq5tgK8ys=
+
+Name: fr/orsay/lri/varna/models/export/VueVARNAGraphics.class
+SHA1-Digest: yTrUtWM66pU+gYCPb8Sx5P6hNwM=
+
+Name: fr/orsay/lri/varna/views/VueChemProbAnnotation.java
+SHA1-Digest: HlFgyDLBgDfJSy6DRAxLMYLNGR0=
+
+Name: fr/orsay/lri/varna/views/VueJPEG.class
+SHA1-Digest: uFujR45GAcESUv/SJDdMY3Op2SY=
+
+Name: fr/orsay/lri/varna/controlers/ControleurMolette.java
+SHA1-Digest: WuElIW1ipnEWDWpL0FUn/0sMcpQ=
+
+Name: fr/orsay/lri/varna/applications/NussinovDemo$1.class
+SHA1-Digest: 9CvMvbPtyxhn/Ez1kCVYEgp8gJQ=
+
+Name: fr/orsay/lri/varna/views/VueBaseValues.class
+SHA1-Digest: 7i3eY7hEItSFpS9OFogeIfgz1Lc=
+
+Name: BugsAndProblems
+SHA1-Digest: /uvDBmwQgLeRyaBtQdwQTUhgcGg=
+
+Name: fr/orsay/lri/varna/views/VueChemProbAnnotation.class
+SHA1-Digest: 6oo2D/cmH7q+Azak71gj73E5Np8=
+
+Name: fr/orsay/lri/varna/exceptions/MappingException.java
+SHA1-Digest: g7+cudFEDpvrYOsB954twBXkWwM=
+
+Name: fr/orsay/lri/varna/models/export/SecStrProducerGraphics.java
+SHA1-Digest: 5KPMEIC2wKX9HO83roGb54BPuWk=
+
+Name: fr/orsay/lri/varna/exceptions/ExceptionUnmatchedClosingParenthes
+ es.class
+SHA1-Digest: rkzyg1xuu6poRpvBLwb3S1iC0BI=
+
+Name: fr/orsay/lri/varna/models/export/XFIGExport.java
+SHA1-Digest: fJbTWmrpEZ/CD8KZq0vXTEolwnI=
+
+Name: fr/orsay/lri/varna/models/treealign/ExampleDistance3$SequenceAli
+ gnResult.class
+SHA1-Digest: C16f9m1nV6FsRHve1rX16r35L9I=
+
+Name: fr/orsay/lri/varna/models/rna/ModeleColorMap.java
+SHA1-Digest: c4oY7Gmc17vtRer/LV+PKWrCasg=
+
+Name: fr/orsay/lri/varna/models/rna/ModeleStrand.java
+SHA1-Digest: bk7nTkiJP8hVJL6F94e7suFcXK0=
+
+Name: fr/orsay/lri/varna/models/VARNAConfig.java
+SHA1-Digest: RlnWajOnFaWt7qNN8Aj7E9Lrm1A=
+
+Name: fr/orsay/lri/varna/models/templates/RNATemplateMappingException.
+ java
+SHA1-Digest: WMnr+4jysL5BkMLnf427XPPBkhU=
+
+Name: fr/orsay/lri/varna/views/PrintPanel.class
+SHA1-Digest: v+3lsHGjT9IYpHTtZhrNgP5Xr6Q=
+
+Name: fr/orsay/lri/varna/exceptions/ExceptionNAViewAlgorithm.class
+SHA1-Digest: NW2rC6jgpLqEmW4I6Krhcggx1os=
+
+Name: fr/orsay/lri/varna/models/rna/VARNASecDraw$UnpairedPortion.class
+SHA1-Digest: nenaj5D+QJJ/OsCK3gPJaI9cKO8=
+
+Name: fr/orsay/lri/varna/interfaces/InterfaceParameterLoader.java
+SHA1-Digest: eLrZBq/b6HWFLez8IF04Hrl9N8M=
+
+Name: fr/orsay/lri/varna/models/rna/StructureTemp.class
+SHA1-Digest: mj0vwhvUyb8u7g7Pi7+IThWMGEY=
+
+Name: fr/orsay/lri/varna/models/export/RectangleCommand.java
+SHA1-Digest: 8WHxD8vzbF3m9b1JuIBNjvQA3OA=
+
+Name: fr/orsay/lri/varna/controlers/ControleurScriptParser.java
+SHA1-Digest: AvzpbO53ANZ45QLwM4DwINnhE1c=
+
+Name: fr/orsay/lri/varna/applications/NussinovDemo.java
+SHA1-Digest: fzonNFqs/q8vAQa+jk7EVhl6bak=
+
+Name: fr/orsay/lri/varna/views/VueColorMapStyle$1.class
+SHA1-Digest: ao91Eclu9IF73f/vCY8yNuOects=
+
+Name: fr/orsay/lri/varna/views/VueStyleBP.java
+SHA1-Digest: MDH4CRInX8YUlcXQ3pYMENUWfrA=
+
+Name: fr/orsay/lri/varna/controlers/ControleurBaseSpecialColorEditor.j
+ ava
+SHA1-Digest: Ol9KugHI3qFbDcd7grmKegWdArs=
+
+Name: fr/orsay/lri/varna/models/naView/Loop.class
+SHA1-Digest: b7BnTgORD4tsb5M2YCZzHKo/ooo=
+
+Name: fr/orsay/lri/varna/views/VueBPList.java
+SHA1-Digest: 3n2n04/QKHcy86lWpYOH9ilgfR4=
+
+Name: fr/orsay/lri/varna/models/VARNAConfig$BP_STYLE.class
+SHA1-Digest: +HguTsjaDlyvgVl8LqhR9xs+zlQ=
+
+Name: fr/orsay/lri/varna/applications/AlignmentDemo$1.class
+SHA1-Digest: Gs8JuZLbpfFKgpqglSeYnWVx940=
+
+Name: fr/orsay/lri/varna/components/BaseSpecialColorEditor.class
+SHA1-Digest: tTXdbTI0afJn0jkutBo75/exoUA=
+
+Name: fr/orsay/lri/varna/models/templates/RNANodeValueTemplateSequence
+ .class
+SHA1-Digest: i48nEJMdzgjtGmjXOuOzrZcuhY4=
+
+Name: fr/orsay/lri/varna/exceptions/ExceptionParameterError.java
+SHA1-Digest: K+e4qIRKI4fmO9rVe4fDfMQ1tts=
+
+Name: fr/orsay/lri/varna/models/export/FontCommand.java
+SHA1-Digest: UHlYzE4p69zp7RZQkw9LCKA9+dA=
+
+Name: fr/orsay/lri/varna/applications/templateEditor/GraphicalTemplate
+ Element$RelativePosition.class
+SHA1-Digest: G/B89CxkCuN5x2FsN2oxhTD5EXg=
+
+Name: fr/orsay/lri/varna/models/templates/RNANodeValue2TemplateDistanc
+ e.java
+SHA1-Digest: buQdkUfFqVLGZSf6boj3En+qhWU=
+
+Name: fr/orsay/lri/varna/applications/AlignmentDemo.class
+SHA1-Digest: a9kcZjyQpVCCbNBz6Gk6E0ypaKc=
+
+Name: fr/orsay/lri/varna/models/rna/VARNASecDraw$RNATree.class
+SHA1-Digest: EYjrRutKcLWx4qXmsk2gHYA1UUg=
+
+Name: fr/orsay/lri/varna/models/rna/ModeleBPStyle.class
+SHA1-Digest: iy6N/xy+yELVvPB91kPIUz/qmRQ=
+
+Name: fr/orsay/lri/varna/controlers/ControleurVueAnnotation.java
+SHA1-Digest: iiDVMxtA9bDxobMbTj1UT4avVoQ=
+
+Name: fr/orsay/lri/varna/models/templates/RNATemplate$RNATemplateUnpai
+ redSequence.class
+SHA1-Digest: GiSTHeW5LqZAkbs30vbJ37Cz004=
+
+Name: fr/orsay/lri/varna/applications/VARNAEditor.class
+SHA1-Digest: bYe/VcrSfoMbokB368Kw3t6Q1jk=
+
+Name: fr/orsay/lri/varna/models/export/FillPolygonCommand.class
+SHA1-Digest: Rx2y5nE0iA3e3pWWNiep3oqA74Q=
+
+Name: fr/orsay/lri/varna/models/rna/ModeleBase.class
+SHA1-Digest: eLPiqO11pi5btgDRntwvwo1+Pgc=
+
+Name: fr/orsay/lri/varna/models/treealign/TreeAlign.java
+SHA1-Digest: c3LQ0kP1xbZS+z1Ik4uo8zh9KBw=
+
+Name: fr/orsay/lri/varna/controlers/ControleurClicMovement.class
+SHA1-Digest: 7Nj0qVxnhIVuV+7bhDU2UgIz/C8=
+
+Name: fr/orsay/lri/varna/models/export/ColorCommand.class
+SHA1-Digest: MykhA6YfCBE1kyhMJI1a/2Q7VVM=
+
+Name: fr/orsay/lri/varna/applications/FileNameExtensionFilter.class
+SHA1-Digest: 72d0Dec9tkE2lNbWU2FBeb2Y4wU=
+
+Name: fr/orsay/lri/varna/exceptions/ExceptionLoadingFailed.class
+SHA1-Digest: 59KGSn5v3kRwzQ1H72hDAfmPj9o=
+
+Name: fr/orsay/lri/varna/controlers/ControleurScriptParser$StringArgum
+ ent.class
+SHA1-Digest: eBptYMEWQLCts48UfQMdTYW8Bvc=
+
+Name: fr/orsay/lri/varna/models/treealign/ExampleDistance3.class
+SHA1-Digest: SGjcWWb8iplssbNuzoyEkBM4hNk=
+
+Name: fr/orsay/lri/varna/models/templates/RNATemplate$RNATemplateEleme
+ nt.class
+SHA1-Digest: lw36h819GFQgE7erhIo/ijb2gzY=
+
+Name: fr/orsay/lri/varna/models/treealign/RNANodeValue2.class
+SHA1-Digest: QQsesD1+NYfpOmvf0IR+4lUUFGM=
+
+Name: fr/orsay/lri/varna/models/treealign/RNATree2.class
+SHA1-Digest: hkz/DhInmgo71OSnKEELiBmWZsk=
+
+Name: fr/orsay/lri/varna/factories/RNAFactory.class
+SHA1-Digest: gtwFdFoZqblQRr3EAAk8Hj9vzTo=
+
+Name: fr/orsay/lri/varna/views/VueGlobalRotation.java
+SHA1-Digest: VB9UVQeZN1DlHDa7/G6dk7i5xA0=
+
+Name: fr/orsay/lri/varna/components/ReorderableJList$ReorderableListCe
+ llRenderer.class
+SHA1-Digest: XxqvUY8UnlGmlv+oNexCzEqTfNg=
+
+Name: fr/orsay/lri/varna/models/export/SwingGraphics.java
+SHA1-Digest: UqMWmMdcU7nl69PTKMfYGGwfE1k=
+
+Name: fr/orsay/lri/varna/models/templates/RNATemplate.java
+SHA1-Digest: FlFk2ISJoFoMTXl7/kMzv0u1NqY=
+
+Name: fr/orsay/lri/varna/views/VueBPHeightIncrement.java
+SHA1-Digest: EYkPf04eGUW1XKz5Sb1n6Z4j44U=
+
+Name: fr/orsay/lri/varna/applications/VARNAcmd.java
+SHA1-Digest: DUkN+H6wbTCCPyzTZPUY2tczFp4=
+
+Name: fr/orsay/lri/varna/models/rna/ModeleBP.class
+SHA1-Digest: 6ZX6vf5hTba22npIsD+5EHFUJPc=
+
+Name: fr/orsay/lri/varna/models/rna/RNA$1.class
+SHA1-Digest: ezqTnWX0QxNOR71GPY5fWORfM+A=
+
+Name: fr/orsay/lri/varna/models/rna/RNAMLParser.class
+SHA1-Digest: bt3KRfqe1iy2RarnMOpwl41640c=
+
+Name: fr/orsay/lri/varna/exceptions/ExceptionXmlLoading.java
+SHA1-Digest: daiUUqQlDe2QesRc28dzk6y0LPc=
+
+Name: fr/orsay/lri/varna/exceptions/ExceptionNonEqualLength.class
+SHA1-Digest: itiJkNcCdiATjj0kuVLtRbj+LFg=
+
+Name: fr/orsay/lri/varna/applications/VARNAEditor.java
+SHA1-Digest: 0ST/pp1CdV0uiKEup0Gqz5aLi+E=
+
+Name: fr/orsay/lri/varna/models/rna/ModeleBasesComparison.class
+SHA1-Digest: kAkHQRxs1RnlivpRgFv/XZsfU5U=
+
+Name: fr/orsay/lri/varna/controlers/ControleurDraggedMolette.class
+SHA1-Digest: JaILGO/plO8tFzFApV8Xu1prTeA=
+
+Name: LICENSE.txt
+SHA1-Digest: p4gqIuRNC5RyAK0Mcv6mfUOnKFk=
+
+Name: fr/orsay/lri/varna/models/annotations/HighlightRegionAnnotation.
+ class
+SHA1-Digest: sh+rKgvkV0fn3nHSOZcwwukEGSc=
+
+Name: fr/orsay/lri/varna/models/rna/VARNASecDraw.java
+SHA1-Digest: IHspWlyjF894TVJl5VAaLVxkeZ8=
+
+Name: fr/orsay/lri/varna/models/treealign/TreeAlign$ConvertTreeToArray
+ .class
+SHA1-Digest: TjpkEgrWHy3aPBY8y9LSVlKVwn8=
+
+Name: fr/orsay/lri/varna/models/treealign/ExampleDistance3.java
+SHA1-Digest: vyUbBwHUGU6NLEVIwS0qM/j2AXI=
+
+Name: fr/orsay/lri/varna/models/export/LineCommand.class
+SHA1-Digest: X/ZpOBZFWPsNZXUjW9u7N7mmhtU=
+
+Name: fr/orsay/lri/varna/views/Imprimer.java
+SHA1-Digest: ahCjCSk4NiiOWof1IGjFAptdnxU=
+
+Name: fr/orsay/lri/varna/controlers/ControleurSpaceBetweenBases.class
+SHA1-Digest: KXGdaDGMXj6MEOIlcS1Kzie+Hms=
+
+Name: fr/orsay/lri/varna/models/rna/ModeleStyleBase.class
+SHA1-Digest: IP5pzOxtQD+pZM36nq2wt1m01J4=
+
+Name: fr/orsay/lri/varna/applications/VARNAcmd$1.class
+SHA1-Digest: 2ggyk4un/PDanoqSIaB/tPiBG6o=
+
+Name: fr/orsay/lri/varna/views/VueBPList$Actions.class
+SHA1-Digest: GMYq1oaA2WTQQP1KMZz6X281dz0=
+
+Name: fr/orsay/lri/varna/models/CubicBezierCurve.java
+SHA1-Digest: mB/dpMiOQygbo1WEK7oBrme46DE=
+
+Name: fr/orsay/lri/varna/models/FullBackup.class
+SHA1-Digest: Frb+M2AOJ7KZm4PqZjBARhbg3EY=
+
+Name: fr/orsay/lri/varna/models/treealign/RNATree2Exception.class
+SHA1-Digest: liC3w6wumPeX44yzz9R6nn0MlyI=
+
+Name: fr/orsay/lri/varna/models/export/FontCommand.class
+SHA1-Digest: RMFqCyQQpGnnWTl9dO6f4lSVqYo=
+
+Name: fr/orsay/lri/varna/models/treealign/ExampleDistance2.class
+SHA1-Digest: vnx1Mj4KBw/xO79AEOgN8vTHDSc=
+
+Name: fr/orsay/lri/varna/controlers/ControleurGlobalRotation.java
+SHA1-Digest: hf3ZfPvfWWe9VxCjH2pt9ySCLNk=
+
+Name: fr/orsay/lri/varna/views/VueListeAnnotations.class
+SHA1-Digest: CX3LpdCOTSo1SSDxJ/WylS738v0=
+
+Name: fr/orsay/lri/varna/applications/templateEditor/UnpairedRegion.ja
+ va
+SHA1-Digest: gdcP7zxudQmj0y9r6y2AIroMVio=
+
+Name: fr/orsay/lri/varna/models/rna/ModeleBaseNucleotide.java
+SHA1-Digest: OoeF2V1QUk3mnAQZ86wXIWqttk8=
+
+Name: fr/orsay/lri/varna/controlers/ControleurMenu.java
+SHA1-Digest: MCkIeYwn78gp7D5r6gmouidsupo=
+
+Name: fr/orsay/lri/varna/models/treealign/TreeAlignLabelDistanceSymmet
+ ric.class
+SHA1-Digest: SxMY9wNinJVV8hrAYrERxPZreqQ=
+
+Name: fr/orsay/lri/varna/components/GradientEditorPanel.java
+SHA1-Digest: 72usX6dYiuFte6T27BrJjzsD42U=
+
+Name: fr/orsay/lri/varna/components/VARNAConsole.class
+SHA1-Digest: W23PQZrVw8Ikaw2TmkHxfnhHykE=
+
+Name: fr/orsay/lri/varna/models/templates/TODO.txt
+SHA1-Digest: tzQRh4MBHc3s//wE2CRBoU+x7Mo=
+
+Name: fr/orsay/lri/varna/models/annotations/ChemProbAnnotation.class
+SHA1-Digest: T3fFtlTjuwF5+z0sBocQfdk2OHE=
+
+Name: fr/orsay/lri/varna/models/BaseList.java
+SHA1-Digest: tkFFCKxkbsrNd0n95hbCapkm6rc=
+
+Name: fr/orsay/lri/varna/controlers/ControleurSelectionHighlight.class
+SHA1-Digest: 8399j0M+vk7bktYtbtN6W09RkQA=
+
+Name: fr/orsay/lri/varna/applications/SuperpositionDemo.java
+SHA1-Digest: IAolqba6xRyCI3rnua2j+Oo2ayw=
+
+Name: fr/orsay/lri/varna/models/templates/RNATemplate$LoadFromXml.clas
+ s
+SHA1-Digest: aGsM7/RWWMwj4mgVV2FDTzwmm1w=
+
+Name: fr/orsay/lri/varna/controlers/ControleurMenu.class
+SHA1-Digest: VbWPicW5GBEIPsGkVt42cNd6jBQ=
+
+Name: fr/orsay/lri/varna/models/rna/RNAMLParser$RNATmp.class
+SHA1-Digest: akfTlBH0sORgKKry6F3eA6+Pz14=
+
+Name: fr/orsay/lri/varna/models/templates/RNATemplateAlign.java
+SHA1-Digest: /eN6tsiLyctBUc/4B1Ly7JcTgFM=
+
+Name: fr/orsay/lri/varna/views/VueStyleBP.class
+SHA1-Digest: oofOR94t6T7nDshTmAHvzsxGI5A=
+
+Name: fr/orsay/lri/varna/applications/VARNAEditor$4.class
+SHA1-Digest: h3eGAZNEBYWxlQkL0uadd85yHuY=
+
+Name: fr/orsay/lri/varna/models/rna/RNA$DrawRNATemplateMethod.class
+SHA1-Digest: vKkDrCJz3MC4mD96HHL72Sh1gYQ=
+
+Name: fr/orsay/lri/varna/components/AnnotationTableModel.java
+SHA1-Digest: qETV8lYWspTK2CTJh9J5Xgy3Oek=
+
+Name: fr/orsay/lri/varna/models/rna/ModeleBase.java
+SHA1-Digest: L8BwcTijfrSFCqTnJDP6qmbMNoA=
+
+Name: fr/orsay/lri/varna/exceptions/ExceptionXmlLoading.class
+SHA1-Digest: 8jzIVNEVaDCkPTKzhgCI/9nyF0E=
+
+Name: fr/orsay/lri/varna/controlers/ControleurClicMovement$MouseStates
+ .class
+SHA1-Digest: JJyLd3Pg6TcbzlmPkD0mwQNVDts=
+
+Name: fr/orsay/lri/varna/applications/templateEditor/MouseControler.cl
+ ass
+SHA1-Digest: phi0S/Epkuo12Yo30m5h8RYwyDU=
+
+Name: fr/orsay/lri/varna/models/export/SecStrProducerGraphics.class
+SHA1-Digest: MdAxMERsn+LrOBO1jgAzR7zqsT8=
+
+Name: fr/orsay/lri/varna/models/rna/VARNAPoint.java
+SHA1-Digest: 8BlKlws1D0DyC1ZB/KccQ6VizAo=
+
+Name: README.txt
+SHA1-Digest: j6k9gMx4L7X4Wj/sRFsPCD3cR2k=
+
+Name: fr/orsay/lri/varna/models/rna/ModeleBP$Edge.class
+SHA1-Digest: IFEwYgm9nhtmJcBgLP+NAjrGjnA=
+
+Name: fr/orsay/lri/varna/applications/templateEditor/TemplateEditorPan
+ elUI.java
+SHA1-Digest: F6Y/d2pNGSIVmRM1adYe9rQFZzo=
+
+Name: fr/orsay/lri/varna/models/naView/Base.java
+SHA1-Digest: b2pfsSm9V8mYzlR+jv6VQq8c8zs=
+
+Name: fr/orsay/lri/varna/views/PrintTestFrame$2.class
+SHA1-Digest: xR3Tvum+6+m5sLdnud8ccTVHmqI=
+
+Name: fr/orsay/lri/varna/models/treealign/AlignedNode.class
+SHA1-Digest: VX/170AtZHrVJ3/MHTe7t04eVxs=
+
+Name: fr/orsay/lri/varna/controlers/ControleurBlinkingThread.class
+SHA1-Digest: QH2tljZhFU+JJWwSOdUBTkDBHus=
+
+Name: fr/orsay/lri/varna/models/naView/Radloop.java
+SHA1-Digest: gyhywOWjO6bjxJ9aCNLyuqEJOlA=
+
+Name: fr/orsay/lri/varna/models/templates/RNATemplate$MakeEdgeList.cla
+ ss
+SHA1-Digest: vcZQebcxiM4S00xyEeI8NwTcTo8=
+
+Name: fr/orsay/lri/varna/exceptions/ExceptionInvalidRNATemplate.java
+SHA1-Digest: pd8Kh9FbVNYg6lDcgKm+Jm824co=
+
+Name: fr/orsay/lri/varna/components/AnnotationTableModel.class
+SHA1-Digest: xQxHq8Dm66yr9wBCIsWL2qGFUjo=
+
+Name: fr/orsay/lri/varna/applications/VARNAEditor$2.class
+SHA1-Digest: 1slXxmcKzc4pQ3qfxjAZ7BNvcVo=
+
+Name: fr/orsay/lri/varna/controlers/ControleurDraggedMolette.java
+SHA1-Digest: +Aoh4XZDOx5yFRsnNK9Vr3ztD6o=
+
+Name: fr/orsay/lri/varna/models/export/SVGExport.java
+SHA1-Digest: l5QLE56xOfrRkfDvZpY+K6V8/Mw=
+
+Name: fr/orsay/lri/varna/exceptions/ExceptionWritingForbidden.java
+SHA1-Digest: zAeSVy1j8UEBl+prrLrfUfZ7qN0=
+
+Name: fr/orsay/lri/varna/views/VueHighlightRegionEdit.java
+SHA1-Digest: hRSt2Ey5eB/16E8o/wkogUHApOQ=
+
+Name: fr/orsay/lri/varna/interfaces/InterfaceParameterLoader.class
+SHA1-Digest: dPRRPr9u2gsEhv5HPpaU5FFMXhY=
+
+Name: fr/orsay/lri/varna/models/export/GraphicElement.class
+SHA1-Digest: twzrAFcuC0tHh6QbxENk06sQ/KI=
+
+Name: fr/orsay/lri/varna/applications/templateEditor/TemplateEditor.cl
+ ass
+SHA1-Digest: JQJ3tZ+t9ZAmwSVvjeMoMtx+1Ws=
+
+Name: fr/orsay/lri/varna/models/rna/Motif.java
+SHA1-Digest: Z3ao/4XjVKtfNlEPBaDiR4qEMjo=
+
+Name: fr/orsay/lri/varna/controlers/ControleurDemoTextField.class
+SHA1-Digest: w+ONlx9UuTSAmEeXhYuli4eoy1o=
+
+Name: fr/orsay/lri/varna/models/export/XFIGExport.class
+SHA1-Digest: NCnFBlHkiWY4/Txr4BLlBOpYwfw=
+
+Name: fr/orsay/lri/varna/models/VARNAEdits$HelixFlipEdit.class
+SHA1-Digest: SKWVDC596Y5Pg7VXDzCHx+YoXWs=
+
+Name: fr/orsay/lri/varna/interfaces/InterfaceVARNASelectionListener.cl
+ ass
+SHA1-Digest: rr72S5Cti3NyEwOSIkSN/Min9zk=
+
+Name: fr/orsay/lri/varna/views/VueManualInput.java
+SHA1-Digest: /ZMMPzxxY9OlCYsDJkW6lJgg0dw=
+
+Name: fr/orsay/lri/varna/controlers/ControleurZoom.java
+SHA1-Digest: jm1abCBGlWYImm4yqcozHx9wYg8=
+
+Name: fr/orsay/lri/varna/exceptions/ExceptionExportFailed.java
+SHA1-Digest: EGEYUs6IBrNTRftrfrdnB/Ahl7M=
+
+Name: fr/orsay/lri/varna/controlers/ControleurJCheckBoxMenuItem.java
+SHA1-Digest: TSavfwwuzP/sHXSABrNESRoYLL4=
+
+Name: fr/orsay/lri/varna/applications/SuperpositionDemo.class
+SHA1-Digest: gjFkd3LZ9Ch7vb4xyciwjNavfT4=
+
+Name: fr/orsay/lri/varna/models/treealign/TreeGraphviz.java
+SHA1-Digest: 10AdcpQKLtGcmhx6NotCkhKu+yI=
+
+Name: fr/orsay/lri/varna/models/rna/RNAMLParser.java
+SHA1-Digest: 0mlYybXOu55F315V8EkJzjWgM78=
+
+Name: fr/orsay/lri/varna/applications/VARNAEditor$1.class
+SHA1-Digest: hmQKFXPDjrFbSW6o4et/jwPYDWo=
+
+Name: fr/orsay/lri/varna/views/VueBPList$BPTableModel.class
+SHA1-Digest: oyF9VrIgMfKnpYU0oHZ5SDLuZk4=
+
+Name: fr/orsay/lri/varna/models/treealign/RNATree2Exception.java
+SHA1-Digest: wVLQ7K1LpSouCCdYfcYmp4WNN8I=
+
+Name: fr/orsay/lri/varna/applications/VARNAGUI$1.class
+SHA1-Digest: LLCH05Ue6EgDW9t0GqJVuIVSDPQ=
+
+Name: fr/orsay/lri/varna/models/treealign/RNANodeValue2WrongTypeExcept
+ ion.class
+SHA1-Digest: P7d9yBEtnG9UAfIWaWzPKJ5yy+k=
+
+Name: VARNA.java
+SHA1-Digest: SgpLnfi/iHOu0b1so2WdndAOh40=
+
+Name: fr/orsay/lri/varna/views/VueBaseValues.java
+SHA1-Digest: PgbP9apUie+W0CyDm0VvXwfPCHM=
+
+Name: fr/orsay/lri/varna/models/treealign/AlignedNode.java
+SHA1-Digest: gzX1y6qOBRlJVfQeELK30TcuZBw=
+
+Name: fr/orsay/lri/varna/components/VARNAConsole.java
+SHA1-Digest: n7zSru6HIuwRKnuoy3AoGwLS5uQ=
+
+Name: fr/orsay/lri/varna/models/rna/ModeleBasesComparison.java
+SHA1-Digest: 74rFhV/TUqsXCMGuJKObA+AQ998=
+
+Name: fr/orsay/lri/varna/views/VueColorMapStyle.java
+SHA1-Digest: BmkA/hy0VYRgUTJ15EbryvLzirA=
+
+Name: fr/orsay/lri/varna/models/naView/Radloop.class
+SHA1-Digest: hPdbYUAYs5TL1MtdUNAk9CF+uJg=
+
+Name: fr/orsay/lri/varna/exceptions/ExceptionPermissionDenied.class
+SHA1-Digest: klEMloyitT7O8f61OMPp5oKTUf4=
+
+Name: fr/orsay/lri/varna/exceptions/ExceptionInvalidRNATemplate.class
+SHA1-Digest: HpQGIzl90ElOwUPm+E+zeSMEy2k=
+
+Name: fr/orsay/lri/varna/models/templates/RNANodeValueTemplateBasePair
+ .java
+SHA1-Digest: a5oTeY5ZD0OIAbZcA8cETl29mrU=
+
+Name: fr/orsay/lri/varna/controlers/ControleurDemoTextField.java
+SHA1-Digest: 9at7Bm8TOy38b/nZVMCiJhn3bqY=
+
+Name: fr/orsay/lri/varna/applications/templateEditor/TemplateEdits$Ele
+ mentRemoveTemplateEdit.class
+SHA1-Digest: l+htyVH8s4zPiBUSbJ2dUmtZUkI=
+
+Name: fr/orsay/lri/varna/controlers/ControleurScriptParser$Command.cla
+ ss
+SHA1-Digest: YkR6n5qg71BAV9jfRiUKg0wO4Wo=
+
+Name: fr/orsay/lri/varna/applications/VARNAGUI$5.class
+SHA1-Digest: +TuXme6ITS4iZ9mljLmZKUhZGps=
+
+Name: fr/orsay/lri/varna/views/VueBPType.class
+SHA1-Digest: 2LEZYm5JRW3G3h63d0DOBA0loP8=
+
+Name: fr/orsay/lri/varna/applications/VARNAConsoleDemo.class
+SHA1-Digest: B35nuKEswWAWt45Y5sk7w4UOM3g=
+
+Name: fr/orsay/lri/varna/controlers/ControleurScriptParser$ArrayArgume
+ nt.class
+SHA1-Digest: UMkuzSFPX2SD/PxOmQ1yGhFcb9s=
+
+Name: fr/orsay/lri/varna/models/annotations/TextAnnotation.class
+SHA1-Digest: de+L0cgoNJ0CgNEGjIZ9J3uO8Ao=
+
+Name: fr/orsay/lri/varna/models/treealign/RNANodeValue.java
+SHA1-Digest: r5ITdTI7aWkgmDBNt4/GzJ9BIEk=
+
+Name: fr/orsay/lri/varna/applications/templateEditor/TemplateEdits$Ele
+ mentEdgeMoveTemplateEdit.class
+SHA1-Digest: MGALjsBreCNSkrxKf9UTl2xCv4Q=
+
+Name: fr/orsay/lri/varna/views/Imprimer.class
+SHA1-Digest: 2HpJ6HY4qEOv66gwLpJzHgf+PVc=
+
+Name: fr/orsay/lri/varna/views/VueListeAnnotations.java
+SHA1-Digest: EPSNq4whMS8w+V56Fp17vHK6voQ=
+
+Name: fr/orsay/lri/varna/applications/VARNAOnlineDemo.class
+SHA1-Digest: d4snVg82ju9V/z4ntPyYAJqypn0=
+
+Name: fr/orsay/lri/varna/components/ActionEditor.class
+SHA1-Digest: myKd0YRHQuLH/ZuyFaOKls/BkBU=
+
+Name: fr/orsay/lri/varna/models/rna/ModeleBaseNucleotide.class
+SHA1-Digest: OqyyYYOeBP2QHEhyAmzJSV1XVQU=
+
+Name: fr/orsay/lri/varna/models/export/PSExport.java
+SHA1-Digest: KoqjNj8JFYTVApODLhn6c3aYuFw=
+
+Name: fr/orsay/lri/varna/views/VueLoadColorMapValues.java
+SHA1-Digest: 0JT5LryOvHlTM46exPAEX9kw4WY=
+
+Name: fr/orsay/lri/varna/models/templates/RNANodeValueTemplateBasePair
+ .class
+SHA1-Digest: kbUAJTRKlUjxCyYN+thoVw7qvwI=
+
+Name: fr/orsay/lri/varna/exceptions/ExceptionEdgeEndpointAlreadyConnec
+ ted.class
+SHA1-Digest: vVZ8cU6ZyF2eLH06c3ZgbC0dp2s=
+
+Name: fr/orsay/lri/varna/views/VueBases.class
+SHA1-Digest: PiSxVdmdvAPpEWTWEG13xDhoAiI=
+
+Name: fr/orsay/lri/varna/applications/templateEditor/UnpairedRegion.cl
+ ass
+SHA1-Digest: 8QXyoUSxy3KY+2C/8Snd//kTt2Y=
+
+Name: fr/orsay/lri/varna/models/export/ArcCommand.java
+SHA1-Digest: WNZHfV5mzs97FdfAaevvH8NxRqY=
+
+Name: fr/orsay/lri/varna/controlers/ControleurNumPeriod.class
+SHA1-Digest: xj79fou/FaRG1YVCrW6TX2+ovnc=
+
+Name: fr/orsay/lri/varna/applications/VARNAEditor$BackupHolder.class
+SHA1-Digest: SjI8byoqZZxg18v4TQdkMLESW/4=
+
+Name: fr/orsay/lri/varna/applications/templateEditor/TemplateEdits$Hel
+ ixFlipTemplateEdit.class
+SHA1-Digest: AmaCn9hDp2+oa/UvuNsN/B6691g=
+
+Name: .classpath
+SHA1-Digest: RHU3VW7pbyNDfWW/vgIHsbXIawM=
+
+Name: fr/orsay/lri/varna/views/VueBPThickness.class
+SHA1-Digest: NIFipK4b3DZ+PWCUma/HukixXdc=
+
+Name: fr/orsay/lri/varna/models/rna/VARNASecDraw$PairedPortion.class
+SHA1-Digest: PpLqoEQtrK5yNNU7pT5EP6fvoOQ=
+
+Name: fr/orsay/lri/varna/views/VueGlobalRotation.class
+SHA1-Digest: qAeXbsWGo3wCNAnTq1dOVIW2IcU=
+
+Name: fr/orsay/lri/varna/controlers/ControleurGlobalRotation.class
+SHA1-Digest: pssFUTLOqasNfyIGhsSMLK9Vu3c=
+
+Name: TODO.txt
+SHA1-Digest: Jb1YS2gYSfkzBEQ1n3OhteK0iyU=
+
+Name: fr/orsay/lri/varna/applications/SuperpositionDemo$2.class
+SHA1-Digest: 7pWwNlbCmvcD4zbhexh33LKo9SE=
+
+Name: fr/orsay/lri/varna/components/ActionRenderer.java
+SHA1-Digest: vxTc2nteqP429b/tumOf3BXNfAU=
+
+Name: fr/orsay/lri/varna/models/treealign/TreeAlignResult.class
+SHA1-Digest: gy9RpetjBPyudI7CZ9uEFiOtoU4=
+
+Name: fr/orsay/lri/varna/applications/VARNAcmd.class
+SHA1-Digest: bZyQN2Myvbp4vYbpZIOMD93bNAE=
+
+Name: fr/orsay/lri/varna/models/templates/RNATemplate$RemovePseudoKnot
+ s.class
+SHA1-Digest: Hacnv+PKQDUhn9BtdtF7Np5hrdE=
+
+Name: fr/orsay/lri/varna/interfaces/InterfaceVARNAObservable.class
+SHA1-Digest: 5WHs60lx6rSfou0S/+CWpEjvJtA=
+
+Name: fr/orsay/lri/varna/models/VARNAEdits$BasesShiftEdit.class
+SHA1-Digest: 4kMnjGUN0SLBUij+fgAqwTdzp5g=
+
+Name: fr/orsay/lri/varna/exceptions/ExceptionPermissionDenied.java
+SHA1-Digest: w80FmugW8DMfehIp+1Ml4yoV5HI=
+
+Name: fr/orsay/lri/varna/applications/templateEditor/Couple.java
+SHA1-Digest: FfE6vHw8WWta5i+L0/xH/uF0tsI=
+
+Name: fr/orsay/lri/varna/VARNAPanel.java
+SHA1-Digest: eT81xbOwly4wcx8Uf81aDbUVBUk=
+
+Name: fr/orsay/lri/varna/models/export/FillCircleCommand.java
+SHA1-Digest: EgxfmnE6zhT9QL290yxVNQ0cNCM=
+
+Name: fr/orsay/lri/varna/models/rna/ModeleStrand.class
+SHA1-Digest: jqZHi4BpaKGo32sTvNpKTovqqB4=
+
+Name: fr/orsay/lri/varna/controlers/ControleurMolette.class
+SHA1-Digest: fSrqhJ0LYfyOdBfxtX7CQ+86Zf8=
+
+Name: fr/orsay/lri/varna/views/PrintTest.class
+SHA1-Digest: SxhxP7FPrzGetRdKmiAtDhBwR+o=
+
+Name: fr/orsay/lri/varna/controlers/ControleurScriptParser$Argument.cl
+ ass
+SHA1-Digest: duu3mrK08/qfv1VJlE7DvlMcW0M=
+
+Name: fr/orsay/lri/varna/models/templates/RNATemplateMappingException.
+ class
+SHA1-Digest: +2KMqmzwnVxEglb0AEwEYg30wcw=
+
+Name: fr/orsay/lri/varna/models/templates/RNATemplateDrawingAlgorithmE
+ xception.java
+SHA1-Digest: E694WRo5dbSTcc58ACjOjLosqUE=
+
+Name: fr/orsay/lri/varna/exceptions/ExceptionUnmatchedClosingParenthes
+ es.java
+SHA1-Digest: YRFAnFCgfaYdtu0Y+b6tZop/8EI=
+
+Name: fr/orsay/lri/varna/models/rna/RNA.java
+SHA1-Digest: Rdw0gSzbJrTmqWDlFvg/wBByKaU=
+
+Name: fr/orsay/lri/varna/models/treealign/TreeAlignLabelDistanceAsymme
+ tric.class
+SHA1-Digest: 8APML3SIJF19aTIWgZXYyovQDGk=
+
+Name: fr/orsay/lri/varna/exceptions/ExceptionXMLGeneration.java
+SHA1-Digest: LHulcmPVXvZ23i4/IeY6axYqfQk=
+
+Name: fr/orsay/lri/varna/controlers/ControleurScriptParser.class
+SHA1-Digest: iE87g68fS6JzNquJx/xI7XOSK80=
+
+Name: fr/orsay/lri/varna/views/VueAboutPanel$AboutAnimator.class
+SHA1-Digest: CWXcnMwptlBnpWmtWiuoqbiJvHk=
+
+Name: fr/orsay/lri/varna/applications/templateEditor/Couple.class
+SHA1-Digest: nb8yjStrEzQDubA6Gd9Ap1XEzbk=
+
+Name: fr/orsay/lri/varna/models/treealign/TreeAlignResult.java
+SHA1-Digest: tIg2u4ct8cOT4FDr39YGhM/MtfY=
+
+Name: fr/orsay/lri/varna/applications/VARNAPrinter.java
+SHA1-Digest: 3W88e909a2c91jHRtQn3N4X0r5g=
+
+Name: fr/orsay/lri/varna/views/VueUI.java
+SHA1-Digest: sS4RsHCTeuL8m/s+nd4nARto8oQ=
+
+Name: fr/orsay/lri/varna/applications/AlignmentDemo.java
+SHA1-Digest: hXNvgi9Rd0GpoCdX49xHF9BbVWE=
+
+Name: fr/orsay/lri/varna/components/ActionRenderer.class
+SHA1-Digest: tB2QM1Qn53Tb6cCwgnDqLHBMtQc=
+
+Name: fr/orsay/lri/varna/models/rna/Motif.class
+SHA1-Digest: 4Z+vcYV0gwxzyYvlhR9j5eWaz4g=
+
+Name: fr/orsay/lri/varna/controlers/ControleurBorder.java
+SHA1-Digest: T350DWIjP7QMH2SLrmCGMRQ5sSw=
+
+Name: fr/orsay/lri/varna/models/VARNAEdits$SingleBaseMoveEdit.class
+SHA1-Digest: qokRVVApp5kscUc+ZOvKHDBAcjQ=
+
+Name: fr/orsay/lri/varna/models/templates/RNANodeValueTemplate.java
+SHA1-Digest: tOLyQbb5wK+FTmVboehpNawjRrQ=
+
+Name: fr/orsay/lri/varna/applications/templateEditor/TemplateEdits$Ele
+ mentAttachTemplateEdit.class
+SHA1-Digest: LMBP9NHv2EA1X9YeWwjHLGV7r1M=
+
+Name: fr/orsay/lri/varna/controlers/ControleurInterpolator$MinimizeRMS
+ D.class
+SHA1-Digest: AjragLZRhiKmSPjEnI9JpdAQFvw=
+
+Name: fr/orsay/lri/varna/exceptions/ExceptionEdgeEndpointAlreadyConnec
+ ted.java
+SHA1-Digest: 8vOvm7rOnDOgs2oSVi+x8UeU1m8=
+
+Name: VARNALinks.csv
+SHA1-Digest: qvZTRq6NlUKnGqAOmeECM2CqkA4=
+
+Name: fr/orsay/lri/varna/models/templates/RNATemplate$RNATemplateEleme
+ nt$EdgeEndPoint.class
+SHA1-Digest: 2BOv5ivDsro0JzkRQ/xruYd7oCU=
+
+Name: fr/orsay/lri/varna/views/VueHighlightRegionEdit.class
+SHA1-Digest: 0yHjTZV1zoq8MohemzRT5yzAFn4=
+
+Name: fr/orsay/lri/varna/models/VARNAConfigLoader.java
+SHA1-Digest: 75NNu2J1Hk7LF3PO3SfGi9Zy90I=
+
+Name: fr/orsay/lri/varna/VARNAPanel.class
+SHA1-Digest: kw2hos/ze0JjxwUXft5hYklTSPw=
+
+Name: fr/orsay/lri/varna/applications/templateEditor/TemplatePanel.jav
+ a
+SHA1-Digest: FWuW7KomhdYRO/Z6jbPRJtYgHC8=
+
+Name: fr/orsay/lri/varna/exceptions/MappingException.class
+SHA1-Digest: d4oXIcAeVkyQIglxQR/N9YY4wrI=
+
+Name: fr/orsay/lri/varna/controlers/ControleurTableAnnotations.class
+SHA1-Digest: c8WOLbZyX2/eXmV+cYjlBuMlyJ0=
+
+Name: fr/orsay/lri/varna/models/rna/RNA$ComputeArcCenter.class
+SHA1-Digest: 7DKk4D6+TvxG11PgKUEjneW37ZM=
+
+Name: fr/orsay/lri/varna/interfaces/InterfaceVARNARNAListener.class
+SHA1-Digest: nB7nrlCPmo72ueGOgQhqxQstzHs=
+
+Name: fr/orsay/lri/varna/models/export/TextCommand.java
+SHA1-Digest: IRy24ekEg7KSeAeoOCaCb1i0zmc=
+
+Name: fr/orsay/lri/varna/models/treealign/RNANodeValue2.java
+SHA1-Digest: pXwx0oW1m5l9D8HWfP0MVYWachI=
+
+Name: fr/orsay/lri/varna/views/VueBPList.class
+SHA1-Digest: kw1yNg+GB+zp+f7IxNLPmMN/oZA=
+
+Name: fr/orsay/lri/varna/components/ColorRenderer.java
+SHA1-Digest: sGPsl3rJbo+ORKXGWyn+HjDmAd0=
+
+Name: fr/orsay/lri/varna/models/naView/Region.class
+SHA1-Digest: WTpqmCFlCM/JDWhRZR+2M25T6g4=
+
+Name: fr/orsay/lri/varna/models/rna/Mapping.java
+SHA1-Digest: f8l44bs7po8FbWri8OTb1li9Ymo=
+
+Name: fr/orsay/lri/varna/applications/templateEditor/TemplateEditorPan
+ elUI.class
+SHA1-Digest: Yp8uVSMZOfWMvk+Pjg/WWYopDnc=
+
+Name: fr/orsay/lri/varna/views/VueJPEG.java
+SHA1-Digest: 5GFlIbTzrsyGiWPb+70zAsgsQLk=
+
+Name: fr/orsay/lri/varna/models/export/LineCommand.java
+SHA1-Digest: S64t92hpE5abc39Y0TGQ6gGYqXQ=
+
+Name: fr/orsay/lri/varna/components/BaseTableModel.class
+SHA1-Digest: VPQuSdEZBO6ivxbvjrvEcgu8+oU=
+
+Name: fr/orsay/lri/varna/models/treealign/RNATree$ConvertToTree.class
+SHA1-Digest: aAl6mC0etSkPfql5LkxrcCX7riQ=
+
+Name: fr/orsay/lri/varna/applications/templateEditor/TemplateEdits$Ele
+ mentDetachTemplateEdit.class
+SHA1-Digest: bkFv0Cy0emxIlnvxbmZaVdZ2moI=
+
+Name: fr/orsay/lri/varna/components/BaseTableModel.java
+SHA1-Digest: GzID45bLTpfWBxqS7JS1ZB4dSLM=
+
+Name: VARNA.js
+SHA1-Digest: mv81SoDIWXfqYU685SX9WBxA1lg=
+
+Name: fr/orsay/lri/varna/views/VueZoom.java
+SHA1-Digest: gqA8w0C+gQsgWgQGbLK+L2631ac=
+
+Name: fr/orsay/lri/varna/models/templates/RNATemplate.class
+SHA1-Digest: uvUAEet1SzJrQmftwaxxLkqAmvM=
+
+Name: fr/orsay/lri/varna/models/export/ArcCommand.class
+SHA1-Digest: /UO3I4KRCHkTzx1ARPhVf0zaL70=
+
+Name: fr/orsay/lri/varna/models/treealign/ExampleDistance2.java
+SHA1-Digest: 5at9SxMyPcDtGWo+UBLQGC9zR4U=
+
+Name: fr/orsay/lri/varna/models/export/SecStrDrawingProducer.java
+SHA1-Digest: d4UcQMaMB4XrC329ZT5/aLcTIoo=
+
+Name: fr/orsay/lri/varna/models/export/SwingGraphics.class
+SHA1-Digest: Gncp7E3m4FJGQFfTxdR7MK5is9A=
+
+Name: fr/orsay/lri/varna/interfaces/InterfaceVARNARNAListener.java
+SHA1-Digest: DlPpNQoAYVqDmO2znuECf0asKD8=
+
+Name: fr/orsay/lri/varna/views/VueNumPeriod.java
+SHA1-Digest: y8aUG84XrSgHfABCNRaRVMYDOTs=
+
+Name: fr/orsay/lri/varna/models/treealign/TreeGraphviz.class
+SHA1-Digest: qtysrfYCNsP6SKkWWc94Daz+J7M=
+
+Name: fr/orsay/lri/varna/controlers/ControleurVARNAPanelKeys.java
+SHA1-Digest: i092JhmKDP8bbJoFlYwRCk6+5vU=
+
+Name: fr/orsay/lri/varna/models/treealign/Tree.class
+SHA1-Digest: E/+rnTi/fgU9lImedjiKXd2ndO0=
+
+Name: fr/orsay/lri/varna/exceptions/ExceptionJPEGEncoding.class
+SHA1-Digest: QPEjEfVqQrAZVwrJzNIJQHE4UaU=
+
+Name: fr/orsay/lri/varna/models/templates/RNATemplate$RNATemplateHelix
+ .class
+SHA1-Digest: /vxR3DBVRuDtdNEK5TCsySq9lQU=
+
+Name: fr/orsay/lri/varna/models/export/GraphicElement.java
+SHA1-Digest: 2AJdTNrzTfgofZexmFW/fDdUv7E=
+
+Name: fr/orsay/lri/varna/models/rna/ModeleBP.java
+SHA1-Digest: gFm8Ys+PILYRwVG1gMiGlT8+Fxw=
+
+Name: fr/orsay/lri/varna/views/VueUI.class
+SHA1-Digest: /+s5Afn4PGEWVyyXsXPhfubN9bk=
+
+Name: fr/orsay/lri/varna/models/export/CircleCommand.class
+SHA1-Digest: W1YgJ+L59nDA9+d2mHFB11FlzRA=
+
+Name: fr/orsay/lri/varna/components/ReorderableJList$RJLTransferable.c
+ lass
+SHA1-Digest: EH4ER38GClbAJHYdAPKoVrZx7Zg=
+
+Name: fr/orsay/lri/varna/components/ColorRenderer.class
+SHA1-Digest: 6B0u6xGpUBuIA6cYv3kvROnd3t8=
+
+Name: fr/orsay/lri/varna/applications/VARNAEditor$3.class
+SHA1-Digest: hUKe9cFnzoOiaiHVqkkUtipx5Oo=
+
+Name: fr/orsay/lri/varna/models/treealign/RNATree.java
+SHA1-Digest: Q9k8moJgpwevwb5L4CXRF237O+g=
+
+Name: fr/orsay/lri/varna/exceptions/ExceptionParameterError.class
+SHA1-Digest: AgRxOMleemce45W+/oqeM1tXGRY=
+
+Name: fr/orsay/lri/varna/models/naView/NAView.java
+SHA1-Digest: m8Vz2JRtbUgn/IlpySw0HHr16sQ=
+
+Name: fr/orsay/lri/varna/controlers/ControleurVueAnnotation.class
+SHA1-Digest: 5jbwmW3B/rg2WU6esW7MaPimQgE=
+
+Name: fr/orsay/lri/varna/models/treealign/RNATree$ConvertToMapping.cla
+ ss
+SHA1-Digest: HHdkJ8s+X05WxjIGUVaqxgR8AO4=
+
+Name: fr/orsay/lri/varna/controlers/ControleurClicMovement.java
+SHA1-Digest: hbqwHx3c7ot0oGxaIq79SfP36oQ=
+
+Name: fr/orsay/lri/varna/exceptions/ExceptionNAViewAlgorithm.java
+SHA1-Digest: SY4zRTPbNe+KXQVnjguBJ5/x5gM=
+
+Name: fr/orsay/lri/varna/models/treealign/TreeAlignLabelDistanceSymmet
+ ric.java
+SHA1-Digest: NflzZ56zcy/5hJoWRvZtsPtDl9Q=
+
+Name: fr/orsay/lri/varna/controlers/ControleurSelectionHighlight.java
+SHA1-Digest: DPjOwP0RPV75rFMD027LSflEpSs=
+
+Name: fr/orsay/lri/varna/controlers/ControleurTableAnnotations.java
+SHA1-Digest: lwZLeCHOprI6iAynE1CjiQ3T9Dw=
+
+Name: fr/orsay/lri/varna/applications/templateEditor/TemplateEdits.jav
+ a
+SHA1-Digest: hFxi3TUsakw0FXxwbZVeoUhOWEQ=
+
+Name: fr/orsay/lri/varna/views/VueBorder.class
+SHA1-Digest: BzQr6RJSqToZz7KDiTCGI2df1RU=
+
+Name: build.xml
+SHA1-Digest: p3+A97wbZUigW8LJzN1Img89dqE=
+
+Name: fr/orsay/lri/varna/applications/VARNAEditor$5.class
+SHA1-Digest: xhnD2fBDriQPkRB1RVLPPpH2Qs8=
+
+Name: fr/orsay/lri/varna/models/FullBackup.java
+SHA1-Digest: 2WfrKJD6MR/PlAjz8wE0kDd4UlU=
+
+Name: fr/orsay/lri/varna/models/templates/RNATemplate$ConvertToTree.cl
+ ass
+SHA1-Digest: 50rtaQqSVaeZmjRaawBa4HGF778=
+
+Name: fr/orsay/lri/varna/controlers/ControleurScriptParser$NumberArgum
+ ent.class
+SHA1-Digest: 85Se3Nj4gje9AMX1xXP+heNu4wc=
+
+Name: fr/orsay/lri/varna/models/treealign/GraphvizDrawableNodeValue.ja
+ va
+SHA1-Digest: J/8w1QrsusH6030Iotb2iWhqmWU=
+
+Name: fr/orsay/lri/varna/applications/VARNAConsoleDemo.java
+SHA1-Digest: ThYtVWIall+bMZ+rL02Y8Zw1bKY=
+
+Name: fr/orsay/lri/varna/models/rna/ModeleStyleBase.java
+SHA1-Digest: XsCzHlq8ObO/p+XnxhWNFYmnVLU=
+
+Name: fr/orsay/lri/varna/exceptions/ExceptionWritingForbidden.class
+SHA1-Digest: HcZh0Hb/Kp7PrnFJFYkyaD96KeU=
+
+Name: fr/orsay/lri/varna/applications/VARNAGUI.class
+SHA1-Digest: YZNH8BBVlmbNdAcMcG56Xl7kQrw=
+
+Name: fr/orsay/lri/varna/models/templates/RNANodeValueTemplate.class
+SHA1-Digest: MwxavDBE34JjbbtZD9fga/aUY48=
+
+Name: fr/orsay/lri/varna/models/templates/RNATemplate$ConvertToXml.cla
+ ss
+SHA1-Digest: UJ5jqnLUM8Lk9+uwqB0Ju6QTZbA=
+
+Name: fr/orsay/lri/varna/models/rna/VARNAPoint.class
+SHA1-Digest: ZLXP/BCV/TOmnikqPvHsAIN0sXM=
+
+Name: fr/orsay/lri/varna/models/export/CircleCommand.java
+SHA1-Digest: OogdWVheDYTTdJJ3PEu3+357qak=
+
+Name: fr/orsay/lri/varna/models/treealign/RNANodeValue$Origin.class
+SHA1-Digest: eSoZyORoF+w2XI1B0+FfC931nO4=
+
+Name: fr/orsay/lri/varna/applications/templateEditor/Connection.java
+SHA1-Digest: 3PgcoM8k76l49Ad2DxR44PZ+5XA=
+
+Name: fr/orsay/lri/varna/models/VARNAConfigLoader.class
+SHA1-Digest: K3+GcqZlLUbckcHDc33Dp0bhyZQ=
+
+Name: fr/orsay/lri/varna/controlers/ControleurNumPeriod.java
+SHA1-Digest: 1ww76UAmrM62ulp2b03eVvjqMnY=
+
+Name: fr/orsay/lri/varna/models/rna/RNAMLParser$HelixTemp.class
+SHA1-Digest: z6mp7/9dTU8n/0oHeKhoLl0M8XQ=
+
+Name: fr/orsay/lri/varna/views/PrintTestFrame.class
+SHA1-Digest: fNrx//gITSC4NBNGFDtSaE5yW6w=
+
+Name: fr/orsay/lri/varna/models/rna/RNAMLParser$BPTemp.class
+SHA1-Digest: hkI56b5erete0uAEEFmZTOIPUjc=
+
+Name: fr/orsay/lri/varna/views/VueAnnotation.java
+SHA1-Digest: tNNQ2DkonK60Ek11sm6u4NLwn5o=
+
+Name: fr/orsay/lri/varna/models/rna/ModeleBaseNucleotide$STATE_SPECIAL
+ _CHARS_STATES.class
+SHA1-Digest: pjLLt8zyzCqRGZ9nfM8V4xVYQNc=
+
+Name: fr/orsay/lri/varna/applications/NussinovDemo.class
+SHA1-Digest: SPwXi8z841EaQeOw84xN7Lf8vsk=
+
+Name: fr/orsay/lri/varna/models/VARNAEdits$RedrawEdit.class
+SHA1-Digest: g0SJ9IdIIPxQ6LAJW03ymMVNbJM=
+
+Name: fr/orsay/lri/varna/exceptions/ExceptionLoadingFailed.java
+SHA1-Digest: 1A15tjnWp60c9Tg1WM3U96OOOfk=
+
+Name: fr/orsay/lri/varna/exceptions/ExceptionNonEqualLength.java
+SHA1-Digest: 74VQJ3va3Wd/y9T0A9fbg7lWY14=
+
+Name: fr/orsay/lri/varna/models/templates/RNATemplate$RNAIterator.clas
+ s
+SHA1-Digest: 7eiNI/DPU6m3WVsYfZtgAvHjT8w=
+
+Name: fr/orsay/lri/varna/controlers/ControleurBaseSpecialColorEditor.c
+ lass
+SHA1-Digest: 3KcjVknF2BsuSPWQOs7M/nUn0Sw=
+
+Name: fr/orsay/lri/varna/models/rna/ModeleColorMap$NamedColorMapTypes.
+ class
+SHA1-Digest: AQepyIVrkYPR7NpWFtyrTRnoLNA=
+
+Name: fr/orsay/lri/varna/models/templates/RNATemplateMapping.class
+SHA1-Digest: kdkc/fQlyjCjcV4EihdQOo3oFH0=
+
+Name: fr/orsay/lri/varna/controlers/ControleurSliderLabel.java
+SHA1-Digest: 3sFgfUDl1/Bi++sNozpUXWIHV4Q=
+
+Name: fr/orsay/lri/varna/applications/templateEditor/GraphicalTemplate
+ Element.class
+SHA1-Digest: rrMdzSBBGmdHbDzOCO3xdIdf0vc=
+
+Name: fr/orsay/lri/varna/controlers/ControleurVARNAPanelKeys.class
+SHA1-Digest: SDJgpTYK+KrAYDQbCHGZabsfvjQ=
+
+Name: fr/orsay/lri/varna/components/ActionEditor.java
+SHA1-Digest: CTRdDEo+7ylU0f2aiIrlGhaotdU=
+
+Name: fr/orsay/lri/varna/views/VueZoom.class
+SHA1-Digest: n4kykd+toanew1RlkzLtv887Qqs=
+
+Name: fr/orsay/lri/varna/models/VARNAConfig.class
+SHA1-Digest: zNfw3eC2WfTWjtV1tfBe8RN5v7k=
+
+Name: fr/orsay/lri/varna/models/naView/Connection.java
+SHA1-Digest: gfdJF+TOxOKwCWqINQHU965mkWU=
+
+Name: fr/orsay/lri/varna/controlers/ControleurScriptParser$ColorArgume
+ nt.class
+SHA1-Digest: RQAHgPFyel20TqwmraPRQOOOBik=
+
+Name: fr/orsay/lri/varna/views/VueBPThickness.java
+SHA1-Digest: yuAAUJSvioaGCCOOrQOq6LJ0Ry0=
+
+Name: fr/orsay/lri/varna/models/export/SecStrDrawingProducer.class
+SHA1-Digest: RoVfsf2JppE2D8a0XcH+9ycWAE4=
+
+Name: fr/orsay/lri/varna/applications/templateEditor/TemplatePanel.cla
+ ss
+SHA1-Digest: mexznJCpXnCVxLlYG8/6K8GlmIY=
+
+Name: fr/orsay/lri/varna/models/rna/VARNASecDraw$HelixEmbedding.class
+SHA1-Digest: 1eTZ6Gmr8O+Rd62t9eRa5+DGZ00=
+
+Name: fr/orsay/lri/varna/controlers/ControleurInterpolator$TargetsHold
+ er.class
+SHA1-Digest: w+M+5INWWrenpxbTGrSNWPtniCU=
+
+Name: fr/orsay/lri/varna/exceptions/ExceptionXMLGeneration.class
+SHA1-Digest: L0ohtXNnt+IpkJOhviR9caQw1XU=
+
+Name: fr/orsay/lri/varna/applications/VARNAPrinter.class
+SHA1-Digest: 2U/Jl2aS3W+vHp3LGY0UOXPVEQE=
+
+Name: fr/orsay/lri/varna/models/rna/ExtendedMB.class
+SHA1-Digest: EI6OjHCYsVBpqvw7IUF9stsfz7Y=
+
+Name: fr/orsay/lri/varna/applications/templateEditor/GraphicalTemplate
+ Element.java
+SHA1-Digest: g681CXpmIiIPwsF8ya/YKkCmsSw=
+
+Name: fr/orsay/lri/varna/models/VARNAEdits.class
+SHA1-Digest: T9zojxtbuzHunbTdGWW0WSa/mBA=
+
+Name: fr/orsay/lri/varna/models/templates/RNATemplateDrawingAlgorithmE
+ xception.class
+SHA1-Digest: EkDG0U0MxXVTvRGheuFKfKNwuo0=
+
+Name: fr/orsay/lri/varna/views/VueBPType.java
+SHA1-Digest: uFscwVAr15EkUEp6im99aqv2Nhw=
+
+Name: fr/orsay/lri/varna/models/export/ColorCommand.java
+SHA1-Digest: V3YgE4HbObYMDMdxRQn+nGYLELY=
+
+Name: fr/orsay/lri/varna/models/annotations/TextAnnotation.java
+SHA1-Digest: Gil5hpDRI2O7YSNOZPWvxBhQZKs=
+
+Name: fr/orsay/lri/varna/components/ReorderableJList.java
+SHA1-Digest: 8uiPVdAXFnNDdz3XRLZVGDy7WyU=
+
+Name: fr/orsay/lri/varna/controlers/ControleurScriptParser$ArgumentTyp
+ e.class
+SHA1-Digest: SFpT5Z3CyZvZ/kO4MIFaqJaMHK0=
+
+Name: fr/orsay/lri/varna/views/VueSpaceBetweenBases.java
+SHA1-Digest: QIMBy9AZqCaj1nu8ms867Qu6pO4=
+
+Name: fr/orsay/lri/varna/models/rna/Mapping.class
+SHA1-Digest: 02zupinfTqX3A4Wwx2HgUt+qa40=
+
+Name: fr/orsay/lri/varna/models/VARNAEdits$RemoveBPEdit.class
+SHA1-Digest: f1oQZQbCB1js/clMwAE1BDPJwCY=
+
+Name: fr/orsay/lri/varna/controlers/ControleurInterpolator$Targets.cla
+ ss
+SHA1-Digest: /jZ893SNfTDG+J6dHS9u8z95oRY=
+
+Name: fr/orsay/lri/varna/models/export/FillCircleCommand.class
+SHA1-Digest: QE+Ai50snwR/dHA3Q8aRXJYx9Ds=
+
+Name: fr/orsay/lri/varna/models/rna/StructureTemp.java
+SHA1-Digest: mZ1diIuqwOco4z4aPHQvxtUctaM=
+
+Name: fr/orsay/lri/varna/models/treealign/TreeAlignException.class
+SHA1-Digest: lkA8ldVc20uDZujWfIV5D3Bij8M=
+
+Name: fr/orsay/lri/varna/models/templates/RNANodeValueTemplateSequence
+ .java
+SHA1-Digest: M1DYArjTH+bHI886jobsO2fC3Jo=
+
+Name: fr/orsay/lri/varna/interfaces/InterfaceVARNASelectionListener.ja
+ va
+SHA1-Digest: fYWlNeh4b8ziVYUiDIiNcahE5e8=
+
+Name: fr/orsay/lri/varna/controlers/ControleurJCheckBoxMenuItem.class
+SHA1-Digest: JyqCS8E3+JzN0M/7QMtaESXhozg=
+
+Name: fr/orsay/lri/varna/models/VARNAEdits.java
+SHA1-Digest: 8fhS3Ijc7APEmogjbo5DiXIKSNg=
+
+Name: fr/orsay/lri/varna/models/export/PolygonCommand.class
+SHA1-Digest: VrY0u6jw1A4ZyJsfjVoqie0PRa0=
+
+Name: fr/orsay/lri/varna/models/treealign/Tree$DFSPrefixIterator.class
+SHA1-Digest: 6Ja2PSlBcb/KeoWd6unLQDHblsk=
+
+Name: fr/orsay/lri/varna/models/treealign/RNANodeValue.class
+SHA1-Digest: m7N7v9nHisoUaFDVjTWNn5eZHyY=
+
+Name: fr/orsay/lri/varna/applications/VARNAOnlineDemo.java
+SHA1-Digest: p4Ci6M4Mxrls77mDT3XOZ9b05Zc=
+
+Name: fr/orsay/lri/varna/applications/templateEditor/TemplateEdits$Ele
+ mentAddTemplateEdit.class
+SHA1-Digest: wRJhaZCm7GhNk5UqiwauREmY6mQ=
+
+Name: fr/orsay/lri/varna/models/templates/RNANodeValue2TemplateDistanc
+ e.class
+SHA1-Digest: eD70I6fqX4jr/iKqmjakZ2sMHTQ=
+
+Name: fr/orsay/lri/varna/models/treealign/Tree.java
+SHA1-Digest: GmdBJwivC27m0XU+XAzpVWCfGME=
+
+Name: fr/orsay/lri/varna/models/rna/RNA.class
+SHA1-Digest: KG2ycUTGqxSFzXhp5alK8pzqgRo=
+
+Name: fr/orsay/lri/varna/controlers/ControleurBPHeightIncrement.class
+SHA1-Digest: +1sTaXM67G4BsooiB1f10Aj1/WM=
+

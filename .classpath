@@ -6,5 +6,7 @@
 	<classpathentry kind="lib" path="lib/data.jar"/>
 	<classpathentry kind="lib" path="lib/mpj.jar" sourcepath="D:/dok/project/java/mpj-v0_38/src"/>
 	<classpathentry kind="src" path="res"/>
+	<classpathentry kind="lib" path="C:/Users/Preeti/Downloads/VARNAv3-8-API.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Preeti/Downloads/VARNAv3-8-src.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
