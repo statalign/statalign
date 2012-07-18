@@ -1,0 +1,21 @@
+Fonctionnalites à ajouter :
+
+    RNAML : Inclure dans .jar
+
+    
+	num base dans angle => produit vectoriel
+	 
+	deplacement dans l'algo NAView identique a celui de l'aglo Radial
+	=>besoin de creer des centre de rotation en mode NAView
+
+	faire un export de tte les info de varna en xml qui sauvegarde ttes les info (seq, struct, couleurs et coords)
+	faire un import du fichier xml pour charge les modif apporte a l'arn
+	
+	Limiter la hauteur des arcs au strict necessaire en mode Line pour le dessin
+	Ex: Dans  (.(((...)))..(((...))).), la boucle exterieure n'a pas besoin d'être
+	à hauteur 22, seulement à hauteur 4, pour ne pas rentrer en conflit avec les
+	arcs dessinés en dessous. A la limite, on pourrait la dessiner à hauteur 5 pour
+	marquer la difference entre les helices dans cette représentation.
+	
+	Courbes de bézier en représentation circulaire.
+	

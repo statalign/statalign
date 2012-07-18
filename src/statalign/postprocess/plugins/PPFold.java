@@ -47,6 +47,7 @@ import statalign.base.State;
 import statalign.base.Utils;
 import statalign.postprocess.Postprocess;
 import statalign.postprocess.gui.AlignmentGUI;
+import statalign.postprocess.gui.TestGUI;
 import statalign.postprocess.utils.Mapping;
 import statalign.postprocess.utils.RNAFoldingTools;
 
@@ -66,7 +67,7 @@ public class PPFold extends statalign.postprocess.Postprocess {
 	public String title;
 	//public int frequency = 5;
 	JPanel pan = new JPanel(new BorderLayout());
-	AlignmentGUI gui;
+	TestGUI gui;
 	// private boolean sampling = true;
 
 	CurrentAlignment curAlig;
@@ -76,18 +77,20 @@ public class PPFold extends statalign.postprocess.Postprocess {
 	int sizeOfAlignments;
 
 	int[] firstDescriptor;
-	String t[][];
+	static String t[][];
 	String[] sequences;
 	String[] viterbialignment;
 	int d;
 
 	int seqNo = 0;
-	String refSeqName = "";
+	static String refSeqName = "";
 	String refSeq;
 	String refSeqGapped;
 
 	float[][] summedArray;
 	float[] summedSingleBaseProb;
+	float[][] probMatrix;
+	
 	int noSambles;
 
 	public PPFold() {
@@ -164,11 +167,12 @@ public class PPFold extends statalign.postprocess.Postprocess {
 		pan.removeAll();
 		title = input.title;
 		JScrollPane scroll = new JScrollPane();
-		scroll.setViewportView(gui = new AlignmentGUI(title, input.model));// ,
+		scroll.setViewportView(gui = new TestGUI(this));// ,
 																			// mcmc.tree.printedAlignment()));
 		pan.add(scroll, BorderLayout.CENTER);
 		pan.getParent().validate();
-
+		
+		gui.changeDimension(d);
 		sizeOfAlignments = (mcmc.tree.vertex.length + 1) / 2;
 		noSambles = 0;
 
@@ -188,6 +192,8 @@ public class PPFold extends statalign.postprocess.Postprocess {
 
 	@Override
 	public void newSample(State state, int no, int total) {
+		
+		
 		for (int i = 0; i < t.length; i++) {
 			t[i] = curAlig.leafAlignment[i].split("\t");
 		}
@@ -345,15 +351,42 @@ public class PPFold extends statalign.postprocess.Postprocess {
 				System.out.println("D=" + d);
 				System.out.println(summedArray.length);
 				System.out.println(projectFun.length);*/
+				probMatrix = new float[d][d];
 				for (i = 0; i < d; ++i) {
 					summedSingleBaseProb[i] += projectSingleBaseProb[i];
 					for (j = 0; j < d; ++j) {
 						summedArray[i][j] += projectFun[i][j];
+						probMatrix[i][j] = summedArray[i][j]/(float)(noSambles+1);
+						gui.setMatrix(probMatrix);
+						gui.repaint();
 					}
 				}
 
 				noSambles += 1;
+				
+			
+				RNAFoldingTools rnaTools = new RNAFoldingTools();
+				String seq = this.getSequenceByName(t, this.refSeqName).replaceAll("-", "");
+				int[] pairedSites = rnaTools.getPosteriorDecodingConsensusStructureMultiThreaded(probMatrix);
+				System.out.println(RNAFoldingTools.getDotBracketStringFromPairedSites(pairedSites));
+				
+				Structure.updateMatrix(probMatrix);
+				
 				PPfoldMain.setfoldingfinished(true);
+				
+				
+				/*float[][] probMatrix = new float[d][d];
+				for(int x = 0; x < d; x++) {
+					for(int y = 0; y < d; y++) {
+						probMatrix[x][y] = summedArray[x][y]/noSambles;
+					}
+				}*/
+				//if(sampling) {
+				gui.clear();
+				gui.changeDimension(d*TestGUI.OFFSET);
+				gui.setMatrix(probMatrix);
+				gui.repaint();
+				//}
 
 				/*
 				 * for(i = 0; i<matrix.length; ++i){ for(j = 0; j<matrix.length;
@@ -387,6 +420,10 @@ public class PPFold extends statalign.postprocess.Postprocess {
 				.getPosteriorDecodingConsensusStructureMultiThreaded(doubleSummedArray);
 		// int[] finalmatrix =
 		// rnaTools.getPosteriorDecodingConsensusStructureMultiThreaded(doubleSummedArray);
+		
+		RNAFoldingTools.writeMatrix(RNAFoldingTools.getDoubleMatrix(probMatrix), new File("prob.matrix"));
+		
+		
 		RNAFoldingTools.writeMatrix(doubleSummedArray, new File("bp.matrix"));
 		System.out.println("num samples" + noSambles);
 		//RNAFoldingTools.writeMatrix(summedArray, new File("bp2.matrix"));
@@ -450,4 +487,13 @@ public class PPFold extends statalign.postprocess.Postprocess {
 
 		return null;
 	}
+	
+	public static String[][] getSequences() {
+		return t;
+	}
+	
+	public static String getRefName() {
+		return refSeqName;
+	}
+	
 }

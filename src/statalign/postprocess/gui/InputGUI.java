@@ -39,6 +39,7 @@ public class InputGUI extends JPanel implements ActionListener, ListSelectionLis
 	private JList sequences;
 	DefaultListModel dlmSequences;
 	JButton jbDelete;
+	JButton jbDeleteAll;
 	
 	/**
 	 * This constructor makes an initial GUI for showing the input sequences and their names.
@@ -66,6 +67,11 @@ public class InputGUI extends JPanel implements ActionListener, ListSelectionLis
 		jbDelete = new JButton("Remove");
 		jbDelete.addActionListener(this);
 		actionPanel.add(jbDelete,BorderLayout.WEST);
+		
+		jbDeleteAll = new JButton("Remove all");
+		jbDeleteAll.addActionListener(this);
+		actionPanel.add(jbDeleteAll, BorderLayout.EAST);
+		
 		add(actionPanel,BorderLayout.SOUTH);
 
 		updateSequences();
@@ -118,6 +124,12 @@ public class InputGUI extends JPanel implements ActionListener, ListSelectionLis
 */
 	
 	void listListener(){
+		jbDeleteAll.setEnabled(false);
+		
+		if(sequences.getModel().getSize() != 0) {
+			jbDeleteAll.setEnabled(true);
+		}
+		
 		int index = sequences.getSelectedIndex();
 		if(index == -1){
 			jbDelete.setEnabled(false);
@@ -132,7 +144,7 @@ public class InputGUI extends JPanel implements ActionListener, ListSelectionLis
 	/**
 	 * Handles removing sequences.
 	 */
-	public void actionPerformed(ActionEvent arg0) {
+	public void actionPerformed(ActionEvent e) {
 		int index = sequences.getSelectedIndex();
 
 		// This is apparently the best way to reverse a int[] array in Java... jeez.
@@ -145,19 +157,30 @@ public class InputGUI extends JPanel implements ActionListener, ListSelectionLis
 		// Removes the sequences from the model AND from the sequences arrays, i.e.
 		// there is a one-to-one mapping between those.
 		listListener();
-		for (int i : indices) {
-			manager.inputData.seqs.seqNames.remove(i);
-			manager.inputData.seqs.sequences.remove(i);
-			dlmSequences.remove(i);
+		
+		if("Remove".equals(e.getActionCommand())) {
+			//listListener();
+			for (int i : indices) {
+				manager.inputData.seqs.seqNames.remove(i);
+				manager.inputData.seqs.sequences.remove(i);
+				dlmSequences.remove(i);
+			}
+	
+			// Moves the selected index of the list.
+			if(dlmSequences.getSize() != 0){
+		    	if(index == dlmSequences.getSize()){
+		    		index--;
+		    	}
+		    	sequences.setSelectedIndex(index);
+		    }
 		}
-
-		// Moves the selected index of the list.
-		if(dlmSequences.getSize() != 0){
-	    	if(index == dlmSequences.getSize()){
-	    		index--;
-	    	}
-	    	sequences.setSelectedIndex(index);
-	    }
+		
+		else if("Remove all".equals(e.getActionCommand())) {
+			manager.inputData.seqs.seqNames.clear();
+			manager.inputData.seqs.sequences.clear();
+			dlmSequences.clear();
+			jbDeleteAll.setEnabled(false);
+		}
 	}
 
 	/**

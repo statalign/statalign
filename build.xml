@@ -1,0 +1,67 @@
+<project name="VARNA" default="build" basedir=".">
+	<property name="buildpath" value="bin" />
+	<property name="srcpath" value="src" />
+	<property name="jarpath" value="jars" />
+	<property name="docpath" value="doc" />
+	<property name="always_include_in_jar" value="VARNALinks.csv VARNA.js TODO.txt BugsAndProblems" />
+
+
+
+	<target name="build">
+		<mkdir dir="${buildpath}" />
+		<javac srcdir="${srcpath}" destdir="${buildpath}" target="1.5" encoding="ISO-8859-1" />
+	</target>
+
+
+
+	<target name="doc">
+		<mkdir dir="${docpath}" />
+		<javadoc destdir="${docpath}" encoding="ISO-8859-1">
+			<packageset dir="${srcpath}" defaultexcludes="yes">
+				<include name="fr/orsay/lri/varna/**"/>
+				<exclude name="fr/orsay/lri/varna/*/**"/>
+			</packageset>
+		</javadoc>
+	</target>
+
+
+
+	<target name="alljars" depends="srcjar, binjar, apijar" />
+	<target name="binjar" depends="build, makejardir">
+		<jar jarfile="${jarpath}/VARNA.jar" duplicate="fail">
+			<fileset dir="." includes="${always_include_in_jar}" />
+			<fileset dir="${srcpath}" includes="README.txt LICENSE.txt" />
+			<fileset dir="${buildpath}" />
+		</jar>
+	</target>
+	<target name="apijar" depends="build, makejardir, doc">
+		<jar jarfile="${jarpath}/VARNA-API.jar" duplicate="fail">
+			<fileset dir="." includes="${always_include_in_jar}" />
+			<fileset dir="." includes="${docpath}/" />
+			<fileset dir="${srcpath}" includes="README.txt LICENSE.txt" />
+			<fileset dir="${buildpath}" />
+		</jar>
+	</target>
+	<target name="srcjar" depends="build, makejardir">
+		<jar jarfile="${jarpath}/VARNA-src.jar" duplicate="fail">
+			<fileset dir="." includes="${always_include_in_jar}" />
+			<fileset dir="." includes="build.xml" />
+			<fileset dir="${srcpath}" />
+			<fileset dir="${buildpath}" />
+		</jar>
+	</target>
+	<target name="makejardir">
+		<mkdir dir="jars" />
+	</target>
+	<target name="cleanjars">
+		<delete dir="${jarpath}" />
+	</target>
+
+
+
+	<target name="clean" depends="cleanjars">
+		<delete dir="${buildpath}" />
+		<delete dir="${docpath}" />
+	</target>
+
+</project>
