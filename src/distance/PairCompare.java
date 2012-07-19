@@ -1,4 +1,4 @@
-package distance.distance;
+package distance;
 
 import java.util.Comparator;
 
