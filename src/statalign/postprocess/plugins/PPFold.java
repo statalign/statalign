@@ -47,7 +47,7 @@ import statalign.base.State;
 import statalign.base.Utils;
 import statalign.postprocess.Postprocess;
 import statalign.postprocess.gui.AlignmentGUI;
-import statalign.postprocess.gui.TestGUI;
+import statalign.postprocess.gui.PPFoldGUI;
 import statalign.postprocess.utils.Mapping;
 import statalign.postprocess.utils.RNAFoldingTools;
 
@@ -67,7 +67,7 @@ public class PPFold extends statalign.postprocess.Postprocess {
 	public String title;
 	//public int frequency = 5;
 	JPanel pan = new JPanel(new BorderLayout());
-	TestGUI gui;
+	PPFoldGUI gui;
 	// private boolean sampling = true;
 
 	CurrentAlignment curAlig;
@@ -117,7 +117,7 @@ public class PPFold extends statalign.postprocess.Postprocess {
 
 	@Override
 	public String getTip() {
-		return "PPFold Plugin";
+		return "Base-pairing matrix of the current consensus structure given by PPFold";
 	}
 
 	@Override
@@ -163,14 +163,26 @@ public class PPFold extends statalign.postprocess.Postprocess {
 		// System.out.println("using seq no. " + seqNo);
 
 		d = refSeq.length();
-
-		pan.removeAll();
-		title = input.title;
-		JScrollPane scroll = new JScrollPane();
-		scroll.setViewportView(gui = new TestGUI(this));// ,
-																			// mcmc.tree.printedAlignment()));
-		pan.add(scroll, BorderLayout.CENTER);
-		pan.getParent().validate();
+		
+		
+		if(show) {
+			pan.removeAll();
+			title = input.title;
+			JScrollPane scroll = new JScrollPane();
+			scroll.getViewport().add(gui = new PPFoldGUI(title, scroll));
+			
+			if(gui.getPreferredSize().getHeight() > gui.getHeight()) {
+				scroll.createVerticalScrollBar();
+			}
+			
+			if(gui.getPreferredSize().getWidth() > gui.getWidth()) {
+				scroll.createHorizontalScrollBar();
+			}
+			
+			pan.add(scroll, BorderLayout.CENTER);
+			pan.getParent().validate();
+			
+		}
 		
 		gui.changeDimension(d);
 		sizeOfAlignments = (mcmc.tree.vertex.length + 1) / 2;
@@ -366,7 +378,7 @@ public class PPFold extends statalign.postprocess.Postprocess {
 				
 			
 				RNAFoldingTools rnaTools = new RNAFoldingTools();
-				String seq = this.getSequenceByName(t, this.refSeqName).replaceAll("-", "");
+				String seq = getSequenceByName(t, PPFold.refSeqName).replaceAll("-", "");
 				int[] pairedSites = rnaTools.getPosteriorDecodingConsensusStructureMultiThreaded(probMatrix);
 				System.out.println(RNAFoldingTools.getDotBracketStringFromPairedSites(pairedSites));
 				
@@ -382,8 +394,8 @@ public class PPFold extends statalign.postprocess.Postprocess {
 					}
 				}*/
 				//if(sampling) {
-				gui.clear();
-				gui.changeDimension(d*TestGUI.OFFSET);
+				
+				gui.changeDimension(d*PPFoldGUI.OFFSET);
 				gui.setMatrix(probMatrix);
 				gui.repaint();
 				//}

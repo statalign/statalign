@@ -1,12 +1,10 @@
 package statalign.postprocess.gui;
 
-import java.awt.Dimension;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Point;
-import java.awt.Rectangle;
-import java.awt.geom.Point2D;
-import java.util.ArrayList;
-
-import javax.swing.JPanel;
 import javax.swing.undo.UndoManager;
 
 import fr.orsay.lri.varna.VARNAPanel;
@@ -17,65 +15,31 @@ import fr.orsay.lri.varna.controlers.ControleurInterpolator;
 import fr.orsay.lri.varna.controlers.ControleurMolette;
 import fr.orsay.lri.varna.controlers.ControleurVARNAPanelKeys;
 import fr.orsay.lri.varna.exceptions.ExceptionNonEqualLength;
-import fr.orsay.lri.varna.interfaces.InterfaceVARNAListener;
-import fr.orsay.lri.varna.interfaces.InterfaceVARNARNAListener;
-import fr.orsay.lri.varna.interfaces.InterfaceVARNASelectionListener;
-import fr.orsay.lri.varna.models.BaseList;
 import fr.orsay.lri.varna.models.VARNAConfig;
-import fr.orsay.lri.varna.models.annotations.TextAnnotation;
-import fr.orsay.lri.varna.models.rna.ModeleBase;
 import fr.orsay.lri.varna.models.rna.RNA;
-import fr.orsay.lri.varna.views.VueMenu;
 import fr.orsay.lri.varna.views.VueUI;
 
 public class StructureGUI extends VARNAPanel {
 
 	/**
+	 * This class implements a graphical interface for displaying the current consensus structure. RNA
+	 * graphics are provided by VARNA.
 	 * 
+	 * @author Preeti Arunapuram
 	 */
 	private static final long serialVersionUID = 1L;
 	private static String sequence;
 	private static String structure;
 	
-	private boolean _debug = false;
+	private Graphics2D g2;
+	public String title;
+	
 
 	private VARNAConfig _conf = new VARNAConfig();
 	
-	private ArrayList<InterfaceVARNAListener> _VARNAListeners = new ArrayList<InterfaceVARNAListener>();
-	private ArrayList<InterfaceVARNASelectionListener> _selectionListeners = new ArrayList<InterfaceVARNASelectionListener>(); 
-	private ArrayList<InterfaceVARNARNAListener> _RNAListeners = new ArrayList<InterfaceVARNARNAListener>();
-	
 	UndoManager _manager;
-
-	
-	private Point2D.Double[] _realCoords = new Point2D.Double[0];
-	private Point2D.Double[] _realCenters = new Point2D.Double[0];
-	private double _scaleFactor = 1.0;
-	private Point2D.Double _offsetPanel = new Point2D.Double();
-	private Point2D.Double _offsetRNA = new Point2D.Double();
-
-	private double _offX;
-	private double _offY;
-	
 	
 	private ControleurBlinkingThread _blink;
-	private BaseList _selectedBases = new BaseList("selection");
-	private ArrayList<ModeleBase> _backupSelection = new ArrayList<ModeleBase>();
-	private Integer _nearestBase = null;
-	private Point2D.Double _lastSelectedCoord = new Point2D.Double(0.0,0.0);
-	
-	private Point2D.Double _linkOrigin = null;
-	private Point2D.Double _linkDestination = null;
-	
-	private Rectangle _selectionRectangle = null;
-
-	private boolean _highlightAnnotation = false;
-
-	private int _titleHeight;
-	private Dimension _border = new Dimension(0,0);
-
-	private boolean _drawBBox = false;
-	private boolean _drawBorder = false;
 	
 
 
@@ -86,22 +50,37 @@ public class StructureGUI extends VARNAPanel {
 
 
 	private ControleurInterpolator _interpolator;
-	
-	private VueMenu _popup = new VueMenu(this);
 
 	private VueUI _UI = new VueUI(this);
 
-
-	private TextAnnotation _selectedAnnotation;
 	
-	public StructureGUI(String seq, String str) throws ExceptionNonEqualLength {
-		sequence = seq;
-		structure = str;
+	public StructureGUI(String title) throws ExceptionNonEqualLength {
+		sequence = null;
+		structure = null;
+		this.title = title;
+	}
+	
+	public void paintComponent(Graphics g) {
+		super.paintComponent(g);
+		g2 = (Graphics2D)g;
+		
+		if(structure == null || sequence == null) {
+			g2.drawString("Waiting for data..", 30, 30);
+            return;
+		}
+		
+		g2.setPaint(Color.BLACK);
+		g2.setFont(new Font("SANS_SERIF", Font.BOLD, 16));
+		g2.drawString(title, 10, 20);
+		g2.setFont(new Font("MONOSPACED", Font.PLAIN, 12));
+		
 	}
 	
 	public void updateAndDraw(String seq, String str) {
 		sequence = seq;
 		structure = str;
+		
+		repaint();
 		
 		super.drawRNAInterpolated(sequence, structure, RNA.DRAW_MODE_RADIATE);
 		
