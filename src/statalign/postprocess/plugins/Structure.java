@@ -99,9 +99,9 @@ public class Structure extends statalign.postprocess.Postprocess {
 	public void newSample(State state, int no, int total) {
 		
 		if(sampling) {
-			updateSequence();
-			updateStructure();
-			gui.updateAndDraw(currentSequence, currentDotBracketStructure);
+			//updateSequence();
+			//updateStructure();
+			//gui.updateAndDraw(currentSequence, currentDotBracketStructure);
 		}
 	}
 	

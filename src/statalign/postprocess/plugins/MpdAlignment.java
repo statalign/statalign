@@ -1,6 +1,9 @@
 package statalign.postprocess.plugins;
 
 import java.awt.BorderLayout;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -11,6 +14,8 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+
+import com.ppfold.main.PPfoldMain;
 
 import statalign.base.CircularArray;
 import statalign.base.InputData;
@@ -234,7 +239,63 @@ public class MpdAlignment extends statalign.postprocess.Postprocess {
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
+		}	
+		
 
+		
+		if(no == 0)
+		{
+			String [] [] inputAlignment = new String[input.seqs.sequences.size()][2];
+			for(int k = 0 ; k < inputAlignment.length ; k++)
+			{
+				inputAlignment[k][0] = input.seqs.seqNames.get(k);
+				inputAlignment[k][1] = input.seqs.sequences.get(k);
+			}
+			Arrays.sort(inputAlignment, compStringArr);
+			
+			appendAlignment("reference", inputAlignment, new File(input.title+".samples"), false);
+			appendAlignment(no+"", t, new File(input.title+".samples"), true);
+		}
+		else
+		{
+			appendAlignment(no+"", t, new File(input.title+".samples"), true);
+		}
+		
+	}
+	
+	public void appendAlignment(String label, String [][] alignment, File outFile, boolean append)
+	{
+		try
+		{
+			BufferedWriter buffer = new BufferedWriter(new FileWriter(outFile, append));
+			buffer.write("%"+label+"\n");
+			for (int i = 0; i < alignment.length; i++) {
+				buffer.write(">"+alignment[i][0] + "\n");
+				buffer.write(alignment[i][1] + "\n");
+			}
+			buffer.close();
+		}
+		catch(IOException ex)
+		{
+			ex.printStackTrace();
+		}
+	}
+	
+	public void appendAlignment(String label, String [] alignment, File outFile, boolean append)
+	{
+		try
+		{
+			BufferedWriter buffer = new BufferedWriter(new FileWriter(outFile, append));
+			buffer.write("%"+label+"\n");
+			String [] fastaAlignment = Utils.alignmentTransformation(alignment,"Fasta", input);
+			for (int i = 0; i < fastaAlignment.length; i++) {
+				buffer.write(fastaAlignment[i] + "\n");
+			}
+			buffer.close();
+		}
+		catch(IOException ex)
+		{
+			ex.printStackTrace();
 		}
 	}
 	
@@ -259,6 +320,10 @@ public class MpdAlignment extends statalign.postprocess.Postprocess {
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
+			
+			appendAlignment("mpd", alignment, new File(input.title+".samples"), true);
+			PPFold.saveToFile(Utils.alignmentTransformation(alignment,
+					"Fasta", input), new File("TestRNAData.dat.res.mpd"));
 		}
 	}
 

@@ -217,7 +217,7 @@ public class Benchmarks
 	public static void automatedTest2()
 	{
 		String dir = "/home/michael/Dropbox/RNA and StatAlign/TestRNAData/";
-		String resultsDir = "/home/michael/Dropbox/RNA and StatAlign/TestRNAData/ResultsWeighted/";
+		String resultsDir = "/home/michael/Dropbox/RNA and StatAlign/TestRNAData/Results3/";
 		File [] files = new File(resultsDir).listFiles();
 		for(int i = 0 ; i < files.length ; i++)
 		{
@@ -236,6 +236,8 @@ public class Benchmarks
 				ExperimentalData experimentalData = Benchmarks.loadExperimentalStructure(experimentalFile);
 				StatAlignResult statalignResult = loadStatAlignResultFile(new File(resultsDir+"/"+name+".dat.res"));
 				StatAlignResult statalignWeightedResult = loadStatAlignResultFile(new File(resultsDir+"/"+name+".dat.res.weighted"));
+				System.out.println(name);
+				StatAlignResult mpdResult = loadStatAlignResultFile(new File(resultsDir+"/"+name+".dat.res.mpd"));
 				
 				String mappingSeq = "";
 				for(int j = 0 ;j < experimentalData.sequences.size() ; j++)
@@ -253,6 +255,7 @@ public class Benchmarks
 				int [] pairedSitesStatAlign = statalignResult.pairedSites;
 				int [] pairedSitesStatAlignWeighted = statalignWeightedResult.pairedSites;
 				int [] pairedSitesPPfold = projectPairedSites(mappingSeq, RNAFoldingTools.getPairedSitesFromCtFile(ppfoldData));
+				int [] pairedSitesMPD = mpdResult.pairedSites;
 				//printPairs(pairedSitesExperimental);
 				//printPairs(pairedSitesStatAlign);
 				//printPairs(pairedSitesPPfold);
@@ -276,6 +279,7 @@ public class Benchmarks
 				double fscExpStat = Benchmarks.calculateFScore(pairedSitesExperimental, pairedSitesStatAlign);
 				double fscExpPPfold = Benchmarks.calculateFScore(pairedSitesExperimental, pairedSitesPPfold);
 				double fscExpStatWeighted =Benchmarks.calculateFScore(pairedSitesExperimental, pairedSitesStatAlignWeighted);
+				double fscExpStatMPD=Benchmarks.calculateFScore(pairedSitesExperimental, pairedSitesMPD);
 				
 				System.out.println(RNAFoldingTools.pad("", 14)+RNAFoldingTools.pad("StatAl", 10)+RNAFoldingTools.pad("PPfold", 10));
 				System.out.println(RNAFoldingTools.pad("Senstivity", 14)+RNAFoldingTools.pad(sensExpStat+"", 6)+"    "+RNAFoldingTools.pad(sensExpPPfold+"", 6));
@@ -304,10 +308,16 @@ public class Benchmarks
 						BufferedWriter buffer = new BufferedWriter(new FileWriter(resultsDir+name+".hist"));
 						buffer.write("ST="+fscExpStat+"\n");
 						buffer.write("STW="+fscExpStatWeighted+"\n");
+						buffer.write("MPD="+fscExpStatMPD+"\n");
 						buffer.write("PP="+fscExpPPfold+"\n");						
 						for(int l = 0 ; l < values.size() ; l++)
 						{
-							buffer.write(values.get(l)+"\n");
+							double val = Double.parseDouble(values.get(l));
+							if(Double.isNaN(val))
+							{
+								val = 0;
+							}
+							buffer.write(val+"\n");
 						}
 						buffer.close();
 					}

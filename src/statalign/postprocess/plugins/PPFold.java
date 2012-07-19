@@ -5,6 +5,7 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -48,10 +49,18 @@ import statalign.base.Utils;
 import statalign.postprocess.Postprocess;
 import statalign.postprocess.gui.AlignmentGUI;
 import statalign.postprocess.gui.TestGUI;
+import statalign.postprocess.plugins.benchmarks.Benchmarks;
 import statalign.postprocess.utils.Mapping;
 import statalign.postprocess.utils.RNAFoldingTools;
 
 public class PPFold extends statalign.postprocess.Postprocess {
+	
+	public static void main(String [] args)
+	{
+		int [] pairedSites = RNAFoldingTools.getPosteriorDecodingConsensusStructure(RNAFoldingTools.loadMatrix(new File("bp_log.matrix")));
+		System.out.println(RNAFoldingTools.getDotBracketStringFromPairedSites(pairedSites));
+	}
+	
 	// variables from ppfoldmain
 
 	static private Progress progress = NullProgress.INSTANCE;; // Progressbar;
@@ -92,6 +101,10 @@ public class PPFold extends statalign.postprocess.Postprocess {
 	float[][] probMatrix;
 	
 	int noSambles;
+	double [][] weightedBasePairProb;
+	double beta = 10;
+	double weightedSum = 0;
+	double firstLikelihood = 0;
 
 	public PPFold() {
 		screenable = true;
@@ -189,6 +202,82 @@ public class PPFold extends statalign.postprocess.Postprocess {
 
 		viterbialignment = new String[sizeOfAlignments];
 	}
+	
+	public static void saveToFile(String [] fastaAlignment, File outFile)
+	{
+		List<String> lines = new ArrayList<String>();
+		for (int i = 0; i < fastaAlignment.length; i++) {			
+			lines.add(fastaAlignment[i]);
+		}
+		
+		try
+		{
+			BufferedWriter buffer = new BufferedWriter(new FileWriter("mpd.fas"));
+			for (int i = 0; i < fastaAlignment.length; i++) {
+				buffer.write(fastaAlignment[i]+"\n");
+			}
+			buffer.close();
+		}
+		catch(IOException ex)
+		{
+			ex.printStackTrace();
+		}
+
+		
+		try {
+			
+			Alignment align = AlignmentReader.readAlignmentFromStringList(lines);
+
+			BufferedReader paramFileReader = null;
+			Parameters param;
+			File file = new File("res/matrices.in");
+			paramFileReader = new BufferedReader(new InputStreamReader(
+					new FileInputStream(file)));
+
+			param = Parameters.readParam(paramFileReader);
+			
+
+			
+			List<String> sequences = align.getSequences();
+			List<String> seqNames = align.getNames();
+			String refSeq = sequences.get(0).replaceAll("-", "");
+			String refSeqName = seqNames.get(0);
+			String refSeqGapped = sequences.get(0);
+			int maxLength = refSeq.length();
+			for (int i = 0; i < sequences.size(); i++) {
+				String seq = sequences.get(i).replaceAll("-", "");
+				if (seq.length() > maxLength) {
+					maxLength = seq.length();
+					refSeq = seq;
+					refSeqName = seqNames.get(i);
+					refSeqGapped = sequences.get(i);
+				}
+			}
+			
+
+			List<ExtraData> extradata = new ArrayList<ExtraData>();
+			float [][] basePairProb = PPfoldMain.fold(progress, align.getSequences(), align.getNames(), null, param, extradata);			
+			int [] pairedSites = RNAFoldingTools.getPosteriorDecodingConsensusStructure(basePairProb);
+			int [] projectedPairedSites = Benchmarks.projectPairedSites(refSeqGapped, pairedSites);
+			//RNAFoldingTools.g
+			
+			try
+			{
+				BufferedWriter buffer = new BufferedWriter(new FileWriter(outFile));
+				buffer.write(refSeqGapped+"\n");
+				buffer.write(RNAFoldingTools.getDotBracketStringFromPairedSites(projectedPairedSites)+"\n");
+				buffer.close();
+			}
+			catch(IOException ex)
+			{
+				ex.printStackTrace();
+			}
+			
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
 
 	@Override
 	public void newSample(State state, int no, int total) {
@@ -264,6 +353,7 @@ public class PPFold extends statalign.postprocess.Postprocess {
 
 			if (no == 0) {
 				summedArray = new float[d][d];
+				weightedBasePairProb = new double[d][d];
 				for (i = 0; i < d; ++i) {
 					for (j = 0; j < d; ++j) {
 						summedArray[i][j] = 0;
@@ -297,13 +387,13 @@ public class PPFold extends statalign.postprocess.Postprocess {
 				param = Parameters.readParam(paramFileReader);
 
 				List<ExtraData> extradata = new ArrayList<ExtraData>();
-				float[][] fun = PPfoldMain.fold(progress, align.getSequences(),
+				float[][] basePairProb = PPfoldMain.fold(progress, align.getSequences(),
 						align.getNames(), tree, param, extradata);
-				float[] singleBaseProb = new float[fun.length];
-				for (int x = 0; x < fun.length; x++) {
+				float[] singleBaseProb = new float[basePairProb.length];
+				for (int x = 0; x < basePairProb.length; x++) {
 					singleBaseProb[x] = 1;
-					for (int y = 0; y < fun[0].length; y++) {
-						singleBaseProb[x] -= fun[x][y];
+					for (int y = 0; y < basePairProb[0].length; y++) {
+						singleBaseProb[x] -= basePairProb[x][y];
 					}
 				}
 
@@ -322,14 +412,14 @@ public class PPFold extends statalign.postprocess.Postprocess {
 				// float[][] projectFun = Mapping.projectMatrix(mapSeq, fun,
 				// '-');
 				float[][] projectFun = Mapping.projectMatrix(
-						PPFold.getSequenceByName(t, refSeqName), fun, '-');
+						PPFold.getSequenceByName(t, refSeqName), basePairProb, '-');
 				// float [] projectSingleBaseProb = Mapping.projectArray(mapSeq,
 				// singleBaseProb, '-');
 				float[] projectSingleBaseProb = Mapping.projectarray(
 						PPFold.getSequenceByName(t, refSeqName),
 						singleBaseProb, '-');
 				
-				// normalise project matrix
+				// normalise projected matrix
 				for(int x = 0 ; x < projectFun.length ; x++)
 				{
 					double rowMatrSum = 0;
@@ -346,27 +436,76 @@ public class PPFold extends statalign.postprocess.Postprocess {
 						projectSingleBaseProb[x] /= factor;
 					}
 				}
+				
+				double alignmentLogLikelihood = mcmc.mcmcStep.newLogLike;
+				if(noSambles == 0)
+				{
+					firstLikelihood = mcmc.mcmcStep.newLogLike;
+					weightedSum  = 0;
+				}
+				try
+				{
+					BufferedWriter buffer = new BufferedWriter(new FileWriter("likelihoods.txt", true));
+					buffer.write(noSambles+"\t"+(alignmentLogLikelihood - firstLikelihood)+"\n");
+					buffer.close();
+					
+					//System.out.println(noSambles+"\t"+mcmc.mcmcStep.newLogLike);
+				}
+				catch(IOException ex)
+				{
+					ex.printStackTrace();
+				}
+				
+				RNAFoldingTools rnaTools = new RNAFoldingTools();
+				boolean append = true;
+				if(noSambles == 0)
+				{
+					append = false;
+				}
+				PPFold.appendFolds(new File("TestRNAData.folds"), noSambles+"", PPFold.getSequenceByName(t, refSeqName),rnaTools.getPosteriorDecodingConsensusStructureMultiThreaded(basePairProb), rnaTools.getPosteriorDecodingConsensusStructureMultiThreaded(projectFun), append);
 
 				/*
 				System.out.println("D=" + d);
 				System.out.println(summedArray.length);
 				System.out.println(projectFun.length);*/
 				probMatrix = new float[d][d];
+
+				double weight = Math.pow(firstLikelihood / alignmentLogLikelihood, beta);
+
 				for (i = 0; i < d; ++i) {
 					summedSingleBaseProb[i] += projectSingleBaseProb[i];
 					for (j = 0; j < d; ++j) {
 						summedArray[i][j] += projectFun[i][j];
+
 						probMatrix[i][j] = summedArray[i][j]/(float)(noSambles+1);
 						gui.setMatrix(probMatrix);
 						gui.repaint();
+
+						weightedBasePairProb[i][j] += projectFun[i][j]*weight;
+
 					}
+				}
+
+				
+				weightedSum += weight;
+				try
+				{
+					BufferedWriter buffer = new BufferedWriter(new FileWriter("weights.txt", true));
+					buffer.write(noSambles+"\t"+weightedSum+"\t"+weight+"\n");
+					buffer.close();
+					
+					//System.out.println(noSambles+"\t"+mcmc.mcmcStep.newLogLike);
+				}
+				catch(IOException ex)
+				{
+					ex.printStackTrace();
 				}
 
 				noSambles += 1;
 				
 			
-				RNAFoldingTools rnaTools = new RNAFoldingTools();
-				String seq = this.getSequenceByName(t, this.refSeqName).replaceAll("-", "");
+				//RNAFoldingTools rnaTools = new RNAFoldingTools();
+				//String seq = this.getSequenceByName(t, this.refSeqName).replaceAll("-", "");
 				int[] pairedSites = rnaTools.getPosteriorDecodingConsensusStructureMultiThreaded(probMatrix);
 				System.out.println(RNAFoldingTools.getDotBracketStringFromPairedSites(pairedSites));
 				
@@ -430,12 +569,25 @@ public class PPFold extends statalign.postprocess.Postprocess {
 		double[] singleBaseProb = RNAFoldingTools
 				.getSingleBaseProb(doubleSummedArray);
 		saveResult(refSeqGapped, pairedSites, doubleSummedArray,
-				singleBaseProb, new File("result.txt"));
+				singleBaseProb, new File("TestRNAData.dat.res"));
+		
+		//System.out.printl
+		for (int i = 0; i < d; ++i) {
+			for (int j = 0; j < d; ++j) {
+				this.weightedBasePairProb[i][j] /= weightedSum;
+			}
+			// System.out.println();
+		}
+		RNAFoldingTools.writeMatrix(weightedBasePairProb, new File("bp_log.matrix"));
+		saveResult(refSeqGapped, rnaTools.getPosteriorDecodingConsensusStructureMultiThreaded(weightedBasePairProb), weightedBasePairProb,
+				 RNAFoldingTools
+					.getSingleBaseProb(weightedBasePairProb), new File("TestRNAData.dat.res.weighted"));
 	}
 
 	public static String getSequenceByName(String[][] sequences, String name) {
 		for (int i = 0; i < sequences.length; i++) {
-			if (sequences[i][0].equals(name)) {
+			System.out.println(sequences[i]+"\t"+name);
+			if (sequences[i] != null && sequences[i][0].equals(name)) {
 				return sequences[i][1];
 			}
 		}
@@ -496,4 +648,46 @@ public class PPFold extends statalign.postprocess.Postprocess {
 		return refSeqName;
 	}
 	
+	public static void appendFolds(File file, String name, String alignedSequence, int [] pairedSites, int [] projectedPairedSites, boolean append)
+	{
+		
+		try {
+			BufferedWriter buffer = new BufferedWriter(new FileWriter(file, append));
+			buffer.write(">"+name+"\n");
+			buffer.write(alignedSequence+"\n");
+			buffer.write(RNAFoldingTools.getDotBracketStringFromPairedSites(pairedSites)+"\n");
+			buffer.write(alignedSequence.replaceAll("-", "")+"\n");
+			buffer.write(RNAFoldingTools.getDotBracketStringFromPairedSites(projectedPairedSites)+"\n");
+			buffer.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	public static ArrayList<String> loadFolds(File file, int line)
+	{
+		ArrayList<String> list = new ArrayList<String>();
+		try
+		{
+			BufferedReader buffer = new BufferedReader(new FileReader(file));
+			String textline = null;
+			int lines = 0;
+			while((textline = buffer.readLine()) != null)
+			{
+				if((lines - line) % 5 == 0)
+				{
+					list.add(textline);
+				}
+				
+				lines++;
+			}
+			buffer.close();
+		}
+		catch(IOException ex)
+		{
+			ex.printStackTrace();
+		}
+		return list;
+	}
 }

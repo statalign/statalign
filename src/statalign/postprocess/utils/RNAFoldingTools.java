@@ -344,8 +344,6 @@ public class RNAFoldingTools {
     {
     	if(i >= j)
     	{
-
-        	System.out.println("i>=j"+i+","+j);
     		// do nothing
     	}
     	else
@@ -353,12 +351,10 @@ public class RNAFoldingTools {
     	{
     		pairedWith[i] = j + 1;
     		pairedWith[j] = i + 1;
-    		traceBack(S, i+1, j-1, pairedWith);    		
-    		System.out.println(i+","+j);
+    		traceBack(S, i+1, j-1, pairedWith);    
     	}
     	else
     	{
-    		System.out.println("X"+S[i][j]);
     		traceBack(S, i, S[i][j], pairedWith);
     		traceBack(S, S[i][j]+1, j, pairedWith);
     	}
@@ -788,10 +784,13 @@ public class RNAFoldingTools {
             if (dotBracketStructure.charAt(j) == openBracket) {
                 stack.push(j);
             } else if (dotBracketStructure.charAt(j) == closeBracket) {
-                int x = stack.pop();
-                int y = j;
-                pairedSites[x] = y + 1;
-                pairedSites[y] = x + 1;
+            	if(!stack.empty())
+            	{
+	                int x = stack.pop();
+	                int y = j;
+	                pairedSites[x] = y + 1;
+	                pairedSites[y] = x + 1;
+            	}
             }
         }
         return pairedSites;
@@ -965,5 +964,47 @@ public class RNAFoldingTools {
     		}
     	}
     	return doubleMatrix;
+    }
+    
+    public static void loadFastaSequences(File file, ArrayList<String> sequences, ArrayList<String> sequenceNames) {
+        loadFastaSequences(file, sequences, sequenceNames, Integer.MAX_VALUE);
+    }
+
+    public static void loadFastaSequences(File file, ArrayList<String> sequences, ArrayList<String> sequenceNames, int max) {
+        try {
+            BufferedReader buffer = new BufferedReader(new FileReader(file));
+            String textline = null;
+            String sequence = "";
+            int n = 0;
+            boolean maxReached = false;
+            while ((textline = buffer.readLine()) != null) {
+                if(maxReached && textline.startsWith(">"))
+                {
+                    break;
+                }
+                
+                if (textline.startsWith(">")) {
+                    n++;
+                    if (n >= max) {
+                        maxReached = true;
+                    }
+
+                    sequenceNames.add(textline.substring(1));
+                    if (!sequence.equals("")) {
+                        sequences.add(sequence.toUpperCase());
+                        sequence = "";
+                    }
+                } else {
+                    sequence += textline.trim();
+                }
+
+            }
+            buffer.close();
+            if (!sequence.equals("")) {
+                sequences.add(sequence);
+            }
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
     }
 }
