@@ -5,3 +5,6 @@ bin/
 *.classpath
 *.project
 doc/*
+*.txt
+*.matrix
+*.bp
