@@ -243,7 +243,7 @@ public class MpdAlignment extends statalign.postprocess.Postprocess {
 		
 
 		
-		if(no == 0)
+		/*if(no == 0)
 		{
 			String [] [] inputAlignment = new String[input.seqs.sequences.size()][2];
 			for(int k = 0 ; k < inputAlignment.length ; k++)
@@ -259,44 +259,8 @@ public class MpdAlignment extends statalign.postprocess.Postprocess {
 		else
 		{
 			appendAlignment(no+"", t, new File(input.title+".samples"), true);
-		}
+		}*/
 				
-	}
-	
-	public void appendAlignment(String label, String [][] alignment, File outFile, boolean append)
-	{
-		try
-		{
-			BufferedWriter buffer = new BufferedWriter(new FileWriter(outFile, append));
-			buffer.write("%"+label+"\n");
-			for (int i = 0; i < alignment.length; i++) {
-				buffer.write(">"+alignment[i][0] + "\n");
-				buffer.write(alignment[i][1] + "\n");
-			}
-			buffer.close();
-		}
-		catch(IOException ex)
-		{
-			ex.printStackTrace();
-		}
-	}
-	
-	public void appendAlignment(String label, String [] alignment, File outFile, boolean append)
-	{
-		try
-		{
-			BufferedWriter buffer = new BufferedWriter(new FileWriter(outFile, append));
-			buffer.write("%"+label+"\n");
-			String [] fastaAlignment = Utils.alignmentTransformation(alignment,"Fasta", input);
-			for (int i = 0; i < fastaAlignment.length; i++) {
-				buffer.write(fastaAlignment[i] + "\n");
-			}
-			buffer.close();
-		}
-		catch(IOException ex)
-		{
-			ex.printStackTrace();
-		}
 	}
 	
 	@Override
@@ -320,7 +284,7 @@ public class MpdAlignment extends statalign.postprocess.Postprocess {
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-			
+			/*
 			appendAlignment("mpd", alignment, new File(input.title+".samples"), true);
 			PPFold.saveToFile(Utils.alignmentTransformation(alignment,
 					"Fasta", input), new File(input.title+".dat.res.mpd"));
@@ -338,7 +302,7 @@ public class MpdAlignment extends statalign.postprocess.Postprocess {
 			catch(IOException ex)
 			{
 				ex.printStackTrace();
-			}
+			}*/
 		}
 	}
 

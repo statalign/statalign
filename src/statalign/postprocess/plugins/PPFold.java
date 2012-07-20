@@ -80,6 +80,7 @@ public class PPFold extends statalign.postprocess.Postprocess {
 	// private boolean sampling = true;
 
 	CurrentAlignment curAlig;
+	MpdAlignment mpdAlignment;
 
 	ColumnNetwork network;
 	Column firstVector, lastVector;
@@ -105,6 +106,7 @@ public class PPFold extends statalign.postprocess.Postprocess {
 	double beta = 10;
 	double weightedSum = 0;
 	double firstLikelihood = 0;
+	double posteriorProbabilityAvg = 0;
 
 	public PPFold() {
 		screenable = true;
@@ -140,12 +142,13 @@ public class PPFold extends statalign.postprocess.Postprocess {
 
 	@Override
 	public String[] getDependences() {
-		return new String[] { "statalign.postprocess.plugins.CurrentAlignment" };
+		return new String[] { "statalign.postprocess.plugins.CurrentAlignment", "statalign.postprocess.plugins.MpdAlignment"};
 	}
 
 	@Override
 	public void refToDependences(Postprocess[] plugins) {
 		curAlig = (CurrentAlignment) plugins[0];
+		mpdAlignment = (MpdAlignment) plugins[1];
 	}
 
 	static Comparator<String[]> compStringArr = new Comparator<String[]>() {
@@ -551,6 +554,25 @@ public class PPFold extends statalign.postprocess.Postprocess {
 				e.printStackTrace();
 			}
 		}
+		
+		// save alignment sample information
+		if(no == 0)
+		{
+			String [] [] inputAlignment = new String[mpdAlignment.input.seqs.sequences.size()][2];
+			for(int k = 0 ; k < inputAlignment.length ; k++)
+			{
+				inputAlignment[k][0] = mpdAlignment.input.seqs.seqNames.get(k);
+				inputAlignment[k][1] = mpdAlignment.input.seqs.sequences.get(k);
+			}
+			Arrays.sort(inputAlignment, compStringArr);
+			
+			appendAlignment("reference", inputAlignment, new File(mpdAlignment.input.title+".samples"), false);
+			appendAlignment(no+"", t, new File(mpdAlignment.input.title+".samples"), true);
+		}
+		else
+		{
+			appendAlignment(no+"", t, new File(mpdAlignment.input.title+".samples"), true);
+		}
 	}
 
 	@Override
@@ -596,6 +618,75 @@ public class PPFold extends statalign.postprocess.Postprocess {
 		saveResult(refSeqGapped, rnaTools.getPosteriorDecodingConsensusStructureMultiThreaded(weightedBasePairProb), weightedBasePairProb,
 				 RNAFoldingTools
 					.getSingleBaseProb(weightedBasePairProb), new File(title+".dat.res.weighted"));
+		
+		// save mpd alignment
+		appendAlignment("mpd", mpdAlignment.alignment, new File(mpdAlignment.input.title+".samples"), true, mpdAlignment.input);
+		PPFold.saveToFile(Utils.alignmentTransformation(mpdAlignment.alignment,
+				"Fasta", mpdAlignment.input), new File(mpdAlignment.input.title+".dat.res.mpd"));
+		try
+		{
+
+			BufferedWriter buffer = new BufferedWriter(new FileWriter(new File(mpdAlignment.input.title+".samples"), true));
+			buffer.write("%posteriors\n");
+			for(int i = 0 ; i < mpdAlignment.decoding.length ; i++)
+			{
+				buffer.write(mpdAlignment.decoding[i]+"\n");
+			}
+			buffer.close();
+		}
+		catch(IOException ex)
+		{
+			ex.printStackTrace();
+		}
+		
+		// calculate "distance from reference"
+		posteriorProbabilityAvg = 0;
+		for(int i = 0 ; i < mpdAlignment.decoding.length ; i++)
+		{
+			posteriorProbabilityAvg += mpdAlignment.decoding[i];
+		}
+		posteriorProbabilityAvg /= (double)(mpdAlignment.decoding.length);
+		//System.out.println("Posterior probability avg: " + posteriorProbabilityAvg);
+		
+		
+	}
+	
+
+	
+	public static void appendAlignment(String label, String [][] alignment, File outFile, boolean append)
+	{
+		try
+		{
+			BufferedWriter buffer = new BufferedWriter(new FileWriter(outFile, append));
+			buffer.write("%"+label+"\n");
+			for (int i = 0; i < alignment.length; i++) {
+				buffer.write(">"+alignment[i][0] + "\n");
+				buffer.write(alignment[i][1] + "\n");
+			}
+			buffer.close();
+		}
+		catch(IOException ex)
+		{
+			ex.printStackTrace();
+		}
+	}
+	
+	public static void appendAlignment(String label, String [] alignment, File outFile, boolean append, InputData input)
+	{
+		try
+		{
+			BufferedWriter buffer = new BufferedWriter(new FileWriter(outFile, append));
+			buffer.write("%"+label+"\n");
+			String [] fastaAlignment = Utils.alignmentTransformation(alignment,"Fasta", input);
+			for (int i = 0; i < fastaAlignment.length; i++) {
+				buffer.write(fastaAlignment[i] + "\n");
+			}
+			buffer.close();
+		}
+		catch(IOException ex)
+		{
+			ex.printStackTrace();
+		}
 	}
 
 	public static String getSequenceByName(String[][] sequences, String name) {
