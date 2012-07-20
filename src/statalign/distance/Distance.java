@@ -84,21 +84,21 @@ public class Distance {
 	}
 	
 	/**
-	 * Given a set of sequences and a similarity score, returns the corresponding distance.
+	 * Given a set of sequences and an AMA score, returns the corresponding distance.
 	 * @param sequences
-	 * @param sim
+	 * @param amaScore
 	 * @return
 	 */
-	public static double similarityToDifference(ArrayList<String> sequences, double sim)
+	public static double amaScoreToMultiDistance(ArrayList<String> sequences, double amaScore)
 	{
-		int lengthSum = 0;
+		double lengthSum = 0;
 		for(int i = 0 ; i < sequences.size() ; i++)
 		{
 			lengthSum += sequences.get(i).replaceAll("-", "").length();
 		}
-		int ksub1 = sequences.size() - 1;
+		double ksub1 = sequences.size() - 1;
 		
-		return (1-sim)*ksub1*lengthSum;
+		return (1-amaScore)*ksub1*lengthSum;
 	}
 
 	public static int multiDistance(ArrayList<String>  A, ArrayList<String>  B){
