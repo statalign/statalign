@@ -2,4 +2,6 @@
 *~
 *.fas*
 bin/
-/.classpath
+*.classpath
+*.project
+doc/*
