@@ -1,6 +1,7 @@
-package distance;
+package statalign.distance;
 
 import java.util.Comparator;
+
 
 public class PairCompare implements Comparator < Pair <String,Integer> >  {
 

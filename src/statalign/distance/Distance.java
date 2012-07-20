@@ -1,8 +1,8 @@
-package distance;
+package statalign.distance;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
+
 
 
 public class Distance {
@@ -13,6 +13,8 @@ public class Distance {
 
 		ArrayList<String> A1 = new ArrayList<String>();
 		ArrayList<String> A2 = new ArrayList<String>();
+		ArrayList<String> amapseq = new ArrayList<String>();
+		
 
 		A1.add("GGGUGCUUGAAGCUGUCUGCUUUAAGUGCUUGCA----UCAGGCUGAGAGUAGGCAGAGAAAAGCCCCGUA------------------UCA-----A----------------UGUUAAUCAAUACGAGGC-CCUCUGUAAUG-CACGACAACAUUACGGU-AGCCUUUUACC-CGCCGAAA-GGCAA------GGAGGCUGAAGAUG");
 		A1.add("GGGUGCUUGAGACUGUUUGUCUCAGG------UAUUUA----CCAAAAGGCAGACAGAGAAAAGCCCCACC------------------UGACUAUA------------------AAUCAAAAGUGCAUUGC-ACCCAUUAUUG-AUCU-CUUCAAUAACGA-AGCUA-UCCCC-UACAGUAU-UUCA------GAACGUCCAACCAUG");
@@ -25,6 +27,15 @@ public class Distance {
 		A2.add("GGGUGCUUGAGACUGUUUGUCUCAGGUAUU---UAC---CAAAAGGCAGACAGAGAAAAGCCCCACCUGACUAUAA----------------------AUCAAAAGUGCAUUGCAC-CC-AUUAUUGAUCUCUUCAAUAACGAAGCUAUCCCCU-----ACAGUAUUUCAG----AACG------UCCAACCAUG");
 		A2.add("GGGUGCUUGAGGCUGUCUGCCUCGGGCA--UGCCAC---CGUAAGGCAGACAGAGAAAAGCCCCAGUU-AACAUUACGCGUCCUGCAAGACGCCUAACAUUAA-UCUGAGGCCAAUUUC-AUGCUAGA-CACA---UGU---AGGUUAGCCUCUUACGCGCCGAAAGGCAA----GGAGAAGCA-GCU-AUG---");
 		A2.add("GGGUGCUUGAGACUGUUUGUCUCAGGUAUU---CAC---CGAAAGGCAGACAGAGAAAAGCCCCACCUGACUAUAA----------------------AUCAA-AGUGAGGCU-ACCCU-AUGCCUGAACACC---AUA---AGGUUAGCCUCUUACUCGUUGGAAAUCAACACAGGGG------GCUGGGAAUG");
+		
+		
+		
+		amapseq.add("GGGUGCUUGAAGCUGUCUGCUUUAAGUGCUUGCAUCAGGCUGAGAGUA----------------------------------------------------------------------------------------------------------------------GGCAGAGAAAAGCCCCGUAUCAAUGUUAAUCAAUACGAGGCCCUCUGUAAUGCACGACAACAUUACGGUAGCCUUUUACCCGCCGAAAGGCAAGGAGGCUGAAGAUG------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
+		amapseq.add("GGGUGCUUGAGAC-----------------------------------UGUUUGUCUCAGGUAUUUACCAAAAGGCA-----------------------------------------------------------------------------------------GACAGAGAAAAGCCCC-------------------------------------------------------------------------------------------ACCUGACUAUAAA-------------------------------------------------------------------------------------------------------------UCAAAAGUGCAUUGCACCCAUUAUUGAUCUCUUCAAUAACGAAGCUAUCCCCUACAGUAUUUCAGAACGUCCAACCAUG---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
+		amapseq.add("GGGUGCUUGAGGC---------------------------------------------------------------------------------------------------------------------------UGUCUGCCUCGGGCAUGCCACUGUAAGGCAGACAGAGAAAAGCCCC--------------------------------------------------------------------------------------------------------AGUUAACAUUACGCGUCCUGCAAGACGCUUAACAUUAAUCUGAGGCCCAAUCUAUGUCUCACAAAUGUAGGUUAGCCUCUUACGUGCCGAAAGGCAAGGAGAAGCAGGC-------------------------------------------------------------------------------------------------------------------------------------UAUGAAG--------------------------------------------------------------------------------------------------------------------------------------------------------");
+		amapseq.add("GGGUGCUUGAGAC----------------------------------------------------------------UGUUUGUCUCAGGUAUUCACCGAAAGGCA------------------------------------------------------------GACAGAGAAAAGCCCC----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ACCUGACUAUAAAUCAAAGUGAGGCUACCCUAUGCCUGAACACCAUAAGGUUAG-------CCUCUUACUCGUUGGAAAUCAACACAGGGGGCUGGGAAUG----------------------------------------------------------------------------------------------------------------");
+		amapseq.add("GGGUGCUUGAGGC---------------------------------------------------------------------------------------------UGUCUGCCUCGGGCAUGCCACCGUAAGGCA------------------------------GACAGAGAAAAGCCCC---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------AGUUAACAUUACGCGUCCUGCAAGACGCCUAACAUUAAUCUGAGGCCAAUUUCAUGCUAGACACAUGUAGGUUAGCCUCUUACGCGCCGAAAGGCAAGGAGAAGCAGCUAUG");
+		
 		
 		ArrayList<String> B1 = new ArrayList<String>();
 		ArrayList<String> B2 = new ArrayList<String>();
@@ -41,14 +52,6 @@ public class Distance {
 		B2.add("-----------------------------------------------------------------------------------GGCGUUAGUAUG-AGUGUUGUACAGCCUCCAGGCCCCCCCCUCCCGGGAGAGCCAUAGUGGUCUGCGGAACCGGUGAGUACACCGGAAUCGCCGGGAUGACCGGGUCCUUUCUUGGAUUAACCCGCUCAAUGCCCGGAAAUUUGGGCGUGCCCCCGCAAGACUGCUAGCCGAGUAGUGUUGGGUCGCGAAAGG--------------------------------------------------------------------------------------");
 		B2.add("---------------------------------------------------------------------------------------------------------CAGCCCCCAGGACCCCCCCUCCCGGGAGAGCCAUAGUGGUCUGCGGAACCGGUGAGUACACCGGAAUCGCCGGGAUGACCGGGUCCUUUCUUGGAUAAACCCGCUCAAUGCCCGGAAAUUUGGGCGUGCCCCCGCGAGACCGUUAGCCGAGUAGUGUUGGGUCGCAAAAGGCCUUGUGG------------------------------------------------------------------------------");
 
-		ArrayList<String> C1 = new ArrayList<String>();
-		ArrayList<String> C2 = new ArrayList<String>();
-		
-		C1.add("aaa");
-		C1.add("ddd");
-		C1.add("bbb");
-		C1.add("ccc");
-		
 		//A1[0] = "ATGCTAC";
 		//A1[1] = "A--CTAC";
 		//A1[2] = "A-----C";
@@ -61,9 +64,17 @@ public class Distance {
 		//System.out.println(Distance.distance(A1.toArray(),A2.toArray()));
 		System.out.println("AMA between those alignments: "+Distance.AMA(A1,A2));
 		System.out.println("-------------------------------------------");
-		System.out.println("Distance between the reference alignment and the MPD from Test17: "+Distance.multiDistance(B1,B2));
+		System.out.println("The distance between the reference alignment and the AMAP from Test1: "+Distance.multiDistance(A1,amapseq));
 		//System.out.println(Distance.distance(A1.toArray(),A2.toArray()));
-		System.out.println("AMA between those alignments: "+Distance.AMA(B1,B2));
+		System.out.println("AMA between those alignments: "+Distance.AMA(A1,amapseq));
+		System.out.println("-------------------------------------------");
+		System.out.println("The distance between the AMAP and the MPD from Test1: "+Distance.multiDistance(amapseq,A2));
+		//System.out.println(Distance.distance(A1.toArray(),A2.toArray()));
+		System.out.println("AMA between those alignments: "+Distance.AMA(amapseq,A2));
+		System.out.println("-------------------------------------------");
+		//System.out.println("Distance between the reference alignment and the MPD from Test17: "+Distance.multiDistance(B1,B2));
+		//System.out.println(Distance.distance(A1.toArray(),A2.toArray()));
+		//System.out.println("AMA between those alignments: "+Distance.AMA(B1,B2));
 
 
 
