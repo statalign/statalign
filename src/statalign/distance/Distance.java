@@ -11,31 +11,59 @@ public class Distance {
 
 	public static void main(String[] args) {
 
-		ArrayList<String> A1 = new ArrayList<String>();
-		ArrayList<String> A2 = new ArrayList<String>();
-		ArrayList<String> amapseq = new ArrayList<String>();
+		ArrayList<String> referenceA = new ArrayList<String>();
+		ArrayList<String> mpd = new ArrayList<String>();
+		ArrayList<String> amapnorm = new ArrayList<String>();
+		ArrayList<String> amapseq4 = new ArrayList<String>();
 		
 
-		A1.add("GGGUGCUUGAAGCUGUCUGCUUUAAGUGCUUGCA----UCAGGCUGAGAGUAGGCAGAGAAAAGCCCCGUA------------------UCA-----A----------------UGUUAAUCAAUACGAGGC-CCUCUGUAAUG-CACGACAACAUUACGGU-AGCCUUUUACC-CGCCGAAA-GGCAA------GGAGGCUGAAGAUG");
-		A1.add("GGGUGCUUGAGACUGUUUGUCUCAGG------UAUUUA----CCAAAAGGCAGACAGAGAAAAGCCCCACC------------------UGACUAUA------------------AAUCAAAAGUGCAUUGC-ACCCAUUAUUG-AUCU-CUUCAAUAACGA-AGCUA-UCCCC-UACAGUAU-UUCA------GAACGUCCAACCAUG");
-		A1.add("GGGUGCUUGAGGCUGUCUGCCUCGGG------CAUGCC---ACUGUAAGGCAGACAGAGAAAAGCCCCAGUUAACAUUACGCGUCCUGC--------AAGA----------CGCUUAACAUUAAUCUGAGGC-CCAAUCUAUGU-CUCA-CAAAUGUAGGUU-AGCCUCUUACG-UGCCGAAA-GGCAAGGAGAAGCAGGCUAUG-AAG");
-		A1.add("GGGUGCUUGAGACUGUUUGUCUCAGG------UAUUCA----CCGAAAGGCAGACAGAGAAAAGCCCCACC------------------UGACU---------------------AUAAAUCAAAGUGAGGCUA--CCCU-AUGCCUGAACACCAUAAGG-UUAGCCUCUUACUCGUUGGAAAUCAACAC----AGGGGGCUGGGAAUG");
-		A1.add("GGGUGCUUGAGGCUGUCUGCCUCGGG------CAUGCC---ACCGUAAGGCAGACAGAGAAAAGCCCCAGU------------------UAACAUUACGCGUCCUGCAAGACGCCUAACAUUAAUCUGAGGC-CAAUUU-CAUG-CUAGACA-CAUGUAGGUUAGCCUCUUACG-CGCCGAAA-GGCAAG----GAGAAGCAGCU-AUG");
+		referenceA.add("GGGUGCUUGAAGCUGUCUGCUUUAAGUGCUUGCA----UCAGGCUGAGAGUAGGCAGAGAAAAGCCCCGUA------------------UCA-----A----------------UGUUAAUCAAUACGAGGC-CCUCUGUAAUG-CACGACAACAUUACGGU-AGCCUUUUACC-CGCCGAAA-GGCAA------GGAGGCUGAAGAUG");
+		referenceA.add("GGGUGCUUGAGACUGUUUGUCUCAGG------UAUUUA----CCAAAAGGCAGACAGAGAAAAGCCCCACC------------------UGACUAUA------------------AAUCAAAAGUGCAUUGC-ACCCAUUAUUG-AUCU-CUUCAAUAACGA-AGCUA-UCCCC-UACAGUAU-UUCA------GAACGUCCAACCAUG");
+		referenceA.add("GGGUGCUUGAGGCUGUCUGCCUCGGG------CAUGCC---ACUGUAAGGCAGACAGAGAAAAGCCCCAGUUAACAUUACGCGUCCUGC--------AAGA----------CGCUUAACAUUAAUCUGAGGC-CCAAUCUAUGU-CUCA-CAAAUGUAGGUU-AGCCUCUUACG-UGCCGAAA-GGCAAGGAGAAGCAGGCUAUG-AAG");
+		referenceA.add("GGGUGCUUGAGACUGUUUGUCUCAGG------UAUUCA----CCGAAAGGCAGACAGAGAAAAGCCCCACC------------------UGACU---------------------AUAAAUCAAAGUGAGGCUA--CCCU-AUGCCUGAACACCAUAAGG-UUAGCCUCUUACUCGUUGGAAAUCAACAC----AGGGGGCUGGGAAUG");
+		referenceA.add("GGGUGCUUGAGGCUGUCUGCCUCGGG------CAUGCC---ACCGUAAGGCAGACAGAGAAAAGCCCCAGU------------------UAACAUUACGCGUCCUGCAAGACGCCUAACAUUAAUCUGAGGC-CAAUUU-CAUG-CUAGACA-CAUGUAGGUUAGCCUCUUACG-CGCCGAAA-GGCAAG----GAGAAGCAGCU-AUG");
 
-		A2.add("GGGUGCUUGAGGCUGUCUGCCUCGGGCA--UGCCAC---UGUAAGGCAGACAGAGAAAAGCCCCAGUU-AACAUUACGCGUCCUGCAAGACGCUUAACAUUAA-UCUGAGGCCCAAUCU-AUGUCUCA-CAAA---UGU---AGGUUAGCCUCUUACGUGCCGAAAGGCAA----GGAGAAGCAGGCU-AUGAAG");
-		A2.add("GGGUGCUUGAAGCUGUCUGCUUUAAGUGCUUGCAUCAGGCUGAGAGUAGGCAGAGAAAAGCCCCGUAUCAAUGUUA----------------------AUCAA-UACGAGGCCCUCUGUAAUGCACGA-CAAC---AUU---ACGGUAGCCUUUUACCCGCCGAAAGGCAA----GGAG------GCUGAAGAUG");
-		A2.add("GGGUGCUUGAGACUGUUUGUCUCAGGUAUU---UAC---CAAAAGGCAGACAGAGAAAAGCCCCACCUGACUAUAA----------------------AUCAAAAGUGCAUUGCAC-CC-AUUAUUGAUCUCUUCAAUAACGAAGCUAUCCCCU-----ACAGUAUUUCAG----AACG------UCCAACCAUG");
-		A2.add("GGGUGCUUGAGGCUGUCUGCCUCGGGCA--UGCCAC---CGUAAGGCAGACAGAGAAAAGCCCCAGUU-AACAUUACGCGUCCUGCAAGACGCCUAACAUUAA-UCUGAGGCCAAUUUC-AUGCUAGA-CACA---UGU---AGGUUAGCCUCUUACGCGCCGAAAGGCAA----GGAGAAGCA-GCU-AUG---");
-		A2.add("GGGUGCUUGAGACUGUUUGUCUCAGGUAUU---CAC---CGAAAGGCAGACAGAGAAAAGCCCCACCUGACUAUAA----------------------AUCAA-AGUGAGGCU-ACCCU-AUGCCUGAACACC---AUA---AGGUUAGCCUCUUACUCGUUGGAAAUCAACACAGGGG------GCUGGGAAUG");
+		mpd.add("GGGUGCUUGAGGCUGUCUGCCUCGGGCA--UGCCAC---UGUAAGGCAGACAGAGAAAAGCCCCAGUU-AACAUUACGCGUCCUGCAAGACGCUUAACAUUAA-UCUGAGGCCCAAUCU-AUGUCUCA-CAAA---UGU---AGGUUAGCCUCUUACGUGCCGAAAGGCAA----GGAGAAGCAGGCU-AUGAAG");
+		mpd.add("GGGUGCUUGAAGCUGUCUGCUUUAAGUGCUUGCAUCAGGCUGAGAGUAGGCAGAGAAAAGCCCCGUAUCAAUGUUA----------------------AUCAA-UACGAGGCCCUCUGUAAUGCACGA-CAAC---AUU---ACGGUAGCCUUUUACCCGCCGAAAGGCAA----GGAG------GCUGAAGAUG");
+		mpd.add("GGGUGCUUGAGACUGUUUGUCUCAGGUAUU---UAC---CAAAAGGCAGACAGAGAAAAGCCCCACCUGACUAUAA----------------------AUCAAAAGUGCAUUGCAC-CC-AUUAUUGAUCUCUUCAAUAACGAAGCUAUCCCCU-----ACAGUAUUUCAG----AACG------UCCAACCAUG");
+		mpd.add("GGGUGCUUGAGGCUGUCUGCCUCGGGCA--UGCCAC---CGUAAGGCAGACAGAGAAAAGCCCCAGUU-AACAUUACGCGUCCUGCAAGACGCCUAACAUUAA-UCUGAGGCCAAUUUC-AUGCUAGA-CACA---UGU---AGGUUAGCCUCUUACGCGCCGAAAGGCAA----GGAGAAGCA-GCU-AUG---");
+		mpd.add("GGGUGCUUGAGACUGUUUGUCUCAGGUAUU---CAC---CGAAAGGCAGACAGAGAAAAGCCCCACCUGACUAUAA----------------------AUCAA-AGUGAGGCU-ACCCU-AUGCCUGAACACC---AUA---AGGUUAGCCUCUUACUCGUUGGAAAUCAACACAGGGG------GCUGGGAAUG");
 		
 		
 		
-		amapseq.add("GGGUGCUUGAAGCUGUCUGCUUUAAGUGCUUGCAUCAGGCUGAGAGUA----------------------------------------------------------------------------------------------------------------------GGCAGAGAAAAGCCCCGUAUCAAUGUUAAUCAAUACGAGGCCCUCUGUAAUGCACGACAACAUUACGGUAGCCUUUUACCCGCCGAAAGGCAAGGAGGCUGAAGAUG------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
-		amapseq.add("GGGUGCUUGAGAC-----------------------------------UGUUUGUCUCAGGUAUUUACCAAAAGGCA-----------------------------------------------------------------------------------------GACAGAGAAAAGCCCC-------------------------------------------------------------------------------------------ACCUGACUAUAAA-------------------------------------------------------------------------------------------------------------UCAAAAGUGCAUUGCACCCAUUAUUGAUCUCUUCAAUAACGAAGCUAUCCCCUACAGUAUUUCAGAACGUCCAACCAUG---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
-		amapseq.add("GGGUGCUUGAGGC---------------------------------------------------------------------------------------------------------------------------UGUCUGCCUCGGGCAUGCCACUGUAAGGCAGACAGAGAAAAGCCCC--------------------------------------------------------------------------------------------------------AGUUAACAUUACGCGUCCUGCAAGACGCUUAACAUUAAUCUGAGGCCCAAUCUAUGUCUCACAAAUGUAGGUUAGCCUCUUACGUGCCGAAAGGCAAGGAGAAGCAGGC-------------------------------------------------------------------------------------------------------------------------------------UAUGAAG--------------------------------------------------------------------------------------------------------------------------------------------------------");
-		amapseq.add("GGGUGCUUGAGAC----------------------------------------------------------------UGUUUGUCUCAGGUAUUCACCGAAAGGCA------------------------------------------------------------GACAGAGAAAAGCCCC----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ACCUGACUAUAAAUCAAAGUGAGGCUACCCUAUGCCUGAACACCAUAAGGUUAG-------CCUCUUACUCGUUGGAAAUCAACACAGGGGGCUGGGAAUG----------------------------------------------------------------------------------------------------------------");
-		amapseq.add("GGGUGCUUGAGGC---------------------------------------------------------------------------------------------UGUCUGCCUCGGGCAUGCCACCGUAAGGCA------------------------------GACAGAGAAAAGCCCC---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------AGUUAACAUUACGCGUCCUGCAAGACGCCUAACAUUAAUCUGAGGCCAAUUUCAUGCUAGACACAUGUAGGUUAGCCUCUUACGCGCCGAAAGGCAAGGAGAAGCAGCUAUG");
 		
+		//amapseq4.add("GGGUGCUUGAAGCUGUCUGCUUUAAGUGCUUGCAUCAGGCUGAGAGUA----------------------------------------------------------------------------------------------------------------------GGCAGAGAAAAGCCCCGUAUCAAUGUUAAUCAAUACGAGGCCCUCUGUAAUGCACGACAACAUUACGGUAGCCUUUUACCCGCCGAAAGGCAAGGAGGCUGAAGAUG------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
+		//amapseq4.add("GGGUGCUUGAGAC-----------------------------------UGUUUGUCUCAGGUAUUUACCAAAAGGCA-----------------------------------------------------------------------------------------GACAGAGAAAAGCCCC-------------------------------------------------------------------------------------------ACCUGACUAUAAA-------------------------------------------------------------------------------------------------------------UCAAAAGUGCAUUGCACCCAUUAUUGAUCUCUUCAAUAACGAAGCUAUCCCCUACAGUAUUUCAGAACGUCCAACCAUG---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
+		//amapseq4.add("GGGUGCUUGAGGC---------------------------------------------------------------------------------------------------------------------------UGUCUGCCUCGGGCAUGCCACUGUAAGGCAGACAGAGAAAAGCCCC--------------------------------------------------------------------------------------------------------AGUUAACAUUACGCGUCCUGCAAGACGCUUAACAUUAAUCUGAGGCCCAAUCUAUGUCUCACAAAUGUAGGUUAGCCUCUUACGUGCCGAAAGGCAAGGAGAAGCAGGC-------------------------------------------------------------------------------------------------------------------------------------UAUGAAG--------------------------------------------------------------------------------------------------------------------------------------------------------");
+		//amapseq4.add("GGGUGCUUGAGAC----------------------------------------------------------------UGUUUGUCUCAGGUAUUCACCGAAAGGCA------------------------------------------------------------GACAGAGAAAAGCCCC----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ACCUGACUAUAAAUCAAAGUGAGGCUACCCUAUGCCUGAACACCAUAAGGUUAG-------CCUCUUACUCGUUGGAAAUCAACACAGGGGGCUGGGAAUG----------------------------------------------------------------------------------------------------------------");
+		//amapseq4.add("GGGUGCUUGAGGC---------------------------------------------------------------------------------------------UGUCUGCCUCGGGCAUGCCACCGUAAGGCA------------------------------GACAGAGAAAAGCCCC---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------AGUUAACAUUACGCGUCCUGCAAGACGCCUAACAUUAAUCUGAGGCCAAUUUCAUGCUAGACACAUGUAGGUUAGCCUCUUACGCGCCGAAAGGCAAGGAGAAGCAGCUAUG");
+		
+		amapseq4.add("GGGUGCUUGAAGCUG-----UCUGCUUUAAGUGCUUGC--AU-CAGGCUGAGA----------GU--------------AGGCAGAGAAAAGCCCCGUAUCAAU-GUUAAUCAAUA---------CGA--------------------------GGC-----CCUCUGUAAUGCACGAC----------------------------------------------------------------------------AAC----AUUACGGU--------------------------------------------------AGCC------UUUUAC-----C--CGCCGAAAGGCAAGG-----------------AGGCU--------------GAAGAU-G");
+		amapseq4.add("GGGUGCUUGAGACU-GUUUGUC--------------------UC---------AGGUAUUUA-----CCAA---AAGGCAGACAGAGAAAAGCCCC--------A--------------------------CCUGACUAUAAAUCAA-AAG-----------------------------------UGCAUUGCACCCAUUAUUGAUCUCUUC-AAUAACGAAGCU-AUCCCCUACAGUAUUUCAGAACGU------------------------------------------------------------------------------------------------------------------CCAACC----------------------------AU-G");
+		amapseq4.add("GGGUGCUUGAGGCUG-----UCU---------------GCCU-CGGGC--------------A--UGCCACUGUAAGGCAGACAGAGAAAAGCCCC--------AG----------UUAACAUUACG-CGUCC--------------------------------------UGCAAGACGCUUA------------------------------------------------------------------------AC----AUU-----AAUCUGAGGCCCAAUCUAUGUCUC-------------ACAAAUGUAGGUUAGCCUCUUAC------------GU-GCCGAAAGGCAAGG----------------------AGAAGCAGG-CUAUGAA---G-");
+		amapseq4.add("GGGUGCUUGAGACU-GUUUGUC--------------------UC---------AGGUAUUCA-----CCGA---AAGGCAGACAGAGAAAAGCCCC--------A--------------------------CCUGACUAUAAAUCAAA--GUGAG--GCUACCCUAU-----------------GC---------------------------C------------U------------------------GAACA--CCAU---AA-------------------------------------------------GGUUAGCCUCUUAC------UCGUU------------------GGAAAUCAAC--ACAGGGGGCU--------------GGGAAU-G");
+		amapseq4.add("GGGUGCUUGAGGCUG-----UCU---------------GCCU-CGGGC--------------A--UGCCACCGUAAGGCAGACAGAGAAAAGCCCC--------AG----------UUAACAUUACG-CGUCC--------------------------------------UGCAAGACGCCUA------------------------------------------------------------------------AC----AUU-----AAUCUGAGGCC-------------AAUUUCAUGCUAGACACAUGUAGGUUAGCCUCUUAC-----------G--CGCCGAAAGGCAAGG----------------------AGAAGCA--GCUAU-------G");
+		
+		
+		//amapnorm.add("-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------UG");
+		//amapnorm.add("GGGUGCUUGAGACUGUUUG----UC------------------U----------CAGGUAUUUACCAAA-----------------------------------AGGC-------AGACAGAGAAAAGCCCCA----------------------------------------------------------------------------------------------------------------------CCUGACUAUAAA------------------------------------------------------------------UCAAAAGUGCAUUGCACCCAUUAUUGAUCUCUUCAAUAACGAAGCUAUCCCCUACAGUAUUUCAGAACGUCCAACCA---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------UG");
+		//amapnorm.add("GGGUGCUUGAGGCUG--------UC------------------------UGCCUCGG------------G----------------------CAUGCCACUGUAAGGC-------AGACAGAGAAAAGCCCCA----------------------------------------------------------------------------------------GUUAACAUUACGCGU---------------CCUG--------CAAGACGCUUAACAUUAAUCUGAGGCCCAAUCUAUGUCUCACAAAUGUAGGUUAGCCUCUUACGUG-----------------------------------------------------------------------------CCG-------------------------------------------------AAAGGCAAG--------------------------------------GAGAAGCAGGCUAUGAAG--------------------------------------------------------------------------------------------");
+		//amapnorm.add("GGGUGCUUGAGACUG----UUUGUC------------------U----------CAG------------GUAUUCACCGAA-----------------------AGGC-------AGACAGAGAAAAGCCCCA----------------------------------------------------------------------------------------------------------------------CCUG----------------------------------------------------------------------------------------------------------------------------------------------------------ACUAUAAAUCAAAGUGAGGCUACCCUAUGCCUGAACACCAUAAGGUUAG---------CCUCUUACUCGUUGGAAAUCAACACAGGGGGCUGGGAA------------------------------------------------------------------------------------------------------------UG");
+		//amapnorm.add("GGGUGCUUGAGGCUG--------UC-------------------UGCCU-----CGG------------G-----------CAUGCCACCGU-----------AAGGC-------AGACAGAGAAAAGCCCCA-------------------------------------------------------------------------------------------------------GUUAACAUUACGCGUCCUG----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------CAAGACGCCUAACAUUAAUCUGAGGCCAAUUUCAUGCUAGACACAUGUAGGUUAGCCUCUUACGCGCCGAAAGGCAAGGAGAAGCAGCUAUG");
+		
+		amapnorm.add("GGGUGCUUGAAGCUG----UCUGCUUUAAGUGCUUGCAUCAGGC--------------UGAGAGU-----AGGCAGAGAAAAGCCCCGUAUCAAUGUUAAUCAAU----ACG------------------------AGG--------CCCUCUGUAAUG--CACGAC----AACAUU----------------------------------------------------A--CGG-UAGCCU----UUUAC----------------------------------CCGCCGAAAGGC------------AAGGA------GGCU---GAAGAUG");
+		amapnorm.add("GGGUGCUUGAGACUGUUUGUCU-----------------CAGG-UAUUUA--CCAA---------AAGGCAGACAGAGAAAAGCCCCA---------------------------CCUGACUAUAAAUCAAAAGUG---CAUUGC----------------------AC------------------CCAUUAUUG-A--U--CUCUUCA-----------------------------------------AUAACGAAGCUAUCCCCUACAGUAUUUCA-----------------GAACGUCCAACC----------------------AUG");
+		amapnorm.add("GGGUGCUUGAGGCUG----UCUG-------------CCUCGGGC-----AUGCCACUGU------AAGGCAGACAGAGAAAAGCCCCA-------GUUAA-----CAUUACGCGUCC----------------------------------------UG--CAAGACGCUUAACAUUAAUCUGAGGCCC-------AA--U------------CUAUGUCUCACAA-AU-GUAGGUUAGCCUCUUA----CGU----------------------------------GCCGAAAGGC------------AAGGAGAAGCAGGC-UAUGAAG---");
+		amapnorm.add("GGGUGCUUGAGACUGUUUGUCU-----------------CAGG-UAUUCA--CCGA---------AAGGCAGACAGAGAAAAGCCCCA---------------------------CCUGACUAUAAAUCAA-AGUGAGG-----CUACCCUAUG-CC--UGAAC-------A-----------------------------------------------------CCAUA--AGGUUAGCCUCUUA----C-----------------------------UCGUU------------GGAAAUCAACACAGG-G------GGCU---GGGAAUG");
+		amapnorm.add("GGGUGCUUGAGGCUG----UCUG-------------CCUCGGGC-----AUGCCACCGU------AAGGCAGACAGAGAAAAGCCCCA-------GUUAA-----CAUUACGCGUCC----------------------------------------UG--CAAGACGCCUAACAUUAAUCUGAGGCCA-------A-UU-UC-------AUGCUA-----GACAC-AU-GUAGGUUAGCCUCUUA----C----------------------------------GCGCCGAAAGGC------------AAGGAGAAGCA-GC-UAU------G");
+		
+		//A1[0] = "ATGCTAC";
+		//A1[1] = "A--CTAC";
+		//A1[2] = "A-----C";
+
+		//A2[0] = "ATG-C-TAC";
+		//A2[1] = "A---CTA-C";
+		//A2[2] = "A------C-";
 		
 		ArrayList<String> B1 = new ArrayList<String>();
 		ArrayList<String> B2 = new ArrayList<String>();
@@ -51,26 +79,31 @@ public class Distance {
 		B2.add("GCCAGCCCCUAAUGGGGCGACACUCCACCAUGAUCACUCCCCUGUGAGGAACUACUGUCUUCACGCAGAAAGCGUCUAGCCAUGGCGUUAGUAUG-AGUGUCGUGCAGCCUCCAGGACUCCCCCUCCCGGGAGAGCCAUAGUAGUCUGCGGAACCGGUGAGUACACCGGAAUUGCCAGGAUGACCGGGUCCUUUCUUGGAUCAACCCGCUCGAUGCCUGGAGAUUUGGGCGUGCCCCCGCAAGAUUGCUAGCCGAGUAGUGUUGGGUCGCGAAAGGCCUUGUGGUACUGCCUGAUAGGGUGCUUGCGAGUGCCCCGGGAGGUCUCGUAGACCGUGCAACAUGAGCACACUUCCAAAACCCCA");
 		B2.add("-----------------------------------------------------------------------------------GGCGUUAGUAUG-AGUGUUGUACAGCCUCCAGGCCCCCCCCUCCCGGGAGAGCCAUAGUGGUCUGCGGAACCGGUGAGUACACCGGAAUCGCCGGGAUGACCGGGUCCUUUCUUGGAUUAACCCGCUCAAUGCCCGGAAAUUUGGGCGUGCCCCCGCAAGACUGCUAGCCGAGUAGUGUUGGGUCGCGAAAGG--------------------------------------------------------------------------------------");
 		B2.add("---------------------------------------------------------------------------------------------------------CAGCCCCCAGGACCCCCCCUCCCGGGAGAGCCAUAGUGGUCUGCGGAACCGGUGAGUACACCGGAAUCGCCGGGAUGACCGGGUCCUUUCUUGGAUAAACCCGCUCAAUGCCCGGAAAUUUGGGCGUGCCCCCGCGAGACCGUUAGCCGAGUAGUGUUGGGUCGCAAAAGGCCUUGUGG------------------------------------------------------------------------------");
+		
 
-		//A1[0] = "ATGCTAC";
-		//A1[1] = "A--CTAC";
-		//A1[2] = "A-----C";
-
-		//A2[0] = "ATG-C-TAC";
-		//A2[1] = "A---CTA-C";
-		//A2[2] = "A------C-";
-
-		System.out.println("The distance between the reference alignment and the MPD from Test1: "+Distance.multiDistance(A1,A2));
+		System.out.println("The distance between the reference alignment and the MPD from Test1: "+Distance.multiDistance(referenceA,mpd));
 		//System.out.println(Distance.distance(A1.toArray(),A2.toArray()));
-		System.out.println("AMA between those alignments: "+Distance.AMA(A1,A2));
+		System.out.println("AMA between those alignments: "+Distance.AMA(referenceA,mpd));
 		System.out.println("-------------------------------------------");
-		System.out.println("The distance between the reference alignment and the AMAP from Test1: "+Distance.multiDistance(A1,amapseq));
+		System.out.println("The distance between the reference alignment and the AMAP-4 from Test1: "+Distance.multiDistance(referenceA,amapseq4));
 		//System.out.println(Distance.distance(A1.toArray(),A2.toArray()));
-		System.out.println("AMA between those alignments: "+Distance.AMA(A1,amapseq));
+		System.out.println("AMA between those alignments: "+Distance.AMA(referenceA,amapseq4));
 		System.out.println("-------------------------------------------");
-		System.out.println("The distance between the AMAP and the MPD from Test1: "+Distance.multiDistance(amapseq,A2));
+		System.out.println("The distance between the AMAP-4 and the MPD from Test1: "+Distance.multiDistance(amapseq4,mpd));
 		//System.out.println(Distance.distance(A1.toArray(),A2.toArray()));
-		System.out.println("AMA between those alignments: "+Distance.AMA(amapseq,A2));
+		System.out.println("AMA between those alignments: "+Distance.AMA(amapseq4,mpd));
+		System.out.println("-------------------------------------------");
+		System.out.println("The distance between the AMAP-4 and the Normal AMAP from Test1: "+Distance.multiDistance(amapseq4,amapnorm));
+		//System.out.println(Distance.distance(A1.toArray(),A2.toArray()));
+		System.out.println("AMA between those alignments: "+Distance.AMA(amapseq4,mpd));
+		System.out.println("-------------------------------------------");
+		System.out.println("The distance between the Normal AMAP and the MPD from Test1: "+Distance.multiDistance(amapnorm,mpd));
+		//System.out.println(Distance.distance(A1.toArray(),A2.toArray()));
+		System.out.println("AMA between those alignments: "+Distance.AMA(amapnorm,mpd));
+		System.out.println("-------------------------------------------");
+		System.out.println("The distance between the Normal AMAP and the reference alignment from Test1: "+Distance.multiDistance(amapnorm,referenceA));
+		//System.out.println(Distance.distance(A1.toArray(),A2.toArray()));
+		System.out.println("AMA between those alignments: "+Distance.AMA(amapnorm,referenceA));
 		System.out.println("-------------------------------------------");
 		//System.out.println("Distance between the reference alignment and the MPD from Test17: "+Distance.multiDistance(B1,B2));
 		//System.out.println(Distance.distance(A1.toArray(),A2.toArray()));
@@ -88,6 +121,8 @@ public class Distance {
 	 * @param sequences
 	 * @param amaScore
 	 * @return
+	 * @param sim
+	 * @return 
 	 */
 	public static double amaScoreToMultiDistance(ArrayList<String> sequences, double amaScore)
 	{
