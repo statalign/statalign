@@ -1007,4 +1007,23 @@ public class RNAFoldingTools {
             ex.printStackTrace();
         }
     }
+	
+	public static double calculatePPfoldReliabilityScore(int [] pairedSites, double [][] basePairProb)
+	{
+		double [] singleBaseProb = RNAFoldingTools.getSingleBaseProb(basePairProb);
+		double ppfoldReliablityScore = 0;
+		for(int i = 0 ; i < pairedSites.length ; i++)
+		{
+			if(pairedSites[i] == 0)
+			{
+				ppfoldReliablityScore += singleBaseProb[i];
+			}
+			else
+			{
+				ppfoldReliablityScore += basePairProb[i][pairedSites[i]-1];
+			}
+		}
+
+		return ppfoldReliablityScore/(double)(pairedSites.length);
+	}
 }

@@ -46,6 +46,7 @@ import statalign.base.InputData;
 import statalign.base.Mcmc;
 import statalign.base.State;
 import statalign.base.Utils;
+import statalign.distance.Distance;
 import statalign.postprocess.Postprocess;
 import statalign.postprocess.gui.AlignmentGUI;
 import statalign.postprocess.plugins.benchmarks.Benchmarks;
@@ -219,7 +220,7 @@ public class PPFold extends statalign.postprocess.Postprocess {
 		viterbialignment = new String[sizeOfAlignments];
 	}
 	
-	public static void saveToFile(String [] fastaAlignment, File outFile)
+	public void saveMPDToFile(String [] fastaAlignment, File outFile)
 	{
 		List<String> lines = new ArrayList<String>();
 		for (int i = 0; i < fastaAlignment.length; i++) {			
@@ -274,8 +275,13 @@ public class PPFold extends statalign.postprocess.Postprocess {
 			List<ExtraData> extradata = new ArrayList<ExtraData>();
 			float [][] basePairProb = PPfoldMain.fold(progress, align.getSequences(), align.getNames(), null, param, extradata);			
 			int [] pairedSites = RNAFoldingTools.getPosteriorDecodingConsensusStructure(basePairProb);
+			double mpdPPfoldReliabilityScore = RNAFoldingTools.calculatePPfoldReliabilityScore(pairedSites, RNAFoldingTools.getDoubleMatrix(basePairProb));
 			int [] projectedPairedSites = Benchmarks.projectPairedSites(refSeqGapped, pairedSites);
-			//RNAFoldingTools.g
+			System.out.println("PPfold reliability score (MPD) = " + mpdPPfoldReliabilityScore);
+			System.out.println("Improved reliability score 1 (MPD) = " + (posteriorProbabilityAvg*mpdPPfoldReliabilityScore));
+			double proxySimilarity = getProxySimilarityFromAvgPosterior(posteriorProbabilityAvg);
+			System.out.println("Improved reliability score 2 (MPD) = " + (proxySimilarity*mpdPPfoldReliabilityScore));
+			
 			
 			try
 			{
@@ -586,15 +592,12 @@ public class PPFold extends statalign.postprocess.Postprocess {
 				doubleSummedArray[i][j] = (double) summedArray[i][j]
 						/ (double) noSambles;
 			}
-			// System.out.println();
 		}
 
 		RNAFoldingTools rnaTools = new RNAFoldingTools();
 
 		int[] pairedSites = rnaTools
 				.getPosteriorDecodingConsensusStructureMultiThreaded(doubleSummedArray);
-		// int[] finalmatrix =
-		// rnaTools.getPosteriorDecodingConsensusStructureMultiThreaded(doubleSummedArray);
 		
 		RNAFoldingTools.writeMatrix(RNAFoldingTools.getDoubleMatrix(probMatrix), new File("prob.matrix"));
 		
@@ -615,14 +618,9 @@ public class PPFold extends statalign.postprocess.Postprocess {
 			// System.out.println();
 		}
 		RNAFoldingTools.writeMatrix(weightedBasePairProb, new File("bp_log.matrix"));
-		saveResult(refSeqGapped, rnaTools.getPosteriorDecodingConsensusStructureMultiThreaded(weightedBasePairProb), weightedBasePairProb,
-				 RNAFoldingTools
-					.getSingleBaseProb(weightedBasePairProb), new File(title+".dat.res.weighted"));
+		saveResult(refSeqGapped, rnaTools.getPosteriorDecodingConsensusStructureMultiThreaded(weightedBasePairProb), weightedBasePairProb, RNAFoldingTools.getSingleBaseProb(weightedBasePairProb), new File(title+".dat.res.weighted"));
 		
-		// save mpd alignment
-		appendAlignment("mpd", mpdAlignment.alignment, new File(mpdAlignment.input.title+".samples"), true, mpdAlignment.input);
-		PPFold.saveToFile(Utils.alignmentTransformation(mpdAlignment.alignment,
-				"Fasta", mpdAlignment.input), new File(mpdAlignment.input.title+".dat.res.mpd"));
+	
 		try
 		{
 
@@ -646,9 +644,60 @@ public class PPFold extends statalign.postprocess.Postprocess {
 			posteriorProbabilityAvg += mpdAlignment.decoding[i];
 		}
 		posteriorProbabilityAvg /= (double)(mpdAlignment.decoding.length);
-		//System.out.println("Posterior probability avg: " + posteriorProbabilityAvg);
+		System.out.println("Posterior probability avg: " + posteriorProbabilityAvg);
 		
+		double ppfoldReliablityScore = RNAFoldingTools.calculatePPfoldReliabilityScore(pairedSites, doubleSummedArray);
+		System.out.println("Structure reliability score = " + ppfoldReliablityScore);
+		double proxySim = getProxySimilarityFromAvgPosterior(posteriorProbabilityAvg);
+		System.out.println("Proxy similiarity = " + proxySim);
+		ArrayList<String> sequences = new ArrayList<String>();
+		for(int i = 0 ; i < mpdAlignment.alignment.length ; i++)
+		{
+			sequences.add(mpdAlignment.alignment[i]);
+		}			
+		System.out.println("Proxy distance = " + Distance.similarityToDifference(sequences,proxySim));
+		double improvedReliabilityScore1 = posteriorProbabilityAvg*ppfoldReliablityScore;		
+		System.out.println("Improved reliability score 1 = " + improvedReliabilityScore1);
+		double improvedReliabilityScore2 = proxySim*ppfoldReliablityScore;		
+		System.out.println("Improved reliability score 2 = " + improvedReliabilityScore2);
 		
+		// save mpd alignment
+		appendAlignment("mpd", mpdAlignment.alignment, new File(mpdAlignment.input.title+".samples"), true, mpdAlignment.input);
+		saveMPDToFile(Utils.alignmentTransformation(mpdAlignment.alignment,
+				"Fasta", mpdAlignment.input), new File(mpdAlignment.input.title+".dat.res.mpd"));
+	}
+	
+	public void saveDistanceValues(File outFile, boolean writeHeaders)
+	{
+		try
+		{
+			BufferedWriter buffer = new BufferedWriter(new FileWriter(outFile, !writeHeaders));
+			if(writeHeaders)
+			{
+				buffer.write("Dataset\tPosterior avg.\tProxy similarity\t");
+			}
+			
+			double proxySimilarity = getProxySimilarityFromAvgPosterior(posteriorProbabilityAvg);
+			ArrayList<String> sequences = new ArrayList<String>();
+			for(int i = 0 ; i < mpdAlignment.alignment.length ; i++)
+			{
+				sequences.add(mpdAlignment.alignment[i]);
+			}
+			double proxyDistance = Distance.similarityToDifference(sequences,proxySimilarity);
+			buffer.write(mpdAlignment.input.title+"\t");
+			buffer.write(posteriorProbabilityAvg+"\t");
+			buffer.write(proxySimilarity+"\t");
+			buffer.write(proxyDistance+"\t");
+		}
+		catch(IOException ex)
+		{
+			ex.printStackTrace();
+		}
+	}
+	
+	public static double getProxySimilarityFromAvgPosterior(double avgPosterior)
+	{
+		return Math.min(1, avgPosterior*0.8084689957 + 0.2011076631);
 	}
 	
 

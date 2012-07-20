@@ -82,6 +82,24 @@ public class Distance {
 
 
 	}
+	
+	/**
+	 * Given a set of sequences and a similarity score, returns the corresponding distance.
+	 * @param sequences
+	 * @param sim
+	 * @return
+	 */
+	public static double similarityToDifference(ArrayList<String> sequences, double sim)
+	{
+		int lengthSum = 0;
+		for(int i = 0 ; i < sequences.size() ; i++)
+		{
+			lengthSum += sequences.get(i).replaceAll("-", "").length();
+		}
+		int ksub1 = sequences.size() - 1;
+		
+		return (1-sim)*ksub1*lengthSum;
+	}
 
 	public static int multiDistance(ArrayList<String>  A, ArrayList<String>  B){
 		sortSeq(A,B);
