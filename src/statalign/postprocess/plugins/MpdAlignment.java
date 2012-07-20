@@ -260,7 +260,7 @@ public class MpdAlignment extends statalign.postprocess.Postprocess {
 		{
 			appendAlignment(no+"", t, new File(input.title+".samples"), true);
 		}
-		
+				
 	}
 	
 	public void appendAlignment(String label, String [][] alignment, File outFile, boolean append)
@@ -323,7 +323,22 @@ public class MpdAlignment extends statalign.postprocess.Postprocess {
 			
 			appendAlignment("mpd", alignment, new File(input.title+".samples"), true);
 			PPFold.saveToFile(Utils.alignmentTransformation(alignment,
-					"Fasta", input), new File("TestRNAData.dat.res.mpd"));
+					"Fasta", input), new File(input.title+".dat.res.mpd"));
+			try
+			{
+
+				BufferedWriter buffer = new BufferedWriter(new FileWriter(new File(input.title+".samples"), true));
+				buffer.write("%posteriors\n");
+				for(int i = 0 ; i < decoding.length ; i++)
+				{
+					buffer.write(decoding[i]+"\n");
+				}
+				buffer.close();
+			}
+			catch(IOException ex)
+			{
+				ex.printStackTrace();
+			}
 		}
 	}
 

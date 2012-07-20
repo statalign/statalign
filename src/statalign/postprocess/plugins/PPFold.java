@@ -48,8 +48,8 @@ import statalign.base.State;
 import statalign.base.Utils;
 import statalign.postprocess.Postprocess;
 import statalign.postprocess.gui.AlignmentGUI;
-import statalign.postprocess.gui.TestGUI;
 import statalign.postprocess.plugins.benchmarks.Benchmarks;
+import statalign.postprocess.gui.PPFoldGUI;
 import statalign.postprocess.utils.Mapping;
 import statalign.postprocess.utils.RNAFoldingTools;
 
@@ -76,7 +76,7 @@ public class PPFold extends statalign.postprocess.Postprocess {
 	public String title;
 	//public int frequency = 5;
 	JPanel pan = new JPanel(new BorderLayout());
-	TestGUI gui;
+	PPFoldGUI gui;
 	// private boolean sampling = true;
 
 	CurrentAlignment curAlig;
@@ -130,7 +130,7 @@ public class PPFold extends statalign.postprocess.Postprocess {
 
 	@Override
 	public String getTip() {
-		return "PPFold Plugin";
+		return "Base-pairing matrix of the current consensus structure given by PPFold";
 	}
 
 	@Override
@@ -157,6 +157,7 @@ public class PPFold extends statalign.postprocess.Postprocess {
 	@Override
 	public void beforeFirstSample(InputData input) {
 		int maxLength = 0;
+		title = input.title;
 		// refSeq = input.seqs.sequences.get(0);
 		refSeq = input.seqs.sequences.get(0).replaceAll("-", "");
 		refSeqName = input.seqs.seqNames.get(0);
@@ -176,14 +177,26 @@ public class PPFold extends statalign.postprocess.Postprocess {
 		// System.out.println("using seq no. " + seqNo);
 
 		d = refSeq.length();
-
-		pan.removeAll();
-		title = input.title;
-		JScrollPane scroll = new JScrollPane();
-		scroll.setViewportView(gui = new TestGUI(this));// ,
-																			// mcmc.tree.printedAlignment()));
-		pan.add(scroll, BorderLayout.CENTER);
-		pan.getParent().validate();
+		
+		
+		if(show) {
+			pan.removeAll();
+			title = input.title;
+			JScrollPane scroll = new JScrollPane();
+			scroll.getViewport().add(gui = new PPFoldGUI(title, scroll));
+			
+			if(gui.getPreferredSize().getHeight() > gui.getHeight()) {
+				scroll.createVerticalScrollBar();
+			}
+			
+			if(gui.getPreferredSize().getWidth() > gui.getWidth()) {
+				scroll.createHorizontalScrollBar();
+			}
+			
+			pan.add(scroll, BorderLayout.CENTER);
+			pan.getParent().validate();
+			
+		}
 		
 		gui.changeDimension(d);
 		sizeOfAlignments = (mcmc.tree.vertex.length + 1) / 2;
@@ -462,7 +475,7 @@ public class PPFold extends statalign.postprocess.Postprocess {
 				{
 					append = false;
 				}
-				PPFold.appendFolds(new File("TestRNAData.folds"), noSambles+"", PPFold.getSequenceByName(t, refSeqName),rnaTools.getPosteriorDecodingConsensusStructureMultiThreaded(basePairProb), rnaTools.getPosteriorDecodingConsensusStructureMultiThreaded(projectFun), append);
+				PPFold.appendFolds(new File(title+".folds"), noSambles+"", PPFold.getSequenceByName(t, refSeqName),rnaTools.getPosteriorDecodingConsensusStructureMultiThreaded(basePairProb), rnaTools.getPosteriorDecodingConsensusStructureMultiThreaded(projectFun), append);
 
 				/*
 				System.out.println("D=" + d);
@@ -503,9 +516,10 @@ public class PPFold extends statalign.postprocess.Postprocess {
 
 				noSambles += 1;
 				
-			
 				//RNAFoldingTools rnaTools = new RNAFoldingTools();
 				//String seq = this.getSequenceByName(t, this.refSeqName).replaceAll("-", "");
+				//RNAFoldingTools rnaTools = new RNAFoldingTools();
+				String seq = getSequenceByName(t, PPFold.refSeqName).replaceAll("-", "");
 				int[] pairedSites = rnaTools.getPosteriorDecodingConsensusStructureMultiThreaded(probMatrix);
 				System.out.println(RNAFoldingTools.getDotBracketStringFromPairedSites(pairedSites));
 				
@@ -521,8 +535,8 @@ public class PPFold extends statalign.postprocess.Postprocess {
 					}
 				}*/
 				//if(sampling) {
-				gui.clear();
-				gui.changeDimension(d*TestGUI.OFFSET);
+				
+				gui.changeDimension(d*PPFoldGUI.OFFSET);
 				gui.setMatrix(probMatrix);
 				gui.repaint();
 				//}
@@ -569,7 +583,7 @@ public class PPFold extends statalign.postprocess.Postprocess {
 		double[] singleBaseProb = RNAFoldingTools
 				.getSingleBaseProb(doubleSummedArray);
 		saveResult(refSeqGapped, pairedSites, doubleSummedArray,
-				singleBaseProb, new File("TestRNAData.dat.res"));
+				singleBaseProb, new File(title+".dat.res"));
 		
 		//System.out.printl
 		for (int i = 0; i < d; ++i) {
@@ -581,7 +595,7 @@ public class PPFold extends statalign.postprocess.Postprocess {
 		RNAFoldingTools.writeMatrix(weightedBasePairProb, new File("bp_log.matrix"));
 		saveResult(refSeqGapped, rnaTools.getPosteriorDecodingConsensusStructureMultiThreaded(weightedBasePairProb), weightedBasePairProb,
 				 RNAFoldingTools
-					.getSingleBaseProb(weightedBasePairProb), new File("TestRNAData.dat.res.weighted"));
+					.getSingleBaseProb(weightedBasePairProb), new File(title+".dat.res.weighted"));
 	}
 
 	public static String getSequenceByName(String[][] sequences, String name) {
