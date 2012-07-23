@@ -108,6 +108,8 @@ public class PPFold extends statalign.postprocess.Postprocess {
 	double weightedSum = 0;
 	double firstLikelihood = 0;
 	double posteriorProbabilityAvg = 0;
+	
+	String outDir = "";
 
 	public PPFold() {
 		screenable = true;
@@ -230,7 +232,7 @@ public class PPFold extends statalign.postprocess.Postprocess {
 		
 		try
 		{
-			BufferedWriter buffer = new BufferedWriter(new FileWriter("mpd.fas"));
+			BufferedWriter buffer = new BufferedWriter(new FileWriter(outDir+title+"_mpd.fas"));
 			for (int i = 0; i < fastaAlignment.length; i++) {
 				buffer.write(fastaAlignment[i]+"\n");
 			}
@@ -382,6 +384,7 @@ public class PPFold extends statalign.postprocess.Postprocess {
 				for (i = 0; i < d; ++i) {
 					for (j = 0; j < d; ++j) {
 						summedArray[i][j] = 0;
+						weightedBasePairProb[i][j] = 0;
 					}
 				}
 				summedSingleBaseProb = new float[d];
@@ -487,7 +490,7 @@ public class PPFold extends statalign.postprocess.Postprocess {
 				{
 					append = false;
 				}
-				PPFold.appendFolds(new File(title+".folds"), noSambles+"", PPFold.getSequenceByName(t, refSeqName),rnaTools.getPosteriorDecodingConsensusStructureMultiThreaded(basePairProb), rnaTools.getPosteriorDecodingConsensusStructureMultiThreaded(projectFun), append);
+				PPFold.appendFolds(new File(outDir+title+".folds"), noSambles+"", PPFold.getSequenceByName(t, refSeqName),rnaTools.getPosteriorDecodingConsensusStructureMultiThreaded(basePairProb), rnaTools.getPosteriorDecodingConsensusStructureMultiThreaded(projectFun), append);
 
 				/*
 				System.out.println("D=" + d);
@@ -572,15 +575,18 @@ public class PPFold extends statalign.postprocess.Postprocess {
 			{
 				inputAlignment[k][0] = mpdAlignment.input.seqs.seqNames.get(k);
 				inputAlignment[k][1] = mpdAlignment.input.seqs.sequences.get(k);
+				//System.out.println("Saving alignment info.");
+				//System.out.println(">"+inputAlignment[k][0]);
+				//System.out.println(">"+inputAlignment[k][1]);
 			}
 			Arrays.sort(inputAlignment, compStringArr);
 			
-			appendAlignment("reference", inputAlignment, new File(mpdAlignment.input.title+".samples"), false);
-			appendAlignment(no+"", t, new File(mpdAlignment.input.title+".samples"), true);
+			appendAlignment("reference", inputAlignment, new File(outDir+mpdAlignment.input.title+".samples"), false);
+			appendAlignment(no+"", t, new File(outDir+mpdAlignment.input.title+".samples"), true);
 		}
 		else
 		{
-			appendAlignment(no+"", t, new File(mpdAlignment.input.title+".samples"), true);
+			appendAlignment(no+"", t, new File(outDir+mpdAlignment.input.title+".samples"), true);
 		}
 	}
 
@@ -627,7 +633,7 @@ public class PPFold extends statalign.postprocess.Postprocess {
 		try
 		{
 
-			BufferedWriter buffer = new BufferedWriter(new FileWriter(new File(mpdAlignment.input.title+".samples"), true));
+			BufferedWriter buffer = new BufferedWriter(new FileWriter(new File(outDir+mpdAlignment.input.title+".samples"), true));
 			buffer.write("%posteriors\n");
 			for(int i = 0 ; i < mpdAlignment.decoding.length ; i++)
 			{
@@ -665,9 +671,9 @@ public class PPFold extends statalign.postprocess.Postprocess {
 		System.out.println("Improved reliability score 2 = " + improvedReliabilityScore2);
 		
 		// save mpd alignment
-		appendAlignment("mpd", mpdAlignment.alignment, new File(mpdAlignment.input.title+".samples"), true, mpdAlignment.input);
+		appendAlignment("mpd", mpdAlignment.alignment, new File(outDir+mpdAlignment.input.title+".samples"), true, mpdAlignment.input);
 		double ppfoldReliabilityScoreMPD = saveMPDToFile(Utils.alignmentTransformation(mpdAlignment.alignment,
-				"Fasta", mpdAlignment.input), new File(mpdAlignment.input.title+".dat.res.mpd"));
+				"Fasta", mpdAlignment.input), new File(outDir+mpdAlignment.input.title+".dat.res.mpd"));
 		
 		this.saveScores(new File("scores.txt"), ppfoldReliablityScore, ppfoldReliabilityScoreMPD);
 	}
