@@ -24,5 +24,19 @@ public class JobResults implements Serializable {
 		S = new ResMatrix(n);
 		F = new ResMatrix(n);
 	}
+	
+	public String toString(){
+		String reString = "";
+		if(L != null){
+			reString +=  "L\n" + L + "\n";
+		}
+		if(F != null){
+			reString +=  "F\n" + F + "\n";
+		}
+		if(S != null){
+			reString +=  "S\n" + S + "\n";
+		}
+		return reString;
+	}
 
 }
