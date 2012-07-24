@@ -336,11 +336,11 @@ public class Benchmarks
 	
 	public void performDistanceBenchmarks()
 	{
-		File distanceFile = new File("/home/michael/workspace/StatAlign/3seq/dist_scores.txt");
+		File distanceFile = new File("/home/michael/workspace/StatAlign/9seq/dist_scores.txt");
 		//String dataDir = "/home/michael/Dropbox/RNA and StatAlign/TestRNAData/";
 		
 		String dataDir = "/home/michael/Dropbox/RNA and StatAlign/Distance/Datasets2/";
-		String resultsDir = "/home/michael/workspace/StatAlign/3seq/";
+		String resultsDir = "/home/michael/workspace/StatAlign/9seq/";
 		try
 		{
 			BufferedReader buffer = new BufferedReader(new FileReader(distanceFile));
