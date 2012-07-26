@@ -11,6 +11,8 @@ public abstract class AsynchronousJobExecutor {
 	public abstract void startExecution(CYKJob cYKJob, JobListener listener);
 
 	public abstract void startExecution(PhyloJob job, JobListener listener);
+	
+	public abstract void startExecution(PhyloJobFuzzy job, JobListener listener);
 
 	public abstract String getDescription();
 

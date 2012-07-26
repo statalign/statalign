@@ -103,7 +103,6 @@ public class RNAFoldingTools {
         	{
     			singleBaseProb[i] -= basePairProb[i][j];
         	}    		
-    		System.out.println("S"+i+"\t"+singleBaseProb[i]);
     	}
     	return getPosteriorDecodingConsensusStructure(basePairProb, singleBaseProb);
     }
@@ -1025,5 +1024,19 @@ public class RNAFoldingTools {
 		}
 
 		return ppfoldReliablityScore/(double)(pairedSites.length);
+	}
+	
+	public static void writeToFile(File f, String s, boolean append)
+	{
+		try
+		{
+			BufferedWriter buffer = new BufferedWriter(new FileWriter(f, append));
+			buffer.write(s+"\n");
+			buffer.close();
+		}
+		catch(IOException ex)
+		{
+			ex.printStackTrace();
+		}
 	}
 }

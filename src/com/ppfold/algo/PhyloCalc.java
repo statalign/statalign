@@ -38,6 +38,8 @@ public class PhyloCalc {
 				// now set the vector of this Node.
 				// the vector of all other nodes will be [1 1 1 1] by default
 				// (Node constructor)
+
+				// ^a vector of length 4 representing the nucleotide frequencies (frequencies because of ambigious nucleotides)
 				double[] vector = node.getVector();
 				MatrixTools.copyFromTo(ntvectors[column[row]], vector);
 			}
@@ -85,6 +87,8 @@ public class PhyloCalc {
 					// the vector of all other nodes will be [1 1 1 1] by
 					// default (Node constructor)
 					double[] vector = node.getVector();
+					// ^for nucleotide column1[row]  and nucleotide column2[row]] at position row in column sets create a alphabet*alphabet*16 array, where the vector represents the pairs of nucleotide probabilities, i.e AA, AG, etc.
+					// makes a length 16 array, representing paired nucleotide combinations, AA, AC, AG, AT
 					MatrixTools.copyFromTo(
 							doublevectors[column1[row]][column2[row]], vector);
 				}
@@ -93,8 +97,10 @@ public class PhyloCalc {
 				// column pair.
 				tree.calculateVectors();
 
+				// ^the probability that these columns pair??
 				result[col1][col2] = MatrixTools.scalarProduct(
-						tree.getRoot().getVector(), 
+						tree.getRoot().getVector(),
+						// ^turns 2 matrix into 1d array
 						MatrixTools.serializeMatrix(phyloJob.param.getPd(), tree.getRoot()
 								.getTmpNtVector()));
 			}

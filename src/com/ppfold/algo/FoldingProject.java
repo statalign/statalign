@@ -214,6 +214,465 @@ public class FoldingProject {
 		return result;
 
 	}
+	
+	public static ResultBundle foldFuzzyAlignment(Progress act, int phylojobsnr,
+			int scfgjobsnr, Tree tree, List<FuzzyNucleotide[]> columns, FuzzyAlignment fuzzyAlignment,
+			List<String> names, Parameters param,
+			AsynchronousJobExecutor executor, boolean verbose, int execnr,
+			List <ExtraData> extradata_list, boolean diffbp, boolean entropycalc)
+			throws InterruptedException {
+		
+		if(columns.size()<2){
+			return ResultBundle.tinyBundle();
+		}
+		
+		double scfg_to_phylo_ratio = 0.095 * columns.size()
+				/ columns.get(0).length;
+		double phylopart = 0.95 / (scfg_to_phylo_ratio + 1);
+		if (phylopart < 0 | phylopart > 1) {
+			System.err.println("Time estimation resulted "
+					+ "in illegal value for phylogenetic calculations: "
+					+ phylopart);
+			phylopart = 0.475; // in case the estimation results in a
+			// "weird number", just set it to 50-50%.
+		}
+		double scfgpart = 0.95 - phylopart; // max is 95% because processing
+		// must happen before and after
+		act.setCurrentActivity("Applying evolutionary model");
+
+		
+		//long starttime = System.currentTimeMillis();
+		double[][] probmatrix = FoldingProject.createPhyloProbForFuzzyAlignment(act
+				.getChildProgress(phylopart), phylojobsnr, tree, columns, fuzzyAlignment,
+				names, columns.size(), param, executor, verbose, execnr);
+
+		//If there are extra data, multiply probmatrix with the relevant values
+		
+		double[][] probmatrix2 = null;
+		if(diffbp&&extradata_list!=null){
+			probmatrix2= new double[probmatrix.length][probmatrix[0].length];
+			for (int a = 0; a<probmatrix2.length;a++){
+				for(int b = 0;b<probmatrix2[0].length; b++){
+					probmatrix2[a][b] = probmatrix[a][b]; 
+				}
+			}
+		}
+		
+		if(extradata_list!=null){
+			System.out.println("Number of auxiliary data items: " + extradata_list.size());
+			ArrayList<ForcedConstraints> fcList = new ArrayList<ForcedConstraints>();
+			for(ExtraData data:extradata_list){
+				if(data instanceof ForcedConstraints){
+					//If forcing constraints, collect them into one and remove from the list
+					fcList.add((ForcedConstraints) data);
+				}
+			}
+			for(ExtraData data:fcList){
+				extradata_list.remove(data);
+			}
+			if(fcList.size()>0){
+				System.out.println("Processing " + fcList.size () + " hard constraint datasets");
+				ForcedConstraints fcMerged = new ForcedConstraints();
+				fcMerged = fcMerged.combinedForcedConstraints(probmatrix.length, fcList);
+				extradata_list.add(fcMerged);
+			}
+
+		}
+		
+		System.out.println("Processing all auxiliary data");
+		if(extradata_list!=null){
+			for(ExtraData extradata:extradata_list){
+				for(int i = 0; i<probmatrix.length; i++){
+					for(int j = 0; j<i; j++){
+						probmatrix[i][j] *= extradata.getProbabilityGivenInnerPaired(i,j);
+						probmatrix[j][i] = probmatrix[i][j];
+					}
+					probmatrix[i][i] *= extradata.getProbabilityGivenUnpaired(i);
+				}
+			}
+		}
+		
+		if(diffbp&&extradata_list!=null){
+			//If inner and outer basepairs are distinguished
+			for(ExtraData extradata:extradata_list){
+				for(int i = 0; i<probmatrix2.length; i++){
+					for(int j = 0; j<i; j++){
+						probmatrix2[i][j] *= extradata.getProbabilityGivenOuterPaired(i,j);
+						probmatrix2[j][i] = probmatrix2[i][j];
+					}
+					probmatrix2[i][i] *= extradata.getProbabilityGivenUnpaired(i);
+				}
+			}
+			
+		}
+		
+		//System.out.println("Time in phylogenetic part: " + (System.currentTimeMillis()-starttime));
+		// do not allow basepairs less than 4 nucleotides apart.
+		for (int i = 0; i < probmatrix.length; i++) {
+			for (int j = 1; j < 4; j++) {
+				if (i + j < probmatrix.length) {
+					probmatrix[i][i + j] = 0;
+				}
+				if (i - j > 0) {
+					probmatrix[i][i - j] = 0;
+				}
+			}
+		}
+		
+		if(diffbp&&extradata_list!=null){
+			for (int i = 0; i < probmatrix2.length; i++) {
+				for (int j = 1; j < 4; j++) {
+					if (i + j < probmatrix2.length) {
+						probmatrix2[i][i + j] = 0;
+					}
+					if (i - j > 0) {
+						probmatrix2[i][i - j] = 0;
+					}
+				}
+			}
+		}
+		
+
+		System.out.println("Folding...");
+		act.setCurrentActivity("Applying grammar");
+		
+		//starttime = System.currentTimeMillis();
+		ResultBundle result = FoldingProject.calcSCFG(act
+				.getChildProgress(scfgpart), scfgjobsnr, param.getProb(),
+				probmatrix, probmatrix2, executor, verbose, diffbp, entropycalc);
+		//System.out.println("Time in SCFG part: " + (System.currentTimeMillis()-starttime));
+
+		//Shut down the executor so we aren't hanging at the end
+		executor.shutDown();
+		return result;
+
+	}
+	
+	private static double[][] createPhyloProbForFuzzyAlignment(Progress act, int userjobsnr,
+			Tree tree, List<FuzzyNucleotide[]> columns_char, FuzzyAlignment fuzzyAlignment, List<String> names,
+			final int length, Parameters param,
+			AsynchronousJobExecutor executor, final boolean verbose, int execnr)
+			throws InterruptedException {
+		final long starttime = System.nanoTime();
+		if(verbose){
+		System.out.println("Timer (phylogeny) started. (time: "
+				+ (System.nanoTime() - starttime) * 1e-9 + " s)");
+		}
+		if (verbose) {
+			System.out.println("Memory allocated: "
+					+ (Runtime.getRuntime().totalMemory() / 1048576) + " MB");
+			System.out.println("Memory used: "
+					+ ((Runtime.getRuntime().totalMemory() - Runtime
+							.getRuntime().freeMemory()) / 1048576) + " MB ");
+		}
+		if (verbose) {
+			System.out.println("Processing input...");
+		}
+		if (verbose) {
+			act.setCurrentActivity("Evolutionary model: processing input");
+		}
+		List<FuzzyNucleotide[]> columns = new ArrayList<FuzzyNucleotide[]>();
+		
+		
+		/*
+		for (int i = 0; i < columns_char.size(); i++) {
+			columns.add(MatrixTools.convertColumn(columns_char.get(i)));
+		}*/
+		for (int i = 0; i < columns_char.size(); i++) {
+			columns.add(columns_char.get(i));
+		}
+		
+		if (verbose) {
+			System.out.println("User wish for number of divisions: " + userjobsnr);
+		}
+
+		// correct user input
+		if (userjobsnr > length) {
+			userjobsnr = length;
+		} else if (userjobsnr < 1) {
+			userjobsnr = 1;
+		}
+		int nrjobs = userjobsnr;
+
+		if (verbose) {
+			System.out.println("Done. (time: "
+					+ (System.nanoTime() - starttime) * 1e-9 + " s)");
+			System.out.println("Memory allocated: "
+					+ (Runtime.getRuntime().totalMemory() / 1048576) + " MB");
+			System.out.println("Memory used: "
+					+ ((Runtime.getRuntime().totalMemory() - Runtime
+							.getRuntime().freeMemory()) / 1048576) + " MB ");
+		}
+		if (verbose) {
+			System.out
+					.println("Actual nr. of divisions in phylogenetic calculations: "
+							+ nrjobs);
+		}
+		if (verbose) {
+			System.out.println("Generating matrices for each node...");
+		}
+
+		tree.generateLeafList(names); // to speed up calculations later
+
+		final double[][] probmatrix = new double[length][length];
+		List<PhyloJobFuzzy> jobs = new ArrayList<PhyloJobFuzzy>();
+		// First generate "exp(Rt)" matrix for each node.
+		// This is the same for all columns of that node.
+		tree.getRoot().calculateChildrenMatrix(param.getSD(), param.getSV(),
+				param.getSV1());
+
+		if (verbose) {
+			System.out.println("Done. (time: "
+					+ (System.nanoTime() - starttime) * 1e-9 + " s)");
+			System.out.println("Memory allocated: "
+					+ (Runtime.getRuntime().totalMemory() / 1048576) + " MB");
+			System.out.println("Memory used: "
+					+ ((Runtime.getRuntime().totalMemory() - Runtime
+							.getRuntime().freeMemory()) / 1048576) + " MB ");
+		}
+
+		if (verbose) {
+			System.out.println("Generating jobs...");
+		}
+		if (verbose) {
+			act.setCurrentActivity("Evolutionary model: dividing tasks");
+		}
+
+		// Create jobs for SINGLE columns
+		// now all single columns are in one job
+		// Add the only single-column job
+		int colcnt = 0;
+		PhyloJobFuzzy lastjob = new PhyloJobFuzzy(fuzzyAlignment);
+		lastjob.tree = Tree.copyTree(tree); // must copy the entire tree into
+		// each phylojob
+		lastjob.names = names; // must copy the names into each phylojob (for
+		// debugging only)
+		lastjob.startcol = 0;
+		lastjob.jobid = 0;
+		lastjob.endcol = length - 1;
+		lastjob.type = false;
+		lastjob.param = param;
+		for (int col = 0; col < length; col++) {
+			// send columns
+			lastjob.columns.add(columns.get(col));
+			lastjob.columnIndices.add(col);
+			colcnt++;
+		}
+		jobs.add(lastjob);
+
+		// Create jobs for column PAIRS
+		// count total number of column pairs
+		int paircnt = 0;
+		for (int i = 0; i < length; i++) {
+			for (int j = i + 1; j < length; j++) {
+				paircnt++;
+			}
+		}
+		if(verbose){
+			System.out.println("Total number of pairs: " + paircnt);
+			System.out.println("Pairs in a job: " + (paircnt) / nrjobs);
+		}
+		// have to calculate matrices, but only once
+		tree.getRoot().calculateChildrenMatrix(param.getDD(), param.getDV(),
+				param.getDV1());
+
+		int lastendcol = -1;
+		int paircolcnt = 0;
+		// add all jobs except last
+		for (int jobnr = 0; jobnr < nrjobs - 1; jobnr++) {
+			PhyloJobFuzzy job = new PhyloJobFuzzy(fuzzyAlignment);
+			job.tree = Tree.copyTree(tree); // must copy the entire tree into
+			// each phylojob
+			job.names = names; // must copy the names into each phylojob
+			job.type = true;
+			job.param = param;
+			job.jobid = jobnr + 1;
+
+			int col1 = lastendcol + 1;
+			job.startcol = col1;
+			paircolcnt += length - col1;
+			col1--;
+			while (paircolcnt < ((long)(jobnr + 1) * (paircnt)) / nrjobs) {
+				col1++;
+				if (col1 == length) { // no more columns left, finish
+					col1--;
+					break;
+				}
+				job.columns.add(columns.get(col1));
+				job.columnIndices.add(col1);
+				paircolcnt += length - col1;
+			}
+
+			job.endcol = col1;
+			lastendcol = col1;
+			for (int col2 = job.startcol + 1; col2 < length; col2++) {
+				// send pairing columns
+				job.columns2.add(columns.get(col2));
+				job.columnIndices2.add(col2);
+			}
+			jobs.add(job);
+			paircolcnt -= length - col1;
+		}
+		// Add the last job
+		lastjob = new PhyloJobFuzzy(fuzzyAlignment);
+		lastjob.tree = Tree.copyTree(tree); // must copy the entire tree into
+		// each phylojob
+		lastjob.names = names; // must copy the names into each phylojob
+		lastjob.startcol = lastendcol + 1;
+		lastjob.endcol = length;
+		lastjob.type = true;
+		lastjob.param = param;
+		lastjob.jobid = nrjobs;
+		for (int col1 = lastjob.startcol; col1 < length; col1++) {
+			// send columns
+			lastjob.columns.add(columns.get(col1));
+			lastjob.columnIndices.add(col1);
+		}
+		for (int col2 = lastjob.startcol + 1; col2 < length; col2++) {
+			// send pairing columns
+			lastjob.columns2.add(columns.get(col2));
+			lastjob.columnIndices2.add(col2);
+		}
+		jobs.add(lastjob);
+
+		if (verbose) {
+			System.out.println("Done. (time: "
+					+ (System.nanoTime() - starttime) * 1e-9 + " s)");
+			System.out.println("Memory allocated: "
+					+ (Runtime.getRuntime().totalMemory() / 1048576) + " MB");
+			System.out.println("Memory used: "
+					+ ((Runtime.getRuntime().totalMemory() - Runtime
+							.getRuntime().freeMemory()) / 1048576) + " MB ");
+		}
+
+		if (verbose) {
+			System.out
+					.println("Total number of jobs in phylogenetic calculations: "
+							+ jobs.size());
+		}
+		if (verbose) {
+			System.out.println("Executing jobs...");
+		}
+
+		// start executing the jobs
+		// counts how many phylojobs are done		
+		final AtomicInteger finishedphylojobscount = new AtomicInteger(0); 
+
+		act.setCurrentActivity("Evolutionary model: " +
+					"calculating column probabilities");
+		
+		long gridstarttime = System.nanoTime();
+		// execute single column jobs
+		Progress singleColAct = act.getChildProgress(0.1);
+		for (int jobnr = 0; jobnr < 1; jobnr++) {
+			if(act.shouldStop()){
+				executor.shutDown();
+			}
+			act.checkStop();
+			PhyloJobFuzzy job = jobs.get(jobnr);
+			//final int jn = jobnr;
+			final int startcol = job.startcol;
+
+			final Progress jobAct = singleColAct
+					.getChildProgress((float) job.columns.size()
+							/ (float) colcnt);
+			executor.startExecution(job, new JobListener() {
+				public void jobFinished(JobResults result) {
+				} // doesn't happen here
+
+				public void jobFinished(List<ResultBundle> result) {
+				} // doesn't happen here
+
+				public void jobFinished(double[][] result) {
+					for (int col = 0; col < result.length; col++) {
+						probmatrix[col + startcol][col + startcol] = result[col][0];
+					}
+					finishedphylojobscount.incrementAndGet();
+					jobAct.setProgress(1.0);
+				}
+			});
+		}
+
+		Progress doubleColAct = act.getChildProgress(0.9);
+
+		// execute double column jobs
+		for (int jobnr = 1; jobnr < jobs.size(); jobnr++) {
+			if(act.shouldStop()){
+				executor.shutDown();
+			}
+			act.checkStop();
+			PhyloJobFuzzy job = jobs.get(jobnr);
+			//final int jn = jobnr;
+			final int startcol = job.startcol;
+			final int endcol = job.endcol;
+			final Progress jobAct = doubleColAct
+					.getChildProgress((float) job.columns.size()
+							/ (float) length);
+			if (job.columns2.size() != 0) {
+				executor.startExecution(job, new JobListener() {
+					public void jobFinished(JobResults result) {
+					} // doesn't happen here
+
+					public void jobFinished(List<ResultBundle> result) {
+					} // doesn't happen here
+
+					public void jobFinished(double[][] result) {
+						for (int col1 = startcol; col1 < endcol + 1; col1++) {
+							for (int col2 = col1 + 1; col2 < length; col2++) {
+								probmatrix[col1][col2] = result[col1 - startcol][col2
+										- startcol - 1];
+								probmatrix[col2][col1] = probmatrix[col1][col2]; // make
+								// it
+								// symmetric
+							}
+						}
+						finishedphylojobscount.incrementAndGet();
+						jobAct.setProgress(1.0);
+					}
+				});
+			} else {
+				finishedphylojobscount.incrementAndGet();
+				jobAct.setProgress(1.0);
+			}
+		}
+
+		// wait for last thread to finish
+		// wait for jobs to finish
+		while (finishedphylojobscount.get() < jobs.size()) {
+			Thread.sleep(100);
+			if(act.shouldStop()){
+				executor.shutDown();
+			}
+			act.checkStop();
+		}
+		singleColAct.setProgress(1.0);
+		doubleColAct.setProgress(1.0);
+		act.setProgress(1.0);
+		//act.setCurrentActivity("Evolutionary model: done");
+
+		if (verbose) {
+			System.out.println("Done. (time: "
+					+ (System.nanoTime() - starttime) * 1e-9 + " s)");
+			System.out.println("Memory allocated: "
+					+ (Runtime.getRuntime().totalMemory() / 1048576) + " MB");
+			System.out.println("Memory used: "
+					+ ((Runtime.getRuntime().totalMemory() - Runtime
+							.getRuntime().freeMemory()) / 1048576) + " MB ");
+		}
+
+		System.out.println("TOTAL TIME ELAPSED IN PHYLOGENETIC PART: "
+				+ (int)((System.nanoTime() - starttime) * 1e-9) + " seconds ");
+		
+		if(verbose){
+			System.out.println("                    ...of which distributed: "
+				+ (System.nanoTime() - gridstarttime) * 1e-9 + " seconds");
+		}
+
+		//System.out.println();
+
+		// Result contains the a priori probability distribution matrix.
+		return probmatrix;
+	}
 
 	private static ResultBundle calcSCFG(Progress act, int userjobsnr,
 			double[][] prob, double[][] probmatrix, double[][] probmatrix2,
@@ -221,6 +680,12 @@ public class FoldingProject {
 			throws InterruptedException {
 		PointRes tmp = new PointRes(0, 0);
 		final long starttime = System.nanoTime();
+		
+
+		
+		double entropyVal = 0;
+		double entropyPercOfMax = 0;
+		double entropyMax = 0;
 
 		if (verbose) {
 			System.out.println("Timer (SCFG) started. (time: "
@@ -852,11 +1317,16 @@ public class FoldingProject {
 		
 		System.out.println("ENTROPY: " + entropy + " = " + entropy.toDouble());
 		
+		
 		DecimalFormat df2 = new DecimalFormat( "#########0.00" );
 		double maxentropy_nr = 0.142- 1.5*Math.log(length)/Math.log(2) + 1.388*length;
 		double maxentropy = new Double(df2.format(maxentropy_nr)).doubleValue();
 		double percent_nr = (entropy.toDouble()/maxentropy_nr)*100;
 		double percent = new Double(df2.format(percent_nr)).doubleValue();
+		
+		entropyVal = entropy.toDouble();
+		entropyPercOfMax = percent;
+		entropyMax = maxentropy;
 		
 		System.out.println("(which is " + percent + "% of the maximum entropy, " + maxentropy + ")");
 		
@@ -1136,6 +1606,9 @@ public class FoldingProject {
 		result.basepairprob = basepairprob;
 		result.singlebaseprob = singlebaseprob;
 		result.expectationvalues = expectationvalues;
+		result.entropyVal = entropyVal;
+		result.entropyPercOfMax = entropyPercOfMax;
+		result.entropyMax = entropyMax;
 		if (verbose) {
 			System.out.println("Done. (time: "
 					+ (System.nanoTime() - starttime) * 1e-9 + " s)");
