@@ -17,6 +17,7 @@ public class Distance {
 	final static String MPD_FOLDER = "/home/ingolfur/Dropbox/RNA and StatAlign/TestRNAData/amap/mpd";
 	final static String AMAP_FOLDER = "/home/ingolfur/Dropbox/RNA and StatAlign/TestRNAData/amap/amap";
 	final static String AMAP4_FOLDER = "/home/ingolfur/Dropbox/RNA and StatAlign/TestRNAData/amap/amap4";
+	final static String AMAP01_FOLDER = "/home/ingolfur/Dropbox/RNA and StatAlign/TestRNAData/amap/amap01";
 
 
 	private static void ReadAlignments(ArrayList<Pair<ArrayList<String>,String>> alignments, String folder){
@@ -43,6 +44,7 @@ public class Distance {
 				}
 
 				String filename = file.getName().split(".fas")[0];
+				filename = filename.replaceAll("yeah", "");
 				filename = filename.replaceAll("removed", "");
 				filename = filename.replaceAll("some4", "");
 				filename = filename.replaceAll("some", "");
@@ -75,15 +77,47 @@ public class Distance {
 
 		ArrayList<Pair<ArrayList<String>,String>> amap4 = new ArrayList<Pair<ArrayList<String>,String> >();
 		ReadAlignments(amap4, AMAP4_FOLDER);
-
 		
+		ArrayList<Pair<ArrayList<String>,String>> amap01 = new ArrayList<Pair<ArrayList<String>,String> >();
+		ReadAlignments(amap01, AMAP01_FOLDER);
 
-		
+		Collections.sort(reference, new ComplexPair());
+		Collections.sort(mpd, new ComplexPair());
+		Collections.sort(amap, new ComplexPair());
+		Collections.sort(amap4, new ComplexPair());
+		Collections.sort(amap01, new ComplexPair());
+
+
+		for(int i = 0; i<reference.size(); ++i){
+			for(int j = 0; j<mpd.size(); ++j){
+				for(int k = 0; k<amap.size(); ++k){
+					for(int t = 0; t<amap01.size(); ++t){
+						Pair<ArrayList<String>,String> refPair = reference.get(i);
+						Pair<ArrayList<String>,String> mpdPair = mpd.get(j);
+						Pair<ArrayList<String>,String> amapPair = amap.get(k);
+						Pair<ArrayList<String>,String> amap01Pair = amap01.get(t);
+						if(mpdPair.getRight().compareTo(refPair.getRight()) == 0 && amapPair.getRight().compareTo(refPair.getRight()) == 0 && amap01Pair.getRight().compareTo(refPair.getRight())==0){
+							//System.out.println(Distance.AMA(refPair.getLeft(), mpdPair.getLeft()));
+							//System.out.println(Distance.AMA(refPair.getLeft(), amapPair.getLeft()));
+							//System.out.println(Distance.AMA(refPair.getLeft(), amap01Pair.getLeft()));
+							//System.out.print("\t");
+							System.out.println(amap01Pair.getRight());
+							//System.out.println("----------------------------------");
+						}
+					}
+				}
+			}
+		}
 
 
 
 
-/*
+
+
+
+
+
+		/*
 		ArrayList<String> referenceA1 = new ArrayList<String>();
 		ArrayList<String> mpd1 = new ArrayList<String>();
 		ArrayList<String> amapnormTest1 = new ArrayList<String>();
@@ -202,7 +236,7 @@ public class Distance {
 			System.out.println("The AMA between the reference alignment and the AMAP4 from Test" +refAndAMAP4.get(i).getRight() + ": " + refAndAMAP4.get(i).getLeft());
 			System.out.println();
 		}
-		
+
 		System.out.println("The distance between the reference alignment and the MPD from Test1: "+Distance.multiDistance(referenceA1,mpd1));
 		//System.out.println(Distance.distance(A1.toArray(),A2.toArray()));
 		System.out.println("The AMA between the reference alignment and the MPD from Test1: "+Distance.AMA(referenceA1,mpd1));

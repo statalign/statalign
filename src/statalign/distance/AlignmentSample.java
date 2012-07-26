@@ -9,7 +9,25 @@ import java.util.ArrayList;
 public 
 
 class AlignmentSample {
-	
+
+	final static String pathToSamples = "/home/ingolfur/Dropbox/RNA and StatAlign/TestRNAData/mpd";
+
+	public static void main(String[] args){
+		File reffolder = new File(pathToSamples);
+		File[] listOfRefFiles = reffolder.listFiles();
+		ArrayList<AlignmentSample> yeah = new ArrayList<AlignmentSample>();
+		for(File file  : listOfRefFiles){
+			AlignmentSample temp = AlignmentSample.loadAlignments(file);
+			 yeah.add(temp);
+			 for(int i = 0; i<temp.posteriors.size(); i++){
+				 System.out.println(temp.posteriors.get(i)); 
+			 }
+			 
+			 System.out.println(file.getName());
+		}
+		
+	}
+
 	Alignment reference = new Alignment();
 	Alignment mpd = new Alignment();
 	ArrayList<Double> posteriors = new ArrayList<Double>();
@@ -29,7 +47,7 @@ class AlignmentSample {
 		}
 		return ret;
 	}
-	
+
 
 	public static AlignmentSample loadAlignments(File file) {
 
@@ -48,91 +66,91 @@ class AlignmentSample {
 				if (textline.startsWith("%")) {
 					if(name == null)
 					{
-						
+
 					}
 					else
-					if (name.equalsIgnoreCase("%reference")) {
-						sample.reference.sequences = sequences;
-						sample.reference.sequenceNames = sequenceNames;
-					} else if (name.equalsIgnoreCase("%mpd")) {
-						sample.mpd.sequences = sequences;
-						sample.mpd.sequenceNames = sequenceNames;
+						if (name.equalsIgnoreCase("%reference")) {
+							sample.reference.sequences = sequences;
+							sample.reference.sequenceNames = sequenceNames;
+						} else if (name.equalsIgnoreCase("%mpd")) {
+							sample.mpd.sequences = sequences;
+							sample.mpd.sequenceNames = sequenceNames;
+						}
+						else
+							if(name.equalsIgnoreCase("%posteriors"))
+							{
+
+							}
+							else {
+								Alignment alignment = new Alignment();
+								alignment.sequences = sequences;
+								alignment.sequenceNames = sequenceNames;
+								sample.samples.add(alignment);
+							}
+
+
+					name = textline;
+					if("%posteriors".equals(name))
+					{
+						for(int i = 0 ; (textline = buffer.readLine()) != null && !textline.startsWith("%") ; i++)
+						{
+							sample.posteriors.add(new Double(textline));
+						}
+
+						if(textline != null && textline.startsWith("%"))
+						{
+							name = textline;
+							System.out.println("#"+name);
+
+							//''sequences = new ArrayList<String>();
+							//'sequenceNames = new ArrayList<String>();
+						}
 					}
-					else
-						if(name.equalsIgnoreCase("%posteriors"))
-						{
-							
-						}
-						else {
-							Alignment alignment = new Alignment();
-							alignment.sequences = sequences;
-							alignment.sequenceNames = sequenceNames;
-							sample.samples.add(alignment);
-						}
 
-					
-						name = textline;
-						if("%posteriors".equals(name))
-						{
-							for(int i = 0 ; (textline = buffer.readLine()) != null && !textline.startsWith("%") ; i++)
-							{
-								sample.posteriors.add(new Double(textline));
-							}
-							
-							if(textline != null && textline.startsWith("%"))
-							{
-								name = textline;
-								System.out.println("#"+name);
+					// some comment
+					if(!alignmentString.equals(""))
+					{
+						parseAlignmentString(alignmentString, sequences, sequenceNames);
+						alignmentString = "";
 
-								//''sequences = new ArrayList<String>();
-								//'sequenceNames = new ArrayList<String>();
-							}
-						}
-
-						// some comment
-						if(!alignmentString.equals(""))
-						{
-							parseAlignmentString(alignmentString, sequences, sequenceNames);
-							alignmentString = "";
-	
-							sequences = new ArrayList<String>();
-							sequenceNames = new ArrayList<String>();
-						}
+						sequences = new ArrayList<String>();
+						sequenceNames = new ArrayList<String>();
+					}
 				} else {
 					alignmentString += textline + "\n";
 				}
 			}
-			
+
 
 			if(name == null)
 			{
-				
+
 			}
 			else
-			if (name.equalsIgnoreCase("%reference")) {
-				sample.reference.sequences = sequences;
-				sample.reference.sequenceNames = sequenceNames;
-			} else if (name.equalsIgnoreCase("%mpd")) {
-				sample.mpd.sequences = sequences;
-				sample.mpd.sequenceNames = sequenceNames;
-			}
-			else
-			if(name.equalsIgnoreCase("%posteriors"))
-			{
-				
-			}
-			else {
-				Alignment alignment = new Alignment();
-				alignment.sequences = sequences;
-				alignment.sequenceNames = sequenceNames;
-				sample.samples.add(alignment);
-			}
+				if (name.equalsIgnoreCase("%reference")) {
+					sample.reference.sequences = sequences;
+					sample.reference.sequenceNames = sequenceNames;
+				} else if (name.equalsIgnoreCase("%mpd")) {
+					sample.mpd.sequences = sequences;
+					sample.mpd.sequenceNames = sequenceNames;
+				}
+				else
+					if(name.equalsIgnoreCase("%posteriors"))
+					{
+
+					}
+					else {
+						Alignment alignment = new Alignment();
+						alignment.sequences = sequences;
+						alignment.sequenceNames = sequenceNames;
+						sample.samples.add(alignment);
+					}
 
 			if(!alignmentString.equals(""))
 			{
 				parseAlignmentString(alignmentString, sequences, sequenceNames);
 				alignmentString = "";
-				
+
 			}
 			buffer.close();
 		} catch (IOException ex) {
@@ -141,7 +159,7 @@ class AlignmentSample {
 
 		return sample;
 	}
-	
+
 	public static void parseAlignmentString(String alignmentString, ArrayList<String> sequences,  ArrayList<String> sequenceNames)
 	{
 
@@ -171,7 +189,7 @@ class AlignmentSample {
 			sequences.add(seq);
 		}
 	}
-	
+
 
 	static class Alignment {
 		ArrayList<String> sequences = new ArrayList<String>();
