@@ -18,6 +18,12 @@ public class ResultBundle implements Serializable {
 	char[] structure; // . = single-stranded; (,)=basepaired
 	float[] reliability; // corresponding ps or pd value
 
+
+	public float[][] finalmatrix;
+	public double entropyVal = 0;
+	public double entropyPercOfMax = 0;
+	public double entropyMax = 0;
+
 	public ResultBundle() {
 	}
 
@@ -56,20 +62,9 @@ public class ResultBundle implements Serializable {
 		return reliability;
 	}
 	
-    public String toString(){
-		String reString = "";
-		String struct = "structure:      [";
-		String sing   = "singlebaseprob: [";
-		String rel    = "reliability:    [";
-		for(int i = 0; i<structure.length; ++i){
-			struct += structure[i];
-			sing += singlebaseprob[i] + ",";
-			rel += reliability[i] + ",";
-		}
-		
-		reString +=  struct + "]\n";
-		reString +=  sing+ "]\n";
-		reString += rel+ "]";
-		return reString;
+	public float[][] getFinalMatrix()
+	{
+		return finalmatrix;
 	}
+
 }

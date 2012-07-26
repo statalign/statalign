@@ -15,7 +15,8 @@ import statalign.postprocess.utils.RNAFoldingTools;
 public class Benchmarks 
 {
 	public static void main(String[] args) {
-		new Benchmarks().performDistanceBenchmarks();
+		//new Benchmarks().performDistanceBenchmarks();
+		Benchmarks.automatedTest2();
 		System.exit(0);
 		/*
 		//Benchmarks.testData();
@@ -327,6 +328,16 @@ public class Benchmarks
 					catch(IOException ex)
 					{
 						ex.printStackTrace();
+					}
+					
+					String dir2 = "/home/michael/workspace/StatAlign/";
+					System.out.println(new File(dir2+name+".dat.fas.folds_2"));
+					if(new File(dir2+name+".dat.fas.folds_2").exists())
+					{
+						String dbn = PPFold.loadFolds(new File(dir2+name+".dat.fas.folds_2"), 4).get(0);
+						double fscSampling = Benchmarks.calculateFScore(pairedSitesExperimental, RNAFoldingTools.getPairedSitesFromDotBracketString(dbn));
+						System.out.println("Alignment sampling FSC"+fscSampling);
+						
 					}
 					//System.out.println(structures);
 				}

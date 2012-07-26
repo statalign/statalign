@@ -67,6 +67,21 @@ public class AsynchronousJobExecutorThreadPool extends AsynchronousJobExecutor {
 			}
 		});
 	}
+	
+	@Override
+	public void startExecution(final PhyloJobFuzzy job, final JobListener listener) {
+		threadPool.execute(new Runnable() {
+			public void run() {
+				if (job.isType() == false) {
+					double[][] res = PhyloCalcFuzzy.calcSingleColumn(job);
+					listener.jobFinished(res);
+				} else {
+					double[][] res = PhyloCalcFuzzy.calcDoubleColumn(job);
+					listener.jobFinished(res);
+				}
+			}
+		});
+	}
 
 	@Override
 	public String getDescription() {
