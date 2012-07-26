@@ -38,17 +38,6 @@ public class AsynchronousJobExecutorBlocking extends AsynchronousJobExecutor {
 			listener.jobFinished(res);
 		}
 	}
-	
-	@Override
-	public void startExecution(PhyloJobFuzzy job, JobListener listener) {
-		if (job.isType() == false) {
-			double[][] res = PhyloCalcFuzzy.calcSingleColumn(job);
-			listener.jobFinished(res);
-		} else {
-			double[][] res = PhyloCalcFuzzy.calcDoubleColumn(job);
-			listener.jobFinished(res);
-		}
-	}
 
 	@Override
 	public String getId() {

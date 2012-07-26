@@ -18,12 +18,6 @@ public class ResultBundle implements Serializable {
 	char[] structure; // . = single-stranded; (,)=basepaired
 	float[] reliability; // corresponding ps or pd value
 
-
-	public float[][] finalmatrix;
-	public double entropyVal = 0;
-	public double entropyPercOfMax = 0;
-	public double entropyMax = 0;
-
 	public ResultBundle() {
 	}
 
@@ -60,11 +54,6 @@ public class ResultBundle implements Serializable {
 
 	public float[] getReliability() {
 		return reliability;
-	}
-	
-	public float[][] getFinalMatrix()
-	{
-		return finalmatrix;
 	}
 	
     public String toString(){
