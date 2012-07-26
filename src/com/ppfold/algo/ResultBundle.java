@@ -71,23 +71,5 @@ public class ResultBundle implements Serializable {
 		reString +=  sing+ "]\n";
 		reString += rel+ "]";
 		return reString;
-	}"structure:      [";
-		String sing   = "singlebaseprob: [";
-		String rel    = "reliability:    [";
-		for(int i = 0; i<structure.length; ++i){
-			struct += structure[i];
-			sing += singlebaseprob[i] + ",";
-			rel += reliability[i] + ",";
-		}
-		
-		reString +=  struct + "]\n";
-		reString +=  sing+ "]\n";
-		reString += rel+ "]";
-		return reString;
-	}
-	
-	public float[][] getFinalMatrix()
-	{
-		return finalmatrix;
 	}
 }
