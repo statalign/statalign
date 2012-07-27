@@ -13,11 +13,7 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.Iterator;
 import java.util.List;
-import java.util.LinkedList;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
@@ -25,13 +21,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
 import com.ppfold.algo.AlignmentData;
-import com.ppfold.algo.AsynchronousJobExecutor;
-import com.ppfold.algo.AsynchronousJobExecutorThreadPool;
-import com.ppfold.algo.ExportTools;
-import com.ppfold.algo.FoldingProject;
 import com.ppfold.algo.FuzzyAlignment;
-import com.ppfold.algo.MatrixTools;
-import com.ppfold.algo.NeighbourJoining;
 import com.ppfold.algo.NullProgress;
 import com.ppfold.algo.Parameters;
 import com.ppfold.algo.Progress;
@@ -40,7 +30,6 @@ import com.ppfold.algo.Tree;
 import com.ppfold.algo.extradata.ExtraData;
 import com.ppfold.main.Alignment;
 import com.ppfold.main.AlignmentReader;
-import com.ppfold.main.DataInfo;
 import com.ppfold.main.NewickReader;
 import com.ppfold.main.PPfoldMain;
 
@@ -50,7 +39,6 @@ import statalign.base.State;
 import statalign.base.Utils;
 import statalign.distance.Distance;
 import statalign.postprocess.Postprocess;
-import statalign.postprocess.gui.AlignmentGUI;
 import statalign.postprocess.plugins.benchmarks.Benchmarks;
 import statalign.postprocess.gui.PPFoldGUI;
 import statalign.postprocess.utils.Mapping;
@@ -265,7 +253,6 @@ public class PPFold extends statalign.postprocess.Postprocess {
 			List<String> sequences = align.getSequences();
 			List<String> seqNames = align.getNames();
 			String refSeq = sequences.get(0).replaceAll("-", "");
-			String refSeqName = seqNames.get(0);
 			String refSeqGapped = sequences.get(0);
 			int maxLength = refSeq.length();
 			for (int i = 0; i < sequences.size(); i++) {
@@ -552,7 +539,6 @@ public class PPFold extends statalign.postprocess.Postprocess {
 				//RNAFoldingTools rnaTools = new RNAFoldingTools();
 				//String seq = this.getSequenceByName(t, this.refSeqName).replaceAll("-", "");
 				//RNAFoldingTools rnaTools = new RNAFoldingTools();
-				String seq = getSequenceByName(t, PPFold.refSeqName).replaceAll("-", "");
 				int[] pairedSites = rnaTools.getPosteriorDecodingConsensusStructureMultiThreaded(probMatrix);
 				p2 = RNAFoldingTools.getDotBracketStringFromPairedSites(pairedSites);
 				System.out.println(RNAFoldingTools.getDotBracketStringFromPairedSites(pairedSites));

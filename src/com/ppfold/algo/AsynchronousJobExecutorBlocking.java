@@ -1,6 +1,5 @@
 package com.ppfold.algo;
 
-import java.util.List;
 
 /**
  * Asynchronous job execution, blocking class. Jobs are executed sequentially.
