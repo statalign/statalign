@@ -111,6 +111,8 @@ public class PPFold extends statalign.postprocess.Postprocess {
 	double firstLikelihood = 0;
 	double posteriorProbabilityAvg = 0;
 	
+	RNAFoldingTools rnaTools = new RNAFoldingTools();
+	
 	String outDir = "";
 
 	public PPFold() {
@@ -284,7 +286,7 @@ public class PPFold extends statalign.postprocess.Postprocess {
 			float [][] basePairProb = mpdResult.finalmatrix;			
 			System.out.println("MPD entropy" + mpdResult.entropyVal+"\t"+mpdResult.entropyPercOfMax+"\t"+mpdResult.entropyMax);
 			
-			int [] pairedSites = RNAFoldingTools.getPosteriorDecodingConsensusStructure(basePairProb);
+			int [] pairedSites = rnaTools.getPosteriorDecodingConsensusStructureMultiThreaded(basePairProb);
 			ppfoldReliability = RNAFoldingTools.calculatePPfoldReliabilityScore(pairedSites, RNAFoldingTools.getDoubleMatrix(basePairProb));
 			int [] projectedPairedSites = Benchmarks.projectPairedSites(refSeqGapped, pairedSites);
 			System.out.println("PPfold reliability score (MPD) = " + ppfoldReliability);
@@ -628,16 +630,16 @@ public class PPFold extends statalign.postprocess.Postprocess {
 				//Tree tree = getPPfoldTree(mcmc);
 				ResultBundle fuzzyResultExp = PPfoldMain.foldFuzzyAlignment(progress, fuzzyAlignment, tree, param, extradata, true);
 				ResultBundle fuzzyResultObs = PPfoldMain.foldFuzzyAlignment(progress, fuzzyAlignment, tree, param, extradata, false);
-				float [][] fuzzyBasePairProb = fuzzyResultExp.finalmatrix;
-				//RNAFoldingTools.s
-				int [] fuzzyPairedSites = RNAFoldingTools.getPosteriorDecodingConsensusStructure(fuzzyBasePairProb);
+				int [] fuzzyPairedSitesExp = rnaTools.getPosteriorDecodingConsensusStructureMultiThreaded(fuzzyResultExp.finalmatrix);
+				int [] fuzzyPairedSitesObs = rnaTools.getPosteriorDecodingConsensusStructureMultiThreaded(fuzzyResultObs.finalmatrix);
 				System.out.println("R0:"+p2);
 				System.out.println(refSeq);				
-				System.out.println("FZ:"+RNAFoldingTools.getDotBracketStringFromPairedSites(fuzzyPairedSites));
+				System.out.println("FZ:"+RNAFoldingTools.getDotBracketStringFromPairedSites(fuzzyPairedSitesExp));
 				System.out.println("Fuzzy entropy" + fuzzyResultExp.entropyVal+"\t"+fuzzyResultExp.entropyPercOfMax+"\t"+fuzzyResultExp.entropyMax);
 				RNAFoldingTools.writeToFile(new File(title+"_entropy_fuzzy_exp.txt"), no+"\t"+fuzzyResultExp.entropyVal+"\t"+fuzzyResultExp.entropyPercOfMax + "\t"+fuzzyResultExp.entropyMax, true);
 				RNAFoldingTools.writeToFile(new File(title+"_entropy_fuzzy_obs.txt"), no+"\t"+fuzzyResultObs.entropyVal+"\t"+fuzzyResultObs.entropyPercOfMax + "\t"+fuzzyResultObs.entropyMax, true);
-				PPFold.appendFolds(new File(outDir+title+".folds_2"), "sample", PPFold.getSequenceByName(t, refSeqName),fuzzyPairedSites,fuzzyPairedSites, false);
+				PPFold.appendFolds(new File(outDir+title+".folds_e_exp"), "exp", PPFold.getSequenceByName(t, refSeqName),fuzzyPairedSitesExp,fuzzyPairedSitesExp, false);
+				PPFold.appendFolds(new File(outDir+title+".folds_e_obs"), "obs", PPFold.getSequenceByName(t, refSeqName),fuzzyPairedSitesExp,fuzzyPairedSitesObs, false);
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();

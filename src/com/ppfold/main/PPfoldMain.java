@@ -507,7 +507,7 @@ public class PPfoldMain implements Runnable {
 				for(int j=0; j<nrseq; j++){
 					//iterates sequences
 					thiscolumn[j]= fuzzyAlignment.sequences.get(j).charAt(i);
-					thisFuzzyColumn[j]= fuzzyAlignment.columns.get(i)[j];
+					thisFuzzyColumn[j]= fuzzyAlignment.columns.get(i)[j].clone();
 					if(MatrixTools.isGap(thiscolumn[j])){gapscounter++;}
 					//System.out.println("Calculating column nr. " + j + " taking from seq " + j + " charAt " + i + " which is " + thiscolumn[j]);
 				}
@@ -560,6 +560,7 @@ public class PPfoldMain implements Runnable {
 				for(int j=0; j<nrseq; j++){
 					//iterates sequences
 					thiscolumn[j]=(char) fuzzyAlignment.sequences.get(j).charAt(i);
+					thisFuzzyColumn[j]= fuzzyAlignment.columns.get(i)[j].clone();
 				}
 				fullcolumns.add(thiscolumn.clone());
 				//Remove column 
@@ -571,6 +572,7 @@ public class PPfoldMain implements Runnable {
 				else{
 					//Keep column.
 					columns.add(thiscolumn.clone());
+					fuzzyColumns.add(thisFuzzyColumn.clone());
 				}
 			}
 		}
@@ -646,12 +648,15 @@ public class PPfoldMain implements Runnable {
 			ArrayList<Integer> mapping = new ArrayList<Integer>();
 			for(int i = 0 ; i < fuzzyAlignment.sequences.get(0).length() ; i++)
 			{
-				if(leftoutcolumns.indexOf(i) <= 0)
+				if(leftoutcolumns.indexOf(new Integer(i)) == -1)
 				{
 					mapping.add(i);
 				}
 			}
 			fuzzyAlignment.mapping = mapping;
+			//System.out.println(mapping);
+			//System.out.println(fuzzyColumns.size() + "\t"+columns.size());
+			//System.out.println(fuzzyColumns+ "\n"+columns);
 			result = FoldingProject.foldFuzzyAlignment(activity3, phylodivisions,scfgdivisions, tree, 
 					fuzzyColumns, fuzzyAlignment, fuzzyAlignment.names, param, executor, verbose,1,extradata,false,entropycalc);
 		}

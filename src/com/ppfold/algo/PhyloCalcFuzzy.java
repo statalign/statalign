@@ -97,15 +97,16 @@ public class PhyloCalcFuzzy {
 					else
 					{
 						// observed frequencies
-						frequencies =  phyloJob.fuzzyAlignment.getFrequencyPairs(phyloJob.columnIndices.get(col1), phyloJob.columnIndices2.get(col2), row, true);
+						frequencies =  phyloJob.fuzzyAlignment.getFrequencyPairs(phyloJob.fuzzyAlignment.mapping.get(phyloJob.columnIndices.get(col1)), phyloJob.fuzzyAlignment.mapping.get(phyloJob.columnIndices2.get(col2)), row, false);
 					}
-					
-					int mapCol1 = phyloJob.columnIndices.get(col1);
-					int mapCol2 = phyloJob.columnIndices.get(col2);	
 					String t1 =doubleArrayToString( column1[row].probability);
 					String t2 =doubleArrayToString( column2[row].probability);
-					String s1 = doubleArrayToString(phyloJob.fuzzyAlignment.columns.get(phyloJob.columnIndices.get(col1))[row].probability);
-					String s2 = doubleArrayToString(phyloJob.fuzzyAlignment.columns.get(phyloJob.columnIndices2.get(col2))[row].probability);
+					//System.out.println("Fzysize"+phyloJob.fuzzyAlignment.columns.size()+"\t"+phyloJob.fuzzyAlignment.mapping.size());
+					//System.out.println("c1,"+phyloJob.columnIndices+"\tc2"+phyloJob.columnIndices2);
+					//System.out.println("d1,"+phyloJob.columnIndices.size()+"\td2"+phyloJob.columnIndices2.size());
+					//System.out.println("Fzysize"+);
+					String s1 = doubleArrayToString(phyloJob.fuzzyAlignment.columns.get(phyloJob.fuzzyAlignment.mapping.get(phyloJob.columnIndices.get(col1)))[row].probability);
+					String s2 = doubleArrayToString(phyloJob.fuzzyAlignment.columns.get(phyloJob.fuzzyAlignment.mapping.get(phyloJob.columnIndices2.get(col2)))[row].probability);
 					//System.out.println("+"+t1+"\t"+t2+"\t"+s1+"\t"+s2);
 										
 					//double [][] probabilities =  phyloJob.fuzzyAlignment.getFrequencyPairs(phyloJob.columnIndices.get(col1), phyloJob.columnIndices2.get(col2), row, true);
