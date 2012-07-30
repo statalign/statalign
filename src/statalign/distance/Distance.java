@@ -7,6 +7,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -324,6 +325,13 @@ public class Distance {
 		return (1-amaScore)*ksub1*lengthSum;
 	}
 
+	public static int multiDistance(String [] A, String [] B){
+		ArrayList<String> arListA = new ArrayList <String> (Arrays.asList(A));
+		ArrayList<String> arListB = new ArrayList <String> (Arrays.asList(B));
+		return Distance.multiDistance(arListA, arListB);
+		
+	}
+	
 	public static int multiDistance(ArrayList<String>  A, ArrayList<String>  B){
 		sortSeq(A,B);
 		String [] tempA = new String[2]; 
@@ -517,6 +525,12 @@ public class Distance {
 			}
 		}
 		return deletionUnion.size() + insertionUnion.size();
+	}
+	
+	public static double AMA(String[] A, String[] B){
+		ArrayList<String> arListA = new ArrayList <String> (Arrays.asList(A));
+		ArrayList<String> arListB = new ArrayList <String> (Arrays.asList(B));
+		return Distance.AMA(arListA, arListB);
 	}
 
 	public static double AMA(ArrayList<String>  A, ArrayList<String>  B){
