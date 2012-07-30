@@ -1023,7 +1023,7 @@ public class RNAFoldingTools {
 			}
 		}
 
-		return ppfoldReliablityScore/(double)(pairedSites.length);
+		return ppfoldReliablityScore/((double)pairedSites.length);
 	}
 	
 	public static void writeToFile(File f, String s, boolean append)

@@ -66,5 +66,14 @@ public class ResultBundle implements Serializable {
 	{
 		return finalmatrix;
 	}
-
+	
+	public double getPPfoldReliability()
+	{
+		double sum = 0;
+		for(int i = 0 ; i < reliability.length ; i++)
+		{
+			sum += reliability[i];
+		}
+		return sum / ((double)reliability.length);
+	}
 }

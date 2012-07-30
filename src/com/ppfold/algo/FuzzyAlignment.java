@@ -50,7 +50,7 @@ public class FuzzyAlignment {
 				String seq = a.sequences.get(row);
 				for(int col = 0 ; col < seq.length() ; col++)
 				{
-					double [] ambiguities = MatrixTools.createSVector(seq.charAt(col));
+					double [] ambiguities = normalize(MatrixTools.createSVector(seq.charAt(col)));
 					for(int l = 0 ; l < ambiguities.length ; l++)
 					{
 						fuzzyAlignment.columns.get(col)[row].probability[l] += ambiguities[l] / numAlignmentsDouble;
@@ -63,6 +63,7 @@ public class FuzzyAlignment {
 		return fuzzyAlignment;
 	}
 	
+	/*
 	public static double[] createSVector2(final char nt) {
 		final double[] vector = MatrixTools.createVector(4, 0.01); //uncertainty in nucleotide
 		//final double[] vector = createVector(4, 0.00);
@@ -94,7 +95,7 @@ public class FuzzyAlignment {
 			vector[i] /= count;
 		}
 		return vector;
-	}
+	}*/
 	
 	public static FuzzyAlignment getFuzzyAlignmentAndProject(List<AlignmentData> alignments, int seqno)
 	{
@@ -163,6 +164,9 @@ public class FuzzyAlignment {
 		a.sequences.add("A-G");
 		a.sequences.add("AAT");
 		a.sequences.add("AAT");
+		a.names.add("a");
+		a.names.add("b");
+		a.names.add("c");
 		
 		AlignmentData b = new AlignmentData();
 		b.sequences.add("A-A");
@@ -198,13 +202,30 @@ public class FuzzyAlignment {
 				frequencies[k] += ambiguities[k]/numAlignments; 
 			}
 		}
-		return frequencies;
+		return normalize(frequencies);
 	}
 	
 	/*public static double [][] getFrequencyPairs(List<FuzzyNucleotide[]> columns1, List<FuzzyNucleotide[]> columns2)
 	{
 		
 	}*/
+	
+	public static double [] normalize(double [] vector)
+	{
+		double sum = 0;
+		for(int i = 0 ; i < vector.length ; i++)
+		{
+			sum += vector[i];
+		}
+		
+		double [] array = new double[vector.length];
+		for(int i = 0 ; i < vector.length ; i++)
+		{
+			array[i] = vector[i] / sum;
+		}
+		
+		return array;
+	}
 	
 	
 	public double [][] getFrequencyPairs(int colA, int colB, int row, boolean useMapping)
@@ -225,8 +246,8 @@ public class FuzzyAlignment {
 		for(int i = 0 ; i < alignments.size() ; i++)
 		{
 			String seq1 = alignments.get(i).sequences.get(row);
-			double [] ambiguities1 = MatrixTools.createSVector(seq1.charAt(col1));
-			double [] ambiguities2 = MatrixTools.createSVector(seq1.charAt(col2));
+			double [] ambiguities1 = normalize(MatrixTools.createSVector(seq1.charAt(col1)));
+			double [] ambiguities2 = normalize(MatrixTools.createSVector(seq1.charAt(col2)));
 			double [][] result = new double[4][4];
 			MatrixTools.multiplyVectorVector(ambiguities1, ambiguities2, result);
 			

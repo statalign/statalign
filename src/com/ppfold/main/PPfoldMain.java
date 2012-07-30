@@ -596,6 +596,10 @@ public class PPfoldMain implements Runnable {
 		if(tree==null){
 			try {				
 				//System.out.println("Creating tree by neighbour joining... ");
+				
+				System.out.println("activity="+(activity == null));
+				System.out.println("columns_int="+(columns_int == null));
+				System.out.println("param="+(param == null));
 				tree = NeighbourJoining.generateTreeNJ(activity, fuzzyAlignment.sequences,columns_int, fuzzyAlignment.names, param);
 				//tree.print();
 			}catch (InterruptedException e) {

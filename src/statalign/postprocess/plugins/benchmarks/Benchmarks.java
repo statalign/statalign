@@ -15,8 +15,8 @@ import statalign.postprocess.utils.RNAFoldingTools;
 public class Benchmarks 
 {
 	public static void main(String[] args) {
-		//new Benchmarks().performDistanceBenchmarks();
-		Benchmarks.automatedTest2();
+		new Benchmarks().performDistanceBenchmarks();
+		//Benchmarks.automatedTest2();
 		System.exit(0);
 		/*
 		//Benchmarks.testData();
@@ -218,7 +218,7 @@ public class Benchmarks
 		}
 	}
 	
-	public static void automatedTest2()
+	/*public static void automatedTest2()
 	{
 		String dir = "/home/michael/Dropbox/RNA and StatAlign/TestRNAData/";
 		String resultsDir = "/home/michael/Dropbox/RNA and StatAlign/TestRNAData/Results3/";
@@ -331,14 +331,157 @@ public class Benchmarks
 					}
 					
 					String dir2 = "/home/michael/workspace/StatAlign/";
-					System.out.println(new File(dir2+name+".dat.fas.folds_2"));
-					if(new File(dir2+name+".dat.fas.folds_2").exists())
+					System.out.println(new File(dir2+name+".dat.fas.folds_e_obs"));
+					if(new File(dir2+name+".dat.fas.folds_e_obs").exists())
 					{
-						String dbn = PPFold.loadFolds(new File(dir2+name+".dat.fas.folds_2"), 4).get(0);
-						double fscSampling = Benchmarks.calculateFScore(pairedSitesExperimental, RNAFoldingTools.getPairedSitesFromDotBracketString(dbn));
-						System.out.println("Alignment sampling FSC"+fscSampling);
+						String dbn = PPFold.loadFolds(new File(dir2+name+".dat.fas.folds_e_obs"), 4).get(0);
+						double fscSamplingObs = Benchmarks.calculateFScore(pairedSitesExperimental, RNAFoldingTools.getPairedSitesFromDotBracketString(dbn));
+						System.out.println("Alignment sampling obs FSC"+fscSamplingObs);
+						
+						dbn = PPFold.loadFolds(new File(dir2+name+".dat.fas.folds_e_exp"), 4).get(0);
+						double fscSamplingExp = Benchmarks.calculateFScore(pairedSitesExperimental, RNAFoldingTools.getPairedSitesFromDotBracketString(dbn));
+						System.out.println("Alignment sampling exp FSC"+fscSamplingExp);
 						
 					}
+					//System.out.println(structures);
+				}
+			}
+		}
+	}*/
+	
+	public static void automatedTest2()
+	{
+		String dir = System.getProperty("user.home")+ "/Dropbox/RNA and StatAlign/TestRNAData/";
+		//String dir = "/home/michael/Dropbox/RNA and StatAlign/TestRNAData/";
+		//String resultsDir = "/home/michael/Dropbox/RNA and StatAlign/TestRNAData/Results3/";
+		String resultsDir = System.getProperty("user.home")+ "/Dropbox/RNA and StatAlign/static/5seq/";
+		File [] files = new File(resultsDir).listFiles();
+		for(int i = 0 ; i < files.length ; i++)
+		{
+			String fullName = files[i].getName();
+			if(fullName.endsWith(".dat.res"))
+			{
+				String name = fullName.substring(0, fullName.length()-8);
+				String smallname = fullName.substring(0, fullName.length()-16);
+				System.out.println(name);
+				
+				//File files = new File("C:/Users/Michael/Dropbox/RNA and StatAlign/TestRNAData/").listFiles();
+				File experimentalFile = new File(dir+smallname+".dat");
+				//File ourData = new File("C:/Users/Michael/Dropbox/RNA and StatAlign/TestRNAData/TestRNADATA1OURS");
+				//File statalignResultFile = new File("C:/Users/Michael/Dropbox/RNA and StatAlign/TestRNAData/TestRNAData1.dat.txt");
+				File ppfoldData = new File(dir+smallname+".dat.ct");
+				
+				ExperimentalData experimentalData = Benchmarks.loadExperimentalStructure(experimentalFile);
+				StatAlignResult statalignResult = loadStatAlignResultFile(new File(resultsDir+"/"+name+".dat.res"));
+				StatAlignResult statalignWeightedResult = loadStatAlignResultFile(new File(resultsDir+"/"+name+".dat.res.weighted"));
+				System.out.println(name);
+				StatAlignResult mpdResult = loadStatAlignResultFile(new File(resultsDir+"/"+name+".dat.res.mpd"));
+				
+				String mappingSeq = "";
+				for(int j = 0 ;j < experimentalData.sequences.size() ; j++)
+				{
+					if(experimentalData.sequences.get(j).replaceAll("-", "").equals(statalignResult.sequence.replaceAll("-", "")))
+					{
+						mappingSeq = experimentalData.sequences.get(j);
+					}
+				}
+				
+				//System.out.println(mappingSeq);
+				//System.out.println(statalignResult.sequence);
+				
+				int [] pairedSitesExperimental = projectPairedSites(mappingSeq, experimentalData.pairedSites);
+				int [] pairedSitesStatAlign = statalignResult.pairedSites;
+				int [] pairedSitesStatAlignWeighted = statalignWeightedResult.pairedSites;
+				int [] pairedSitesPPfold = projectPairedSites(mappingSeq, RNAFoldingTools.getPairedSitesFromCtFile(ppfoldData));
+				int [] pairedSitesMPD = mpdResult.pairedSites;
+				//printPairs(pairedSitesExperimental);
+				//printPairs(pairedSitesStatAlign);
+				//printPairs(pairedSitesPPfold);
+				
+
+				//System.out.println("X:"+statalignResult.sequence);
+				//System.out.println("X:"+experimentalData.sequences.get(2));
+				System.out.println(">"+name + " (" + (statalignResult.sequence.replaceAll("-", "").length())+")");
+				System.out.println("  "+statalignResult.sequence.replaceAll("-", ""));
+				System.out.println("E:"+RNAFoldingTools.getDotBracketStringFromPairedSites(pairedSitesExperimental));
+				System.out.println("S:"+RNAFoldingTools.getDotBracketStringFromPairedSites(pairedSitesStatAlign));
+				System.out.println("  "+statalignResult.sequence.replaceAll("-", ""));
+				System.out.println("E:"+RNAFoldingTools.getDotBracketStringFromPairedSites(pairedSitesExperimental));
+				System.out.println("P:"+RNAFoldingTools.getDotBracketStringFromPairedSites(pairedSitesPPfold));
+				
+				
+				double sensExpStat = Benchmarks.calculateSensitivity(pairedSitesExperimental, pairedSitesStatAlign);
+				double sensExpPPfold = Benchmarks.calculateSensitivity(pairedSitesExperimental, pairedSitesPPfold);
+				double ppvExpStat = Benchmarks.calculatePPV(pairedSitesExperimental, pairedSitesStatAlign);
+				double ppvExpPPfold = Benchmarks.calculatePPV(pairedSitesExperimental, pairedSitesPPfold);
+				double fscExpStat = Benchmarks.calculateFScore(pairedSitesExperimental, pairedSitesStatAlign);
+				double fscExpPPfold = Benchmarks.calculateFScore(pairedSitesExperimental, pairedSitesPPfold);
+				double fscExpStatWeighted =Benchmarks.calculateFScore(pairedSitesExperimental, pairedSitesStatAlignWeighted);
+				double fscExpStatMPD=Benchmarks.calculateFScore(pairedSitesExperimental, pairedSitesMPD);
+				double fscSamplingObs = -1;
+				
+				System.out.println(RNAFoldingTools.pad("", 14)+RNAFoldingTools.pad("StatAl", 10)+RNAFoldingTools.pad("PPfold", 10));
+				System.out.println(RNAFoldingTools.pad("Senstivity", 14)+RNAFoldingTools.pad(sensExpStat+"", 6)+"    "+RNAFoldingTools.pad(sensExpPPfold+"", 6));
+				System.out.println(RNAFoldingTools.pad("PPV", 14)+RNAFoldingTools.pad(ppvExpStat+"", 6)+"    "+RNAFoldingTools.pad(ppvExpPPfold+"", 6));
+				System.out.println(RNAFoldingTools.pad("F-score", 14)+RNAFoldingTools.pad(fscExpStat+"", 6)+"    "+RNAFoldingTools.pad(fscExpPPfold+"", 6));
+				System.out.print("StatAl: ");
+				printValues(pairedSitesExperimental, pairedSitesStatAlign);
+				System.out.print("PPfold: ");
+				printValues(pairedSitesExperimental, pairedSitesPPfold);
+				System.out.println("---------------------------------------------------------------------");
+				System.out.println();
+				
+				String dir2 = System.getProperty("user.home")+ "/Dropbox/RNA and StatAlign/static/5seq/";
+				//System.out.println(new File(dir2+smallname+".dat.fas.folds_e_obs").exists());
+				if(new File(dir2+smallname+".dat.fas.folds_e_obs").exists())
+				{
+					String dbn = PPFold.loadFolds(new File(dir2+smallname+".dat.fas.folds_e_obs"), 4).get(0);
+					fscSamplingObs = Benchmarks.calculateFScore(pairedSitesExperimental, RNAFoldingTools.getPairedSitesFromDotBracketString(dbn));
+					System.out.println("Alignment sampling obs FSC"+fscSamplingObs);
+					
+					dbn = PPFold.loadFolds(new File(dir2+smallname+".dat.fas.folds_e_exp"), 4).get(0);
+					double fscSamplingExp = Benchmarks.calculateFScore(pairedSitesExperimental, RNAFoldingTools.getPairedSitesFromDotBracketString(dbn));
+					System.out.println("Alignment sampling exp FSC"+fscSamplingExp);
+					
+				}
+				
+				System.out.println(new File(resultsDir+name+".folds").exists()+"\t"+fscSamplingObs);
+				//System.out.println("XXXXXXXXXXXXXX"+resultsDir+name+".folds");
+				if(new File(resultsDir+name+".folds").exists() && fscSamplingObs != -1)
+				{
+					ArrayList<String> structures = PPFold.loadFolds(new File(resultsDir+name+".folds"), 4);
+					ArrayList<String> values = new ArrayList<String>();
+					for(int k= 0 ; k < structures.size() ; k++)
+					{
+						String val = "" + Benchmarks.calculateFScore(pairedSitesExperimental, RNAFoldingTools.getPairedSitesFromDotBracketString(structures.get(k)));
+						values.add(val);
+					}
+					//System.out.println(values);
+					try
+					{
+						BufferedWriter buffer = new BufferedWriter(new FileWriter(resultsDir+name+".hist2"));
+						buffer.write("ST="+fscExpStat+"\n");
+						buffer.write("STW="+fscExpStatWeighted+"\n");
+						buffer.write("MPD="+fscExpStatMPD+"\n");
+						buffer.write("PP="+fscExpPPfold+"\n");
+						buffer.write("STE="+fscSamplingObs+"\n");
+						for(int l = 0 ; l < values.size() ; l++)
+						{
+							double val = Double.parseDouble(values.get(l));
+							if(Double.isNaN(val))
+							{
+								val = 0;
+							}
+							buffer.write(val+"\n");
+						}
+						buffer.close();
+					}
+					catch(IOException ex)
+					{
+						ex.printStackTrace();
+					}
+					
+					
 					//System.out.println(structures);
 				}
 			}
@@ -347,17 +490,28 @@ public class Benchmarks
 	
 	public void performDistanceBenchmarks()
 	{
-		File distanceFile = new File("/home/michael/workspace/StatAlign/9seq/dist_scores.txt");
-		//String dataDir = "/home/michael/Dropbox/RNA and StatAlign/TestRNAData/";
+		File distanceFile = new File(System.getProperty("user.home")+ "/Dropbox/RNA and StatAlign/static/9seq/dist_scores.txt");
 		
-		String dataDir = "/home/michael/Dropbox/RNA and StatAlign/Distance/Datasets2/";
-		String resultsDir = "/home/michael/workspace/StatAlign/9seq/";
+		String dataDir = System.getProperty("user.home")+ "/Dropbox/RNA and StatAlign/Distance/Datasets2/";
+		String resultsDir = System.getProperty("user.home")+ "/Dropbox/RNA and StatAlign/static/9seq/";
+		
+		//File distanceFile = new File(System.getProperty("user.home")+ "/Dropbox/RNA and StatAlign/static/5seq/dist_scores.txt");
+		
+		//String dataDir = System.getProperty("user.home")+ "/Dropbox/RNA and StatAlign/TestRNAData/";
+		//String resultsDir = System.getProperty("user.home")+ "/Dropbox/RNA and StatAlign/static/5seq/";
 		try
 		{
 			BufferedReader buffer = new BufferedReader(new FileReader(distanceFile));
 			String textline = null;
+			String header = "";
 			while((textline = buffer.readLine()) != null)
 			{
+				if(textline.startsWith("Dataset"))
+				{
+					header = textline;
+					//System.out.println(header);
+					continue;
+				}
 				String [] split = textline.split("\t+");
 				String dataName = split[0];
 				String name = dataName.split("\\.")[0];
@@ -401,6 +555,8 @@ public class Benchmarks
 					
 					System.out.println(textline+"\t"+fscExpStat+"\t"+fscExpStatMPD+"\t"+sensExpStat+"\t"+sensExpMPD+"\t"+ppvExpStat+"\t"+ppvExpMPD);
 			}
+			
+			buffer.close();
 		}
 		catch(IOException ex)
 		{
