@@ -333,7 +333,18 @@ public class Distance {
 	}
 	
 	public static int multiDistance(ArrayList<String>  A, ArrayList<String>  B){
-		sortSeq(A,B);
+		ArrayList<String> cloneA = new ArrayList<String>();
+		ArrayList<String> cloneB = new ArrayList<String>();
+		
+		for(String i : A){
+			cloneA.add(i);
+		}
+		
+		for(String i : B){
+			cloneB.add(i);
+		}
+		
+		sortSeq(cloneA,cloneB);
 		String [] tempA = new String[2]; 
 		String [] tempB = new String[2];
 		int d = 0;
@@ -352,6 +363,7 @@ public class Distance {
 	}
 
 	private static void sortSeq(ArrayList<String>  A, ArrayList<String>  B){
+		
 		List< Pair < String  , Integer> > seq1 = new ArrayList< Pair < String , Integer> >();
 		List< Pair < String  , Integer> > seq2 = new ArrayList< Pair < String  , Integer> >();
 		ArrayList<String> newA = new ArrayList<String>();

@@ -113,6 +113,7 @@ public class FuzzyAlignment {
 		ArrayList<AlignmentData> projectedAlignments = new ArrayList<AlignmentData>();
 		for(int i = 0 ; i < alignments.size() ; i++)
 		{
+			System.out.println("Projecting: " + projectAlignment(alignments.get(i) , refSeqName).sequences.get(0).length()+"\t"+ refSeqName);
 			projectedAlignments.add(projectAlignment(alignments.get(i), refSeqName));			
 		}
 		
