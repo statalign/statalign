@@ -15,8 +15,8 @@ import statalign.postprocess.utils.RNAFoldingTools;
 public class Benchmarks 
 {
 	public static void main(String[] args) {
-		new Benchmarks().performDistanceBenchmarks();
-		//Benchmarks.automatedTest2();
+		//new Benchmarks().performEntropy();
+		Benchmarks.automatedTest2();
 		System.exit(0);
 		/*
 		//Benchmarks.testData();
@@ -351,10 +351,10 @@ public class Benchmarks
 	
 	public static void automatedTest2()
 	{
-		String dir = System.getProperty("user.home")+ "/Dropbox/RNA and StatAlign/TestRNAData/";
+		String dir = System.getProperty("user.home")+ "/Dropbox/RNA and StatAlign/Distance/Datasets2/";
 		//String dir = "/home/michael/Dropbox/RNA and StatAlign/TestRNAData/";
 		//String resultsDir = "/home/michael/Dropbox/RNA and StatAlign/TestRNAData/Results3/";
-		String resultsDir = System.getProperty("user.home")+ "/Dropbox/RNA and StatAlign/static/5seq/";
+		String resultsDir = System.getProperty("user.home")+ "/Dropbox/RNA and StatAlign/static/9seq2/";
 		File [] files = new File(resultsDir).listFiles();
 		for(int i = 0 ; i < files.length ; i++)
 		{
@@ -431,7 +431,8 @@ public class Benchmarks
 				System.out.println("---------------------------------------------------------------------");
 				System.out.println();
 				
-				String dir2 = System.getProperty("user.home")+ "/Dropbox/RNA and StatAlign/static/5seq/";
+				//String dir2 = System.getProperty("user.home")+ "/Dropbox/RNA and StatAlign/static/5seq/";
+				String dir2 = resultsDir;
 				//System.out.println(new File(dir2+smallname+".dat.fas.folds_e_obs").exists());
 				if(new File(dir2+smallname+".dat.fas.folds_e_obs").exists())
 				{
@@ -490,10 +491,10 @@ public class Benchmarks
 	
 	public void performDistanceBenchmarks()
 	{
-		File distanceFile = new File(System.getProperty("user.home")+ "/Dropbox/RNA and StatAlign/static/9seq/dist_scores.txt");
+		File distanceFile = new File(System.getProperty("user.home")+ "/Dropbox/RNA and StatAlign/static/9seq2/dist_scores.txt");
 		
 		String dataDir = System.getProperty("user.home")+ "/Dropbox/RNA and StatAlign/Distance/Datasets2/";
-		String resultsDir = System.getProperty("user.home")+ "/Dropbox/RNA and StatAlign/static/9seq/";
+		String resultsDir = System.getProperty("user.home")+ "/Dropbox/RNA and StatAlign/static/9seq2/";
 		
 		//File distanceFile = new File(System.getProperty("user.home")+ "/Dropbox/RNA and StatAlign/static/5seq/dist_scores.txt");
 		
@@ -562,6 +563,138 @@ public class Benchmarks
 		{
 			ex.printStackTrace();
 		}
+	}
+	
+	public void performEntropy()
+	{
+		File distanceFile = new File(System.getProperty("user.home")+ "/Dropbox/RNA and StatAlign/static/5seq2/dist_scores.txt");
+		
+		//String dataDir = System.getProperty("user.home")+ "/Dropbox/RNA and StatAlign/Distance/Datasets2/";
+		String resultsDir = System.getProperty("user.home")+ "/Dropbox/RNA and StatAlign/static/5seq2/";
+		
+		//File distanceFile = new File(System.getProperty("user.home")+ "/Dropbox/RNA and StatAlign/static/5seq/dist_scores.txt");
+		
+		String dataDir = System.getProperty("user.home")+ "/Dropbox/RNA and StatAlign/TestRNAData/";
+		//String resultsDir = System.getProperty("user.home")+ "/Dropbox/RNA and StatAlign/static/5seq/";
+		try
+		{
+			BufferedReader buffer = new BufferedReader(new FileReader(distanceFile));
+			String textline = null;
+			String header = "";
+			while((textline = buffer.readLine()) != null)
+			{
+				if(textline.startsWith("Dataset"))
+				{
+					header = textline;
+					//System.out.println(header);
+					continue;
+				}
+				String [] split = textline.split("\t+");
+				String dataName = split[0];
+				String name = dataName.split("\\.")[0].split("_")[0];
+					
+					
+				File experimentalFile = new File(dataDir+name+".dat");
+				File ppfoldData = new File(dataDir+name+".dat.ct");
+				
+				ExperimentalData experimentalData = Benchmarks.loadExperimentalStructure(experimentalFile);
+				
+				StatAlignResult statalignResult = loadStatAlignResultFile(new File(resultsDir+"/"+dataName+".dat.res")); // 
+				StatAlignResult statalignWeightedResult = loadStatAlignResultFile(new File(resultsDir+"/"+dataName+".dat.res.weighted"));
+				StatAlignResult mpdResult = loadStatAlignResultFile(new File(resultsDir+"/"+dataName+".dat.res.mpd"));
+				
+				String mappingSeq = "";
+				for(int j = 0 ;j < experimentalData.sequences.size() ; j++)
+				{
+					if(experimentalData.sequences.get(j).replaceAll("-", "").equals(statalignResult.sequence.replaceAll("-", "")))
+					{
+						mappingSeq = experimentalData.sequences.get(j);
+					}
+				}
+				
+				int [] pairedSitesExperimental = projectPairedSites(mappingSeq, experimentalData.pairedSites);
+				int [] pairedSitesStatAlign = statalignResult.pairedSites;
+				int [] pairedSitesStatAlignWeighted = statalignWeightedResult.pairedSites;
+				int [] pairedSitesPPfold = projectPairedSites(mappingSeq, RNAFoldingTools.getPairedSitesFromCtFile(ppfoldData));
+				int [] pairedSitesMPD = mpdResult.pairedSites;
+				
+				
+				double sensExpStat = Benchmarks.calculateSensitivity(pairedSitesExperimental, pairedSitesStatAlign);
+				double sensExpPPfold = Benchmarks.calculateSensitivity(pairedSitesExperimental, pairedSitesPPfold);
+				double sensExpMPD=Benchmarks.calculateSensitivity(pairedSitesExperimental, pairedSitesMPD);
+				double ppvExpStat = Benchmarks.calculatePPV(pairedSitesExperimental, pairedSitesStatAlign);
+				double ppvExpPPfold = Benchmarks.calculatePPV(pairedSitesExperimental, pairedSitesPPfold);
+				double ppvExpMPD = Benchmarks.calculatePPV(pairedSitesExperimental, pairedSitesMPD);
+				double fscExpStat = Benchmarks.calculateFScore(pairedSitesExperimental, pairedSitesStatAlign);
+				double fscExpPPfold = Benchmarks.calculateFScore(pairedSitesExperimental, pairedSitesPPfold);
+				double fscExpStatWeighted =Benchmarks.calculateFScore(pairedSitesExperimental, pairedSitesStatAlignWeighted);
+				double fscExpStatMPD=Benchmarks.calculateFScore(pairedSitesExperimental, pairedSitesMPD);
+				
+				EntropyData entropyDataExp = EntropyData.loadEntropyData(new File(resultsDir+dataName+"_entropy_fuzzy_exp.txt"));
+				EntropyData entropyDataObs = EntropyData.loadEntropyData(new File(resultsDir+dataName+"_entropy_fuzzy_obs.txt"));
+				EntropyData entropyDataSamples = EntropyData.loadEntropyData(new File(resultsDir+dataName+"_entropy_samples.txt"));
+				
+				
+				double entropyDataExpLast = entropyDataExp.entropyVals.get(entropyDataExp.entropyVals.size()-1);
+				double entropyDataObsLast = entropyDataObs.entropyVals.get(entropyDataExp.entropyVals.size()-1);
+				double entropyDataObsPercLast = entropyDataObs.percentOfMax.get(entropyDataExp.percentOfMax.size()-1);
+				double sampleMean = mean(entropyDataSamples.entropyVals);
+				double sampleMeanPercentOfMax = mean(entropyDataSamples.percentOfMax);
+				
+				System.out.println(textline+"\t"+fscExpStat+"\t"+fscExpStatMPD+"\t"+sensExpStat+"\t"+sensExpMPD+"\t"+ppvExpStat+"\t"+ppvExpMPD+"\t"+entropyDataObsLast+"\t"+sampleMean+"\t"+entropyDataObsPercLast+"\t"+sampleMeanPercentOfMax);
+			}
+			
+			buffer.close();
+		}
+		catch(IOException ex)
+		{
+			ex.printStackTrace();
+		}
+	}
+	
+	static class EntropyData
+	{
+		ArrayList<Double> sampleNo = new ArrayList<Double>();
+		ArrayList<Double> entropyVals = new ArrayList<Double>();
+		ArrayList<Double> percentOfMax = new ArrayList<Double>();
+		ArrayList<Double> maxVals = new ArrayList<Double>();
+		
+		public static EntropyData loadEntropyData(File entropyFile)
+		{
+			EntropyData entropyData = new EntropyData();
+			
+			try
+			{
+				BufferedReader buffer = new BufferedReader(new FileReader(entropyFile));
+				buffer.readLine();
+				String textline = null;
+				while((textline = buffer.readLine()) != null)
+				{
+					String [] split = textline.split("(\t)+");
+					entropyData.sampleNo.add(new Double(split[0]));
+					entropyData.entropyVals.add(new Double(split[1]));
+					entropyData.percentOfMax.add(new Double(split[2]));
+					entropyData.maxVals.add(new Double(split[3]));
+				}
+				buffer.close();
+			}
+			catch(IOException ex)
+			{
+				ex.printStackTrace();
+			}
+			
+			return entropyData;
+		}
+	}
+	
+	public static double mean(ArrayList<Double> values)
+	{
+		double sum = 0;
+		for(int i = 0 ; i < values.size() ; i++)
+		{
+			sum += values.get(i);
+		}
+		return sum / ((double) values.size());
 	}
 	
 	public static void printPairs(int [] pairedSites)

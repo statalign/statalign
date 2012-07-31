@@ -88,7 +88,7 @@ public class PPFold extends statalign.postprocess.Postprocess {
 	String refSeq;
 	String refSeqGapped;
 
-	double[][] summedMatrix;
+	double[][] summedBasePairProbMatrix;
 	double[] summedSingleBaseProb;
 	float[][] probMatrix;
 	
@@ -152,6 +152,11 @@ public class PPFold extends statalign.postprocess.Postprocess {
 		}
 	};
 
+
+
+	List<ExtraData> extradata = new ArrayList<ExtraData>();
+	Parameters param = null;
+	
 	@Override
 	public void beforeFirstSample(InputData input) {
 		int maxLength = 0;
@@ -215,6 +220,21 @@ public class PPFold extends statalign.postprocess.Postprocess {
 		lastVector = null;
 
 		viterbialignment = new String[sizeOfAlignments];
+		
+
+
+		try {
+			BufferedReader paramFileReader = null;
+			if(param == null)
+			{
+				File file = new File("res/matrices.in");
+				paramFileReader = new BufferedReader(new InputStreamReader(	new FileInputStream(file)));
+				param = Parameters.readParam(paramFileReader);				
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	public double saveMPDToFile(String [] fastaAlignment, File outFile)
@@ -242,16 +262,6 @@ public class PPFold extends statalign.postprocess.Postprocess {
 		try {
 			
 			Alignment align = AlignmentReader.readAlignmentFromStringList(lines);
-
-			BufferedReader paramFileReader = null;
-			Parameters param;
-			File file = new File("res/matrices.in");
-			paramFileReader = new BufferedReader(new InputStreamReader(
-					new FileInputStream(file)));
-
-			param = Parameters.readParam(paramFileReader);
-			
-
 			
 			List<String> sequences = align.getSequences();
 			List<String> seqNames = align.getNames();
@@ -307,12 +317,10 @@ public class PPFold extends statalign.postprocess.Postprocess {
 		return ppfoldReliability;
 	}
 
-	Parameters param = null;
 	ArrayList<AlignmentData> alignments = new ArrayList<AlignmentData>();
 	String p2 = "";
 	@Override
-	public void newSample(State state, int no, int total) {
-		
+	public void newSample(State state, int no, int total) {		
 		
 		for (int i = 0; i < t.length; i++) {
 			t[i] = curAlig.leafAlignment[i].split("\t");
@@ -383,11 +391,11 @@ public class PPFold extends statalign.postprocess.Postprocess {
 			}
 
 			if (no == 0) {
-				summedMatrix = new double[d][d];
+				summedBasePairProbMatrix = new double[d][d];
 				weightedBasePairProb = new double[d][d];
 				for (i = 0; i < d; ++i) {
 					for (j = 0; j < d; ++j) {
-						summedMatrix[i][j] = 0;
+						summedBasePairProbMatrix[i][j] = 0;
 						weightedBasePairProb[i][j] = 0;
 					}
 				}
@@ -405,18 +413,7 @@ public class PPFold extends statalign.postprocess.Postprocess {
 						.readAlignmentFromStringList(lines);
 
 				Tree tree = getPPfoldTree(mcmc);
-
-				BufferedReader paramFileReader = null;
-				if(param == null)
-				{
-					File file = new File("res/matrices.in");
-					paramFileReader = new BufferedReader(new InputStreamReader(
-							new FileInputStream(file)));
-	
-					param = Parameters.readParam(paramFileReader);
-				}
-
-				List<ExtraData> extradata = new ArrayList<ExtraData>();
+				
 				//AlignmentData d = new AlignmentData();
 				ResultBundle sampleResult = PPfoldMain.fold(progress, align.getSequences(),	align.getNames(), tree, param, extradata);
 				System.out.println("Sample "+no+ " entropy" + sampleResult.entropyVal+"\t"+sampleResult.entropyPercOfMax+"\t"+sampleResult.entropyMax);
@@ -460,9 +457,10 @@ public class PPFold extends statalign.postprocess.Postprocess {
 					{
 						rowMatrSum += projectFun[x][y];
 					}
-					
 					double factor = rowMatrSum + projectSingleBaseProb[x];
-					System.out.println("F:"+factor);
+					factor = 1;
+					//
+					System.out.println("F:"+factor+"\t"+rowMatrSum+"\t"+projectSingleBaseProb[x]);
 					for(int y = 0 ; y < projectFun[0].length ; y++)
 					{
 						projectFun[x][y] = (float)(projectFun[x][y] / factor);
@@ -509,9 +507,9 @@ public class PPFold extends statalign.postprocess.Postprocess {
 				for (i = 0; i < d; ++i) {
 					summedSingleBaseProb[i] += projectSingleBaseProb[i];
 					for (j = 0; j < d; ++j) {
-						summedMatrix[i][j] += projectFun[i][j];
+						summedBasePairProbMatrix[i][j] += projectFun[i][j];
 
-						probMatrix[i][j] = (float)(summedMatrix[i][j]/(float)(noSamples+1));
+						probMatrix[i][j] = (float)(summedBasePairProbMatrix[i][j]/(double)(noSamples+1));
 						if(gui != null)
 						{
 							gui.setMatrix(probMatrix);
@@ -633,7 +631,7 @@ public class PPFold extends statalign.postprocess.Postprocess {
 			doubleSingleBaseProb[i] = summedSingleBaseProb[i]
 					/ (double) noSamples;
 			for (int j = 0; j < d; ++j) {
-				doubleSummedArray[i][j] = (double) summedMatrix[i][j]
+				doubleSummedArray[i][j] = (double) summedBasePairProbMatrix[i][j]
 						/ (double) noSamples;
 			}
 		}
