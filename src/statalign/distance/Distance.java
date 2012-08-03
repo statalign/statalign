@@ -11,6 +11,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import statalign.postprocess.utils.RNAFoldingTools;
+
 
 
 public class Distance {
@@ -66,7 +68,7 @@ public class Distance {
 	public static void main(String[] args) {
 
 
-
+		/*
 		ArrayList<Pair<ArrayList<String>,String>> reference = new ArrayList<Pair<ArrayList<String>,String> > ();
 		ReadAlignments(reference, REFERENCE_FOLDER);
 
@@ -78,7 +80,7 @@ public class Distance {
 
 		ArrayList<Pair<ArrayList<String>,String>> amap4 = new ArrayList<Pair<ArrayList<String>,String> >();
 		ReadAlignments(amap4, AMAP4_FOLDER);
-		
+
 		ArrayList<Pair<ArrayList<String>,String>> amap01 = new ArrayList<Pair<ArrayList<String>,String> >();
 		ReadAlignments(amap01, AMAP01_FOLDER);
 
@@ -109,10 +111,46 @@ public class Distance {
 				}
 			}
 		}
+		 */
+		ArrayList<String> seq = new ArrayList<String>();
+		ArrayList<String> name = new ArrayList<String>();
+		File folder = new File("/home/ingolfur/oxford_workspace/cmdStatAlign/seq5/seq5Clean/Cleaner/");
+		File[] listOfFiles = folder.listFiles();
+		Arrays.sort(listOfFiles);
+
+
+
+		for(File i : listOfFiles){
+			RNAFoldingTools.loadFastaSequences(i,seq , name);
+			int length = 0;
+			ArrayList<Integer> len = new ArrayList<Integer>();
+			double lendist = 0;
+			for(String s : seq){
+				int seqlen = s.replace(".", "").length();
+				len.add(seqlen);
+				length += seqlen;
+			}
+			int count = 0;
+			for(int j = 0; j < seq.size()-1; ++j ){
+				for(int k = j+1; k < seq.size(); ++k ){
+					lendist += Math.abs(len.get(j) -len.get(k)) / (double)(Math.max(len.get(j), len.get(k)) -1);
+					count++;
+				}
+			}
+			lendist = lendist / (double) count;
 
 
 
 
+			System.out.println(i.getName());
+			//System.out.println(length);
+			//System.out.println(lendist);
+			//System.out.println(Distance.sequenceSimilarityScore(seq));
+			//System.out.println("-----");
+			seq.clear();
+		}
+
+		//System.out.println(sequenceSimilarityScore(referenceA1));
 
 
 
@@ -139,11 +177,6 @@ public class Distance {
 		ArrayList<Pair<Double,Integer>> refAndAMAP4 = new ArrayList<Pair<Double,Integer>>();
 
 
-		referenceA1.add("GGGUGCUUGAAGCUGUCUGCUUUAAGUGCUUGCA----UCAGGCUGAGAGUAGGCAGAGAAAAGCCCCGUA------------------UCA-----A----------------UGUUAAUCAAUACGAGGC-CCUCUGUAAUG-CACGACAACAUUACGGU-AGCCUUUUACC-CGCCGAAA-GGCAA------GGAGGCUGAAGAUG");
-		referenceA1.add("GGGUGCUUGAGACUGUUUGUCUCAGG------UAUUUA----CCAAAAGGCAGACAGAGAAAAGCCCCACC------------------UGACUAUA------------------AAUCAAAAGUGCAUUGC-ACCCAUUAUUG-AUCU-CUUCAAUAACGA-AGCUA-UCCCC-UACAGUAU-UUCA------GAACGUCCAACCAUG");
-		referenceA1.add("GGGUGCUUGAGGCUGUCUGCCUCGGG------CAUGCC---ACUGUAAGGCAGACAGAGAAAAGCCCCAGUUAACAUUACGCGUCCUGC--------AAGA----------CGCUUAACAUUAAUCUGAGGC-CCAAUCUAUGU-CUCA-CAAAUGUAGGUU-AGCCUCUUACG-UGCCGAAA-GGCAAGGAGAAGCAGGCUAUG-AAG");
-		referenceA1.add("GGGUGCUUGAGACUGUUUGUCUCAGG------UAUUCA----CCGAAAGGCAGACAGAGAAAAGCCCCACC------------------UGACU---------------------AUAAAUCAAAGUGAGGCUA--CCCU-AUGCCUGAACACCAUAAGG-UUAGCCUCUUACUCGUUGGAAAUCAACAC----AGGGGGCUGGGAAUG");
-		referenceA1.add("GGGUGCUUGAGGCUGUCUGCCUCGGG------CAUGCC---ACCGUAAGGCAGACAGAGAAAAGCCCCAGU------------------UAACAUUACGCGUCCUGCAAGACGCCUAACAUUAAUCUGAGGC-CAAUUU-CAUG-CUAGACA-CAUGUAGGUUAGCCUCUUACG-CGCCGAAA-GGCAAG----GAGAAGCAGCU-AUG");
 
 		mpd1.add("GGGUGCUUGAGGCUGUCUGCCUCGGGCA--UGCCAC---UGUAAGGCAGACAGAGAAAAGCCCCAGUU-AACAUUACGCGUCCUGCAAGACGCUUAACAUUAA-UCUGAGGCCCAAUCU-AUGUCUCA-CAAA---UGU---AGGUUAGCCUCUUACGUGCCGAAAGGCAA----GGAGAAGCAGGCU-AUGAAG");
 		mpd1.add("GGGUGCUUGAAGCUGUCUGCUUUAAGUGCUUGCAUCAGGCUGAGAGUAGGCAGAGAAAAGCCCCGUAUCAAUGUUA----------------------AUCAA-UACGAGGCCCUCUGUAAUGCACGA-CAAC---AUU---ACGGUAGCCUUUUACCCGCCGAAAGGCAA----GGAG------GCUGAAGAUG");
@@ -329,21 +362,21 @@ public class Distance {
 		ArrayList<String> arListA = new ArrayList <String> (Arrays.asList(A));
 		ArrayList<String> arListB = new ArrayList <String> (Arrays.asList(B));
 		return Distance.multiDistance(arListA, arListB);
-		
+
 	}
-	
+
 	public static int multiDistance(ArrayList<String>  A, ArrayList<String>  B){
 		ArrayList<String> cloneA = new ArrayList<String>();
 		ArrayList<String> cloneB = new ArrayList<String>();
-		
+
 		for(String i : A){
 			cloneA.add(i);
 		}
-		
+
 		for(String i : B){
 			cloneB.add(i);
 		}
-		
+
 		sortSeq(cloneA,cloneB);
 		String [] tempA = new String[2]; 
 		String [] tempB = new String[2];
@@ -363,7 +396,7 @@ public class Distance {
 	}
 
 	private static void sortSeq(ArrayList<String>  A, ArrayList<String>  B){
-		
+
 		List< Pair < String  , Integer> > seq1 = new ArrayList< Pair < String , Integer> >();
 		List< Pair < String  , Integer> > seq2 = new ArrayList< Pair < String  , Integer> >();
 		ArrayList<String> newA = new ArrayList<String>();
@@ -538,7 +571,7 @@ public class Distance {
 		}
 		return deletionUnion.size() + insertionUnion.size();
 	}
-	
+
 	public static double AMA(String[] A, String[] B){
 		ArrayList<String> arListA = new ArrayList <String> (Arrays.asList(A));
 		ArrayList<String> arListB = new ArrayList <String> (Arrays.asList(B));
@@ -552,6 +585,41 @@ public class Distance {
 		}
 		return 1 - Distance.multiDistance(A, B)/ (double)( (A.size()-1) *sum );
 	}
+
+	public static double sequenceSimilarityScore(String []  A){
+		ArrayList<String> temp = new ArrayList<String>(Arrays.asList(A)); 
+		return sequenceSimilarityScore(temp);
+	}
+
+	public static double sequenceSimilarityScore(List<String>  A){
+		double score = 0;
+		int count = 0;
+		int tempScore;
+		int length;
+		for(int i =0; i<A.size()-1; ++i){
+			for(int j =i+1; j<A.size(); ++j){
+				String seq1 = A.get(i);
+				String seq2 = A.get(j);
+				tempScore = 0;
+				length = 0;
+				count++;
+				for(int k = 0; k<seq1.length(); ++k){
+					if (seq1.charAt(k) == '.' || seq2.charAt(k) == '.'){
+						continue;
+					}
+					else if(seq1.charAt(k) == seq2.charAt(k)){
+						tempScore++;
+						length++;
+					}else{
+						length++;
+					}
+				}
+				score += tempScore / (double)length;
+			}
+		}
+		return score /count;
+	}
+
 
 
 }

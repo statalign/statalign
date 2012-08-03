@@ -61,7 +61,7 @@ public class PPFold extends statalign.postprocess.Postprocess {
 	// (if no GUI),
 	// or the
 	// PPfoldProgressBar
-	// (if GUI)
+	// (if GUI)	
 
 	// end of variables from ppfoldmain
 
@@ -92,7 +92,7 @@ public class PPFold extends statalign.postprocess.Postprocess {
 	double[][] summedBasePairProbMatrix;
 	double[] summedSingleBaseProb;
 	float[][] probMatrix;
-	
+
 	int noSamples;
 
 	double [][] weightedBasePairProb;
@@ -101,7 +101,7 @@ public class PPFold extends statalign.postprocess.Postprocess {
 	double firstLikelihood = 0;
 	double posteriorProbabilityAvg = 0;
 	ArrayList<String> tempAlignment;
-	final double CONST_DIST = 0.8;
+	ArrayList<Double> logLikelihood;
 
 	RNAFoldingTools rnaTools = new RNAFoldingTools();
 
@@ -160,7 +160,7 @@ public class PPFold extends statalign.postprocess.Postprocess {
 
 	List<ExtraData> extradata = new ArrayList<ExtraData>();
 	Parameters param = null;
-	
+
 	@Override
 	public void beforeFirstSample(InputData input) {
 		int maxLength = 0;
@@ -204,7 +204,7 @@ public class PPFold extends statalign.postprocess.Postprocess {
 			pan.getParent().validate();
 
 		}
-		
+
 		if(gui != null)
 		{
 			gui.changeDimension(d);
@@ -224,7 +224,7 @@ public class PPFold extends statalign.postprocess.Postprocess {
 		lastVector = null;
 
 		viterbialignment = new String[sizeOfAlignments];
-		
+		logLikelihood = new ArrayList<Double>();
 
 
 		try {
@@ -236,7 +236,6 @@ public class PPFold extends statalign.postprocess.Postprocess {
 				param = Parameters.readParam(paramFileReader);				
 			}
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
@@ -323,12 +322,12 @@ public class PPFold extends statalign.postprocess.Postprocess {
 	String p2 = "";
 	@Override
 	public void newSample(State state, int no, int total) {		
-		
+
 		for (int i = 0; i < t.length; i++) {
 			t[i] = curAlig.leafAlignment[i].split("\t");
 		}
 		Arrays.sort(t, compStringArr);
-
+	
 		int[] previousDescriptor = firstDescriptor;
 
 		int i, j, len = t[0][1].length();
@@ -357,6 +356,7 @@ public class PPFold extends statalign.postprocess.Postprocess {
 				lastDescriptor[j] = ColumnKey.colNext(previousDescriptor[j]) + 1;
 			}
 			lastVector = network.add(lastDescriptor);
+
 		}
 		if (no == 0 || 1 < 2) {
 			network.updateViterbi(no + 1);
@@ -410,11 +410,18 @@ public class PPFold extends statalign.postprocess.Postprocess {
 					lines.add(">" + t[i][0].trim());
 					lines.add(t[i][1]);
 				}
-
+				
 				Alignment align = AlignmentReader.readAlignmentFromStringList(lines);
 
 				Tree tree = getPPfoldTree(mcmc);
-
+				
+				//writes the distance of the first sampleq to a file
+				BufferedWriter buffer2 = new BufferedWriter(new FileWriter(outDir+title+"_sample1SeqID"));
+				System.out.println(Distance.sequenceSimilarityScore(align.getSequences()));
+				buffer2.write(""+Distance.sequenceSimilarityScore(align.getSequences()));
+				buffer2.close();
+				
+				
 				//AlignmentData d = new AlignmentData();
 				ResultBundle sampleResult = PPfoldMain.fold(progress, align.getSequences(),	align.getNames(), tree, param, extradata);
 				System.out.println("Sample "+no+ " entropy" + sampleResult.entropyVal+"\t"+sampleResult.entropyPercOfMax+"\t"+sampleResult.entropyMax);
@@ -474,11 +481,19 @@ public class PPFold extends statalign.postprocess.Postprocess {
 				{
 					firstLikelihood = mcmc.mcmcStep.newLogLike;
 					weightedSum  = 0;
+					try {
+						BufferedWriter bufferClear = new BufferedWriter(new FileWriter(outDir + title + "likelihoods.txt", false));
+						bufferClear.write("");
+						bufferClear.close();
+					}catch (IOException ex){
+						ex.printStackTrace();
+					}
+
 				}
 				try
 				{
 
-					BufferedWriter buffer = new BufferedWriter(new FileWriter("likelihoods.txt", true));
+					BufferedWriter buffer = new BufferedWriter(new FileWriter(outDir + title + "likelihoods.txt", true));
 					buffer.write(noSamples+"\t"+(alignmentLogLikelihood - firstLikelihood)+"\n");
 
 					buffer.close();
@@ -498,8 +513,8 @@ public class PPFold extends statalign.postprocess.Postprocess {
 				}
 				PPFold.appendFolds(new File(outDir+title+".folds"), noSamples+"", PPFold.getSequenceByName(t, refSeqName),rnaTools.getPosteriorDecodingConsensusStructureMultiThreaded(basePairProb), rnaTools.getPosteriorDecodingConsensusStructureMultiThreaded(projectFun), append);
 
-			
-				
+
+
 
 
 				/*
@@ -527,39 +542,38 @@ public class PPFold extends statalign.postprocess.Postprocess {
 				}
 				weightedSum += weight;
 
-					BufferedWriter buffer = new BufferedWriter(new FileWriter("weights.txt", true));
-					buffer.write(noSamples+"\t"+weightedSum+"\t"+weight+"\n");
-					buffer.close();
+				BufferedWriter buffer = new BufferedWriter(new FileWriter("weights.txt", true));
+				buffer.write(noSamples+"\t"+weightedSum+"\t"+weight+"\n");
+				buffer.close();
 
-					//System.out.println(noSambles+"\t"+mcmc.mcmcStep.newLogLike);
-				}
-				catch(IOException ex)
-				{
-					ex.printStackTrace();
-				} catch (Exception e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+				//System.out.println(noSambles+"\t"+mcmc.mcmcStep.newLogLike);
+			}
+			catch(IOException ex)
+			{
+				ex.printStackTrace();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 
-				noSamples += 1;
-				
-				//RNAFoldingTools rnaTools = new RNAFoldingTools();
-				//String seq = this.getSequenceByName(t, this.refSeqName).replaceAll("-", "");
-				//RNAFoldingTools rnaTools = new RNAFoldingTools();
-				int[] pairedSites = rnaTools.getPosteriorDecodingConsensusStructureMultiThreaded(probMatrix);
-				p2 = RNAFoldingTools.getDotBracketStringFromPairedSites(pairedSites);
-				System.out.println(RNAFoldingTools.getDotBracketStringFromPairedSites(pairedSites));
+			noSamples += 1;
 
-				Structure.updateMatrix(probMatrix);
+			//RNAFoldingTools rnaTools = new RNAFoldingTools();
+			//String seq = this.getSequenceByName(t, this.refSeqName).replaceAll("-", "");
+			//RNAFoldingTools rnaTools = new RNAFoldingTools();
+			int[] pairedSites = rnaTools.getPosteriorDecodingConsensusStructureMultiThreaded(probMatrix);
+			p2 = RNAFoldingTools.getDotBracketStringFromPairedSites(pairedSites);
+			System.out.println(RNAFoldingTools.getDotBracketStringFromPairedSites(pairedSites));
 
-				PPfoldMain.setfoldingfinished(true);
-				
-				if(gui != null)
-				{
-					gui.changeDimension(d*PPFoldGUI.OFFSET);
-					gui.setMatrix(probMatrix);
-					gui.repaint();
-				}
+			Structure.updateMatrix(probMatrix);
+
+			PPfoldMain.setfoldingfinished(true);
+
+			if(gui != null)
+			{
+				gui.changeDimension(d*PPFoldGUI.OFFSET);
+				gui.setMatrix(probMatrix);
+				gui.repaint();
+			}
 
 		}
 
@@ -567,14 +581,14 @@ public class PPFold extends statalign.postprocess.Postprocess {
 		if(no == 0)
 		{
 			String [] [] inputAlignment = new String[mpdAlignment.input.seqs.sequences.size()][2];
-			
+
 			for(int k = 0 ; k < inputAlignment.length ; k++)
 			{
 				inputAlignment[k][0] = mpdAlignment.input.seqs.seqNames.get(k);
 				inputAlignment[k][1] = mpdAlignment.input.seqs.sequences.get(k);
 			}
 			Arrays.sort(inputAlignment, compStringArr);
-			
+
 			/*//AlignmentData al =  new AlignmentData();
 			for(int k = 0 ; k < t.length ; k++)
 			{
@@ -588,28 +602,27 @@ public class PPFold extends statalign.postprocess.Postprocess {
 			RNAFoldingTools.writeToFile(new File(outDir +title+"_Distance.txt"),"BurnIn "+new Integer(mcmc.mcmcpars.burnIn).toString() + "\t" +
 					"cycles "+new Integer(mcmc.mcmcpars.cycles).toString() + "\t" +
 					"sampRate "+new Integer(mcmc.mcmcpars.sampRate).toString() + "\t" + 
-					"const "+ CONST_DIST + "\t" + 
 					"Filename "+ mpdAlignment.input.title + "\t", false);
-			
-			
+
+
 			tempAlignment = new ArrayList<String>();
 			for(int k = 0 ; k < t.length ; k++)
 			{
 				tempAlignment.add(t[k][1]);
 			}
 			//al.
-			
+
 
 			RNAFoldingTools.writeToFile(new File(outDir +title+"_entropy_fuzzy_obs.txt"),"", false);
 			RNAFoldingTools.writeToFile(new File(outDir +title+"_entropy_fuzzy_exp.txt"),"", false);
 			RNAFoldingTools.writeToFile(new File(outDir +title+"_entropy_samples.txt"),"", false);
 			RNAFoldingTools.writeToFile(new File(outDir +title+"_entropy_mpd.txt"),"", false);
 			alignments = new ArrayList<AlignmentData>();
-			
+
 			//for the MCMC part (part 4)
-			
-			
-			
+
+
+
 		}
 		else
 		{
@@ -623,12 +636,12 @@ public class PPFold extends statalign.postprocess.Postprocess {
 				al.names.add(t[k][0]);
 			}
 			alignments.add(al);
-			
-			
+
+
 			FuzzyAlignment fuzzyAlignment = FuzzyAlignment.getFuzzyAlignmentAndProject(alignments, refSeqName);
-			
+
 			double dist = Distance.AMA(tempAlignment, al.sequences);
-			
+
 			/*if(dist < CONST_DIST){
 				tempAlignment.clear();
 				tempAlignment.addAll(al.sequences);
@@ -636,7 +649,7 @@ public class PPFold extends statalign.postprocess.Postprocess {
 				RNAFoldingTools.writeToFile(new File(outDir +title+"_Distance.txt"),"1", true);
 			}
 			else{*/
-				RNAFoldingTools.writeToFile(new File(outDir +title+"_Distance.txt"),new Double(dist).toString(), true);
+			RNAFoldingTools.writeToFile(new File(outDir +title+"_Distance.txt"),new Double(dist).toString(), true);
 			//}
 
 			List<ExtraData> extradata = new ArrayList<ExtraData>();
@@ -650,7 +663,7 @@ public class PPFold extends statalign.postprocess.Postprocess {
 				ResultBundle fuzzyResultObs = PPfoldMain.foldFuzzyAlignment(progress, fuzzyAlignment, tree, param, extradata, false);
 				int [] fuzzyPairedSitesExp = rnaTools.getPosteriorDecodingConsensusStructureMultiThreaded(fuzzyResultExp.finalmatrix);
 				int [] fuzzyPairedSitesObs = rnaTools.getPosteriorDecodingConsensusStructureMultiThreaded(fuzzyResultObs.finalmatrix);
-					
+
 				System.out.println("R0:"+p2);
 				System.out.println(refSeq);				
 				System.out.println("FZ:"+RNAFoldingTools.getDotBracketStringFromPairedSites(fuzzyPairedSitesExp));
@@ -667,7 +680,7 @@ public class PPFold extends statalign.postprocess.Postprocess {
 		}
 	}
 	int stepCounter = 0;
-	
+
 
 	@Override
 	public void afterLastSample() {
@@ -681,7 +694,7 @@ public class PPFold extends statalign.postprocess.Postprocess {
 						/ (double) noSamples;
 			}
 		}
-		
+
 		for (int i = 0; i < d; ++i) {
 			double sum = doubleSingleBaseProb[i];
 			for (int j = 0; j < d; ++j) {
@@ -695,14 +708,14 @@ public class PPFold extends statalign.postprocess.Postprocess {
 		int[] pairedSites = rnaTools.getPosteriorDecodingConsensusStructureMultiThreaded(doubleSummedArray);
 		double statalignPpfoldReliablityScore = RNAFoldingTools.calculatePPfoldReliabilityScore(pairedSites, doubleSummedArray);
 		//RNAFoldingTools.writeMatrix(RNAFoldingTools.getDoubleMatrix(probMatrix), new File("prob.matrix"));
-		
-		
+
+
 		RNAFoldingTools.writeMatrix(doubleSummedArray, new File("bp.matrix"));
 		System.out.println("num samples" + noSamples);
 		//RNAFoldingTools.writeMatrix(summedArray, new File("bp2.matrix"));
 		double[] singleBaseProb = RNAFoldingTools.getSingleBaseProb(doubleSummedArray);
 		saveResult(refSeqGapped, pairedSites, doubleSummedArray, singleBaseProb, new File(title+".dat.res"));
-		
+
 		for (int i = 0; i < d; ++i) {
 			for (int j = 0; j < d; ++j) {
 				this.weightedBasePairProb[i][j] /= weightedSum;
@@ -754,7 +767,23 @@ public class PPFold extends statalign.postprocess.Postprocess {
 		appendAlignment("mpd", mpdAlignment.alignment, new File(outDir+mpdAlignment.input.title+".samples"), true, mpdAlignment.input);
 		double ppfoldReliabilityScoreMPD = saveMPDToFile(Utils.alignmentTransformation(mpdAlignment.alignment,
 				"Fasta", mpdAlignment.input), new File(outDir+mpdAlignment.input.title+".dat.res.mpd"));
-		
+		try
+		{
+
+			BufferedWriter buffer = new BufferedWriter(new FileWriter(outDir+mpdAlignment.input.title+".samples", true));
+			buffer.write("%logLiklihood\n");
+			for(int i = 0; i<logLikelihood.size(); ++i){
+				buffer.write(logLikelihood.get(i) + "\n");
+			}
+
+			buffer.close();
+
+			//System.out.println(noSambles+"\t"+mcmc.mcmcStep.newLogLike);
+		}
+		catch(IOException ex)
+		{
+			ex.printStackTrace();
+		}
 
 		this.saveScores(new File(outDir +"scores.txt"), ppfoldReliablityScore, ppfoldReliabilityScoreMPD);
 	}
