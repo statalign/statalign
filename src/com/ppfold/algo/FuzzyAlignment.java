@@ -1,11 +1,17 @@
 package com.ppfold.algo;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
 import statalign.postprocess.utils.Mapping;
 
-public class FuzzyAlignment {
+public class FuzzyAlignment implements Serializable {
+	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 5984201565048925527L;
 	
 	public int length;
 	public List<String> sequences;
@@ -262,6 +268,33 @@ public class FuzzyAlignment {
 		}
 		
 		return nucleotidePairs;
+	}
+	
+	public static double distance(FuzzyAlignment fz1, FuzzyAlignment fz2)
+	{
+		double distance = 0;
+		for(int i = 0 ; i < fz1.columns.size() ; i++)
+		{
+			FuzzyNucleotide[] c1 = fz1.columns.get(i);
+			FuzzyNucleotide[] c2 = fz2.columns.get(i);			
+			for(int j = 0 ; j < c1.length ; j++)
+			{
+				double [] p1 = normalize(c1[j].probability);
+				double [] p2 = normalize(c2[j].probability);
+				distance += euclideanDistance(p1, p2);
+			}
+		}
+		return distance;
+	}
+	
+	public static double euclideanDistance(double [] v1, double [] v2)
+	{
+		double distance =0;
+		for(int i = 0 ; i < v1.length ; i++)
+		{
+			distance += Math.pow(v1[i]-v2[i], 2);
+		}
+		return Math.sqrt(distance);
 	}
 }
 

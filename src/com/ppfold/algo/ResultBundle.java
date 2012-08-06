@@ -23,6 +23,8 @@ public class ResultBundle implements Serializable {
 	public double entropyVal = 0;
 	public double entropyPercOfMax = 0;
 	public double entropyMax = 0;
+	public double reliabilityScore = 0;
+	public double pairsOnlyReliabilityScore = 0;
 
 	public ResultBundle() {
 	}
@@ -75,5 +77,37 @@ public class ResultBundle implements Serializable {
 			sum += reliability[i];
 		}
 		return sum / ((double)reliability.length);
+	}
+	
+	public double getPairsOnlyReliability()
+	{
+		double sum = 0;
+		double pairs = 0;
+		for(int i = 0 ; i < reliability.length ; i++)
+		{
+			if(structure[i] != '.')
+			{
+				sum += reliability[i];
+				pairs++;
+			}
+		}
+		if(pairs == 0)
+		{
+			return 1;
+		}
+		return sum / pairs;
+	}
+	
+	public ResultBundle getSmallBundle()
+	{
+		ResultBundle smallBundle = new ResultBundle();
+		smallBundle.structure = structure;
+		smallBundle.singlebaseprob = this.singlebaseprob;
+		smallBundle.entropyVal = this.entropyVal;
+		smallBundle.entropyMax = this.entropyMax;
+		smallBundle.entropyPercOfMax = this.entropyPercOfMax;
+		smallBundle.reliabilityScore = this.getPPfoldReliability();
+		smallBundle.pairsOnlyReliabilityScore = this.getPairsOnlyReliability();
+		return smallBundle;
 	}
 }

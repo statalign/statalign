@@ -1026,6 +1026,27 @@ public class RNAFoldingTools {
 		return ppfoldReliablityScore/((double)pairedSites.length);
 	}
 	
+	public static double calculatePairsOnlyReliabilityScore(int [] pairedSites, double [][] basePairProb)
+	{
+		double ppfoldReliablityScore = 0;
+		double pairs = 0;
+		for(int i = 0 ; i < pairedSites.length ; i++)
+		{
+			if(pairedSites[i] != 0)
+			{
+				ppfoldReliablityScore += basePairProb[i][pairedSites[i]-1];
+				pairs++;
+			}
+		}
+		
+		if(pairs == 0)
+		{
+			return 1;
+		}
+
+		return ppfoldReliablityScore/pairs;
+	}
+	
 	public static void writeToFile(File f, String s, boolean append)
 	{
 		try
