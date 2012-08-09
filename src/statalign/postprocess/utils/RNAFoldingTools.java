@@ -870,6 +870,19 @@ public class RNAFoldingTools {
     	return RNAFoldingTools.getDotBracketStringFromPairedSites(RNAFoldingTools.getPairedSitesFromCtFile(ctFile));
     }
     
+    public static String getSequenceByName(String seqName, ArrayList<String> sequences, ArrayList<String> sequenceNames)
+    {
+    	for(int i = 0 ; i < sequences.size() ; i++)
+    	{
+    		if(sequenceNames.get(i).equals(seqName))
+    		{
+    			return sequences.get(i);
+    		}
+    	}
+    	System.err.println("Could not find ref seq: "+seqName);
+    	return sequences.get(0);
+    }
+    
     public static int [] getPairedSitesFromCtFile(File ctFile)
     {
     	try
@@ -963,6 +976,19 @@ public class RNAFoldingTools {
     		}
     	}
     	return doubleMatrix;
+    }
+    
+    public static float [][] getFloatMatrix(double [][] matrix)
+    {
+    	float [][] floatMatrix = new float[matrix.length][matrix[0].length];
+    	for(int i = 0 ; i < matrix.length ; i++)
+    	{
+    		for(int j = 0 ; j < matrix[0].length ; j++)
+    		{
+    			floatMatrix[i][j] = (float)matrix[i][j];
+    		}
+    	}
+    	return floatMatrix;
     }
     
     public static void loadFastaSequences(File file, ArrayList<String> sequences, ArrayList<String> sequenceNames) {

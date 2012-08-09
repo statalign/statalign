@@ -11,6 +11,9 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 
+import statalign.postprocess.plugins.RNAalifoldResult;
+import statalign.postprocess.utils.RNAFoldingTools;
+
 import com.ppfold.algo.AlignmentData;
 import com.ppfold.algo.FuzzyAlignment;
 import com.ppfold.algo.ResultBundle;
@@ -75,8 +78,9 @@ public class Dataset implements Serializable {
 	
 	public int [] pairedSites;
 	public int [] pairedSitesWeighted;	
-	public int [] pairedSitesMPD;
-	public int [] pairedSitesPPfold;
+	public int [] pairedSitesMPD; // also projected
+	public int [] pairedSitesPPfoldProjected;
+	
 	
 	public String pairedSitesRefSeq;
 	public String pairedSitesWeightedRefSeq;
@@ -85,6 +89,19 @@ public class Dataset implements Serializable {
 	public int [] pairedSitesEntropyExp;
 	public int [] pairedSitesEntropyObs;
 	
+	//public ArrayList<RNAalifoldResult> rnaAlifoldSamples = new ArrayList<RNAalifoldResult>();
+	public ArrayList<int[]> pairedSitesProjectedRnaAlifoldSamples = new ArrayList<int[]>();
+	//public RNAalifoldResult rnaAlifoldFinal;
+	public int [] pairedSitesRNAalifold;
+	public double ppfoldReliabilityScoreRNAalifold;
+	public double pairsOnlyReliabilityScoreRNAalifold;
+	
+	public RNAalifoldResult rnaAlifoldMPD;
+	//public int[] pairedSitesMPDprojected;
+	
+	public RNAalifoldResult rnaAlifoldRef;
+	public int[] pairedSitesRNAalifoldMPDProjected;
+	public int[] pairedSitesRNAalifoldRefProjected;
 	//public int [] pairedSitesMPD;
 	
 	/*public int [] samplingAndAveragingPairedSites;

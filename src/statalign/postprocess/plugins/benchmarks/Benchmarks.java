@@ -7,6 +7,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -22,8 +23,8 @@ import statalign.postprocess.utils.RNAFoldingTools;
 public class Benchmarks 
 {
 	public static void main(String[] args) {
-		//Benchmarks.automatedTests();
-		Benchmarks.testVariation2();
+		Benchmarks.automatedTests();
+		//Benchmarks.testVariation2();
 		//new Benchmarks().performEntropy();
 		//Benchmarks.automatedTest2();
 		System.exit(0);
@@ -560,7 +561,7 @@ public class Benchmarks
 	public static void automatedTests()
 	{
 		String dir = "/home/michael/Dropbox/RNA and StatAlign/TestRNAData/";
-		String resultsDir = "/home/michael/workspace/StatAlignExecute/output4/";
+		String resultsDir = "/home/michael/workspace/StatAlignExecute/longrun/";
 		File outFile = new File("Benchmarks.txt");
 		String suffix = "_5seqs";
 		if(!suffix.equals("_5seqs"))
@@ -570,14 +571,15 @@ public class Benchmarks
 
 		
 		String header = "dataset\tposterior_avg\tsim_mpd_ref\t"
-		+"fsc_sample_mean\tfsc_stat\tfsc_stat_weighted\tfsc_mpd\tfsc_ppfold\tfsc_entropy_exp\tfsc_entropy_obs\t"
+		+"fsc_sample_mean\tfsc_sample_median\tfsc_stat\tfsc_stat_weighted\tfsc_mpd\tfsc_ppfold\tfsc_entropy_exp\tfsc_entropy_obs\t"
 		+"rel_stat\trel_stat_weighted\trel_mpd\trel_ppfold\trel_entropy_exp\trel_entropy_obs\t"
 		+"rel2_stat\trel2_stat_weighted\trel2_mpd\trel2_ppfold\trel2_entropy_exp\trel2_entropy_obs\t"
 		+"entropy_exp\tentropy_perc_exp\tentropy_max_exp\t"
 		+"entropy_obs\tentropy_perc_obs\tentropy_max_obs\t"
 		+"entropy_mpd\tentropy_perc_mpd\tentropy_max_mpd\t"
 		+"entropy_ppfold\tentropy_perc_ppfold\tentropy_max_ppfold\t"
-		+"entropy_sample_mean\tentropy_perc_sample_mean\tentropy_max_sample_mean\t";
+		+"entropy_sample_mean\tentropy_perc_sample_mean\tentropy_max_sample_mean\t"
+		+"fsc_sample_alifold_mean\tfsc_sample_alifold_median\tfsc_alifold\tffsc_alifold_mpd\t_alifolf_ref\t";
 		RNAFoldingTools.writeToFile(outFile, header, false);
 		
 		File [] files = new File(resultsDir).listFiles();
@@ -593,7 +595,17 @@ public class Benchmarks
 				continue;
 			}
 			
-			Dataset dataset = Dataset.loadDatasetResult(files[i]);
+			Dataset dataset = null;
+			try
+			{
+				System.out.println(files[i]);
+				dataset = Dataset.loadDatasetResult(files[i]);
+			}
+			catch(Exception ex)
+			{
+				System.err.println("Should delete "+files[i]);
+				continue;
+			}
 			
 			
 			//String resultsDir = System.getProperty("user.home")+ "/Dropbox/RNA and StatAlign/static/5seq2/";
@@ -669,6 +681,18 @@ public class Benchmarks
 			double fscExpStatMPD= getDouble(Benchmarks.calculateFScore(pairedSitesExperimental, pairedSitesMPD));
 			double fscSamplingExp = getDouble(Benchmarks.calculateFScore(pairedSitesExperimental, dataset.pairedSitesEntropyExp));
 			double fscSamplingObs = getDouble(Benchmarks.calculateFScore(pairedSitesExperimental, dataset.pairedSitesEntropyObs));
+			double fscRNAalifold = getDouble(Benchmarks.calculateFScore(pairedSitesExperimental, dataset.pairedSitesRNAalifold));
+			System.out.println(dataset.title);
+			double fscRNAalifoldMPD = getDouble(Benchmarks.calculateFScore(pairedSitesExperimental, dataset.pairedSitesRNAalifoldMPDProjected));
+			double fscRNAalifoldRef = -1;
+			if(dataset.pairedSitesRNAalifoldRefProjected != null)
+			{
+				fscRNAalifoldRef = getDouble(Benchmarks.calculateFScore(pairedSitesExperimental, dataset.pairedSitesRNAalifoldRefProjected));
+			}
+			else
+			{
+				System.err.println("Could not load.");
+			}
 					
 			System.out.println(RNAFoldingTools.pad("", 14)+RNAFoldingTools.pad("StatAl", 10)+RNAFoldingTools.pad("PPfold", 10));
 			System.out.println(RNAFoldingTools.pad("Senstivity", 14)+RNAFoldingTools.pad(sensExpStat+"", 6)+"    "+RNAFoldingTools.pad(sensExpPPfold+"", 6));
@@ -680,13 +704,20 @@ public class Benchmarks
 			printValues(pairedSitesExperimental, pairedSitesPPfold);
 			System.out.println("---------------------------------------------------------------------");
 			System.out.println();
-			ArrayList<Double> values = new ArrayList<Double>();
+			ArrayList<Double> ppfoldValues = new ArrayList<Double>();
+			ArrayList<Double> rnaAlifoldValues = new ArrayList<Double>();
 			for(int k= 0 ; k < dataset.pairedSitesProjectedSamples.size() ; k++)
 			{
 				String val = "" + getDouble(Benchmarks.calculateFScore(pairedSitesExperimental, dataset.pairedSitesProjectedSamples.get(k)));
-				values.add(new Double(val));
+				ppfoldValues.add(new Double(val));
+				//System.out.println(dataset.pairedSitesProjectedSamples.size()+"\t"+dataset.pairedSitesProjectedRnaAlifoldSamples.size());
+				rnaAlifoldValues.add(getDouble(Benchmarks.calculateFScore(pairedSitesExperimental, dataset.pairedSitesProjectedRnaAlifoldSamples.get(k))));
 			}
-			double fscSampleMean = mean(values);
+			double fscSampleMean = mean(ppfoldValues);
+			double fscSampleMedian = getMedian(ppfoldValues);
+			
+			double fscRnaAlifoldSampleMean = mean(rnaAlifoldValues);
+			double fscRnaAlifoldSampleMedian = getMedian(rnaAlifoldValues);
 			
 			ArrayList<Double> entropySamples = new ArrayList<Double>();
 			ArrayList<Double> entropyPercSamples = new ArrayList<Double>();
@@ -703,7 +734,7 @@ public class Benchmarks
 			double entropyMaxSampleMean = mean(entropyMaxSamples);
 			
 			String row = name+"\t"+dataset.posteriorsAverage+"\t"+dataset.mpdVsInputSim+"\t"
-			+fscSampleMean+"\t"+fscExpStat+"\t"+fscExpStatWeighted+"\t"+fscExpStatMPD+"\t"+fscExpPPfold+"\t"+fscSamplingExp+"\t"+fscSamplingObs
+			+fscSampleMean+"\t"+fscSampleMedian+"\t"+fscExpStat+"\t"+fscExpStatWeighted+"\t"+fscExpStatMPD+"\t"+fscExpPPfold+"\t"+fscSamplingExp+"\t"+fscSamplingObs
 			+"\t"+dataset.ppfoldReliabilityScoreSamplingAndAveraging+"\t"+dataset.ppfoldReliabilityScoreSamplingAndAveragingWeighted+"\t"+dataset.ppfoldReliabilityMPD
 			+"\t"+dataset.resultBundlePPfold.reliabilityScore+"\t"+dataset.resultBundleEntropyExp.reliabilityScore+"\t"+dataset.resultBundleEntropyObs.reliabilityScore
 			+"\t"+dataset.pairsOnlyReliabilityScoreSamplingAndAveraging+"\t"+dataset.pairsOnlyReliabilityScoreSamplingAndAveragingWeighted+"\t"+dataset.pairsOnlyReliabilityMPD
@@ -712,7 +743,10 @@ public class Benchmarks
 			+"\t"+dataset.resultBundleEntropyObs.entropyVal+"\t"+(dataset.resultBundleEntropyObs.entropyPercOfMax/100)+"\t"+dataset.resultBundleEntropyObs.entropyMax
 			+"\t"+dataset.resultBundleMPD.entropyVal+"\t"+(dataset.resultBundleMPD.entropyPercOfMax/100)+"\t"+dataset.resultBundleMPD.entropyMax
 			+"\t"+dataset.resultBundlePPfold.entropyVal+"\t"+(dataset.resultBundlePPfold.entropyPercOfMax/100)+"\t"+dataset.resultBundlePPfold.entropyMax
-			+"\t"+entropySampleMean+"\t"+(entropyPercSampleMean/100)+"\t"+entropyMaxSampleMean;
+			+"\t"+entropySampleMean+"\t"+(entropyPercSampleMean/100)+"\t"+entropyMaxSampleMean+"\t"
+			+fscRnaAlifoldSampleMean+"\t"+fscRnaAlifoldSampleMedian+"\t"+fscRNAalifold+"\t"+fscRNAalifoldMPD+"\t"+fscRNAalifoldRef;
+
+			
 		
 			ArrayList<Double> fuzzyDistances = new ArrayList<Double>();
 			for(int k = 1 ; k  < dataset.cumulativeFuzzyAlignment.size() ; k++)
@@ -749,14 +783,36 @@ public class Benchmarks
 				buffer.write("MPD="+fscExpStatMPD+"\n");
 				buffer.write("PP="+fscExpPPfold+"\n");
 				buffer.write("STE="+fscSamplingObs+"\n");
-				for(int l = 0 ; l < values.size() ; l++)
+				for(int l = 0 ; l < ppfoldValues.size() ; l++)
 				{
-					double val =values.get(l);
+					double val =ppfoldValues.get(l);
 					if(Double.isNaN(val))
 					{
 						val = 0;
 					}
 					buffer.write(val+"\n");
+				}
+				buffer.close();
+			}
+			catch(IOException ex)
+			{
+				ex.printStackTrace();
+			}
+			
+			try
+			{
+				File entropyFile = new File("/home/michael/Dropbox/RNA and StatAlign/Report/Entropy2/"+name+".txt");
+				BufferedWriter buffer = new BufferedWriter(new FileWriter(entropyFile));
+				buffer.write("no\tobs_val\tobs_perc\tobs_max\texp_val\texp_perc\texp_max\tsam_val\tsam_perc\tsam_max\n");
+				for(int l = 0 ; l < dataset.sampledStructures.size() ; l++)
+				{
+					ResultBundle sample = dataset.sampledStructures.get(l);
+					ResultBundle obsSample = dataset.cumulativeFuzzyObsResults.get(l);
+					ResultBundle expSample = dataset.cumulativeFuzzyExpResults.get(l);
+					buffer.write(l+"\t"+obsSample.entropyVal+"\t"+obsSample.entropyPercOfMax+"\t"+obsSample.entropyMax+"\t");
+					buffer.write(expSample.entropyVal+"\t"+expSample.entropyPercOfMax+"\t"+expSample.entropyMax+"\t");
+					buffer.write(sample.entropyVal+"\t"+sample.entropyPercOfMax+"\t"+sample.entropyMax);
+					buffer.newLine();
 				}
 				buffer.close();
 			}
@@ -791,15 +847,16 @@ public class Benchmarks
 		//RNAFoldingTools.writeToFile(outFile, header, false);
 		
 		File [] files = new File(resultsDir).listFiles();
-		HashSet<File> usedDatasets = new HashSet<File>();
+		HashSet<String> usedDatasets = new HashSet<String>();
 		for(int z = 0 ; z < files.length ; z++)
 		{
-			if(!files[z].getName().contains(suffix) || !files[z].getName().endsWith(".serialized") || usedDatasets.contains(files[z]))
+			String datasetName = files[z].getName().replaceAll("_seed.*", "");
+			if(!files[z].getName().contains(suffix) || !files[z].getName().endsWith(".serialized") || usedDatasets.contains(datasetName))
 			{
 				continue;
 			}
-			String datasetName = files[z].getName().replaceAll("_seed.*", "");
-			usedDatasets.add(files[z]);
+			
+			usedDatasets.add(datasetName);
 			
 			ArrayList<Double> samplesFscVector = new ArrayList<Double>();
 			ArrayList<Double> statalignFscVector = new ArrayList<Double>();
@@ -815,7 +872,15 @@ public class Benchmarks
 				}
 				//System.out.println(files[i]);
 				
+				if(files[i].getName().equals("TestRNAData27_5seqs.dat.fas_seed682981838.serialized"))
+				{
+					continue;
+				}
+				
+				System.out.println(files[i]);
 				Dataset dataset = Dataset.loadDatasetResult(files[i]);
+				
+				
 				
 				
 				//String resultsDir = System.getProperty("user.home")+ "/Dropbox/RNA and StatAlign/static/5seq2/";
@@ -941,10 +1006,47 @@ public class Benchmarks
 			
 			DecimalFormat df = new DecimalFormat("0.000");
 			//System.out.println();
-			System.out.println("Dataset\t\t\t\t\t#\tsample\tstat\tmpd\tppfold\ten_exp\ten_obs");
-			System.out.println(datasetName+"\tmean\t\t"+mpdFscVector.size()+"\t"+df.format(mean(samplesFscVector))+"\t"+df.format(mean(statalignFscVector))+"\t"+df.format(mean(mpdFscVector))+"\t"+df.format(mean(ppfoldFscVector))+"\t"+df.format(mean(entropyExpFscVector))+"\t"+df.format(mean(entropyObsFscVector)));
-			System.out.println(datasetName+"\tstdev\t\t"+mpdFscVector.size()+"\t"+df.format(stdev(samplesFscVector))+"\t"+df.format(stdev(statalignFscVector))+"\t"+df.format(stdev(mpdFscVector))+"\t"+df.format(stdev(ppfoldFscVector))+"\t"+df.format(stdev(entropyExpFscVector))+"\t"+df.format(stdev(entropyObsFscVector)));
-
+			String vdir = "/home/michael/Dropbox/RNA and StatAlign/Report/V2/";
+			//System.out.println("Dataset\t\t\t\t\t#\tsample\tstat\tmpd\tppfold\ten_exp\ten_obs");
+			RNAFoldingTools.writeToFile(new File(vdir+"mean.txt"), datasetName+"\tmean\t\t"+mpdFscVector.size()+"\t"+df.format(mean(samplesFscVector))+"\t"+df.format(mean(statalignFscVector))+"\t"+df.format(mean(mpdFscVector))+"\t"+df.format(mean(ppfoldFscVector))+"\t"+df.format(mean(entropyExpFscVector))+"\t"+df.format(mean(entropyObsFscVector)), true);
+			//System.out.println(datasetName+"\tmean\t\t"+mpdFscVector.size()+"\t"+df.format(mean(samplesFscVector))+"\t"+df.format(mean(statalignFscVector))+"\t"+df.format(mean(mpdFscVector))+"\t"+df.format(mean(ppfoldFscVector))+"\t"+df.format(mean(entropyExpFscVector))+"\t"+df.format(mean(entropyObsFscVector)));
+			RNAFoldingTools.writeToFile(new File(vdir+"stdev.txt"), datasetName+"\tstdev\t\t"+mpdFscVector.size()+"\t"+df.format(stdev(samplesFscVector))+"\t"+df.format(stdev(statalignFscVector))+"\t"+df.format(stdev(mpdFscVector))+"\t"+df.format(stdev(ppfoldFscVector))+"\t"+df.format(stdev(entropyExpFscVector))+"\t"+df.format(stdev(entropyObsFscVector)), true);
+			//System.out.println(datasetName+"\tstdev\t\t"+mpdFscVector.size()+"\t"+df.format(stdev(samplesFscVector))+"\t"+df.format(stdev(statalignFscVector))+"\t"+df.format(stdev(mpdFscVector))+"\t"+df.format(stdev(ppfoldFscVector))+"\t"+df.format(stdev(entropyExpFscVector))+"\t"+df.format(stdev(entropyObsFscVector)));
+			double perc = 0.25;
+			RNAFoldingTools.writeToFile(new File(vdir+"25th.txt"), datasetName+"\t25th\t\t"+mpdFscVector.size()+"\t"+df.format(getValue(samplesFscVector, perc))+"\t"+df.format(getValue(statalignFscVector, perc))+"\t"+df.format(getValue(mpdFscVector, perc))+"\t"+df.format(getValue(ppfoldFscVector, perc))+"\t"+df.format(getValue(entropyExpFscVector, perc))+"\t"+df.format(getValue(entropyObsFscVector, perc)), true);
+			//System.out.println(datasetName+"\t25th\t\t"+mpdFscVector.size()+"\t"+df.format(getValue(samplesFscVector, perc))+"\t"+df.format(getValue(statalignFscVector, perc))+"\t"+df.format(getValue(mpdFscVector, perc))+"\t"+df.format(getValue(ppfoldFscVector, perc))+"\t"+df.format(getValue(entropyExpFscVector, perc))+"\t"+df.format(getValue(entropyObsFscVector, perc)));
+			perc = 0.5;
+			RNAFoldingTools.writeToFile(new File(vdir+"50th.txt"), datasetName+"\tmedian\t\t"+mpdFscVector.size()+"\t"+df.format(getValue(samplesFscVector, perc))+"\t"+df.format(getValue(statalignFscVector, perc))+"\t"+df.format(getValue(mpdFscVector, perc))+"\t"+df.format(getValue(ppfoldFscVector, perc))+"\t"+df.format(getValue(entropyExpFscVector, perc))+"\t"+df.format(getValue(entropyObsFscVector, perc)), true);
+			//System.out.println(datasetName+"\tmedian\t\t"+mpdFscVector.size()+"\t"+df.format(getValue(samplesFscVector, perc))+"\t"+df.format(getValue(statalignFscVector, perc))+"\t"+df.format(getValue(mpdFscVector, perc))+"\t"+df.format(getValue(ppfoldFscVector, perc))+"\t"+df.format(getValue(entropyExpFscVector, perc))+"\t"+df.format(getValue(entropyObsFscVector, perc)));
+			perc = 0.75;
+			RNAFoldingTools.writeToFile(new File(vdir+"75th.txt"),datasetName+"\t75th\t\t"+mpdFscVector.size()+"\t"+df.format(getValue(samplesFscVector, perc))+"\t"+df.format(getValue(statalignFscVector, perc))+"\t"+df.format(getValue(mpdFscVector, perc))+"\t"+df.format(getValue(ppfoldFscVector, perc))+"\t"+df.format(getValue(entropyExpFscVector, perc))+"\t"+df.format(getValue(entropyObsFscVector, perc)), true);
+			//System.out.println(datasetName+"\t75th\t\t"+mpdFscVector.size()+"\t"+df.format(getValue(samplesFscVector, perc))+"\t"+df.format(getValue(statalignFscVector, perc))+"\t"+df.format(getValue(mpdFscVector, perc))+"\t"+df.format(getValue(ppfoldFscVector, perc))+"\t"+df.format(getValue(entropyExpFscVector, perc))+"\t"+df.format(getValue(entropyObsFscVector, perc)));
+			RNAFoldingTools.writeToFile(new File(vdir+"IQR.txt"),datasetName+"\tIQR\t\t"+mpdFscVector.size()+"\t"+df.format(IQR(samplesFscVector))+"\t"+df.format(IQR(statalignFscVector))+"\t"+df.format(IQR(mpdFscVector))+"\t"+df.format(IQR(ppfoldFscVector))+"\t"+df.format(IQR(entropyExpFscVector))+"\t"+df.format(IQR(entropyObsFscVector)), true);
+			System.out.println(datasetName+"\tIQR\t\t"+mpdFscVector.size()+"\t"+df.format(IQR(samplesFscVector))+"\t"+df.format(IQR(statalignFscVector))+"\t"+df.format(IQR(mpdFscVector))+"\t"+df.format(IQR(ppfoldFscVector))+"\t"+df.format(IQR(entropyExpFscVector))+"\t"+df.format(IQR(entropyObsFscVector)));
+			double sampleMean = mean(samplesFscVector);
+			RNAFoldingTools.writeToFile(new File(vdir+"percent_greater_than_mean.txt"),datasetName+"\t%>mean\t\t"+mpdFscVector.size()+"\t"+df.format(percentGreaterOrEqualTo(sampleMean, samplesFscVector))+"\t"+df.format(percentGreaterOrEqualTo(sampleMean, statalignFscVector))+"\t"+df.format(percentGreaterOrEqualTo(sampleMean,mpdFscVector))+"\t"+df.format(percentGreaterOrEqualTo(sampleMean,ppfoldFscVector))+"\t"+df.format(percentGreaterOrEqualTo(sampleMean,entropyExpFscVector))+"\t"+df.format(percentGreaterOrEqualTo(sampleMean,entropyObsFscVector)), true);
+			double sampleMedian = getValue(samplesFscVector, 0.5);
+			RNAFoldingTools.writeToFile(new File(vdir+"percent_greater_than_median.txt"),datasetName+"\t%>median\t\t"+mpdFscVector.size()+"\t"+df.format(percentGreaterOrEqualTo(sampleMedian, samplesFscVector))+"\t"+df.format(percentGreaterOrEqualTo(sampleMedian, statalignFscVector))+"\t"+df.format(percentGreaterOrEqualTo(sampleMedian,mpdFscVector))+"\t"+df.format(percentGreaterOrEqualTo(sampleMedian,ppfoldFscVector))+"\t"+df.format(percentGreaterOrEqualTo(sampleMedian,entropyExpFscVector))+"\t"+df.format(percentGreaterOrEqualTo(sampleMedian,entropyObsFscVector)), true);
+			
+			try
+			{
+				BufferedWriter buffer = new BufferedWriter(new FileWriter(System.getProperty("user.home")+ "/Dropbox/RNA and StatAlign/Report/Variation/"+datasetName+".var"));
+				buffer.write("Samples\tStatAlign\tMPD\tPPfold\tEntropy obs\n");
+				for(int k = 0 ; k < statalignFscVector.size() ; k++)
+				{
+					buffer.write(samplesFscVector.get(k)+"\t"+statalignFscVector.get(k)+"\t"+mpdFscVector.get(k)+"\t"+ppfoldFscVector.get(k)+"\t"+entropyObsFscVector.get(k));
+					buffer.newLine();
+				}
+				for(int k = statalignFscVector.size() ; k < samplesFscVector.size() ; k++)
+				{
+					buffer.write(samplesFscVector.get(k)+"\n");
+				}
+				buffer.close();
+			}
+			catch(IOException ex)
+			{
+				ex.printStackTrace();
+			}
 		}
 	}
 	
@@ -1112,6 +1214,8 @@ public class Benchmarks
 				//System.out.println();
 				System.out.println("Dataset\t\t\t\t\t#\tsample\tstat\tmpd\tppfold\ten_exp\ten_obs");
 				System.out.println(originalName+"\tmean\t\t"+runs+"\t"+df.format(mean(samplesFscVector))+"\t"+df.format(mean(statalignFscVector))+"\t"+df.format(mean(mpdFscVector))+"\t"+df.format(mean(ppfoldFscVector))+"\t"+df.format(mean(entropyExpFscVector))+"\t"+df.format(mean(entropyObsFscVector)));
+				System.out.println(originalName+"\tstdev\t\t"+runs+"\t"+df.format(stdev(samplesFscVector))+"\t"+df.format(stdev(statalignFscVector))+"\t"+df.format(stdev(mpdFscVector))+"\t"+df.format(stdev(ppfoldFscVector))+"\t"+df.format(stdev(entropyExpFscVector))+"\t"+df.format(stdev(entropyObsFscVector)));
+				double perc = 0.25;
 				System.out.println(originalName+"\tstdev\t\t"+runs+"\t"+df.format(stdev(samplesFscVector))+"\t"+df.format(stdev(statalignFscVector))+"\t"+df.format(stdev(mpdFscVector))+"\t"+df.format(stdev(ppfoldFscVector))+"\t"+df.format(stdev(entropyExpFscVector))+"\t"+df.format(stdev(entropyObsFscVector)));
 				double sampleMean = mean(samplesFscVector);
 				
@@ -1676,5 +1780,60 @@ public class Benchmarks
     		}
     		return scores;
     	}
+    }
+    
+    public static double IQR(ArrayList<Double> values)
+    {
+    	return getValue(values, 0.75) - getValue(values, 0.25);
+    }
+    
+    public static double getMedian(ArrayList<Double> values)
+    {
+    	ArrayList<Double> sortedValues = (ArrayList<Double>) values.clone();
+    	Collections.sort(sortedValues);
+    	
+    	double length = ((double)values.size()-1)/2;
+    	int floor = (int) Math.floor(length);
+    	int ceil = (int) Math.ceil(length);
+    	
+    	return (sortedValues.get(floor)+sortedValues.get(ceil))/2;
+    }
+    
+    public static double getValue(ArrayList<Double> values, double percentile)
+    {
+    	ArrayList<Double> sortedValues = (ArrayList<Double>) values.clone();
+    	Collections.sort(sortedValues);
+    	
+    	int lower = (int)(percentile * ((double)sortedValues.size()-1));
+    	int upper = (int)Math.ceil(percentile * ((double)sortedValues.size()-1));
+    	
+    	return (sortedValues.get(lower)+sortedValues.get(upper))/2;
+    }
+    
+    public double percentile(ArrayList<Double> values, double x)
+    {
+    	ArrayList<Double> sortedValues = (ArrayList<Double>) values.clone();
+    	Collections.sort(sortedValues);
+    	double minIndex = 0;
+    	for(int i = 0 ; i < sortedValues.size() ; i++)
+    	{
+    		if(x >= sortedValues.get(i))
+    		{
+    			minIndex = i+1;
+    			break;
+    		}
+    	}
+    	double maxIndex = sortedValues.size();
+    	for(int i = sortedValues.size() - 1 ; i >=  0 ; i--)
+    	{
+    		if(x <= sortedValues.get(i))
+    		{
+    			maxIndex = i+1;
+    			break;
+    		}
+    	}
+    	
+    	double pos = (minIndex+maxIndex)/2;    	
+    	return pos / ((double)(sortedValues.size()));
     }
 }

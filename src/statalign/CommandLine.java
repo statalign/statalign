@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import ml.options.OptionData;
 import ml.options.OptionSet;
 import ml.options.Options;
 import ml.options.Options.Multiplicity;
@@ -21,6 +22,7 @@ import statalign.model.subst.RecognitionError;
 import statalign.model.subst.SubstitutionModel;
 import statalign.model.subst.plugins.Dayhoff;
 import statalign.model.subst.plugins.Kimura3;
+import statalign.postprocess.PluginParameters;
 import statalign.postprocess.Postprocess;
 import statalign.postprocess.PostprocessManager;
 
@@ -60,13 +62,24 @@ public class CommandLine {
 	public int fillParams(String[] args, MainManager manager) {
 		initArrays(manager);
 
+		/*
+		ArrayList<String> parsedArgs = new ArrayList<String>();
+		for(int i = 0 ; i < args.length ; i++)
+		{
+			if(!args[i].startsWith("plugin:"))
+			{
+				System.out.println(args[i]);
+				parsedArgs.add(args[i]);
+			}
+		}*/
+		
 		Options opt = new Options(args, Multiplicity.ZERO_OR_ONE, 1,
 				Integer.MAX_VALUE);
 		opt.addSet("run").addOption("subst", Separator.EQUALS)
 				.addOption("mcmc", Separator.EQUALS)
 				.addOption("seed", Separator.EQUALS)
 				.addOption("ot", Separator.EQUALS)
-				.addOption("log", Separator.EQUALS);
+				.addOption("log", Separator.EQUALS).addOption("plugin", Separator.COLON, Multiplicity.ZERO_OR_MORE);
 
 		OptionSet set;
 		if ((set = opt.getMatchingSet(false, false)) == null) {
@@ -219,6 +232,21 @@ public class CommandLine {
 								+ log);
 					}
 				}
+			}
+			
+			OptionData plugins = set.getOption("plugin");
+			ArrayList<String> argsVector = new ArrayList<String>();
+			for(int i = 0 ; i < plugins.getResultCount() ; i++)
+			{
+				argsVector.add(plugins.getResultValue(i));
+			}
+			
+			
+			Postprocess[] pps = manager.postProcMan.plugins;
+			PluginParameters parameters = new PluginParameters(argsVector);
+			for(Postprocess pp : pps)
+			{
+				pp.pluginParameters = parameters;
 			}
 
 		} catch (Exception e) {

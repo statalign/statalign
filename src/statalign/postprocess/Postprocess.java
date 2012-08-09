@@ -99,6 +99,11 @@ public abstract class Postprocess {
 	 * This is the output file writer, that is written by a specific postprocess.
 	 */
 	public FileWriter outputFile;
+	
+	/**
+	 * Same set of parameters visible to all plugins.
+	 */
+	public PluginParameters pluginParameters;
 
 	/**
 	 * Called by {@link PostprocessManager} after setting the {@link #show} field to allow initialisation,
