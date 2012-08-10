@@ -1073,12 +1073,70 @@ public class RNAFoldingTools {
 		return ppfoldReliablityScore/pairs;
 	}
 	
+	public static double calculatePairsOnlyReliabilityScore(int [] pairedSites, double [][] basePairProb, ArrayList<Double> weights)
+	{
+		double ppfoldReliablityScore = 0;
+		double pairs = 0;
+		double weightSum = 0;
+		for(int i = 0 ; i < pairedSites.length ; i++)
+		{
+			if(pairedSites[i] != 0)
+			{
+				double weighting = weights.get(i)*weights.get(pairedSites[i]-1);
+				ppfoldReliablityScore += basePairProb[i][pairedSites[i]-1]*weighting;
+				weightSum += weighting;
+				pairs++;
+			}
+		}
+		
+		if(pairs == 0)
+		{
+			return 1;
+		}
+
+		return ppfoldReliablityScore/pairs;
+	}
+	
 	public static void writeToFile(File f, String s, boolean append)
 	{
 		try
 		{
 			BufferedWriter buffer = new BufferedWriter(new FileWriter(f, append));
 			buffer.write(s+"\n");
+			buffer.close();
+		}
+		catch(IOException ex)
+		{
+			ex.printStackTrace();
+		}
+	}
+	
+	public static void saveCtFile(File outFile, int [] pairedSites, String header, String sequence)
+	{
+		try
+		{
+			BufferedWriter buffer = new BufferedWriter(new FileWriter(outFile));
+			buffer.write(header+"\n");
+			for(int i = 0 ; i < pairedSites.length ; i++)
+			{
+				buffer.write((i+1)+sequence.charAt(i)+"\t"+i+"\t"+(i+2)+"\t"+pairedSites[i]+"\t"+(i+1)+"\n");
+			}
+			buffer.close();
+		}
+		catch(IOException ex)
+		{
+			ex.printStackTrace();
+		}
+	}
+	
+	public static void saveDotBracketFile(File outFile, int [] pairedSites, String header, String sequence)
+	{
+		try
+		{
+			BufferedWriter buffer = new BufferedWriter(new FileWriter(outFile));
+			buffer.write(">"+header+"\n");
+			buffer.write(sequence+"\n");
+			buffer.write(RNAFoldingTools.getDotBracketStringFromPairedSites(pairedSites)+"\n");
 			buffer.close();
 		}
 		catch(IOException ex)

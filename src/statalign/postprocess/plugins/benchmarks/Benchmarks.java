@@ -561,7 +561,7 @@ public class Benchmarks
 	public static void automatedTests()
 	{
 		String dir = "/home/michael/Dropbox/RNA and StatAlign/TestRNAData/";
-		String resultsDir = "/home/michael/workspace/StatAlignExecute/longrun/";
+		String resultsDir = "/home/michael/workspace/StatAlignExecute/longrun2/";
 		File outFile = new File("Benchmarks.txt");
 		String suffix = "_5seqs";
 		if(!suffix.equals("_5seqs"))
@@ -571,6 +571,7 @@ public class Benchmarks
 
 		
 		String header = "dataset\tposterior_avg\tsim_mpd_ref\t"
+		+"average_length\t"
 		+"fsc_sample_mean\tfsc_sample_median\tfsc_stat\tfsc_stat_weighted\tfsc_mpd\tfsc_ppfold\tfsc_entropy_exp\tfsc_entropy_obs\t"
 		+"rel_stat\trel_stat_weighted\trel_mpd\trel_ppfold\trel_entropy_exp\trel_entropy_obs\t"
 		+"rel2_stat\trel2_stat_weighted\trel2_mpd\trel2_ppfold\trel2_entropy_exp\trel2_entropy_obs\t"
@@ -579,7 +580,7 @@ public class Benchmarks
 		+"entropy_mpd\tentropy_perc_mpd\tentropy_max_mpd\t"
 		+"entropy_ppfold\tentropy_perc_ppfold\tentropy_max_ppfold\t"
 		+"entropy_sample_mean\tentropy_perc_sample_mean\tentropy_max_sample_mean\t"
-		+"fsc_sample_alifold_mean\tfsc_sample_alifold_median\tfsc_alifold\tffsc_alifold_mpd\t_alifolf_ref\t";
+		+"fsc_sample_alifold_mean\tfsc_sample_alifold_median\tfsc_alifold\tfsc_alifold_mpd\talifold_ref\trel3_stat\trel3_mpd\trel3_entropy_obs";
 		RNAFoldingTools.writeToFile(outFile, header, false);
 		
 		File [] files = new File(resultsDir).listFiles();
@@ -710,6 +711,11 @@ public class Benchmarks
 			{
 				String val = "" + getDouble(Benchmarks.calculateFScore(pairedSitesExperimental, dataset.pairedSitesProjectedSamples.get(k)));
 				ppfoldValues.add(new Double(val));
+				
+			}
+			
+			for(int k= 0 ; k < dataset.pairedSitesProjectedRnaAlifoldSamples.size() ; k++)
+			{
 				//System.out.println(dataset.pairedSitesProjectedSamples.size()+"\t"+dataset.pairedSitesProjectedRnaAlifoldSamples.size());
 				rnaAlifoldValues.add(getDouble(Benchmarks.calculateFScore(pairedSitesExperimental, dataset.pairedSitesProjectedRnaAlifoldSamples.get(k))));
 			}
@@ -732,8 +738,11 @@ public class Benchmarks
 			double entropySampleMean = mean(entropySamples);
 			double entropyPercSampleMean = mean(entropyPercSamples);
 			double entropyMaxSampleMean = mean(entropyMaxSamples);
-			
+
+
+			double averageLength = getAverageLength(dataset.inputAlignment.sequences);
 			String row = name+"\t"+dataset.posteriorsAverage+"\t"+dataset.mpdVsInputSim+"\t"
+			+averageLength+"\t"
 			+fscSampleMean+"\t"+fscSampleMedian+"\t"+fscExpStat+"\t"+fscExpStatWeighted+"\t"+fscExpStatMPD+"\t"+fscExpPPfold+"\t"+fscSamplingExp+"\t"+fscSamplingObs
 			+"\t"+dataset.ppfoldReliabilityScoreSamplingAndAveraging+"\t"+dataset.ppfoldReliabilityScoreSamplingAndAveragingWeighted+"\t"+dataset.ppfoldReliabilityMPD
 			+"\t"+dataset.resultBundlePPfold.reliabilityScore+"\t"+dataset.resultBundleEntropyExp.reliabilityScore+"\t"+dataset.resultBundleEntropyObs.reliabilityScore
@@ -744,7 +753,8 @@ public class Benchmarks
 			+"\t"+dataset.resultBundleMPD.entropyVal+"\t"+(dataset.resultBundleMPD.entropyPercOfMax/100)+"\t"+dataset.resultBundleMPD.entropyMax
 			+"\t"+dataset.resultBundlePPfold.entropyVal+"\t"+(dataset.resultBundlePPfold.entropyPercOfMax/100)+"\t"+dataset.resultBundlePPfold.entropyMax
 			+"\t"+entropySampleMean+"\t"+(entropyPercSampleMean/100)+"\t"+entropyMaxSampleMean+"\t"
-			+fscRnaAlifoldSampleMean+"\t"+fscRnaAlifoldSampleMedian+"\t"+fscRNAalifold+"\t"+fscRNAalifoldMPD+"\t"+fscRNAalifoldRef;
+			+fscRnaAlifoldSampleMean+"\t"+fscRnaAlifoldSampleMedian+"\t"+fscRNAalifold+"\t"+fscRNAalifoldMPD+"\t"+fscRNAalifoldRef
+			+"\t"+dataset.pairsOnlyReliabilityScoreSamplingAndAveragingPosteriorWeighted+"\t"+dataset.pairsOnlyMPDPosteriorWeighted+"\t"+dataset.pairsOnlyReliabilityEntropyObsPosteriorWeighted;
 
 			
 		
@@ -821,6 +831,16 @@ public class Benchmarks
 				ex.printStackTrace();
 			}
 		}
+	}
+	
+	public static double getAverageLength(ArrayList<String> sequences)
+	{
+		double sum = 0;
+		for(int i = 0 ; i < sequences.size() ; i++)
+		{
+			sum += sequences.get(i).replaceAll("-", "").length();
+		}
+		return sum / ((double)sequences.size());
 	}
 	
 	public static void testVariation2()
@@ -1595,6 +1615,13 @@ public class Benchmarks
 		return null;
 	}
 	
+	/**
+	 * Given an array of paired sites corresponding to the real structure 
+	 * and an array corrsponding to the predicted structure returns the sensitivity.
+	 * @param realPairedSites
+	 * @param predictedPairedSites
+	 * @return
+	 */
 	public static double calculateSensitivity (int [] realPairedSites, int [] predictedPairedSites)
 	{/* The sensitivity for a predicted structure
 		is the percentage of base pairs in the experimental structure that are also present in
@@ -1640,6 +1667,13 @@ public class Benchmarks
 		return count / total;
 	}
 	
+	/**
+	 * Given an array of paired sites corresponding to the real structure 
+	 * and an array corresponding to the predicted structure returns the PPV.
+	 * @param realPairedSites
+	 * @param predictedPairedSites
+	 * @return
+	 */
 	public static double calculatePPV (int [] realPairedSites, int [] predictedPairedSites)
 	{	
 		/* The PPV is the percentage of base
@@ -1682,6 +1716,13 @@ public class Benchmarks
 		return count / total;
 	}
 	
+	/**
+	 * Given an array of paired sites corresponding to the real structure 
+	 * and an array corresponding to the predicted structure returns the F-score.
+	 * @param realPairedSites
+	 * @param predictedPairedSites
+	 * @return
+	 */
 	public static double calculateFScore (int [] realPairedSites, int [] predictedPairedSites)
 	{
 		double sensitivity = calculateSensitivity(realPairedSites, predictedPairedSites);

@@ -66,14 +66,17 @@ public class Dataset implements Serializable {
 	public ResultBundle resultBundleEntropyExp;
 	public ResultBundle resultBundleEntropyObs;
 	public ResultBundle resultBundlePPfold;
+	public double pairsOnlyReliabilityEntropyObsPosteriorWeighted = -1;
 	
 	public double ppfoldReliabilityScoreSamplingAndAveraging = -1;
 	public double ppfoldReliabilityScoreSamplingAndAveragingWeighted = -1;
+	public double pairsOnlyReliabilityScoreSamplingAndAveragingPosteriorWeighted = -1;
 	public double ppfoldReliabilityMPD = -1;
 	
 	public double pairsOnlyReliabilityScoreSamplingAndAveraging = -1;
 	public double pairsOnlyReliabilityScoreSamplingAndAveragingWeighted = -1;
 	public double pairsOnlyReliabilityMPD = -1;
+	public double pairsOnlyMPDPosteriorWeighted = -1;
 	
 	
 	public int [] pairedSites;
