@@ -196,5 +196,9 @@ public class MainManager {
 			});
 		}
 	}
+	
+	public void deactivateRNA() {
+		frame.deactivateRNA();
+	}
 
 }

@@ -41,6 +41,11 @@ public class PostprocessManager {
 	public MainManager mainManager;
 	
 	/**
+	 * 
+	 */
+	public boolean rnaMode = false;
+	
+	/**
 	 * This constructor recognizes the plugins
 	 * @param mainManager The MainManager that manages the MCMC run.
 	 */
@@ -108,11 +113,24 @@ public class PostprocessManager {
 	 * It opens information chanels towards postrocessing plug-ins.
 	 */
 	public void beforeFirstSample() {
-		for(Postprocess plugin : plugins){
-			plugin.mcmc = mcmc;
-			plugin.file = logFile;
-			plugin.alignmentType = MainManager.alignmentTypes[mainManager.inputData.currentAlignmentType];
-			plugin.beforeFirstSample(mainManager.inputData);
+		if(rnaMode) {
+			for(Postprocess plugin : plugins){
+				plugin.mcmc = mcmc;
+				plugin.file = logFile;
+				plugin.alignmentType = MainManager.alignmentTypes[mainManager.inputData.currentAlignmentType];
+				plugin.beforeFirstSample(mainManager.inputData);
+			}
+		}
+		
+		else {
+			for(Postprocess plugin : plugins) {
+				if(!plugin.rnaAssociated) {
+					plugin.mcmc = mcmc;
+					plugin.file = logFile;
+					plugin.alignmentType = MainManager.alignmentTypes[mainManager.inputData.currentAlignmentType];
+					plugin.beforeFirstSample(mainManager.inputData);
+				}
+			}
 		}
 	}
 	
@@ -122,18 +140,39 @@ public class PostprocessManager {
 	 * @param total The total number of samples.
 	 */
 	public void newSample(State state, int no, int total) {
-		for(Postprocess plugin : plugins)
-			plugin.newSample(state, no, total);
+		if(rnaMode) {
+			for(Postprocess plugin : plugins) {
+				plugin.newSample(state, no, total);
+			}
+		}
+		
+		else {
+			for(Postprocess plugin : plugins) {
+				if(!plugin.rnaAssociated) {
+					plugin.newSample(state, no, total);
+				}
+			}
+		}
 	}
 	
 	/**
 	 * Calls the plug-ins after an MCMC step.
 	 */
 	public void newStep(McmcStep step) {
-		for(Postprocess plugin : plugins){
-			//if(plugin.selected){
-				plugin.newStep(step);
-			//}
+		if(rnaMode) {
+			for(Postprocess plugin : plugins){
+				//if(plugin.selected){
+					plugin.newStep(step);
+				//}
+			}
+		}
+		
+		else {
+			for(Postprocess plugin : plugins){
+				if(!plugin.rnaAssociated){
+					plugin.newStep(step);
+				}
+			}
 		}
 	}
 	
@@ -142,10 +181,20 @@ public class PostprocessManager {
 	 */
 	public void newPeek() {
 		State state = mcmc.getState();
-		for(Postprocess plugin : plugins){
-			//if(plugin.selected){
-				plugin.newPeek(state);
-			//}
+		if(rnaMode) {
+			for(Postprocess plugin : plugins){
+				//if(plugin.selected){
+					plugin.newPeek(state);
+				//}
+			}
+		}
+		
+		else {
+			for(Postprocess plugin : plugins){
+				if(!plugin.rnaAssociated){
+					plugin.newPeek(state);
+				}
+			}
 		}
 	}
 	
@@ -154,9 +203,21 @@ public class PostprocessManager {
 	 * It calls plug-ins to finalize their postprocessing activities.
 	 */
 	public void afterLastSample() {
-		for(Postprocess plugin : plugins){
-			if(plugin.postprocessWrite){
-				plugin.afterLastSample();
+		if(rnaMode) {
+			for(Postprocess plugin : plugins){
+				if(plugin.postprocessWrite){
+					plugin.afterLastSample();
+				}
+			}
+		}
+		
+		else {
+			for(Postprocess plugin : plugins){
+				if(!plugin.rnaAssociated) {
+					if(plugin.postprocessWrite){
+						plugin.afterLastSample();
+					}
+				}
 			}
 		}
 

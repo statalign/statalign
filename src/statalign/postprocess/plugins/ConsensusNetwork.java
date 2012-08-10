@@ -35,6 +35,7 @@ public class ConsensusNetwork extends statalign.postprocess.Postprocess{
 		screenable = true;
 		outputable = true;
 		postprocessable = false;
+		rnaAssociated = false;
 	}
 	
 	/**
@@ -71,6 +72,12 @@ public class ConsensusNetwork extends statalign.postprocess.Postprocess{
 	public String getTip() {
 		return "Consensus network of tree samples";
 	}
+	
+	@Override
+    public double getTabOrder() {
+        return 7.0d;
+    }
+
 
 	@Override
 	public String getFileExtension() {
@@ -88,6 +95,8 @@ public class ConsensusNetwork extends statalign.postprocess.Postprocess{
 			JScrollPane scroll = new JScrollPane();
 			scroll.setViewportView(gui = new CNetworkView(scroll));//, mcmc.tree.printedAlignment()));
 			pan.add(scroll, BorderLayout.CENTER);
+			System.out.println("Consensus network parent: " + pan.getParent());
+			pan.getParent().validate();
 		}
 		updateCnt = 0;
 

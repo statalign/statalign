@@ -31,6 +31,7 @@ public class CurrentTreeVisualizer extends TreeVisualizer {
         postprocessable = true;
         postprocessWrite = true;
         sampling = true;
+        rnaAssociated = false;
     }
     
     @Override

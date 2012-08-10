@@ -30,6 +30,7 @@ public class ConsensusTreeVisualizer extends TreeVisualizer {
         outputable = true;
         postprocessable = true;
         postprocessWrite = true;
+        rnaAssociated = false;
     }
     
     @Override

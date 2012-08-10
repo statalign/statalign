@@ -11,7 +11,6 @@ public class ColorGradient {
 
     public Color[] colours;
     public float[] positions;
-    private float[] differences;
 
     public ColorGradient(Color c1, Color c2) {
         colours = new Color[2];

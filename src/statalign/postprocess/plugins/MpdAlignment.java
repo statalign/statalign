@@ -1,9 +1,6 @@
 package statalign.postprocess.plugins;
 
 import java.awt.BorderLayout;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -14,8 +11,6 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-
-import com.ppfold.main.PPfoldMain;
 
 import statalign.base.CircularArray;
 import statalign.base.InputData;
@@ -31,13 +26,13 @@ public class MpdAlignment extends statalign.postprocess.Postprocess {
 	JPanel pan;
 	AlignmentGUI gui;
 	//private boolean sampling = true;
-	
+
 	CurrentAlignment curAlig;
-	
+
 	ColumnNetwork network;
 	Column firstVector, lastVector;
 	int sizeOfAlignments;
-	
+
 	int[] firstDescriptor; 
 	String t[][];
 	String[] sequences;
@@ -45,16 +40,17 @@ public class MpdAlignment extends statalign.postprocess.Postprocess {
 
 	double[] decoding;
 	String[] alignment;
-	
+
 	InputData input;
-	
+
 	public MpdAlignment(){
 		screenable = true;
 		outputable = true;
 		postprocessable = true;
 		postprocessWrite = true;
+		rnaAssociated = false;
 	}
-	
+
 	@Override
 	public JPanel getJPanel() {
 		pan = new JPanel(new BorderLayout());
@@ -97,7 +93,7 @@ public class MpdAlignment extends statalign.postprocess.Postprocess {
 	public void refToDependences(Postprocess[] plugins) {
 		curAlig = (CurrentAlignment) plugins[0];
 	}
-	
+
 	static Comparator<String[]> compStringArr = new Comparator<String[]>() {
 		public int compare(String[] a1, String[] a2) {
 			return a1[0].compareTo(a2[0]);
@@ -111,11 +107,12 @@ public class MpdAlignment extends statalign.postprocess.Postprocess {
 			JScrollPane scroll = new JScrollPane();
 			scroll.setViewportView(gui = new AlignmentGUI(title,input.model));//, mcmc.tree.printedAlignment()));
 			pan.add(scroll, BorderLayout.CENTER);
+			System.out.println("Mpd Alignment parent: " + pan.getParent());
 			pan.getParent().validate();
 		}
-		
+
 		this.input = input;
-		
+
 		sizeOfAlignments = input.seqs.sequences.size();
 		alignment = new String[sizeOfAlignments];
 		if(show)
@@ -125,7 +122,7 @@ public class MpdAlignment extends statalign.postprocess.Postprocess {
 		viterbialignment = new String[sizeOfAlignments];
 
 		network = new ColumnNetwork();
-		
+
 		firstDescriptor = new int[sizeOfAlignments];
 		Arrays.fill(firstDescriptor, -1);
 		firstVector = network.add(firstDescriptor);
@@ -145,7 +142,7 @@ public class MpdAlignment extends statalign.postprocess.Postprocess {
 		Arrays.sort(t, compStringArr);
 
 		int[] previousDescriptor = firstDescriptor;
-		
+
 		int i, j, len = t[0][1].length();
 		for(j = 0; j < len; j++){
 			int[] nextDescriptor =  new int[sizeOfAlignments];
@@ -160,10 +157,10 @@ public class MpdAlignment extends statalign.postprocess.Postprocess {
 			}
 			if(!allGap)
 				network.add(nextDescriptor);//[j]);
-			
+
 			previousDescriptor = nextDescriptor;
 		}//j (length of alignments)
-		
+
 		if(no == 0) {		// add last vector once only
 			int[] lastDescriptor =  new int[sizeOfAlignments];
 			for(j = 0; j < sizeOfAlignments; j++){
@@ -174,7 +171,7 @@ public class MpdAlignment extends statalign.postprocess.Postprocess {
 		if(no == 0 || (total-1-no) % frequency == 0) {
 			network.updateViterbi(no+1);
 			//System.out.println("sequences first: "+sequences);
-			
+
 			if(sequences == null) {
 				sequences = new String[sizeOfAlignments];
 				for(i = 0; i < sizeOfAlignments; i++){
@@ -211,17 +208,18 @@ public class MpdAlignment extends statalign.postprocess.Postprocess {
 			for(i = 0; i < viterbialignment.length; i++){
 				alignment[i] = t[i][0]+"\t"+viterbialignment[i];
 			}
-			
+
 			// sort alignment lexicographically
 			// TODO sort oder is parameter (alternatives: original, tree, lexico)
 			Arrays.sort(alignment);
-			
+
 			if(show) {
 				gui.decoding = decoding;
 				gui.alignment = alignment;
 				gui.repaint();
 			}
 		}
+		
 		if(sampling){
 			try {
 				String[] aln = Utils.alignmentTransformation(alignment, alignmentType, input);
@@ -240,9 +238,9 @@ public class MpdAlignment extends statalign.postprocess.Postprocess {
 				e.printStackTrace();
 			}
 		}	
-		
 
-		
+
+
 		/*if(no == 0)
 		{
 			String [] [] inputAlignment = new String[input.seqs.sequences.size()][2];
@@ -260,9 +258,9 @@ public class MpdAlignment extends statalign.postprocess.Postprocess {
 		{
 			appendAlignment(no+"", t, new File(input.title+".samples"), true);
 		}*/
-				
+
 	}
-	
+
 	@Override
 	public void afterLastSample() {
 		if (postprocessWrite) {
@@ -312,7 +310,7 @@ public class MpdAlignment extends statalign.postprocess.Postprocess {
 	@Override
 	public void setSampling(boolean enabled) {
 		sampling = enabled;
-		
+
 	}
 
 }
@@ -321,12 +319,12 @@ class ColumnNetwork {
 	HashMap<ColumnKey,Column> contMap = new HashMap<ColumnKey,Column>();
 	HashMap<ColumnKey,ArrayList<Column>> preMap = new HashMap<ColumnKey,ArrayList<Column>>();
 	HashMap<ColumnKey,ArrayList<Column>> postMap = new HashMap<ColumnKey,ArrayList<Column>>();
-	
+
 	int numberOfEdges = 0;
 	int numberOfNodes = 0;
 
 	Column first;
-	
+
 	/**
 	 * Adds a new alignment column into the network. If already in the network, MyVector.count is incremented.
 	 * @param descriptor Alignment column represented by an array of signed integers
@@ -345,9 +343,9 @@ class ColumnNetwork {
 		if(numberOfNodes == 0)
 			first = val;
 		numberOfNodes++;
-		
+
 		ArrayList<Column> arr;
-		
+
 		key = new ColumnKey(ColumnKey.pre(descriptor));
 		if((arr = preMap.get(key)) == null)
 			preMap.put(key, arr = new ArrayList<Column>());
@@ -359,7 +357,7 @@ class ColumnNetwork {
 				numberOfEdges++;
 			}
 		}
-		
+
 		key = new ColumnKey(ColumnKey.post(descriptor));
 		if((arr = postMap.get(key)) == null)
 			postMap.put(key, arr = new ArrayList<Column>());
@@ -371,11 +369,11 @@ class ColumnNetwork {
 				numberOfEdges++;
 			}
 		}
-		
+
 		return val;
 	}
-	
-	
+
+
 	void updateViterbi(int n) {
 		double logN = Math.log(n);
 		CircularArray<Column> calculable = new CircularArray<Column>();
@@ -403,13 +401,13 @@ class Column {
 	ArrayList<Column> outgoing = new ArrayList<Column>();
 	ColumnKey key;
 	int inNum;
-	
+
 	int inReady;
 	int count = 1;
 	double logcnt = 0;
 	double score = -1e300;
 	Column viterbi;
-	
+
 	Column(ColumnKey _key) {
 		key = _key;
 	}
@@ -418,37 +416,37 @@ class Column {
 
 class ColumnKey {
 	public int[] desc;
-	
+
 	ColumnKey(int[] arr) {
 		desc = arr;
 	}
-	
+
 	@Override
 	public boolean equals(Object o)	{
 		return (o instanceof ColumnKey) && Arrays.equals(desc, ((ColumnKey)o).desc);
 	}
-	
+
 	@Override
 	public int hashCode()	{
 		return Arrays.hashCode(desc);
 	}
-	
+
 	static int[] pre(int[] desc) {
 		int[] ret = new int[desc.length];
 		for(int i = 0; i < desc.length; i++)
 			ret[i] = (desc[i]+1) >> 1;
 		return ret;
 	}
-	
+
 	static int[] post(int[] desc) {
 		int[] ret = new int[desc.length];
 		for(int i = 0; i < desc.length; i++)
 			ret[i] = desc[i] >> 1;
 		return ret;
 	}
-	
+
 	static int colNext(int n) {
 		return n + (n & 1);
 	}
-	
+
 }

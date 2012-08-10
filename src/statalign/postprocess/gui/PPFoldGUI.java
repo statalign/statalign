@@ -5,10 +5,11 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.geom.Ellipse2D;
 
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+
+import statalign.postprocess.plugins.PPFold;
 
 public class PPFoldGUI extends JPanel {
 
@@ -21,6 +22,7 @@ public class PPFoldGUI extends JPanel {
 	private static final long serialVersionUID = 1L;
 
 	public String title;
+	public PPFold owner;
 	
 	private int dimension;
 	private int x;
@@ -43,9 +45,10 @@ public class PPFoldGUI extends JPanel {
 	private float[][] probs;
 	
 	
-	public PPFoldGUI(String title, JScrollPane scroll) {
+	public PPFoldGUI(String title, JScrollPane scroll, PPFold owner) {
 		this.title = title;
 		this.scroll = scroll;
+		this.owner = owner;
 		dimension = 0;
 
 		x = 10*OFFSET_X;
@@ -70,10 +73,53 @@ public class PPFoldGUI extends JPanel {
 		
 		
 		for(int i = x; i < x+dimension; i = i+OFFSET) {
+			//System.out.println("YAYAYAYAYAYAY");
+			//System.out.println(PPFold.getSequences().length);
+			//System.out.println(PPFold.getSequences()[0][0]);
+			//if(owner.getSequences()[0][0] == "String")
+			int sum = 0;
+			
+			/*for(String element : transposedSequences[(i-x)/OFFSET]) {
+				if(element.equals("-")) {sum += 1;}
+			}*/
+			
+			for(int m = 0; m < PPFold.getSequences().length; m++) {
+				String sequence = PPFold.getSequences()[m][1];
+				if(sequence.charAt((i-x)/OFFSET) == '-') {sum += 1;}
+			}
+			
+			System.out.println("THIS IS THE GAP RATIO: " + (double)(sum / PPFold.getSequences().length));
+		
+			if((double)sum / PPFold.getSequences().length >= 0.25) {
+				System.out.println("THIS IS THE GAP RATIO: " + (double)(sum / PPFold.getSequences().length));
+				gr2.setPaint(Color.GRAY);
+				gr2.fillRect(i, y, OFFSET, dimension);
+				continue;
+			}
+			
+			if(owner.refSeqGapped.charAt((i-x)/OFFSET) == '-') {
+				gr2.setPaint(Color.GRAY);
+			}
+			
 			for(int j = y; j < y+dimension; j = j+OFFSET) {
+				
+				/*for(String element : transposedSequences[(i-x)/OFFSET]) {
+					if(element.equals("-")) {sum += 1;}
+				}*/
+			
+				/*if((double)(sum / PPFold.getSequences().length) >= 0.75) {
+					gr2.setPaint(Color.GRAY);
+					gr2.fillRect(i, j, OFFSET, OFFSET);
+					continue;
+				}*/
+				
 				float probability = probs[(i-x)/OFFSET][(j-y)/OFFSET];
 				probability = 1/(float)Math.abs(Math.log(probability));
-				gr2.setPaint(cg.getColor(probability));
+				
+				//System.out.println(Math.abs(i-j));
+				if(Math.abs((i-x) - (j-y)) <= 3*OFFSET) {gr2.setPaint(Color.GRAY);}
+				
+				else {gr2.setPaint(cg.getColor(probability));}
 				gr2.fillRect(i, j, OFFSET, OFFSET);
 			}
 		}
@@ -110,20 +156,23 @@ public class PPFoldGUI extends JPanel {
 	}
 	
 	public Dimension getPreferredSize() {
+		//int xPreferredSize = 20*OFFSET_X + dimension + 30;
+		//int yPreferredSize = 2*TITLE_Y + dimension + 30;
+		
 		int xPreferredSize = 20*OFFSET_X + dimension + 30;
 		int yPreferredSize = 2*TITLE_Y + dimension + 30;
 		
-		if(yPreferredSize > this.getHeight()) {
+		/*if(yPreferredSize >= this.getHeight()) {
 			System.out.println("Vertical bar should be working!");
 			scroll.createVerticalScrollBar();
 		}
 		
-		if(xPreferredSize > this.getWidth()) {
+		if(xPreferredSize >= this.getWidth()) {
 			scroll.createHorizontalScrollBar();
 			System.out.println("Horizontal bar should be working");
-		}
+		}*/
 		
-		return new Dimension(20*OFFSET_X + dimension + 30, 2*TITLE_Y + dimension + 30);
+		return new Dimension(20*OFFSET_X + dimension + 30 + 500, 2*TITLE_Y + dimension + 30 + 500);
 //		if (alignment != null && alignment[0] != null) {
 //			return new Dimension((alignment[0].length() + 3) * COLUMN_WIDTH + 6 * OFFSET_X, 100);
 //		} else {

@@ -48,6 +48,7 @@ public class LogLikelihoodTrace extends statalign.postprocess.Postprocess{
 		postprocessable = true;
 		sampling = true;
 		postprocessWrite = true;
+		rnaAssociated = false;
 	}
 
 	/**

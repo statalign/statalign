@@ -41,6 +41,7 @@ public class CurrentAlignment extends statalign.postprocess.Postprocess{
 		outputable = true;
 		postprocessable = false;
 		sampling = true;
+		rnaAssociated = false;
 	}
 	
 	/**
@@ -152,6 +153,7 @@ public class CurrentAlignment extends statalign.postprocess.Postprocess{
 	 */
 	@Override
 	public void newSample(State state, int no, int total) {
+		//System.out.println("THIS IS THE CURRENT ALIGNMENT" + state.getFullAlign());
 		updateAlignment(state);
 		
 		if(sampling){

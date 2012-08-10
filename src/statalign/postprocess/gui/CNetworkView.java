@@ -27,6 +27,10 @@ import statalign.postprocess.utils.DisplayString;
  *
  */
 public class CNetworkView extends JPanel implements MouseWheelListener {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	// variables for using in storing network data to enable resizing and zooming
 	public ArrayList<DisplayString> leaflabel;
 	public ArrayList<Integer[]> lines;

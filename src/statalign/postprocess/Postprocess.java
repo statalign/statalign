@@ -85,6 +85,13 @@ public abstract class Postprocess {
 	public boolean postprocessWrite;
 	
 	/**
+	 * True if it should show only when running an RNA/DNA file
+	 */
+	public boolean rnaAssociated;
+	
+	
+	
+	/**
 	 * This string tells the alignment type in which alignment must be presented
 	 */
 	public String alignmentType;
@@ -100,10 +107,12 @@ public abstract class Postprocess {
 	 */
 	public FileWriter outputFile;
 	
+
 	/**
 	 * Same set of parameters visible to all plugins.
 	 */
 	public PluginParameters pluginParameters;
+
 
 	/**
 	 * Called by {@link PostprocessManager} after setting the {@link #show} field to allow initialisation,
@@ -111,6 +120,7 @@ public abstract class Postprocess {
 	 */
 	public void init() {
 	}
+	
 
 	/**
 	 * 
@@ -130,7 +140,14 @@ public abstract class Postprocess {
 	 */
 	public abstract JPanel getJPanel();
 	//public abstract Component getComponent();
-		
+	
+	/**
+	 * Reinitializes panel to accommodate a new GUI
+	 */
+	public void reloadPanel() {
+	}
+	
+	
 	/**
 	 * Returns with the tip information (shown when the mouse cursor is moved over the 
 	 * label of the tabulated panel)

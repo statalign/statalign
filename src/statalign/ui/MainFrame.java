@@ -31,6 +31,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JTabbedPane;
+import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
@@ -49,6 +50,7 @@ import statalign.model.subst.SubstitutionModel;
 import statalign.model.subst.plugins.Dayhoff;
 import statalign.model.subst.plugins.Kimura3;
 import statalign.postprocess.Postprocess;
+import statalign.postprocess.PostprocessManager;
 
 /**
  * The main frame of the program.
@@ -64,12 +66,17 @@ public class MainFrame extends JFrame implements ActionListener {
 
     // Variables
 
+    private JTabbedPane tab;
+    private Postprocess[] pluginTabs;
+    private Input input;
+    
     public JToolBar toolBar;
     private JButton openButton;
     private JButton runButton;
     private JButton pauseButton;
     private JButton resumeButton;
     private JButton stopButton;
+    private JToggleButton rnaButton;
 
     private JMenuItem openItem;
     private JMenuItem runItem;
@@ -83,6 +90,7 @@ public class MainFrame extends JFrame implements ActionListener {
 
     private HashMap<Integer, Postprocess> tabPluginMap;
     private Integer lastSelectedTabIndex = -1;
+    private ArrayList<JTabbedPane> allTabs;
 
     /** The main manager that handles the MCMC run. */
     public MainManager manager;
@@ -230,7 +238,13 @@ public class MainFrame extends JFrame implements ActionListener {
         		getSystemResource("icons/stop.png")), stopText);
         stopButton.setEnabled(false);
         toolBar.add(stopButton);
-
+        
+        String rnaText = "RNA mode";
+        rnaButton = createToggleButton(new ImageIcon("icons/rna1.png"), rnaText);
+        rnaButton.setEnabled(false);
+        rnaButton.setSelected(false);
+        toolBar.add(rnaButton);
+        
         String settingsText = "Settings";
         JButton settingsButton = createButton(new ImageIcon(ClassLoader.
         		getSystemResource("icons/settings.png")), settingsText);
@@ -327,14 +341,14 @@ public class MainFrame extends JFrame implements ActionListener {
         mainPanel.setMaximumSize(new Dimension(screenSize.width, screenSize.height));
         mainPanel.setPreferredSize(new Dimension(screenSize.width / 2, screenSize.height / 2));
 
-        JTabbedPane tab = new JTabbedPane();
+        tab = new JTabbedPane();
 
-        Input input = new Input(manager);
+        input = new Input(manager);
         tab.addTab(input.getTabName(), input.getIcon(), input.getJPanel(), input.getTip());
         manager.inputgui = input.inputgui;
 
         // Sorts the tab according to their getTabOrder()
-        Postprocess[] pluginTabs = manager.postProcMan.plugins.clone();
+        pluginTabs = manager.postProcMan.plugins.clone();
         Arrays.sort(pluginTabs, new Comparator<Postprocess>() {
             @Override
             public int compare(Postprocess firstTab, Postprocess secondTab) {
@@ -345,7 +359,7 @@ public class MainFrame extends JFrame implements ActionListener {
         tabPluginMap = new HashMap<Integer, Postprocess>();
         for (int i = 0; i < pluginTabs.length; i++) {
             Postprocess plugin = pluginTabs[i];
-            if (plugin.selected) {
+            if (plugin.selected && !plugin.rnaAssociated) {
                 tabPluginMap.put(i + 1, plugin); // TODO: Jesus Java, horrible.
                 tab.addTab(plugin.getTabName(), plugin.getIcon(), plugin.getJPanel(), plugin.getTip());
             }
@@ -412,6 +426,14 @@ public class MainFrame extends JFrame implements ActionListener {
         button.setActionCommand(text);
         return button;
     }
+    
+    private JToggleButton createToggleButton(Icon icon, String text) {
+    	JToggleButton button = new JToggleButton(icon);
+    	button.setToolTipText(text);
+    	button.addActionListener(this);
+    	button.setActionCommand(text);
+    	return button;
+    }
 
     /** An ActioListener is implemented, so we have to implement this function. It handles actions on the menu bar. */
     public void actionPerformed(ActionEvent ev) {
@@ -424,6 +446,7 @@ public class MainFrame extends JFrame implements ActionListener {
                 try {
                     manager.inputData.seqs.add(reader.read(inFile));
                     manager.inputgui.updateSequences();
+                    System.out.println("THIS IS HOW MANY SEQUENCES THERE ARE: " + manager.inputData.seqs.size());
                     manager.fullPath = inFile.getAbsolutePath();
                     if (manager.inputData.model != null) {
                         try {
@@ -437,11 +460,14 @@ public class MainFrame extends JFrame implements ActionListener {
                     if (manager.inputData.model != null) {
                         runItem.setEnabled(true);
                         runButton.setEnabled(true);
+                        
+                        rnaButton.setEnabled(true);
                     }
                 } catch (IOException e) {
                     JOptionPane.showMessageDialog(this, e.getLocalizedMessage(), "Error reading input file", JOptionPane.ERROR_MESSAGE);
                 }
             }
+            
         } else if (ev.getActionCommand() == "Exit") {
             System.exit(0);
         } else if (ev.getActionCommand() == "Preferences...") {
@@ -468,6 +494,9 @@ public class MainFrame extends JFrame implements ActionListener {
 
             stopItem.setEnabled(true);
             stopButton.setEnabled(true);
+            
+            rnaButton.setEnabled(false);
+            
             manager.start();
         } else if (ev.getActionCommand() == "Pause") {
             pauseItem.setEnabled(false);
@@ -495,6 +524,58 @@ public class MainFrame extends JFrame implements ActionListener {
             finished();
             setTitle(savTit);
             setCursor(Cursor.getDefaultCursor());
+        } else if (ev.getActionCommand() == "RNA mode") {
+        	if(rnaButton.isSelected()) {
+        		//tab.removeAll();
+        		//tabPluginMap.clear();
+        		
+        		//manager.inputgui = input.inputgui;
+        		//manager.inputgui.updateSequences();
+        		//tab.addTab(input.getTabName(), input.getIcon(), input.getJPanel(), input.getTip());
+        		manager.inputgui = input.inputgui;
+        		manager.inputgui.updateSequences();
+        		//System.out.println("SELECTED!!!");
+        		
+        		manager.postProcMan.rnaMode = true;
+    			//manager.postProcMan.reload();
+   
+    			int count = tab.getTabCount();
+        		for(Postprocess plugin : pluginTabs) {
+        			//System.out.println(plugin.getTabName() + ": " + plugin.screenable);
+        			if(plugin.rnaAssociated) {
+	        			tabPluginMap.put(count + 1, plugin);
+	        			tab.addTab(plugin.getTabName(), plugin.getIcon(), plugin.getJPanel(), plugin.getTip());
+	        			count++;
+        			}
+        			
+        			//manager.postProcMan.init();
+        		}
+        	}
+        	
+        	else {
+        		
+        		manager.postProcMan.rnaMode = false;
+        		//System.out.println("NOT SELECTED!!!");
+        		manager.inputgui = input.inputgui;
+        		manager.inputgui.updateSequences();
+        		
+        		int count = 0;
+        		for(Postprocess plugin : pluginTabs) {
+        			if(plugin.rnaAssociated) {
+        				tabPluginMap.remove(plugin);
+        				String removePlugin = tab.getTitleAt(count+1);
+        				tab.remove(count + 1);
+        				count--;
+        			}
+        			
+        			count++;
+        			
+        				
+        		}
+        		
+        		
+        	}
+        	
         } else if (ev.getActionCommand() == "About...") {
             new HelpWindow(this, "About", getClass().getClassLoader().getResource("doc/about/index.html"), false);
         } else if (ev.getActionCommand() == "Html doc for developers") {
@@ -585,7 +666,9 @@ public class MainFrame extends JFrame implements ActionListener {
         openButton.setEnabled(true);
         runItem.setEnabled(true);
         runButton.setEnabled(true);
-
+        rnaButton.setEnabled(true);
+        
+        //rnaButton.setSelected(false);
         pauseItem.setEnabled(false);
         pauseButton.setEnabled(false);
         resumeItem.setEnabled(false);
@@ -593,6 +676,25 @@ public class MainFrame extends JFrame implements ActionListener {
         stopItem.setEnabled(false);
         stopButton.setEnabled(false);
     }
+    
+    public void deactivateRNA() {
+    	
+    	int count = 0;
+		for(Postprocess plugin : pluginTabs) {
+			if(plugin.rnaAssociated) {
+				plugin.reloadPanel();
+				tabPluginMap.remove(plugin);
+				tab.remove(count + 1);
+				count--;
+			}
+			
+			count++;		
+		}
+    	
+    	rnaButton.setSelected(false);
+    	rnaButton.setEnabled(false);
+    }
+    
 
     /**
      * Merely for testing purposes.
