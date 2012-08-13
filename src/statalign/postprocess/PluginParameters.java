@@ -6,6 +6,11 @@ import java.util.Hashtable;
 public class PluginParameters {
 	
 	Hashtable<String, String> parameters = new Hashtable<String, String>();
+	
+	public PluginParameters()
+	{
+		
+	}
 		
 	public PluginParameters(ArrayList<String> args)
 	{
@@ -31,6 +36,19 @@ public class PluginParameters {
 			return parameters.get(name);
 		}
 		return null;
+	}
+	
+	public void setParameter(String name, String value)
+	{
+		parameters.put(name, value);
+	}
+	
+	public void removeParameter(String name)
+	{
+		if(parameters.containsKey(name))
+		{
+			parameters.remove(name);
+		}
 	}
 
 }

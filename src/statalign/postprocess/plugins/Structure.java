@@ -215,13 +215,19 @@ public class Structure extends statalign.postprocess.Postprocess {
 	public void newSample(State state, int no, int total) {
 
 		if(sampling) {
-			updateSequence();
-			updateStructure();
+			if(ppfold.samplingAndAveragingPPfold)
+			{
+				updateSequence();			
+				updateStructure();
+			}
 			//gui.updateAndDraw(currentSequence, currentDotBracketStructure);
 		}
 		
 		if(show) {
-			gui.updateAndDraw(currentSequence, currentDotBracketStructure);
+			if(ppfold.samplingAndAveragingPPfold)
+			{
+				gui.updateAndDraw(currentSequence, currentDotBracketStructure);
+			}			
 		}
 	}
 

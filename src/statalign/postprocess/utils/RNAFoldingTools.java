@@ -1144,4 +1144,42 @@ public class RNAFoldingTools {
 			ex.printStackTrace();
 		}
 	}
+	
+	public static boolean isRNAalignment(ArrayList<String> sequences)
+	{
+		double countRNA = 0;
+		double countNonRNA = 0;
+		for(int i = 0 ; i < sequences.size() ; i++)
+		{
+			String s = sequences.get(i).toUpperCase();
+			for(int j = 0 ; j < s.length() ; j++)
+			{
+				switch(s.charAt(j))
+				{
+				case 'A':
+					countRNA++;
+					break;
+				case 'C':
+					countRNA++;
+					break;
+				case 'G':
+					countRNA++;
+					break;
+				case 'T':
+					countRNA++;
+					break;
+				case 'U':
+					countRNA++;
+					break;
+				case '-':
+					break;
+				default:
+					countNonRNA++;
+				}
+			}			
+		}
+		
+		double ratio = countRNA / countNonRNA;		
+		return ratio > 0.5;
+	}
 }

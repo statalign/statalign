@@ -1,4 +1,4 @@
-package statalign.postprocess.plugins;
+package statalign.postprocess.utils;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -11,11 +11,12 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 
-import statalign.postprocess.utils.RNAFoldingTools;
+import statalign.postprocess.plugins.RNAalifoldResult;
+
 
 public class RNAalifold {
 	
-	static String executable = "/home/michael/Downloads/ViennaRNA-2.0.7/Progs/RNAalifold";
+	public static String executable = "/home/michael/Downloads/ViennaRNA-2.0.7/Progs/RNAalifold";
 	
 	public static RNAalifoldResult fold(List<String> sequences, List<String> sequenceNames, String arguments)
 	{

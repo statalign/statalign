@@ -111,7 +111,7 @@ public abstract class Postprocess {
 	/**
 	 * Same set of parameters visible to all plugins.
 	 */
-	public PluginParameters pluginParameters;
+	public static PluginParameters pluginParameters = new PluginParameters();
 
 
 	/**

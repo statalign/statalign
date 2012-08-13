@@ -51,6 +51,7 @@ import statalign.model.subst.plugins.Dayhoff;
 import statalign.model.subst.plugins.Kimura3;
 import statalign.postprocess.Postprocess;
 import statalign.postprocess.PostprocessManager;
+import statalign.postprocess.utils.RNAFoldingTools;
 
 /**
  * The main frame of the program.
@@ -77,6 +78,7 @@ public class MainFrame extends JFrame implements ActionListener {
     private JButton resumeButton;
     private JButton stopButton;
     private JToggleButton rnaButton;
+    private JButton rnaOptionsButton;
 
     private JMenuItem openItem;
     private JMenuItem runItem;
@@ -98,6 +100,8 @@ public class MainFrame extends JFrame implements ActionListener {
     private McmcSettingsDlg mcmcSettingsDlg;
     private File inFile;
     private Class<? extends SubstitutionModel>[] substModels;
+    
+    RNASettingsDlg dlg = new RNASettingsDlg(this);
 
     // Functions
 
@@ -240,10 +244,16 @@ public class MainFrame extends JFrame implements ActionListener {
         toolBar.add(stopButton);
         
         String rnaText = "RNA mode";
-        rnaButton = createToggleButton(new ImageIcon("icons/rna1.png"), rnaText);
+        rnaButton = createToggleButton(new ImageIcon("icons/rna1.png"),  rnaText);
         rnaButton.setEnabled(false);
         rnaButton.setSelected(false);
         toolBar.add(rnaButton);
+        
+       /* String rnaOptionsText = "RNA Options";
+        rnaOptionsButton = createButton(new ImageIcon("icons/rna1.png"), rnaOptionsText);
+       // rnaOptionsButton.addActionListener(this);
+        toolBar.add(rnaOptionsButton);
+        */
         
         String settingsText = "Settings";
         JButton settingsButton = createButton(new ImageIcon(ClassLoader.
@@ -526,6 +536,16 @@ public class MainFrame extends JFrame implements ActionListener {
             setCursor(Cursor.getDefaultCursor());
         } else if (ev.getActionCommand() == "RNA mode") {
         	if(rnaButton.isSelected()) {
+        		if(RNAFoldingTools.isRNAalignment(manager.inputData.seqs.sequences))
+        		{
+        			System.out.println("Smells like RNA");
+        		}
+        		else
+        		{
+        			System.out.println("Stinks of protein");
+        		}
+        		dlg = new RNASettingsDlg (this);
+        		dlg.display(this);
         		//tab.removeAll();
         		//tabPluginMap.clear();
         		
@@ -550,8 +570,7 @@ public class MainFrame extends JFrame implements ActionListener {
         			
         			//manager.postProcMan.init();
         		}
-        	}
-        	
+        	}        	
         	else {
         		
         		manager.postProcMan.rnaMode = false;
@@ -587,6 +606,12 @@ public class MainFrame extends JFrame implements ActionListener {
         } else if (ev.getActionCommand() == "Help for users") {
             new HelpWindow(this, "Help for users",
                     ClassLoader.getSystemResource("doc/help/index.html"), true);
+        }
+        else if(ev.getActionCommand() == "RNA Options")
+        {        	
+        	System.out.println("PRESSED");
+        	//dlg = new RNASettingsDlg (this);
+    		//dlg.display(this);
         } else {        // new substitution model selected
             for (Class<? extends SubstitutionModel> cl : substModels) {
                 try {
