@@ -11,13 +11,16 @@ import java.awt.event.KeyListener;
 
 import javax.swing.Box;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 
+import statalign.base.AutomateParameters;
 import statalign.base.MCMCPars;
+import statalign.base.AutomateParameters;
 
 /**
  * 
@@ -36,6 +39,7 @@ public class McmcSettingsDlg extends JDialog implements ActionListener, KeyListe
 	private JTextField cycles = new JTextField(10);
 	private JTextField sampRate = new JTextField(10);
 	private JTextField seed = new JTextField(10);
+	private JCheckBox automate = new JCheckBox("",true);
 //	private JTextField outFile = new JTextField(15)
 	private MainFrame owner;
 	
@@ -64,6 +68,9 @@ public class McmcSettingsDlg extends JDialog implements ActionListener, KeyListe
 		pan.add(new JLabel("Seed:"));
 		seed.addKeyListener(this);
 		pan.add(seed);
+		pan.add(new JLabel("Automate the sampling rate:"));
+		automate.addKeyListener(this);
+		pan.add(automate);
 //		pan.add(new JLabel("Output file:"));
 //		pan.add(outFile);
 		bigBox.add(pan);
@@ -111,6 +118,7 @@ public class McmcSettingsDlg extends JDialog implements ActionListener, KeyListe
 				pars.cycles = Integer.parseInt(cycles.getText());
 				pars.sampRate = Integer.parseInt(sampRate.getText());
 				pars.seed = Integer.parseInt(seed.getText());
+				AutomateParameters.setAutomate(automate.isSelected());
 //				sp.outFile = outFile.getText();
 //				toRun = true;
 			}

@@ -114,7 +114,7 @@ public class Distance {
 		 */
 		ArrayList<String> seq = new ArrayList<String>();
 		ArrayList<String> name = new ArrayList<String>();
-		File folder = new File("/home/ingolfur/oxford_workspace/cmdStatAlign/seq5/seq5Clean/Cleaner/");
+		File folder = new File("/home/ingolfur/oxford_workspace/cmdStatAlign/seq9/seq9Clean/");
 		File[] listOfFiles = folder.listFiles();
 		Arrays.sort(listOfFiles);
 
@@ -142,9 +142,9 @@ public class Distance {
 
 
 
-			System.out.println(i.getName());
+			//System.out.println(i.getName());
 			//System.out.println(length);
-			//System.out.println(lendist);
+			System.out.println(lendist);
 			//System.out.println(Distance.sequenceSimilarityScore(seq));
 			//System.out.println("-----");
 			seq.clear();
@@ -620,10 +620,25 @@ public class Distance {
 		return score /count;
 	}
 
+	public static ArrayList<Double> spaceAMA(ArrayList<String[]> allAlignments){
+		ArrayList<Double> sum = new ArrayList<Double>(allAlignments.size()+1);
+		//Initialising sum
+		for(int i =0; i<allAlignments.size(); ++i){
+			sum.add(0.0);
+		}
 
+		for(int i = 0; i<allAlignments.size()-1; ++i){
+			for(int j = i+1; j<allAlignments.size(); ++j){
+				String[] first = allAlignments.get(i);
+				String[] second = allAlignments.get(j);
+				sum.set(j-i, sum.get(j-i)+Distance.AMA(first, second));
+			}
+		} 
 
+		for(int i = 0; i<allAlignments.size(); ++i){
+			sum.set(i, sum.get(i)/(allAlignments.size() - i  ) );
+		}
+		return sum;
+	}
 }
-
-
-
 

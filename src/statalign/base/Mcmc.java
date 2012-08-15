@@ -1,12 +1,14 @@
 package statalign.base;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Random;
 
 import mpi.MPI;
 import statalign.MPIUtils;
 import statalign.base.thread.Stoppable;
 import statalign.base.thread.StoppedException;
+import statalign.distance.Distance;
 import statalign.postprocess.PostprocessManager;
 import statalign.postprocess.plugins.contree.CNetwork;
 import statalign.ui.ErrorMessage;
@@ -37,6 +39,9 @@ public class Mcmc extends Stoppable {
 															// substitutionparameter
 	final static int FOURCHOOSE[] = { 35, 5, 25, 35 }; // edge, topology, indel
 														// parameter, alignment
+	private static final int SAMPLE_RATE_WHEN_DETERMINE_THE_SPACE = 100;
+	private static final int BURNIN_TO_CALCULATE_THE_SPACE = 25000;
+	
 	
 	// Parallelization
 
@@ -133,9 +138,18 @@ public class Mcmc extends Stoppable {
 		if ((isParallel && MPIUtils.isMaster(rank)) || !isParallel) {
 			postprocMan.beforeFirstSample();
 		}
-
+		
+		
+		
 		try {
+			//only to use if AutomateParameters.shouldAutomate() == true
+			ArrayList<String[]> alignmentsFromSamples = new ArrayList<String[]>(); 
 			int burnIn = mcmcpars.burnIn;
+			if(AutomateParameters.shouldAutomate()){
+				burnIn += BURNIN_TO_CALCULATE_THE_SPACE;
+			}
+			//final int SAMPLE_RATE_BURNIN = ((int)((burnIn-burnIn * BURNIN_RATIO_OF_ALIGNM_SPACE_DETERM)/NUMBER_OF_ALIGNMENTS_APPROX));
+			
 			burnin = true;
 			for (int i = 0; i < burnIn; i++) {
 				sample(0);
@@ -154,7 +168,13 @@ public class Mcmc extends Stoppable {
 
 				currentTime = System.currentTimeMillis();
 				if (frame != null) {
-					String text = "Burn In: " + (i + 1);
+					String text = "";
+					if(i > burnIn - BURNIN_TO_CALCULATE_THE_SPACE && AutomateParameters.shouldAutomate()){
+						text = "Burn In to get the space: " + (i-(burnIn - BURNIN_TO_CALCULATE_THE_SPACE) + 1) ;
+					}else{
+						text = "Burn In: " + (i + 1);
+					}
+					
 					if (i > 10)
 						text += "  "
 								+ remainingTime((currentTime - start)
@@ -164,10 +184,29 @@ public class Mcmc extends Stoppable {
 				} else if (i % 1000 == 999) {
 					System.out.println("Burn in: " + (i + 1));
 				}
+				
+				
+				if(AutomateParameters.shouldAutomate() && i >= burnIn - BURNIN_TO_CALCULATE_THE_SPACE && i % SAMPLE_RATE_WHEN_DETERMINE_THE_SPACE == 0)   {
+					String[] align = getState().getLeafAlign();
+					alignmentsFromSamples.add(align);
+				}	
 			}
 			burnin = false;
+			
+			
 			int period = mcmcpars.cycles / mcmcpars.sampRate;
-			int sampRate = mcmcpars.sampRate;
+			
+			int sampRate;
+			if(AutomateParameters.shouldAutomate()){
+				frame.statusText.setText("Calculating the sample rate");
+				ArrayList<Double> theSpace = Distance.spaceAMA(alignmentsFromSamples);
+				sampRate = AutomateParameters.getSampleRateOfTheSpace(theSpace,SAMPLE_RATE_WHEN_DETERMINE_THE_SPACE);
+				
+			}else{
+				sampRate = mcmcpars.sampRate;
+			}
+				
+			
 			int swapNo = 0; // TODO: delete?
 			swapCounter = mcmcpars.swapRate;
 
@@ -205,7 +244,7 @@ public class Mcmc extends Stoppable {
 										* ((period - i - 1) * sampRate
 												+ sampRate - j - 1)
 										/ (burnIn + i * sampRate + j + 1)));
-						frame.statusText.setText(text);
+						frame.statusText.setText(text + "  The sampling rate: " + sampRate);
 					}
 				}
 				if (frame == null && !isParallel) {
