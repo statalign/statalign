@@ -40,7 +40,6 @@ import statalign.base.Mcmc;
 import statalign.base.McmcStep;
 import statalign.base.State;
 import statalign.base.Utils;
-import statalign.distance.CalculateMCMCParameters;
 import statalign.distance.Distance;
 import statalign.postprocess.Postprocess;
 import statalign.postprocess.PostprocessManager;
@@ -55,7 +54,7 @@ public class PPFold extends statalign.postprocess.Postprocess {
 
 	public static void main(String [] args)
 	{
-		System.out.println(CalculateMCMCParameters.stepSize());
+		//System.out.println(CalculateMCMCParameters.stepSize());
 		
 		ArrayList < ArrayList< ArrayList<String> > > allTests = readAllSamples("/home/ingolfur/oxford_workspace/cmdStatAlign/output/alisamples");
 		for(int i = 0; i<allTests.size(); ++i){

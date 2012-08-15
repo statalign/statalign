@@ -22,42 +22,69 @@ public class RNAalifold {
 	
 	public static boolean checkRNAalifold()
 	{
-		ArrayList<String> sequences = new ArrayList<String>();
-		ArrayList<String> sequenceNames = new ArrayList<String>();
-		sequences.add("GGGUGCUUGAAGCUGUCUGCUUUAAGUGCUUGCA----UCAGGCUGAGAGUAGGCAGAGAAAAGCCCCGUAUCA-----A----------------UGUUAAUCAAUACGAGGC-CCUCUGUAAUG");
-		sequences.add("GGGUGCUUGAGGCUGUCUGCCUCGGG------CAUGCC---ACCGUAAGGCAGACAGAGAAAAGCCCCAGUUAACAUUACGCGUCCUGCAAGACGCCUAACAUUAAUCUGAGGC-CAAUUU-CAUG");
-		sequenceNames.add("a");
-		sequenceNames.add("b");
-		
+		try
+		{
+			ArrayList<String> sequences = new ArrayList<String>();
+			ArrayList<String> sequenceNames = new ArrayList<String>();
+			sequences.add("GGGUGCUUGAAGCUGUCUGCUUUAAGUGCUUGCA----UCAGGCUGAGAGUAGGCAGAGAAAAGCCCCGUAUCA-----A----------------UGUUAAUCAAUACGAGGC-CCUCUGUAAUG");
+			sequences.add("GGGUGCUUGAGGCUGUCUGCCUCGGG------CAUGCC---ACCGUAAGGCAGACAGAGAAAAGCCCCAGUUAACAUUACGCGUCCUGCAAGACGCCUAACAUUAAUCUGAGGC-CAAUUU-CAUG");
+			sequenceNames.add("a");
+			sequenceNames.add("b");
+			
+			useOldParams = false;
+			String newparams = " -T " + 37 +" --cfactor " +  1 + " --nfactor " + 1 + " ";
+			RNAalifoldResult res = null;
+			try
+			{
+				res = RNAalifold.fold(sequences, sequenceNames,newparams);
+			}
+			catch(Exception ex)
+			{
+				System.err.println("The following error occured with RNAalifold: " + ex.getMessage());
+			}
+			//System.out.println("HERE " + res);
+			if(res != null)
+			{
+				return true;
+			}
+			else
+			{
+				String oldparams = " -T " + 37 +" -cv " +  1 + " -nc " + 1 + " ";
+				useOldParams = true;
+				res = RNAalifold.fold(sequences, sequenceNames,oldparams);
+				return res != null;
+			}
+		}
+		catch(Exception ex)
+		{
+			System.err.println("The following error occured with RNAalifold: " + ex.getMessage());
+		}
+
 		useOldParams = false;
-		String newparams = " -T " + 37 +" --cfactor " +  1 + " --nfactor " + 1 + " ";		
-		RNAalifoldResult res = RNAalifold.fold(sequences, sequenceNames,newparams);
-		if(res != null)
-		{
-			return true;
-		}
-		else
-		{
-			String oldparams = " -T " + 37 +" -cv " +  1 + " -nc " + 1 + " ";	
-			res = RNAalifold.fold(sequences, sequenceNames,oldparams);
-			useOldParams = true;
-			return res != null;
-		}
+		
+		return false;
 	}
 	
-	public static RNAalifoldResult fold(List<String> sequences, List<String> sequenceNames, String arguments)
+	public static RNAalifoldResult fold(List<String> sequences, List<String> sequenceNames, String arguments) throws Exception
 	{
 		if(useOldParams)
 		{
 			arguments.replaceAll(" --cfactor ", " -cv ");
-			arguments.replaceAll("  --nfactor ", " -nc ");
+			arguments.replaceAll(" --nfactor ", " -nc ");
+			//System.out.println(arguments);
 		}
 		
 		try
 		{
+			System.out.println(arguments);
 			File tempClustalFile = new File("temp.clustalw");
 			saveClustalW(sequences, sequenceNames, tempClustalFile);
-			Process p = Runtime.getRuntime().exec(executable + " " + "-p --bppmThreshold=0 "+arguments+" "+tempClustalFile.getAbsolutePath());
+			String args = executable + " " + "-p --bppmThreshold=0 "+arguments+" "+tempClustalFile.getAbsolutePath();
+			if(useOldParams)
+			{
+				args = executable + " " + "-p "+arguments+" "+tempClustalFile.getAbsolutePath();
+			}
+			Process p = Runtime.getRuntime().exec(args);
 			InputStream is = p.getErrorStream();
 			BufferedReader buffer = new BufferedReader(new InputStreamReader(is));
 			String textline = null;
@@ -79,8 +106,10 @@ public class RNAalifold {
 			//System.out.println(exitCode);
 			if(exitCode != 0)
 			{
-				throw new Exception("RNAalifold generated the following error during execution:" +
+				System.err.println("RNAalifold generated the following error during execution:" +
 						"\n\"" + errorString+"\"");
+				return null;
+				//throw new Exception();
 				//System.out.println("The following error occured:");
 				//System.err.print(errorString);
 			}
@@ -179,6 +208,8 @@ public class RNAalifold {
 	
 	public static void main(String[] args)
 	{
+		try
+		{
 		ArrayList<String> sequences = new ArrayList<String>();
 		ArrayList<String> sequenceNames = new ArrayList<String>();
 		RNAFoldingTools.loadFastaSequences(new File("/home/michael/Dropbox/RNA and StatAlign/Distance/Datasets2/TestRNAData1_5seqs.dat.fas"), sequences, sequenceNames);
@@ -187,5 +218,10 @@ public class RNAalifold {
 		res = RNAalifold.fold(sequences, sequenceNames,"-T 60");
 		System.out.println(RNAFoldingTools.getDotBracketStringFromPairedSites(res.pairedSites));
 		//RNAalifold.saveClustalW(sequences, sequenceNames, new File("/home/michael/Desktop/temp.clustalw"));
+		}
+		catch(Exception ex)
+		{
+			
+		}
 	}
 }
