@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+import statalign.distance.Distance;
 import statalign.postprocess.utils.Mapping;
 
 public class FuzzyAlignment implements Serializable {
@@ -284,6 +285,15 @@ public class FuzzyAlignment implements Serializable {
 			}
 		}
 		return distance;
+	}
+	
+	
+	public static double AMA(FuzzyAlignment fz1, FuzzyAlignment fz2){
+		int sum = 0;
+		for(int i = 0; i<fz1.getNumSequences(); ++i){
+			sum += fz1.sequences.get(i).length();
+		}
+		return 1 - FuzzyAlignment.distance(fz1, fz2)/ (double)( sum  );
 	}
 	
 	public static double euclideanDistance(double [] v1, double [] v2)

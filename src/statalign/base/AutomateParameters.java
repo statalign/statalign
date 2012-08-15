@@ -3,6 +3,8 @@ package statalign.base;
 import java.util.ArrayList;
 
 public class AutomateParameters {
+	
+	
 
 	public static void main(String[] args){
 		double[][] a = new double[2][2];
@@ -26,16 +28,25 @@ public class AutomateParameters {
 
 
 	private static boolean automateSamplingRate = true;
+	private static boolean automateNumberOfSamplesToTake = true;
 
 
 
 
-	public static boolean shouldAutomate() {
+	public static boolean shouldAutomateStepRate() {
 		return automateSamplingRate;
 	}
 
-	public static void setAutomate(boolean set) {
+	public static void setAutomateStepRate(boolean set) {
 		automateSamplingRate = set;
+	}
+	
+	public static boolean shouldAutomateNumberOfSamples() {
+		return automateNumberOfSamplesToTake;
+	}
+
+	public static void setAutomateNumberOfSamples(boolean set) {
+		automateNumberOfSamplesToTake = set;
 	}
 
 	public static int getSampleRateOfTheSpace(ArrayList<Double> theSpace, int stepSizeOfTheBurnIn2) {
@@ -70,22 +81,16 @@ public class AutomateParameters {
 		}
 		return 1;
 	}
-
-
-
-
-
-	public static double matrixDistance(double[][] before, double[][] now){
-		double maxDist = 99999999;
-		for(int i =0; i<before.length; ++i){
-			for(int j =0; j<before.length; ++j){
-				double temp = Math.abs(before[i][j] - now[i][j]);
-				if(maxDist < temp){
-					maxDist = temp;
-				}
-			}
+	
+	public static boolean shouldStopSampling(ArrayList<Double> distances){
+		double PERCENT_CONST = 0.999;
+		if(distances.size() < 2){
+			return false;
 		}
-		return maxDist;
+		if(distances.get(distances.size()-1) > PERCENT_CONST){
+			return true;
+		}
+		return false;
 	}
 
 

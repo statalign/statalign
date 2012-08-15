@@ -1,13 +1,19 @@
 package statalign.base;
 
+import java.awt.Cursor;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Random;
+
+import com.ppfold.algo.AlignmentData;
+import com.ppfold.algo.FuzzyAlignment;
 
 import mpi.MPI;
 import statalign.MPIUtils;
 import statalign.base.thread.Stoppable;
 import statalign.base.thread.StoppedException;
+import statalign.distance.AlignmentSample;
 import statalign.distance.Distance;
 import statalign.postprocess.PostprocessManager;
 import statalign.postprocess.plugins.contree.CNetwork;
@@ -28,21 +34,21 @@ import statalign.utils.SimpleStats;
 public class Mcmc extends Stoppable {
 
 	// Constants
-	
+
 	// int samplingMethod = 1; //0: random sampling, 1: total sampling
 	double[] weights; // for selecting internal tree node
 	final static double LEAFCOUNT_POWER = 1.0;
 	final static double SELTRLEVPROB[] = { 0.9, 0.6, 0.4, 0.2, 0 };
 	final static int FIVECHOOSE[] = { 35, 5, 15, 35, 10 }; // edge, topology,
-															// indel parameter,
-															// alignment,
-															// substitutionparameter
+	// indel parameter,
+	// alignment,
+	// substitutionparameter
 	final static int FOURCHOOSE[] = { 35, 5, 25, 35 }; // edge, topology, indel
-														// parameter, alignment
+	// parameter, alignment
 	private static final int SAMPLE_RATE_WHEN_DETERMINE_THE_SPACE = 100;
 	private static final int BURNIN_TO_CALCULATE_THE_SPACE = 25000;
-	
-	
+
+
 	// Parallelization
 
 	/** Is this a parallel chain? By-default false. */
@@ -61,8 +67,8 @@ public class Mcmc extends Stoppable {
 	private Random swapGenerator;
 
 	// Non parallelization
-	
-    public CNetwork network; 
+
+	public CNetwork network; 
 
 	/** Current tree in the MCMC chain. */
 	public Tree tree;
@@ -138,18 +144,18 @@ public class Mcmc extends Stoppable {
 		if ((isParallel && MPIUtils.isMaster(rank)) || !isParallel) {
 			postprocMan.beforeFirstSample();
 		}
-		
-		
-		
+
+
+
 		try {
 			//only to use if AutomateParameters.shouldAutomate() == true
 			ArrayList<String[]> alignmentsFromSamples = new ArrayList<String[]>(); 
 			int burnIn = mcmcpars.burnIn;
-			if(AutomateParameters.shouldAutomate()){
+			if(AutomateParameters.shouldAutomateStepRate()){
 				burnIn += BURNIN_TO_CALCULATE_THE_SPACE;
 			}
 			//final int SAMPLE_RATE_BURNIN = ((int)((burnIn-burnIn * BURNIN_RATIO_OF_ALIGNM_SPACE_DETERM)/NUMBER_OF_ALIGNMENTS_APPROX));
-			
+
 			burnin = true;
 			for (int i = 0; i < burnIn; i++) {
 				sample(0);
@@ -169,51 +175,62 @@ public class Mcmc extends Stoppable {
 				currentTime = System.currentTimeMillis();
 				if (frame != null) {
 					String text = "";
-					if(i > burnIn - BURNIN_TO_CALCULATE_THE_SPACE && AutomateParameters.shouldAutomate()){
+					if(i > burnIn - BURNIN_TO_CALCULATE_THE_SPACE && AutomateParameters.shouldAutomateStepRate()){
 						text = "Burn In to get the space: " + (i-(burnIn - BURNIN_TO_CALCULATE_THE_SPACE) + 1) ;
 					}else{
 						text = "Burn In: " + (i + 1);
 					}
-					
-					if (i > 10)
-						text += "  "
-								+ remainingTime((currentTime - start)
-										* (burnIn - i - 1 + mcmcpars.cycles)
-										/ (i + 1));
+
+					//if (i > 10)
+					//	text += "  "
+					//			+ remainingTime((currentTime - start)
+					//					* (burnIn - i - 1 + mcmcpars.cycles)
+					//					/ (i + 1));
 					frame.statusText.setText(text);
 				} else if (i % 1000 == 999) {
 					System.out.println("Burn in: " + (i + 1));
 				}
-				
-				
-				if(AutomateParameters.shouldAutomate() && i >= burnIn - BURNIN_TO_CALCULATE_THE_SPACE && i % SAMPLE_RATE_WHEN_DETERMINE_THE_SPACE == 0)   {
+
+
+				if(AutomateParameters.shouldAutomateStepRate() && i >= burnIn - BURNIN_TO_CALCULATE_THE_SPACE && i % SAMPLE_RATE_WHEN_DETERMINE_THE_SPACE == 0)   {
 					String[] align = getState().getLeafAlign();
 					alignmentsFromSamples.add(align);
 				}	
 			}
 			burnin = false;
-			
-			
-			int period = mcmcpars.cycles / mcmcpars.sampRate;
-			
+
+			int period;
+			if(AutomateParameters.shouldAutomateNumberOfSamples()){
+				period = 1000000;
+			}else{
+				period = mcmcpars.cycles / mcmcpars.sampRate;
+			}
+
 			int sampRate;
-			if(AutomateParameters.shouldAutomate()){
+			if(AutomateParameters.shouldAutomateStepRate()){
 				frame.statusText.setText("Calculating the sample rate");
 				ArrayList<Double> theSpace = Distance.spaceAMA(alignmentsFromSamples);
 				sampRate = AutomateParameters.getSampleRateOfTheSpace(theSpace,SAMPLE_RATE_WHEN_DETERMINE_THE_SPACE);
-				
+
 			}else{
 				sampRate = mcmcpars.sampRate;
 			}
-				
-			
+
+
 			int swapNo = 0; // TODO: delete?
 			swapCounter = mcmcpars.swapRate;
+			AlignmentData alignment = new AlignmentData(getState().getLeafAlign());
+			ArrayList<AlignmentData> allAlignments = new ArrayList<AlignmentData>();
+			ArrayList<Double> distances = new ArrayList<Double>();
 
-			for (int i = 0; i < period; i++) {
+			boolean shouldStop = false;
+			double currScore = 0;
+			for (int i = 0; i < period && !shouldStop; i++) {
 				for (int j = 0; j < sampRate; j++) {
 					// Samples.
 					sample(0);
+
+					//FuzzyAlignment fuzzyAlignment2 = FuzzyAlignment.getFuzzyAlignmentAndProject(alignments, "");
 
 					// Proposes a swap.
 					if (isParallel) {
@@ -239,18 +256,38 @@ public class Mcmc extends Stoppable {
 
 					currentTime = System.currentTimeMillis();
 					if (frame != null) {
-						String text = String.format("Samples taken: %d %s", i,
-								remainingTime((currentTime - start)
-										* ((period - i - 1) * sampRate
-												+ sampRate - j - 1)
-										/ (burnIn + i * sampRate + j + 1)));
-						frame.statusText.setText(text + "  The sampling rate: " + sampRate);
+						String text = "Samples taken: " + Integer.toString(i);
+						//remainingTime((currentTime - start)
+						//		* ((period - i - 1) * sampRate
+						//				+ sampRate - j - 1)
+						//				/ (burnIn + i * sampRate + j + 1))
+
+						text += "   The sampling rate: " + sampRate;
+						text +=  "  Similarity between the last two alignments: " + currScore;
+						frame.statusText.setText(text );
 					}
 				}
 				if (frame == null && !isParallel) {
 					System.out.println("Sample: " + (i + 1));
 				}
+				if(AutomateParameters.shouldAutomateNumberOfSamples()){
+					alignment = new AlignmentData(getState().getLeafAlign());
+					allAlignments.add(alignment);
+					if (allAlignments.size() >1){
+						FuzzyAlignment Fa = FuzzyAlignment.getFuzzyAlignmentAndProject(allAlignments.subList(0, allAlignments.size()-1), 0);
+						FuzzyAlignment Fb = FuzzyAlignment.getFuzzyAlignmentAndProject(allAlignments, 0);
+						//System.out.println(Fa);
+						//System.out.println("xxxx");
+						//System.out.println(Fb);
+						currScore = FuzzyAlignment.AMA(Fa, Fb);
+						System.out.println(currScore);
+						distances.add(currScore);
+						if (allAlignments.size() >5){
+							shouldStop = AutomateParameters.shouldStopSampling(distances);
+						}
 
+					}
+				}
 				// Report the results of the sample.
 				report(i, period);
 			}
@@ -267,7 +304,7 @@ public class Mcmc extends Stoppable {
 			System.out.println(ind);
 			System.out.println(sub);
 		}
-		
+
 		// Triggers a /after first sample/ of the plugins.
 		if ((isParallel && MPIUtils.isMaster(rank)) || !isParallel) {
 			postprocMan.afterLastSample();
@@ -275,7 +312,7 @@ public class Mcmc extends Stoppable {
 		if (frame != null) {
 			frame.statusText.setText(MainFrame.IDLE_STATUS_MESSAGE);
 		}
-		
+
 	}
 
 	private void doSwap(int swapNo) {
@@ -315,10 +352,10 @@ public class Mcmc extends Stoppable {
 			mpi.Request.Waitall(new mpi.Request[] { send, recieve });
 
 			System.out
-					.printf("[Worker %d] Heat: [%f] - Sent: [%f,%f,%f] - Recv: [%f,%f,%f]\n",
-							rank, tree.heat, myStateInfo[0], myStateInfo[1],
-							myStateInfo[2], partnerStateInfo[0],
-							partnerStateInfo[1], partnerStateInfo[2]);
+			.printf("[Worker %d] Heat: [%f] - Sent: [%f,%f,%f] - Recv: [%f,%f,%f]\n",
+					rank, tree.heat, myStateInfo[0], myStateInfo[1],
+					myStateInfo[2], partnerStateInfo[0],
+					partnerStateInfo[1], partnerStateInfo[2]);
 
 			double myLogLike = myStateInfo[0];
 			double myLogPrior = myStateInfo[1];
@@ -363,7 +400,7 @@ public class Mcmc extends Stoppable {
 	SimpleStats edge;
 	SimpleStats ind;
 	SimpleStats sub;
-	
+
 	{
 		if(Utils.DEBUG) {
 			ali = new SimpleStats("Alignment");
@@ -373,60 +410,60 @@ public class Mcmc extends Stoppable {
 			sub = new SimpleStats("Subst param");
 		}
 	}
-	
+
 	private void sample(int samplingMethod) throws StoppedException {
 		if (samplingMethod == 0) {
 			long timer;
 			stoppable();
 			switch (tree.substitutionModel.params != null
 					&& tree.substitutionModel.params.length > 0 ? Utils
-					.weightedChoose(FIVECHOOSE) : Utils
-					.weightedChoose(FOURCHOOSE)) {
-			case 0:
-				if(Utils.DEBUG)
-					timer = -System.currentTimeMillis();
-				sampleEdge();
-				if(Utils.DEBUG) {
-					timer += System.currentTimeMillis();
-					edge.addData(timer);
-				}
-				break;
-			case 1:
-				if(Utils.DEBUG)
-					timer = -System.currentTimeMillis();
-				sampleTopology();
-				if(Utils.DEBUG) {
-					timer += System.currentTimeMillis();
-					top.addData(timer);
-				}
-				break;
-			case 2:
-				if(Utils.DEBUG)
-					timer = -System.currentTimeMillis();
-				sampleIndelParameter();
-				if(Utils.DEBUG) {
-					timer += System.currentTimeMillis();
-					ind.addData(timer);
-				}
-				break;
-			case 3:
-				if(Utils.DEBUG)
-					timer = -System.currentTimeMillis();
-				sampleAlignment();
-				if(Utils.DEBUG) {
-					timer += System.currentTimeMillis();
-					ali.addData(timer);
-				}
-				break;
-			case 4:
-				if(Utils.DEBUG)
-					timer = -System.currentTimeMillis();
-				sampleSubstParameter();
-				if(Utils.DEBUG) {
-					timer += System.currentTimeMillis();
-					sub.addData(timer);
-				}
-				break;
+							.weightedChoose(FIVECHOOSE) : Utils
+							.weightedChoose(FOURCHOOSE)) {
+							case 0:
+								if(Utils.DEBUG)
+									timer = -System.currentTimeMillis();
+								sampleEdge();
+								if(Utils.DEBUG) {
+									timer += System.currentTimeMillis();
+									edge.addData(timer);
+								}
+								break;
+							case 1:
+								if(Utils.DEBUG)
+									timer = -System.currentTimeMillis();
+								sampleTopology();
+								if(Utils.DEBUG) {
+									timer += System.currentTimeMillis();
+									top.addData(timer);
+								}
+								break;
+							case 2:
+								if(Utils.DEBUG)
+									timer = -System.currentTimeMillis();
+								sampleIndelParameter();
+								if(Utils.DEBUG) {
+									timer += System.currentTimeMillis();
+									ind.addData(timer);
+								}
+								break;
+							case 3:
+								if(Utils.DEBUG)
+									timer = -System.currentTimeMillis();
+								sampleAlignment();
+								if(Utils.DEBUG) {
+									timer += System.currentTimeMillis();
+									ali.addData(timer);
+								}
+								break;
+							case 4:
+								if(Utils.DEBUG)
+									timer = -System.currentTimeMillis();
+								sampleSubstParameter();
+								if(Utils.DEBUG) {
+									timer += System.currentTimeMillis();
+									sub.addData(timer);
+								}
+								break;
 			}
 		} else {
 			stoppable();
@@ -679,8 +716,8 @@ public class Mcmc extends Stoppable {
 					.exp((newLogLikelihood - oldLogLikelihood) * tree.heat)
 					* (Math.min(1.0 - oldR, Utils.R_SPAN / 2.0) + Math.min(
 							oldR, Utils.R_SPAN / 2.0))
-					/ (Math.min(1.0 - tree.hmm2.params[0], Utils.R_SPAN / 2.0) + Math
-							.min(tree.hmm2.params[0], Utils.R_SPAN / 2.0))) {
+							/ (Math.min(1.0 - tree.hmm2.params[0], Utils.R_SPAN / 2.0) + Math
+									.min(tree.hmm2.params[0], Utils.R_SPAN / 2.0))) {
 				// accept, do nothing
 				// System.out.println("accepted (old: "+oldLogLikelihood+" new: "+newLogLikelihood+")");
 				indelAccepted++;
@@ -715,10 +752,10 @@ public class Mcmc extends Stoppable {
 					* tree.heat)
 					* (Math.min(Utils.LAMBDA_SPAN / 2.0, tree.hmm2.params[2]
 							- oldLambda) + Math.min(oldLambda,
-							Utils.LAMBDA_SPAN / 2.0))
-					/ (Math.min(Utils.LAMBDA_SPAN / 2.0, tree.hmm2.params[2]
-							- tree.hmm2.params[1]) + Math.min(
-							tree.hmm2.params[1], Utils.LAMBDA_SPAN / 2.0))) {
+									Utils.LAMBDA_SPAN / 2.0))
+									/ (Math.min(Utils.LAMBDA_SPAN / 2.0, tree.hmm2.params[2]
+											- tree.hmm2.params[1]) + Math.min(
+													tree.hmm2.params[1], Utils.LAMBDA_SPAN / 2.0))) {
 				// accept, do nothing
 				// System.out.println("accepted (old: "+oldLogLikelihood+" new: "+newLogLikelihood+" oldLambda: "+oldLambda+" newLambda: "+tree.hmm2.params[1]+")");
 				indelAccepted++;
@@ -750,8 +787,8 @@ public class Mcmc extends Stoppable {
 					* tree.heat)
 					* (Utils.MU_SPAN / 2.0 + Math.min(oldMu
 							- tree.hmm2.params[1], Utils.MU_SPAN / 2.0))
-					/ (Utils.MU_SPAN / 2.0 + Math.min(tree.hmm2.params[2]
-							- tree.hmm2.params[1], Utils.MU_SPAN / 2.0))) {
+							/ (Utils.MU_SPAN / 2.0 + Math.min(tree.hmm2.params[2]
+									- tree.hmm2.params[1], Utils.MU_SPAN / 2.0))) {
 				// accept, do nothing
 				// System.out.println("accepted (old: "+oldLogLikelihood+" new: "+newLogLikelihood+")");
 				indelAccepted++;
@@ -783,7 +820,7 @@ public class Mcmc extends Stoppable {
 			if (Utils.generator.nextDouble() < Math.exp(mh
 					+ (Math.log(tree.substitutionModel.getPrior())
 							+ newlikelihood - oldlikelihood))
-					* tree.heat) {
+							* tree.heat) {
 				// System.out.println("Substitution parameter: accepted (old: "+oldlikelihood+" new: "+newlikelihood+")");
 				substAccepted++;
 			} else {
@@ -806,7 +843,7 @@ public class Mcmc extends Stoppable {
 		double oldLogLi = tree.getLogLike();
 		// System.out.println("fast indel before: "+tree.root.indelLogLike);
 		tree.countLeaves(); // calculates recursively how many leaves we have
-							// below this node
+		// below this node
 		for (int i = 0; i < weights.length; i++) {
 			weights[i] = Math.pow(tree.vertex[i].leafCount, LEAFCOUNT_POWER);
 		}
@@ -860,16 +897,16 @@ public class Mcmc extends Stoppable {
 	 */
 	public String getInfoString() {
 		return String.format("Acceptances: [Alignment: %f, Edge: %f, Topology: %f, Indel: %f, Substitution: %f]",
-						(alignmentSampled == 0 ? 0 : (double) alignmentAccepted
-								/ (double) alignmentSampled),
+				(alignmentSampled == 0 ? 0 : (double) alignmentAccepted
+						/ (double) alignmentSampled),
 						(edgeSampled == 0 ? 0 : (double) edgeAccepted
 								/ (double) edgeSampled),
-						(topologySampled == 0 ? 0 : (double) topologyAccepted
-								/ (double) topologySampled),
-						(indelSampled == 0 ? 0 : (double) indelAccepted
-								/ (double) indelSampled),
-						(substSampled == 0 ? 0 : (double) substAccepted
-								/ (double) substSampled));
+								(topologySampled == 0 ? 0 : (double) topologyAccepted
+										/ (double) topologySampled),
+										(indelSampled == 0 ? 0 : (double) indelAccepted
+												/ (double) indelSampled),
+												(substSampled == 0 ? 0 : (double) substAccepted
+														/ (double) substSampled));
 	}
 
 	/**
@@ -1017,7 +1054,7 @@ public class Mcmc extends Stoppable {
 	private void report(int no, int total) {
 
 		int coldChainLocation = -1;
-		
+
 		if (isParallel) {
 			// Get rank of cold chain.
 			int[] ranks = new int[] { (isColdChain() ? rank : 0) };
@@ -1055,11 +1092,11 @@ public class Mcmc extends Stoppable {
 						+ (tree.root.orphanLogLike + tree.root.indelLogLike)
 						+ "\tR\t" + tree.hmm2.params[0] + "\tLamda\t"
 						+ tree.hmm2.params[1] + "\tMu\t" + tree.hmm2.params[2]
-						+ "\t" + tree.substitutionModel.print() + "\n");
+								+ "\t" + tree.substitutionModel.print() + "\n");
 				if (isParallel) {
 					postprocMan.logFile.write("Cold chain location: " + coldChainLocation + "\n");
 				}
-					
+
 			}
 		} catch (IOException e) {
 			if (postprocMan.mainManager.frame != null) {
@@ -1081,6 +1118,8 @@ public class Mcmc extends Stoppable {
 		// substAccepted = 0;
 
 	}
+
+
 
 	/**
 	 * This function is only for testing and debugging purposes.

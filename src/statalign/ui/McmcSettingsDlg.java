@@ -39,7 +39,8 @@ public class McmcSettingsDlg extends JDialog implements ActionListener, KeyListe
 	private JTextField cycles = new JTextField(10);
 	private JTextField sampRate = new JTextField(10);
 	private JTextField seed = new JTextField(10);
-	private JCheckBox automate = new JCheckBox("",true);
+	private JCheckBox automateStepRate = new JCheckBox("",true);
+	private JCheckBox automateNumberOfSamples = new JCheckBox("(RNA only)",true);
 //	private JTextField outFile = new JTextField(15)
 	private MainFrame owner;
 	
@@ -52,7 +53,7 @@ public class McmcSettingsDlg extends JDialog implements ActionListener, KeyListe
 		cp.setLayout(new BorderLayout());
 		Box bigBox = Box.createVerticalBox();
 		JPanel pan = new JPanel();
-		GridLayout l = new GridLayout(5,2);
+		GridLayout l = new GridLayout(6,2);
 		l.setHgap(5);
 		l.setVgap(5);
 		pan.setLayout(l);
@@ -62,15 +63,27 @@ public class McmcSettingsDlg extends JDialog implements ActionListener, KeyListe
 		pan.add(new JLabel("Cycles after burn-in:"));
 		cycles.addKeyListener(this);
 		pan.add(cycles);
+		cycles.setEnabled(false);
 		pan.add(new JLabel("Sampling rate:"));
 		sampRate.addKeyListener(this);
 		pan.add(sampRate);
+		sampRate.setEnabled(false);
 		pan.add(new JLabel("Seed:"));
 		seed.addKeyListener(this);
 		pan.add(seed);
+		
 		pan.add(new JLabel("Automate the sampling rate:"));
-		automate.addKeyListener(this);
-		pan.add(automate);
+		automateStepRate.setActionCommand("steprate");
+		automateStepRate.addKeyListener(this);
+		automateStepRate.addActionListener(this);
+		pan.add(automateStepRate);
+		
+		pan.add(new JLabel("Automate the number of samples to take:"));
+		automateNumberOfSamples.setActionCommand("numsam");
+		automateNumberOfSamples.addKeyListener(this);
+		automateNumberOfSamples.addActionListener(this);
+		pan.add(automateNumberOfSamples);
+		
 //		pan.add(new JLabel("Output file:"));
 //		pan.add(outFile);
 		bigBox.add(pan);
@@ -112,18 +125,41 @@ public class McmcSettingsDlg extends JDialog implements ActionListener, KeyListe
 	 * 
 	 */
 	public void actionPerformed(ActionEvent ev) {
+		if(ev.getActionCommand() == "numsam"){
+			if(automateNumberOfSamples.isSelected()){
+				cycles.setEnabled(false);
+			}
+			else{
+				cycles.setEnabled(true);
+			}
+		}
+		if(ev.getActionCommand() == "steprate"){
+			if(automateStepRate.isSelected()){
+				sampRate.setEnabled(false);
+			}
+			else{
+				sampRate.setEnabled(true);
+			}
+		}
+		
 		try{
 			if(ev.getActionCommand() == "OK") {
 				pars.burnIn = Integer.parseInt(burnIn.getText());
 				pars.cycles = Integer.parseInt(cycles.getText());
 				pars.sampRate = Integer.parseInt(sampRate.getText());
 				pars.seed = Integer.parseInt(seed.getText());
-				AutomateParameters.setAutomate(automate.isSelected());
+				AutomateParameters.setAutomateStepRate(automateStepRate.isSelected());
+				AutomateParameters.setAutomateNumberOfSamples(automateNumberOfSamples.isSelected());
 //				sp.outFile = outFile.getText();
 //				toRun = true;
+				setVisible(false);
+			}
+			if(ev.getActionCommand() == "Cancel") {
+				setVisible(false);
 			}
 //				toRun = false;
-			setVisible(false);
+			
+			
 		}
 		catch(NumberFormatException e){
 			new ErrorMessage(owner,"Wrong format, "+e.getLocalizedMessage(),false);
