@@ -286,7 +286,9 @@ public class Mcmc extends Stoppable {
 						//				/ (burnIn + i * sampRate + j + 1))
 
 						text += "   The sampling rate: " + sampRate;
-						text +=  "  Similarity between the last two alignments: " + currScore;
+						if(AutomateParameters.shouldAutomateNumberOfSamples()){
+							text +=  "  Similarity between the last two alignments: " + currScore;
+						}
 						frame.statusText.setText(text );
 					}
 				}

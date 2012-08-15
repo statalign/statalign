@@ -61,6 +61,12 @@ public class AutomateParameters {
 	}
 
 	public static int getSampleRateOfTheSpace(ArrayList<Double> theSpace, int stepSizeOfTheBurnIn2) {
+		final double decline = 0.0001;
+		final int right = 10;
+		final int wrong = 2;
+		final int total = right + wrong;
+		final double error = 0.99;
+		
 		ArrayList<Double> der = new ArrayList<Double>(theSpace.size()-1);
 		for(int i = 1; i<theSpace.size()-1; i++){
 			der.add(theSpace.get(i)-theSpace.get(i+1));
@@ -74,10 +80,7 @@ public class AutomateParameters {
 		}
 		avg = avg / count;
 
-		double decline = 0.0001;
-		int right = 10;
-		int wrong = 2;
-		int total = right + wrong;
+		
 
 		for(int i = 1; i<(der.size()-total); ++i ){
 			double f = theSpace.get(i);
@@ -85,7 +88,7 @@ public class AutomateParameters {
 			for(int k = 0; k<total; ++k){
 				isUprising += (der.get(i+k) < decline) ? 1 : 0;
 			}
-			if (isUprising >= right || f * 0.99 <= avg){
+			if (isUprising >= right || f * error <= avg){
 				return i*stepSizeOfTheBurnIn2;
 			}
 		}
