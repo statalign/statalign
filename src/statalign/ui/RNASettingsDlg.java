@@ -258,7 +258,7 @@ public class RNASettingsDlg extends JDialog implements ActionListener, ChangeLis
 		addKeyListener(this);
 		pack();
 		loadOptions();
-		updateFoldingParameters();
+		updateFoldingParametersAndTest();
 		setEnabled(rnaalifoldOptions, useSamplingAndAveragingRNAalifoldButton.isSelected());
 	}
 	
@@ -287,21 +287,7 @@ public class RNASettingsDlg extends JDialog implements ActionListener, ChangeLis
 			}			
 			if(ev.getActionCommand() == "OK") {	
 
-				System.out.println("Testing");
-				boolean sel = useSamplingAndAveragingRNAalifoldButton.isSelected();
-				updateFoldingParameters();
-				boolean isWorking = RNAalifold.checkRNAalifold();
-				System.out.println("Is working " + isWorking);
-				if(sel && !isWorking)
-				{
-					useSamplingAndAveragingRNAalifoldButton.setSelected(false);
-					JOptionPane.showMessageDialog(this,
-						    "Disabling RNAalifold folding, the executable does not appear to be working.\nCheck the path or download a newer version of RNAalifold.",
-						    "Warning",
-						    JOptionPane.WARNING_MESSAGE);					
-				}
-				updateFoldingParameters();
-				saveOptions();
+				updateFoldingParametersAndTest();
 				this.dispose();
 			}
 			else
@@ -314,6 +300,26 @@ public class RNASettingsDlg extends JDialog implements ActionListener, ChangeLis
 		catch(NumberFormatException e){
 			new ErrorMessage(owner,"Wrong format, "+e.getLocalizedMessage(),false);
 		}
+	}
+	
+	public void updateFoldingParametersAndTest()
+	{
+		boolean sel = useSamplingAndAveragingRNAalifoldButton.isSelected();
+		updateFoldingParameters();
+		if(sel)
+		{
+			boolean isWorking = RNAalifold.checkRNAalifold();
+			if(sel && !isWorking)
+			{
+				useSamplingAndAveragingRNAalifoldButton.setSelected(false);
+				JOptionPane.showMessageDialog(this,
+					    "Disabling RNAalifold folding, the executable does not appear to be working.\nCheck the path or download a newer version of RNAalifold.",
+					    "Warning",
+					    JOptionPane.WARNING_MESSAGE);					
+			}
+		}
+		updateFoldingParameters();
+		saveOptions();
 	}
 	
 	public static void main(String [] args)
