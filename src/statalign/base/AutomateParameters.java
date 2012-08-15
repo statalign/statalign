@@ -1,6 +1,9 @@
 package statalign.base;
 
+import java.io.File;
 import java.util.ArrayList;
+
+import statalign.postprocess.utils.RNAFoldingTools;
 
 public class AutomateParameters {
 	
@@ -58,7 +61,6 @@ public class AutomateParameters {
 	}
 
 	public static int getSampleRateOfTheSpace(ArrayList<Double> theSpace, int stepSizeOfTheBurnIn2) {
-		System.out.println(theSpace);
 		ArrayList<Double> der = new ArrayList<Double>(theSpace.size()-1);
 		for(int i = 1; i<theSpace.size()-1; i++){
 			der.add(theSpace.get(i)-theSpace.get(i+1));
@@ -103,7 +105,35 @@ public class AutomateParameters {
 
 	
 	public static boolean shouldStopBurnIn(ArrayList<Double> logLikeList){
-		return logLikeList.size() > 10000;
+		final int DECLINE = 30;
+		final int NUTR_SIZE = 100;
+		if(logLikeList.size() < (NUTR_SIZE + DECLINE)){
+			return false;
+		}
+		
+		ArrayList <Double> smalllist = new ArrayList<Double>();
+		ArrayList <Double> derlist = new ArrayList<Double>();
+		
+		for(int i =logLikeList.size()-NUTR_SIZE - DECLINE; i<logLikeList.size()-NUTR_SIZE; i++){
+			double mean = 0;
+			for(int j =0; j<NUTR_SIZE; j++){
+				mean += logLikeList.get(i+j);
+			}
+		smalllist.add(mean/NUTR_SIZE);
+		}
+
+		for(int i = 0; i<smalllist.size()-1; i++){
+			derlist.add(smalllist.get(i)-smalllist.get(i+1));
+		}
+		
+		for(double i : derlist){
+			if(i<0){
+				return false;
+			}
+		}
+		
+		return true;
+		
 	}
 
 }

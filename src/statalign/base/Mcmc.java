@@ -1,6 +1,7 @@
 package statalign.base;
 
 import java.awt.Cursor;
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -17,6 +18,7 @@ import statalign.distance.AlignmentSample;
 import statalign.distance.Distance;
 import statalign.postprocess.PostprocessManager;
 import statalign.postprocess.plugins.contree.CNetwork;
+import statalign.postprocess.utils.RNAFoldingTools;
 import statalign.ui.ErrorMessage;
 import statalign.ui.MainFrame;
 import statalign.utils.SimpleStats;
@@ -145,7 +147,7 @@ public class Mcmc extends Stoppable {
 			postprocMan.beforeFirstSample();
 		}
 
-
+		ArrayList<Double> logLikeList = new ArrayList<Double>();
 
 		try {
 			//only to use if AutomateParameters.shouldAutomate() == true
@@ -154,7 +156,7 @@ public class Mcmc extends Stoppable {
 			boolean stopBurnIn = false;
 			int counterToRealStop = 0;
 
-			ArrayList<Double> logLikeList = new ArrayList<Double>();;
+
 			if(AutomateParameters.shouldAutomateBurnIn()){
 				burnIn = 10000000;
 			} 
@@ -181,18 +183,16 @@ public class Mcmc extends Stoppable {
 					}
 				}
 
-				if(AutomateParameters.shouldAutomateBurnIn()){
+				if(AutomateParameters.shouldAutomateBurnIn() && i % 50 == 0){
 					logLikeList.add(getState().logLike);
 					if(!stopBurnIn){
 						stopBurnIn = AutomateParameters.shouldStopBurnIn(logLikeList);
-						if(AutomateParameters.shouldAutomateStepRate()){
+						if(AutomateParameters.shouldAutomateStepRate() && stopBurnIn){
 							burnIn = i + BURNIN_TO_CALCULATE_THE_SPACE;
-						}else {
+						}else if (stopBurnIn){
 							burnIn = i;
 						}
-						
 					}
-					
 				}
 				currentTime = System.currentTimeMillis();
 				if (frame != null) {
@@ -219,9 +219,6 @@ public class Mcmc extends Stoppable {
 					alignmentsFromSamples.add(align);
 				}	
 			}
-			
-			
-			
 			
 			burnin = false;
 
