@@ -27,6 +27,7 @@ import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JSpinner;
@@ -291,7 +292,10 @@ public class RNASettingsDlg extends JDialog implements ActionListener, ChangeLis
 				if(sel && !isWorking)
 				{
 					useSamplingAndAveragingRNAalifoldButton.setSelected(false);
-					
+					JOptionPane.showMessageDialog(this,
+						    "Disabling the RNAalifold executable",
+						    "Warning",
+						    JOptionPane.WARNING_MESSAGE);					
 				}
 				updateFoldingParameters();
 				saveOptions();
