@@ -107,9 +107,11 @@ public class VisualDistance extends statalign.postprocess.Postprocess {
 			
 			//System.out.println("INITIAL ALIGNMENT: " + ppFold.al.sequences);
 			//System.out.println("TEMP ALIGNMENT: " + ppFold.tempAlignment);
-			
-			//currentDistance = Distance.multiDistance(ppFold.al.sequences, ppFold.tempAlignment);
-			currentDistance = Distance.sequenceSimilarityScore(ppFold.al.sequences);
+			if(no > 0)
+			{
+				currentDistance = Distance.AMA(ppFold.al.sequences, ppFold.tempAlignment);
+			}
+			//currentDistance = Distance.sequenceSimilarityScore(ppFold.al.sequences);
 			
 			distances.add(currentDistance);
 			

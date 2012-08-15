@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
 
+import statalign.exceptions.ExceptionNonFasta;
 import statalign.io.RawSequences;
 import statalign.io.input.FileFormatReader;
 
@@ -25,9 +26,11 @@ public class FastaReader extends FileFormatReader {
 	 * @param reader Data source
 	 * @return RawSequences representation of the contents
 	 * @throws IOException if an I/O error occurs
+	 * @throws ExceptionNonFasta 
+	 * @throws ExceptionNonRNA 
 	 */
 	@Override
-	public RawSequences read(Reader reader) throws IOException {
+	public RawSequences read(Reader reader) throws IOException, ExceptionNonFasta {
 		RawSequences result = new RawSequences();
 		BufferedReader br = new BufferedReader(reader);
 
@@ -74,10 +77,15 @@ public class FastaReader extends FileFormatReader {
 				char ch;
 				for(int i = 0; i < len; i++) {
 					if(!Character.isWhitespace(ch = line.charAt(i))) {
-						if(Character.isLetter(ch) || ch == '-')
+						if(Character.isLetter(ch) || ch == '-') {
 							actSeq.append(ch);
+							if(ch != '-') {
+								result.alphabet += ch;
+							}
+						}
+							
 						else
-							errors++;
+							throw new ExceptionNonFasta("Input valid sequences!");
 					}
 				}
 			} else {
@@ -110,8 +118,10 @@ public class FastaReader extends FileFormatReader {
 	 * 
 	 * @param args First element must be the name of the Fasta file to read
 	 * @throws IOException if an I/O error occurs
+	 * @throws ExceptionNonFasta 
+	 * @throws ExceptionNonRNA 
 	 */
-	public static void main(String[] args) throws IOException {
+	public static void main(String[] args) throws IOException, ExceptionNonFasta {
 		FastaReader f = new FastaReader();
 		f.read(args[0]);
 	}

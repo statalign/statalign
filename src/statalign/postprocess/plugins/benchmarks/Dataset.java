@@ -110,6 +110,10 @@ public class Dataset implements Serializable {
 	/*public int [] samplingAndAveragingPairedSites;
 	public int [] refencedPairedSites;
 	public int [] mpdPairedSites;*/
+	public int [] pairedSitesCombined;
+	public double ppfoldReliabilityScoreCombined;
+	public double pairsOnlyReliabilityScoreCombined;
+	
 	
 	public void saveDatasetResult(File outFile)
 	{

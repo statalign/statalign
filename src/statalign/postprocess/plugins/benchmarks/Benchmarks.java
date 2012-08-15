@@ -561,7 +561,7 @@ public class Benchmarks
 	public static void automatedTests()
 	{
 		String dir = "/home/michael/Dropbox/RNA and StatAlign/TestRNAData/";
-		String resultsDir = "/home/michael/workspace/StatAlignExecute/longrun2/";
+		String resultsDir = "/home/michael/workspace/StatAlignExecute/combined/";
 		File outFile = new File("Benchmarks.txt");
 		String suffix = "_5seqs";
 		if(!suffix.equals("_5seqs"))
@@ -683,6 +683,7 @@ public class Benchmarks
 			double fscSamplingExp = getDouble(Benchmarks.calculateFScore(pairedSitesExperimental, dataset.pairedSitesEntropyExp));
 			double fscSamplingObs = getDouble(Benchmarks.calculateFScore(pairedSitesExperimental, dataset.pairedSitesEntropyObs));
 			double fscRNAalifold = getDouble(Benchmarks.calculateFScore(pairedSitesExperimental, dataset.pairedSitesRNAalifold));
+			double fscCombined = getDouble(Benchmarks.calculateFScore(pairedSitesExperimental, dataset.pairedSitesCombined));
 			System.out.println(dataset.title);
 			double fscRNAalifoldMPD = getDouble(Benchmarks.calculateFScore(pairedSitesExperimental, dataset.pairedSitesRNAalifoldMPDProjected));
 			double fscRNAalifoldRef = -1;
@@ -754,7 +755,8 @@ public class Benchmarks
 			+"\t"+dataset.resultBundlePPfold.entropyVal+"\t"+(dataset.resultBundlePPfold.entropyPercOfMax/100)+"\t"+dataset.resultBundlePPfold.entropyMax
 			+"\t"+entropySampleMean+"\t"+(entropyPercSampleMean/100)+"\t"+entropyMaxSampleMean+"\t"
 			+fscRnaAlifoldSampleMean+"\t"+fscRnaAlifoldSampleMedian+"\t"+fscRNAalifold+"\t"+fscRNAalifoldMPD+"\t"+fscRNAalifoldRef
-			+"\t"+dataset.pairsOnlyReliabilityScoreSamplingAndAveragingPosteriorWeighted+"\t"+dataset.pairsOnlyMPDPosteriorWeighted+"\t"+dataset.pairsOnlyReliabilityEntropyObsPosteriorWeighted;
+			+"\t"+dataset.pairsOnlyReliabilityScoreSamplingAndAveragingPosteriorWeighted+"\t"+dataset.pairsOnlyMPDPosteriorWeighted+"\t"+dataset.pairsOnlyReliabilityEntropyObsPosteriorWeighted
+			+"\t"+fscCombined+"\t"+dataset.pairsOnlyReliabilityScoreCombined+"\t"+dataset.ppfoldReliabilityScoreCombined;
 
 			
 		

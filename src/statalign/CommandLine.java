@@ -242,12 +242,13 @@ public class CommandLine {
 			}
 			
 			
-			Postprocess[] pps = manager.postProcMan.plugins;
-			PluginParameters parameters = new PluginParameters(argsVector);
+			//Postprocess[] pps = manager.postProcMan.plugins;
+			Postprocess.pluginParameters = new PluginParameters(argsVector);
+			/*PluginParameters parameters = 
 			for(Postprocess pp : pps)
 			{
-				pp.pluginParameters = parameters;
-			}
+				
+			}*/
 
 		} catch (Exception e) {
 			e.printStackTrace();
