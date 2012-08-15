@@ -151,6 +151,14 @@ public class Mcmc extends Stoppable {
 			//only to use if AutomateParameters.shouldAutomate() == true
 			ArrayList<String[]> alignmentsFromSamples = new ArrayList<String[]>(); 
 			int burnIn = mcmcpars.burnIn;
+			boolean stopBurnIn = false;
+			int counterToRealStop = 0;
+
+			ArrayList<Double> logLikeList = new ArrayList<Double>();;
+			if(AutomateParameters.shouldAutomateBurnIn()){
+				burnIn = 10000000;
+			} 
+
 			if(AutomateParameters.shouldAutomateStepRate()){
 				burnIn += BURNIN_TO_CALCULATE_THE_SPACE;
 			}
@@ -158,6 +166,7 @@ public class Mcmc extends Stoppable {
 
 			burnin = true;
 			for (int i = 0; i < burnIn; i++) {
+
 				sample(0);
 
 				// Triggers a /new step/ and a /new peek/ (if appropriate) of
@@ -172,10 +181,23 @@ public class Mcmc extends Stoppable {
 					}
 				}
 
+				if(AutomateParameters.shouldAutomateBurnIn()){
+					logLikeList.add(getState().logLike);
+					if(!stopBurnIn){
+						stopBurnIn = AutomateParameters.shouldStopBurnIn(logLikeList);
+						if(AutomateParameters.shouldAutomateStepRate()){
+							burnIn = i + BURNIN_TO_CALCULATE_THE_SPACE;
+						}else {
+							burnIn = i;
+						}
+						
+					}
+					
+				}
 				currentTime = System.currentTimeMillis();
 				if (frame != null) {
 					String text = "";
-					if(i > burnIn - BURNIN_TO_CALCULATE_THE_SPACE && AutomateParameters.shouldAutomateStepRate()){
+					if((i > burnIn - BURNIN_TO_CALCULATE_THE_SPACE ) && AutomateParameters.shouldAutomateStepRate()){
 						text = "Burn In to get the space: " + (i-(burnIn - BURNIN_TO_CALCULATE_THE_SPACE) + 1) ;
 					}else{
 						text = "Burn In: " + (i + 1);
@@ -192,11 +214,15 @@ public class Mcmc extends Stoppable {
 				}
 
 
-				if(AutomateParameters.shouldAutomateStepRate() && i >= burnIn - BURNIN_TO_CALCULATE_THE_SPACE && i % SAMPLE_RATE_WHEN_DETERMINE_THE_SPACE == 0)   {
+				if( AutomateParameters.shouldAutomateStepRate() && (i >= burnIn - BURNIN_TO_CALCULATE_THE_SPACE) && i % SAMPLE_RATE_WHEN_DETERMINE_THE_SPACE == 0)   {
 					String[] align = getState().getLeafAlign();
 					alignmentsFromSamples.add(align);
 				}	
 			}
+			
+			
+			
+			
 			burnin = false;
 
 			int period;

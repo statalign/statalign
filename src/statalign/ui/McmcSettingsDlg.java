@@ -41,6 +41,7 @@ public class McmcSettingsDlg extends JDialog implements ActionListener, KeyListe
 	private JTextField seed = new JTextField(10);
 	private JCheckBox automateStepRate = new JCheckBox("",true);
 	private JCheckBox automateNumberOfSamples = new JCheckBox("(RNA only)",true);
+	private JCheckBox automateBurnIn = new JCheckBox("",true);
 //	private JTextField outFile = new JTextField(15)
 	private MainFrame owner;
 	
@@ -53,13 +54,14 @@ public class McmcSettingsDlg extends JDialog implements ActionListener, KeyListe
 		cp.setLayout(new BorderLayout());
 		Box bigBox = Box.createVerticalBox();
 		JPanel pan = new JPanel();
-		GridLayout l = new GridLayout(6,2);
+		GridLayout l = new GridLayout(7,2);
 		l.setHgap(5);
 		l.setVgap(5);
 		pan.setLayout(l);
 		pan.add(new JLabel("Burn-in cycles:"));
 		burnIn.addKeyListener(this);
 		pan.add(burnIn);
+		burnIn.setEnabled(false);
 		pan.add(new JLabel("Cycles after burn-in:"));
 		cycles.addKeyListener(this);
 		pan.add(cycles);
@@ -83,6 +85,12 @@ public class McmcSettingsDlg extends JDialog implements ActionListener, KeyListe
 		automateNumberOfSamples.addKeyListener(this);
 		automateNumberOfSamples.addActionListener(this);
 		pan.add(automateNumberOfSamples);
+		
+		pan.add(new JLabel("Automate the Burn In:"));
+		automateBurnIn.setActionCommand("burnin");
+		automateBurnIn.addKeyListener(this);
+		automateBurnIn.addActionListener(this);
+		pan.add(automateBurnIn);
 		
 //		pan.add(new JLabel("Output file:"));
 //		pan.add(outFile);
@@ -141,6 +149,14 @@ public class McmcSettingsDlg extends JDialog implements ActionListener, KeyListe
 				sampRate.setEnabled(true);
 			}
 		}
+		if(ev.getActionCommand() == "burnin"){
+			if(automateBurnIn.isSelected()){
+				burnIn.setEnabled(false);
+			}
+			else{
+				burnIn.setEnabled(true);
+			}
+		}
 		
 		try{
 			if(ev.getActionCommand() == "OK") {
@@ -150,6 +166,7 @@ public class McmcSettingsDlg extends JDialog implements ActionListener, KeyListe
 				pars.seed = Integer.parseInt(seed.getText());
 				AutomateParameters.setAutomateStepRate(automateStepRate.isSelected());
 				AutomateParameters.setAutomateNumberOfSamples(automateNumberOfSamples.isSelected());
+				AutomateParameters.setAutomateBurnIn(automateBurnIn.isSelected());
 //				sp.outFile = outFile.getText();
 //				toRun = true;
 				setVisible(false);

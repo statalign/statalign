@@ -29,10 +29,18 @@ public class AutomateParameters {
 
 	private static boolean automateSamplingRate = true;
 	private static boolean automateNumberOfSamplesToTake = true;
+	private static boolean automateBurnIn = true;
+	
 
+	public static boolean shouldAutomateBurnIn() {
+		return automateBurnIn;
+	}
+	
+	public static void setAutomateBurnIn(boolean set) {
+		automateBurnIn = set;
+	}
 
-
-
+	
 	public static boolean shouldAutomateStepRate() {
 		return automateSamplingRate;
 	}
@@ -93,5 +101,9 @@ public class AutomateParameters {
 		return false;
 	}
 
+	
+	public static boolean shouldStopBurnIn(ArrayList<Double> logLikeList){
+		return logLikeList.size() > 10000;
+	}
 
 }
