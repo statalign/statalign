@@ -284,10 +284,17 @@ public class RNASettingsDlg extends JDialog implements ActionListener, ChangeLis
 					executableField.setText(fileChooser.getSelectedFile().getAbsolutePath());
 				}				
 			}			
-			if(ev.getActionCommand() == "OK") {				
+			if(ev.getActionCommand() == "OK") {	
+
+				boolean sel = useSamplingAndAveragingRNAalifoldButton.isSelected();
+				boolean isWorking = RNAalifold.checkRNAalifold();
+				if(sel && !isWorking)
+				{
+					useSamplingAndAveragingRNAalifoldButton.setSelected(false);
+					
+				}
 				updateFoldingParameters();
 				saveOptions();
-				//setVisible(false);
 				this.dispose();
 			}
 			else

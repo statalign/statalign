@@ -18,8 +18,41 @@ public class RNAalifold {
 	
 	public static String executable = "/home/michael/Downloads/ViennaRNA-2.0.7/Progs/RNAalifold";
 	
+	static boolean useOldParams = false;
+	
+	public static boolean checkRNAalifold()
+	{
+		ArrayList<String> sequences = new ArrayList<String>();
+		ArrayList<String> sequenceNames = new ArrayList<String>();
+		sequences.add("GGGUGCUUGAAGCUGUCUGCUUUAAGUGCUUGCA----UCAGGCUGAGAGUAGGCAGAGAAAAGCCCCGUAUCA-----A----------------UGUUAAUCAAUACGAGGC-CCUCUGUAAUG");
+		sequences.add("GGGUGCUUGAGGCUGUCUGCCUCGGG------CAUGCC---ACCGUAAGGCAGACAGAGAAAAGCCCCAGUUAACAUUACGCGUCCUGCAAGACGCCUAACAUUAAUCUGAGGC-CAAUUU-CAUG");
+		sequenceNames.add("a");
+		sequenceNames.add("b");
+		
+		useOldParams = false;
+		String newparams = " -T " + 37 +" --cfactor " +  1 + " --nfactor " + 1 + " ";		
+		RNAalifoldResult res = RNAalifold.fold(sequences, sequenceNames,newparams);
+		if(res != null)
+		{
+			return true;
+		}
+		else
+		{
+			String oldparams = " -T " + 37 +" -cv " +  1 + " -nc " + 1 + " ";	
+			res = RNAalifold.fold(sequences, sequenceNames,oldparams);
+			useOldParams = true;
+			return res != null;
+		}
+	}
+	
 	public static RNAalifoldResult fold(List<String> sequences, List<String> sequenceNames, String arguments)
 	{
+		if(useOldParams)
+		{
+			arguments.replaceAll(" --cfactor ", " -cv ");
+			arguments.replaceAll("  --nfactor ", " -nc ");
+		}
+		
 		try
 		{
 			File tempClustalFile = new File("temp.clustalw");

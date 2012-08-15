@@ -3,6 +3,7 @@ package statalign.io;
 import java.io.IOException;
 import java.util.ArrayList;
 
+
 /**
  * 
  * @author novak
@@ -25,6 +26,9 @@ public class RawSequences {
 	 * Sorted string of characters present in sequences. Must not contain the gap '-'.
 	 */
 	public String alphabet;
+	
+	public boolean isRNA;
+	
 	
 	public RawSequences() {
 		sequences = new ArrayList<String>();
@@ -94,6 +98,25 @@ public class RawSequences {
 	 */
 	public int size() {
 		return seqNames.size();
+	}
+	
+	/**
+	 * Tells whether or not the the sequences are RNA/DNA. The extra letters denote ambiguous nucleotides.
+	 * @return
+	 */
+	public boolean isRNA() {
+		for(int i = 0; i < alphabet.length(); i++) {
+			char letter = alphabet.charAt(i);
+			if(!(letter == 'A' || letter == 'C' || letter == 'G' 
+				|| letter == 'U' || letter == 'T' || letter == 'W' 
+				|| letter == 'S' || letter == 'R' || letter == 'Y'
+				|| letter == 'K' || letter == 'M' || letter == 'D'
+				|| letter == 'D' || letter == 'V' || letter == 'H'
+				|| letter == 'B' || letter == 'X' || letter == 'N')) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	public static void main(String[] args) throws IOException {

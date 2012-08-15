@@ -5,6 +5,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
 
+import statalign.exceptions.ExceptionNonFasta;
 import statalign.io.RawSequences;
 
 /**
@@ -22,8 +23,10 @@ public abstract class FileFormatReader {
 	 * @param file File to read
 	 * @return RawSequences object containing the data read
 	 * @throws IOException when an I/O error occurs
+	 * @throws ExceptionNonFasta 
+	 * @throws ExceptionNonRNA 
 	 */
-	public RawSequences read(File file) throws IOException {
+	public RawSequences read(File file) throws IOException, ExceptionNonFasta {
 		return read(new FileReader(file));
 	}
 	
@@ -33,8 +36,10 @@ public abstract class FileFormatReader {
 	 * @param fileName Name of file to read
 	 * @return RawSequences object containing the data read
 	 * @throws IOException when an I/O error occurs
+	 * @throws ExceptionNonFasta 
+	 * @throws ExceptionNonRNA 
 	 */
-	public RawSequences read(String fileName) throws IOException {
+	public RawSequences read(String fileName) throws IOException, ExceptionNonFasta {
 		return read(new FileReader(fileName));
 	}
 
@@ -44,7 +49,9 @@ public abstract class FileFormatReader {
 	 * @param reader Data source
 	 * @return RawSequences object containing the data read
 	 * @throws IOException when an I/O error occurs
+	 * @throws ExceptionNonFasta 
+	 * @throws ExceptionNonRNA 
 	 */
-	public abstract RawSequences read(Reader reader) throws IOException;
+	public abstract RawSequences read(Reader reader) throws IOException, ExceptionNonFasta;
 	
 }

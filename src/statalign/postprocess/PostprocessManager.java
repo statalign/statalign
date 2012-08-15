@@ -43,7 +43,7 @@ public class PostprocessManager {
 	/**
 	 * 
 	 */
-	public boolean rnaMode = false;
+	public static boolean rnaMode = false;
 	
 	/**
 	 * This constructor recognizes the plugins

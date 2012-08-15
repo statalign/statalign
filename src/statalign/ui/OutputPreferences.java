@@ -74,11 +74,23 @@ public class OutputPreferences extends JDialog implements ActionListener{
 				return o1.getTabOrder()-o2.getTabOrder() < 0 ? -1 : 1;
 			}
 		};
-		for(Postprocess p : postprocess){
-			if(p.outputable){
-				list.add(p);
+		
+		if(owner.manager.postProcMan.rnaMode) {
+			for(Postprocess p : postprocess){
+				if(p.outputable){
+					list.add(p);
+				}
 			}
 		}
+		
+		else {
+			for(Postprocess p : postprocess) {
+				if(p.outputable && !p.rnaAssociated) {
+					list.add(p);
+				}
+			}
+		}
+		
 		Collections.sort(list, comp);
 		JPanel logListPanel = new JPanel(new GridLayout(list.size(),1));
 		logListPanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(5,5,5,5),
@@ -87,7 +99,7 @@ public class OutputPreferences extends JDialog implements ActionListener{
 				/*BorderFactory.createLineBorder(Color.GRAY, 1)*/));
 
 		leftPanel.add(logListPanel,"Center");
-		JCheckBox[] logCheckBoxes = new JCheckBox[postprocess.length];
+		JCheckBox[] logCheckBoxes = new JCheckBox[list.size()];
 		int k = 0;
 		for(Postprocess p : list) {
 			logCheckBoxes[k] = new JCheckBox(p.getTabName(),p.sampling);
@@ -100,11 +112,23 @@ public class OutputPreferences extends JDialog implements ActionListener{
 	//	leftPanel.add(postprocessPanel);
 	//	postprocessPanel.add(new JLabel("Select entries that generates postprocess files"),"North");
 		list.clear();
-		for(Postprocess p : postprocess){
-			if(p.postprocessable){
-				list.add(p);
+		
+		if(owner.manager.postProcMan.rnaMode) {
+			for(Postprocess p : postprocess){
+				if(p.postprocessable){
+					list.add(p);
+				}
 			}
 		}
+		
+		else {
+			for(Postprocess p : postprocess) {
+				if(p.postprocessable && !p.rnaAssociated) {
+					list.add(p);
+				}
+			}
+		}
+		
 		Collections.sort(list, comp);
 		JPanel postprocessListPanel = new JPanel(new GridLayout(list.size(),1));
 		postprocessListPanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(5,5,5,5),
@@ -113,7 +137,7 @@ public class OutputPreferences extends JDialog implements ActionListener{
 				/*BorderFactory.createLineBorder(Color.GRAY, 1)*/));
 
 		leftPanel.add(postprocessListPanel);
-		JCheckBox[] postprocessCheckBoxes = new JCheckBox[postprocess.length];
+		JCheckBox[] postprocessCheckBoxes = new JCheckBox[list.size()];
 		k = 0;
 		for(Postprocess p : list) {
 			postprocessCheckBoxes[k] = new JCheckBox(p.getTabName()+" ",p.postprocessWrite);

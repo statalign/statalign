@@ -43,6 +43,7 @@ import statalign.StatAlign;
 import statalign.base.Input;
 import statalign.base.MainManager;
 import statalign.base.Utils;
+import statalign.exceptions.ExceptionNonFasta;
 import statalign.io.input.FileFormatReader;
 import statalign.io.input.plugins.FastaReader;
 import statalign.model.subst.RecognitionError;
@@ -51,7 +52,6 @@ import statalign.model.subst.plugins.Dayhoff;
 import statalign.model.subst.plugins.Kimura3;
 import statalign.postprocess.Postprocess;
 import statalign.postprocess.PostprocessManager;
-import statalign.postprocess.utils.RNAFoldingTools;
 
 /**
  * The main frame of the program.
@@ -78,7 +78,6 @@ public class MainFrame extends JFrame implements ActionListener {
     private JButton resumeButton;
     private JButton stopButton;
     private JToggleButton rnaButton;
-    private JButton rnaOptionsButton;
 
     private JMenuItem openItem;
     private JMenuItem runItem;
@@ -100,11 +99,10 @@ public class MainFrame extends JFrame implements ActionListener {
     private McmcSettingsDlg mcmcSettingsDlg;
     private File inFile;
     private Class<? extends SubstitutionModel>[] substModels;
-    
-    RNASettingsDlg dlg = new RNASettingsDlg(this);
 
     // Functions
-
+    RNASettingsDlg dlg = new RNASettingsDlg(this);
+    
     /** The only constructor of the class. It launches the main window. */
     @SuppressWarnings("unchecked")
     public MainFrame() throws Exception {
@@ -244,16 +242,10 @@ public class MainFrame extends JFrame implements ActionListener {
         toolBar.add(stopButton);
         
         String rnaText = "RNA mode";
-        rnaButton = createToggleButton(new ImageIcon("icons/rna1.png"),  rnaText);
+        rnaButton = createToggleButton(new ImageIcon("icons/rna1.png"), rnaText);
         rnaButton.setEnabled(false);
         rnaButton.setSelected(false);
         toolBar.add(rnaButton);
-        
-       /* String rnaOptionsText = "RNA Options";
-        rnaOptionsButton = createButton(new ImageIcon("icons/rna1.png"), rnaOptionsText);
-       // rnaOptionsButton.addActionListener(this);
-        toolBar.add(rnaOptionsButton);
-        */
         
         String settingsText = "Settings";
         JButton settingsButton = createButton(new ImageIcon(ClassLoader.
@@ -454,9 +446,9 @@ public class MainFrame extends JFrame implements ActionListener {
                 inFile = choose.getSelectedFile();
                 FileFormatReader reader = new FastaReader();
                 try {
+                	manager.inputData.seqs.alphabet = "";
                     manager.inputData.seqs.add(reader.read(inFile));
                     manager.inputgui.updateSequences();
-                    System.out.println("THIS IS HOW MANY SEQUENCES THERE ARE: " + manager.inputData.seqs.size());
                     manager.fullPath = inFile.getAbsolutePath();
                     if (manager.inputData.model != null) {
                         try {
@@ -471,11 +463,20 @@ public class MainFrame extends JFrame implements ActionListener {
                         runItem.setEnabled(true);
                         runButton.setEnabled(true);
                         
-                        rnaButton.setEnabled(true);
+                        if(!manager.inputData.seqs.isRNA()) {
+                        	rnaButton.setEnabled(false);
+                        }
+                        
+                        else { 
+                        	rnaButton.setEnabled(true);
+                        }
                     }
                 } catch (IOException e) {
                     JOptionPane.showMessageDialog(this, e.getLocalizedMessage(), "Error reading input file", JOptionPane.ERROR_MESSAGE);
-                }
+                } catch (ExceptionNonFasta e) {
+					// TODO Auto-generated catch block
+					ErrorMessage.showPane(this, e.getMessage(), true);
+				} 
             }
             
         } else if (ev.getActionCommand() == "Exit") {
@@ -536,41 +537,34 @@ public class MainFrame extends JFrame implements ActionListener {
             setCursor(Cursor.getDefaultCursor());
         } else if (ev.getActionCommand() == "RNA mode") {
         	if(rnaButton.isSelected()) {
-        		if(RNAFoldingTools.isRNAalignment(manager.inputData.seqs.sequences))
-        		{
-        			System.out.println("Smells like RNA");
-        		}
-        		else
-        		{
-        			System.out.println("Stinks of protein");
-        		}
-        		dlg = new RNASettingsDlg (this);
+           		dlg = new RNASettingsDlg (this);
         		dlg.display(this);
-        		//tab.removeAll();
-        		//tabPluginMap.clear();
         		
         		//manager.inputgui = input.inputgui;
-        		//manager.inputgui.updateSequences();
-        		//tab.addTab(input.getTabName(), input.getIcon(), input.getJPanel(), input.getTip());
-        		manager.inputgui = input.inputgui;
-        		manager.inputgui.updateSequences();
-        		//System.out.println("SELECTED!!!");
-        		
-        		manager.postProcMan.rnaMode = true;
-    			//manager.postProcMan.reload();
+				//manager.inputgui.updateSequences();
+				//tab.addTab(input.getTabName(), input.getIcon(), input.getJPanel(), input.getTip());
+				manager.inputgui = input.inputgui;
+				manager.inputgui.updateSequences();
+				//System.out.println("SELECTED!!!");
+				
+				manager.postProcMan.rnaMode = true;
+				//manager.postProcMan.reload();
    
-    			int count = tab.getTabCount();
-        		for(Postprocess plugin : pluginTabs) {
-        			//System.out.println(plugin.getTabName() + ": " + plugin.screenable);
-        			if(plugin.rnaAssociated) {
-	        			tabPluginMap.put(count + 1, plugin);
-	        			tab.addTab(plugin.getTabName(), plugin.getIcon(), plugin.getJPanel(), plugin.getTip());
-	        			count++;
-        			}
-        			
-        			//manager.postProcMan.init();
+				int count = tab.getTabCount();
+				for(Postprocess plugin : pluginTabs) {
+					//System.out.println(plugin.getTabName() + ": " + plugin.screenable);
+					if(plugin.rnaAssociated) {
+						tabPluginMap.put(count, plugin);
+						tab.addTab(plugin.getTabName(), plugin.getIcon(), plugin.getJPanel(), plugin.getTip());
+						count++;
+					}
+					
+					//manager.postProcMan.init();
+				}
+        		
         		}
-        	}        	
+        	
+        	
         	else {
         		
         		manager.postProcMan.rnaMode = false;
@@ -594,6 +588,7 @@ public class MainFrame extends JFrame implements ActionListener {
         		
         		
         	}
+    
         	
         } else if (ev.getActionCommand() == "About...") {
             new HelpWindow(this, "About", getClass().getClassLoader().getResource("doc/about/index.html"), false);
@@ -606,12 +601,6 @@ public class MainFrame extends JFrame implements ActionListener {
         } else if (ev.getActionCommand() == "Help for users") {
             new HelpWindow(this, "Help for users",
                     ClassLoader.getSystemResource("doc/help/index.html"), true);
-        }
-        else if(ev.getActionCommand() == "RNA Options")
-        {        	
-        	System.out.println("PRESSED");
-        	//dlg = new RNASettingsDlg (this);
-    		//dlg.display(this);
         } else {        // new substitution model selected
             for (Class<? extends SubstitutionModel> cl : substModels) {
                 try {
@@ -705,17 +694,20 @@ public class MainFrame extends JFrame implements ActionListener {
     public void deactivateRNA() {
     	
     	int count = 0;
-		for(Postprocess plugin : pluginTabs) {
-			if(plugin.rnaAssociated) {
-				plugin.reloadPanel();
-				tabPluginMap.remove(plugin);
-				tab.remove(count + 1);
-				count--;
+    	if(manager.postProcMan.rnaMode) {
+			for(Postprocess plugin : pluginTabs) {
+				if(plugin.rnaAssociated) {
+					plugin.reloadPanel();
+					tabPluginMap.remove(plugin);
+					tab.remove(count + 1);
+					count--;
+				}
+				
+				count++;		
 			}
-			
-			count++;		
-		}
+    	}
     	
+    	manager.postProcMan.rnaMode = false;
     	rnaButton.setSelected(false);
     	rnaButton.setEnabled(false);
     }
