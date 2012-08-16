@@ -54,45 +54,48 @@ public class McmcSettingsDlg extends JDialog implements ActionListener, KeyListe
 		cp.setLayout(new BorderLayout());
 		Box bigBox = Box.createVerticalBox();
 		JPanel pan = new JPanel();
-		GridLayout l = new GridLayout(7,2);
-		l.setHgap(5);
+		GridLayout l = new GridLayout(4,2);
+		l.setHgap(25);
 		l.setVgap(5);
 		pan.setLayout(l);
 		pan.add(new JLabel("Burn-in cycles:"));
 		burnIn.addKeyListener(this);
 		pan.add(burnIn);
 		burnIn.setEnabled(false);
-		pan.add(new JLabel("Cycles after burn-in:"));
-		cycles.addKeyListener(this);
-		pan.add(cycles);
-		cycles.setEnabled(false);
-		pan.add(new JLabel("Sampling rate:"));
-		sampRate.addKeyListener(this);
-		pan.add(sampRate);
-		sampRate.setEnabled(false);
-		pan.add(new JLabel("Seed:"));
-		seed.addKeyListener(this);
-		pan.add(seed);
 		
-		pan.add(new JLabel("Automate the Burn In:"));
+		pan.add(new JLabel("Auto the burnIn"));
 		automateBurnIn.setActionCommand("burnin");
 		automateBurnIn.addKeyListener(this);
 		automateBurnIn.addActionListener(this);
 		pan.add(automateBurnIn);
 		
-		pan.add(new JLabel("Automate the number of samples to take:"));
+		pan.add(new JLabel("Cycles after burn-In:"));
+		cycles.addKeyListener(this);
+		pan.add(cycles);
+		cycles.setEnabled(false);
+		
+		pan.add(new JLabel("Auto the Num of Samples"));
 		automateNumberOfSamples.setActionCommand("numsam");
 		automateNumberOfSamples.addKeyListener(this);
 		automateNumberOfSamples.addActionListener(this);
 		pan.add(automateNumberOfSamples);
 		
-		pan.add(new JLabel("Automate the sampling rate:"));
+		
+		pan.add(new JLabel("Sampling rate:"));
+		sampRate.addKeyListener(this);
+		pan.add(sampRate);
+		sampRate.setEnabled(false);
+		
+		
+		pan.add(new JLabel("Auto the Step Rate"));
 		automateStepRate.setActionCommand("steprate");
 		automateStepRate.addKeyListener(this);
 		automateStepRate.addActionListener(this);
 		pan.add(automateStepRate);
 		
-		
+		pan.add(new JLabel("Seed:"));
+		seed.addKeyListener(this);
+		pan.add(seed);
 		
 		
 		
@@ -104,7 +107,7 @@ public class McmcSettingsDlg extends JDialog implements ActionListener, KeyListe
 		box.add(butt=new JButton("OK"));
 		butt.addActionListener(this);
 		getRootPane().setDefaultButton(butt);
-		box.add(Box.createHorizontalStrut(30));
+		box.add(Box.createHorizontalStrut(100));
 		box.add(butt=new JButton("Cancel"));
 		butt.addActionListener(this);
 		bigBox.add(box);
