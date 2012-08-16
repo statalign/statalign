@@ -39,9 +39,9 @@ public class McmcSettingsDlg extends JDialog implements ActionListener, KeyListe
 	private JTextField cycles = new JTextField(10);
 	private JTextField sampRate = new JTextField(10);
 	private JTextField seed = new JTextField(10);
-	private JCheckBox automateStepRate = new JCheckBox("(Slow for long seq)",true);
-	private JCheckBox automateNumberOfSamples = new JCheckBox("(RNA only)",true);
-	private JCheckBox automateBurnIn = new JCheckBox("",true);
+	private JCheckBox automateStepRate = new JCheckBox("Automate (Slow)",true);
+	private JCheckBox automateNumberOfSamples = new JCheckBox("Automate (RNA only)",false);
+	private JCheckBox automateBurnIn = new JCheckBox("Automate",true);
 //	private JTextField outFile = new JTextField(15)
 	private MainFrame owner;
 	
@@ -54,8 +54,8 @@ public class McmcSettingsDlg extends JDialog implements ActionListener, KeyListe
 		cp.setLayout(new BorderLayout());
 		Box bigBox = Box.createVerticalBox();
 		JPanel pan = new JPanel();
-		GridLayout l = new GridLayout(4,2);
-		l.setHgap(25);
+		GridLayout l = new GridLayout(4,4);
+		l.setHgap(5);
 		l.setVgap(5);
 		pan.setLayout(l);
 		pan.add(new JLabel("Burn-in cycles:"));
@@ -63,7 +63,7 @@ public class McmcSettingsDlg extends JDialog implements ActionListener, KeyListe
 		pan.add(burnIn);
 		burnIn.setEnabled(false);
 		
-		pan.add(new JLabel("Auto the burnIn"));
+		//pan.add(new JLabel("Autometic"));
 		automateBurnIn.setActionCommand("burnin");
 		automateBurnIn.addKeyListener(this);
 		automateBurnIn.addActionListener(this);
@@ -72,14 +72,13 @@ public class McmcSettingsDlg extends JDialog implements ActionListener, KeyListe
 		pan.add(new JLabel("Cycles after burn-In:"));
 		cycles.addKeyListener(this);
 		pan.add(cycles);
-		cycles.setEnabled(false);
+		cycles.setEnabled(true);
 		
-		pan.add(new JLabel("Auto the Num of Samples"));
+		//pan.add(new JLabel("Autometic"));
 		automateNumberOfSamples.setActionCommand("numsam");
 		automateNumberOfSamples.addKeyListener(this);
 		automateNumberOfSamples.addActionListener(this);
 		pan.add(automateNumberOfSamples);
-		
 		
 		pan.add(new JLabel("Sampling rate:"));
 		sampRate.addKeyListener(this);
@@ -87,7 +86,7 @@ public class McmcSettingsDlg extends JDialog implements ActionListener, KeyListe
 		sampRate.setEnabled(false);
 		
 		
-		pan.add(new JLabel("Auto the Step Rate"));
+		//pan.add(new JLabel("Autometic"));
 		automateStepRate.setActionCommand("steprate");
 		automateStepRate.addKeyListener(this);
 		automateStepRate.addActionListener(this);

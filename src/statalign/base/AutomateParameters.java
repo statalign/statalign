@@ -7,31 +7,11 @@ import statalign.postprocess.utils.RNAFoldingTools;
 
 public class AutomateParameters {
 	
-	
-
-	public static void main(String[] args){
-		double[][] a = new double[2][2];
-		double[][] b = new double[2][2];
-
-		a[0][0] = 0;
-		a[0][1] = 1;
-		a[1][0] = 2;
-		a[1][1] = 3;
-
-		b[0][0] = 0.1;
-		b[0][1] = 0.2;
-		b[1][0] = 0.3;
-		b[1][1] = 0.4;
-
-		//System.out.println(hasConverged(a,b));
-
-
-	}
 
 
 
 	private static boolean automateSamplingRate = true;
-	private static boolean automateNumberOfSamplesToTake = true;
+	private static boolean automateNumberOfSamplesToTake = false;
 	private static boolean automateBurnIn = true;
 	
 
