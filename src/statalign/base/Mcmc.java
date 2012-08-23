@@ -122,7 +122,9 @@ public class Mcmc extends Stoppable {
 
 	/**
 	 * In effect starts an MCMC run. It first performs a prescribed number of
-	 * burn-in steps, then makes the prescribed number of steps after burn-in,
+	 * burn-in steps, then, if one wants to automate the sampling rate, goes to 
+	 * secondary burn-in where the sampling rate is determined. After that it
+	 *  makes the prescribed number of steps after both burn-ins,
 	 * drawing samples with the prescribes frequency. It also calls the
 	 * appropriate functions of the PostpocessManager <tt>postprocMan</tt> to
 	 * trigger data transfer to postprocessing modules when necessary
@@ -163,7 +165,6 @@ public class Mcmc extends Stoppable {
 			if(AutomateParameters.shouldAutomateStepRate()){
 				burnIn += BURNIN_TO_CALCULATE_THE_SPACE;
 			}
-			//final int SAMPLE_RATE_BURNIN = ((int)((burnIn-burnIn * BURNIN_RATIO_OF_ALIGNM_SPACE_DETERM)/NUMBER_OF_ALIGNMENTS_APPROX));
 
 			burnin = true;
 			for (int i = 0; i < burnIn; i++) {
@@ -181,7 +182,9 @@ public class Mcmc extends Stoppable {
 						postprocMan.newPeek();
 					}
 				}
-
+				
+				//every 50 steps, add the current loglikelihood to a list
+				// and check if we find a major decline in that list 
 				if(AutomateParameters.shouldAutomateBurnIn() && i % 50 == 0){
 					logLikeList.add(getState().logLike);
 					if(!stopBurnIn){
@@ -194,10 +197,11 @@ public class Mcmc extends Stoppable {
 					}
 				}
 				currentTime = System.currentTimeMillis();
+				int realBurnIn = burnIn - BURNIN_TO_CALCULATE_THE_SPACE;
 				if (frame != null) {
 					String text = "";
-					if((i > burnIn - BURNIN_TO_CALCULATE_THE_SPACE ) && AutomateParameters.shouldAutomateStepRate()){
-						text = "Burn In to get the space: " + (i-(burnIn - BURNIN_TO_CALCULATE_THE_SPACE) + 1) ;
+					if((i > realBurnIn ) && AutomateParameters.shouldAutomateStepRate()){
+						text = "Burn In to get the space: " + (i-realBurnIn + 1) ;
 					}else{
 						text = "Burn In: " + (i + 1);
 					}
@@ -207,12 +211,13 @@ public class Mcmc extends Stoppable {
 				}
 
 
-				if( AutomateParameters.shouldAutomateStepRate() && (i >= burnIn - BURNIN_TO_CALCULATE_THE_SPACE) && i % SAMPLE_RATE_WHEN_DETERMINING_THE_SPACE == 0)   {
+				if( AutomateParameters.shouldAutomateStepRate() && (i >= realBurnIn) && i % SAMPLE_RATE_WHEN_DETERMINING_THE_SPACE == 0)   {
 					String[] align = getState().getLeafAlign();
 					alignmentsFromSamples.add(align);
 				}	
 			}
 			
+			//both real burn-in and the one to determine the sampling rate have now been completed.
 			burnin = false;
 
 			int period;
