@@ -2,7 +2,6 @@ package com.ppfold.algo;
 
 import java.io.Serializable;
 
-import com.sun.xml.internal.bind.v2.runtime.RuntimeUtil.ToStringAdapter;
 
 /**
  * Contains matrices for storing inside, outside, expectation variables, and

@@ -43,10 +43,7 @@ public class EntropyGUI extends JPanel {
 	/**
 	 * Constructor to initialise the GUI for entropy
 	 *
-	 * @param parent
-	 *            The main panel
-	 * @param owner
-	 *            The Entropy postprocess handler
+	 * @param owner    The Entropy postprocess handler
 	 */
 	public EntropyGUI(String title, Entropy owner) {
 //		super((int) (panel.getWidth() / 6.6), panel.getHeight() / 13);

@@ -1622,7 +1622,6 @@ public class Benchmarks
 	 * and an array corrsponding to the predicted structure returns the sensitivity.
 	 * @param realPairedSites
 	 * @param predictedPairedSites
-	 * @return
 	 */
 	public static double calculateSensitivity (int [] realPairedSites, int [] predictedPairedSites)
 	{/* The sensitivity for a predicted structure
@@ -1674,7 +1673,6 @@ public class Benchmarks
 	 * and an array corresponding to the predicted structure returns the PPV.
 	 * @param realPairedSites
 	 * @param predictedPairedSites
-	 * @return
 	 */
 	public static double calculatePPV (int [] realPairedSites, int [] predictedPairedSites)
 	{	
@@ -1723,7 +1721,6 @@ public class Benchmarks
 	 * and an array corresponding to the predicted structure returns the F-score.
 	 * @param realPairedSites
 	 * @param predictedPairedSites
-	 * @return
 	 */
 	public static double calculateFScore (int [] realPairedSites, int [] predictedPairedSites)
 	{

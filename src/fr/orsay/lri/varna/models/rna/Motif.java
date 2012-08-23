@@ -311,7 +311,7 @@ public class Motif implements Serializable{
 			int first = getListStrand().getStrand(i).getMB(0).getIndex();
 			ArrayList<ModeleBase> mbLast = _rna.getAllPartners(last);
 			ArrayList<ModeleBase> mbfirst = _rna.getAllPartners(first);
-			int strandModified = -1; //brin sur lequel les changements de coord ont été effectué
+			int strandModified = -1; //brin sur lequel les changements de coord ont t effectu
 			if (mbLast.size()>0 && mbfirst.size()>0){
 				partnerLast = mbLast.get(0).getIndex();
 				numStrandPartner = mbLast.get(0).getNumStrand();
@@ -326,7 +326,7 @@ public class Motif implements Serializable{
 							-this.getListBasesMotif().get(last).getCoords().y);
 				}
 				if(size > getListStrand().getStrand(numStrandPartner).sizeStrand()){
-					//On modifiera les coord des bases présentes sur le brin le plus court
+					//On modifiera les coord des bases prsentes sur le brin le plus court
 					this.getListBasesMotif().get(partnerLast).setCoords(new Point2D.Double(
 							this.getListBasesMotif().get(partnerLast).getCoords().x,
 							this.getListBasesMotif().get(last).getCoords().y));
@@ -547,18 +547,16 @@ public class Motif implements Serializable{
 							getListStrand().getStrand(partenaire.getNumStrand()).getStrandRight()
 							&& getListStrand().getStrand(partenaire.getNumStrand()).getLevelPosition() == 
 								getListStrand().getStrand(previousStrand).getLevelPosition()){
-						//Si le brin précédent et le brin actuel sont du même coté et au même niveau (sur le même axe vertical)
 						//System.out.println("TEST2");
 						
-						//le partenaire de la dernière base du brin centrale reliée au brin précédent.
 						ArrayList<ModeleBase> mbPartner = _rna.getAllPartners(htableLast.get(previousStrand)); 
 						int indexPreviousPartenaire = mbPartner.get(0).getIndex();
 						
-						//coord Y de la derniere base du brin précédent en intéraction avec le brin central
+						//coord Y de la derniere base du brin prcdent en intraction avec le brin central
 						double coordYLastBase= getListStrand().getStrand(centralStrand).
 							getMB(htableLast.get(previousStrand)).getCoords().y;
 						
-						//coord Y de la premiere base du brin actuel en intéraction avec le brin central
+						//coord Y de la premiere base du brin actuel en interaction avec le brin central
 						double coordYFirstBase= getListStrand().getStrand(centralStrand).
 							getMB(htableFirst.get(partenaire.getNumStrand())).getCoords().y;
 						
@@ -566,12 +564,11 @@ public class Motif implements Serializable{
 						int sizeStrand = getListStrand().getStrand(partenaire.getNumStrand()).sizeStrand();
 						
 						//distance entre la 1ere base du brin partenaire en interaction avec le brin central et 
-						//et la dernière base du brin partenaire
 						double distC = Math.abs(this.getListBasesMotif().get(indexPartenaire).getCoords().y 
 								-getListStrand().getStrand(partenaire.getNumStrand()).getMB(sizeStrand-1).getCoords().y);
 						
-						//distance entre la derniere base du brin précédent en interaction avec le brin central et 
-						//et la 1ere base du brin précédent
+						//distance entre la derniere base du brin prcdent en interaction avec le brin central et 
+						//et la 1ere base du brin 
 						double distB = Math.abs(this.getListBasesMotif().get(indexPreviousPartenaire).getCoords().y 
 								-getListStrand().getStrand(previousStrand).getMB(0).getCoords().y);
 						
@@ -579,7 +576,7 @@ public class Motif implements Serializable{
 						
 						if((distB+distC+1)> dist){
 							//System.out.println("TEST3");
-							//on modifie la coordonnée y de la base actuelle sur le brin central
+							//on modifie la coordonne y de la base actuelle sur le brin central
 							double diff = (distB+distC+1) - dist;
 							this.getListBasesMotif().get(indice).setCoords(new Point2D.Double
 									(this.getListBasesMotif().get(indice).getCoords().x ,

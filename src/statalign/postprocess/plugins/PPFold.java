@@ -990,7 +990,7 @@ public class PPFold extends statalign.postprocess.Postprocess {
 			{
 				sequences.add(mpdAlignment.alignment[i]);
 			}
-			double proxyDistance = Distance.amaScoreToMultiDistance(sequences,proxySimilarity);
+			double proxyDistance = Distance.amaScoreToDistance(sequences,proxySimilarity);
 			buffer.write(title+"\t");
 			buffer.write(posteriorProbabilityAvg+"\t");
 			buffer.write(proxySimilarity+"\t");

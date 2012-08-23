@@ -102,7 +102,7 @@ public class RawSequences {
 	
 	/**
 	 * Tells whether or not the the sequences are RNA/DNA. The extra letters denote ambiguous nucleotides.
-	 * @return
+	 * @return True if it is RNA, false otherwise
 	 */
 	public boolean isRNA() {
 		for(int i = 0; i < alphabet.length(); i++) {

@@ -10,23 +10,7 @@ public
 
 class AlignmentSample {
 
-	final static String pathToSamples = "/home/ingolfur/Dropbox/RNA and StatAlign/TestRNAData/mpd";
-
-	public static void main(String[] args){
-		File reffolder = new File(pathToSamples);
-		File[] listOfRefFiles = reffolder.listFiles();
-		ArrayList<AlignmentSample> yeah = new ArrayList<AlignmentSample>();
-		for(File file  : listOfRefFiles){
-			AlignmentSample temp = AlignmentSample.loadAlignments(file);
-			 yeah.add(temp);
-			 for(int i = 0; i<temp.posteriors.size(); i++){
-				 System.out.println(temp.posteriors.get(i)); 
-			 }
-			 
-			 System.out.println(file.getName());
-		}
-		
-	}
+	
 
 	Alignment reference = new Alignment();
 	Alignment mpd = new Alignment();
@@ -62,7 +46,6 @@ class AlignmentSample {
 			ArrayList<String> sequences = new ArrayList<String>();
 			ArrayList<String> sequenceNames = new ArrayList<String>();
 			while ((textline = buffer.readLine()) != null) {
-				//System.out.println(textline);
 				if (textline.startsWith("%")) {
 					if(name == null)
 					{
@@ -107,7 +90,6 @@ class AlignmentSample {
 						}
 					}
 
-					// some comment
 					if(!alignmentString.equals(""))
 					{
 						parseAlignmentString(alignmentString, sequences, sequenceNames);

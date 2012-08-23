@@ -397,7 +397,6 @@ public class NewickParser {
      * {@link #getEncodedTaxaName(String)}. It does not reverse the spaces however.
      * TODO: make it deal with parenthesis.
      * @param encodedTaxa
-     * @return
      */
     public static String getDecodedTaxaName(String encodedTaxa) {
         String s = null;

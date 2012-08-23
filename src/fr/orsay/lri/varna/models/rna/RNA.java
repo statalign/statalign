@@ -2757,7 +2757,7 @@ public class RNA extends InterfaceVARNAObservable implements Serializable{
 		//Recherche du brin central
 		int centralStrand = motif.getCentralStrand();
 		
-		//Cas où l'on a un motif en étoile
+		//Cas o l'on a un motif en toile
 		if(centralStrand!=-1){
 			//On positionne le brin central
 			motif.positionneSpecificStrand(centralStrand, spaceBetweenStrand);

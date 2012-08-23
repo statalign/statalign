@@ -13,340 +13,24 @@ import java.util.List;
 
 import statalign.postprocess.utils.RNAFoldingTools;
 
-
+/**
+ * 
+ * A class that calculates the distance and similarity score between two alignments
+ * 
+ * @author Ingolfur
+ *
+ */
 
 public class Distance {
-	final static String REFERENCE_FOLDER = "/home/ingolfur/Dropbox/RNA and StatAlign/TestRNAData/amap/ref";
-	final static String MPD_FOLDER = "/home/ingolfur/Dropbox/RNA and StatAlign/TestRNAData/amap/mpd";
-	final static String AMAP_FOLDER = "/home/ingolfur/Dropbox/RNA and StatAlign/TestRNAData/amap/amap";
-	final static String AMAP4_FOLDER = "/home/ingolfur/Dropbox/RNA and StatAlign/TestRNAData/amap/amap4";
-	final static String AMAP01_FOLDER = "/home/ingolfur/Dropbox/RNA and StatAlign/TestRNAData/amap/amap01";
-
-
-	private static void ReadAlignments(ArrayList<Pair<ArrayList<String>,String>> alignments, String folder){
-		File reffolder = new File(folder);
-		File[] listOfRefFiles = reffolder.listFiles();
-		for(File file  : listOfRefFiles){
-			FileInputStream fstream;
-			try {
-				fstream = new FileInputStream(file.getAbsolutePath());
-				DataInputStream in = new DataInputStream(fstream);
-				BufferedReader br = new BufferedReader(new InputStreamReader(in));
-				ArrayList<String> seq = new ArrayList<String>();
-				String line = "";
-				String nextline = "";
-				br.readLine();
-				while(nextline != null){
-					nextline = br.readLine();
-					line = "";
-					while(nextline !=null && !nextline.contains(">") ){
-						line += nextline;
-						nextline = br.readLine();
-					}
-					seq.add(line.replace('.','-'));
-				}
-
-				String filename = file.getName().split(".fas")[0];
-				filename = filename.replaceAll("yeah", "");
-				filename = filename.replaceAll("removed", "");
-				filename = filename.replaceAll("some4", "");
-				filename = filename.replaceAll("some", "");
-				alignments.add(new Pair<ArrayList<String>,String>(seq,filename));
-
-				br.close();
-			} catch (FileNotFoundException e) {
-				e.printStackTrace();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}	
-
-		}
-	}
-
-
-
-	public static void main(String[] args) {
-
-
-		/*
-		ArrayList<Pair<ArrayList<String>,String>> reference = new ArrayList<Pair<ArrayList<String>,String> > ();
-		ReadAlignments(reference, REFERENCE_FOLDER);
-
-		ArrayList<Pair<ArrayList<String>,String>> mpd = new ArrayList<Pair<ArrayList<String>,String> >();
-		ReadAlignments(mpd, MPD_FOLDER);
-
-		ArrayList<Pair<ArrayList<String>,String>> amap = new ArrayList<Pair<ArrayList<String>,String> >();
-		ReadAlignments(amap, AMAP_FOLDER);
-
-		ArrayList<Pair<ArrayList<String>,String>> amap4 = new ArrayList<Pair<ArrayList<String>,String> >();
-		ReadAlignments(amap4, AMAP4_FOLDER);
-
-		ArrayList<Pair<ArrayList<String>,String>> amap01 = new ArrayList<Pair<ArrayList<String>,String> >();
-		ReadAlignments(amap01, AMAP01_FOLDER);
-
-		Collections.sort(reference, new ComplexPair());
-		Collections.sort(mpd, new ComplexPair());
-		Collections.sort(amap, new ComplexPair());
-		Collections.sort(amap4, new ComplexPair());
-		Collections.sort(amap01, new ComplexPair());
-
-
-		for(int i = 0; i<reference.size(); ++i){
-			for(int j = 0; j<mpd.size(); ++j){
-				for(int k = 0; k<amap.size(); ++k){
-					for(int t = 0; t<amap01.size(); ++t){
-						Pair<ArrayList<String>,String> refPair = reference.get(i);
-						Pair<ArrayList<String>,String> mpdPair = mpd.get(j);
-						Pair<ArrayList<String>,String> amapPair = amap.get(k);
-						Pair<ArrayList<String>,String> amap01Pair = amap01.get(t);
-						if(mpdPair.getRight().compareTo(refPair.getRight()) == 0 && amapPair.getRight().compareTo(refPair.getRight()) == 0 && amap01Pair.getRight().compareTo(refPair.getRight())==0){
-							//System.out.println(Distance.AMA(refPair.getLeft(), mpdPair.getLeft()));
-							//System.out.println(Distance.AMA(refPair.getLeft(), amapPair.getLeft()));
-							//System.out.println(Distance.AMA(refPair.getLeft(), amap01Pair.getLeft()));
-							//System.out.print("\t");
-							System.out.println(amap01Pair.getRight());
-							//System.out.println("----------------------------------");
-						}
-					}
-				}
-			}
-		}
-		 */
-		ArrayList<String> seq = new ArrayList<String>();
-		ArrayList<String> name = new ArrayList<String>();
-		File folder = new File("/home/ingolfur/oxford_workspace/cmdStatAlign/seq9/seq9Clean/");
-		File[] listOfFiles = folder.listFiles();
-		Arrays.sort(listOfFiles);
-
-
-
-		for(File i : listOfFiles){
-			RNAFoldingTools.loadFastaSequences(i,seq , name);
-			int length = 0;
-			ArrayList<Integer> len = new ArrayList<Integer>();
-			double lendist = 0;
-			for(String s : seq){
-				int seqlen = s.replace(".", "").length();
-				len.add(seqlen);
-				length += seqlen;
-			}
-			int count = 0;
-			for(int j = 0; j < seq.size()-1; ++j ){
-				for(int k = j+1; k < seq.size(); ++k ){
-					lendist += Math.abs(len.get(j) -len.get(k)) / (double)(Math.max(len.get(j), len.get(k)) -1);
-					count++;
-				}
-			}
-			lendist = lendist / (double) count;
-
-
-
-
-			//System.out.println(i.getName());
-			//System.out.println(length);
-			System.out.println(lendist);
-			//System.out.println(Distance.sequenceSimilarityScore(seq));
-			//System.out.println("-----");
-			seq.clear();
-		}
-
-		//System.out.println(sequenceSimilarityScore(referenceA1));
-
-
-
-
-
-		/*
-		ArrayList<String> referenceA1 = new ArrayList<String>();
-		ArrayList<String> mpd1 = new ArrayList<String>();
-		ArrayList<String> amapnormTest1 = new ArrayList<String>();
-		ArrayList<String> amapseq4Test1 = new ArrayList<String>();
-
-		ArrayList<String> mpd17 = new ArrayList<String>();
-		ArrayList<String> referenceA17 = new ArrayList<String>();
-		ArrayList<String> amapnormTest17 = new ArrayList<String>();
-		ArrayList<String> amapseq4Test17 = new ArrayList<String>();
-
-		ArrayList<String> mpd14 = new ArrayList<String>();
-		ArrayList<String> referenceA14 = new ArrayList<String>();
-		ArrayList<String> amapnormTest14 = new ArrayList<String>();
-		ArrayList<String> amapseq4Test14 = new ArrayList<String>();
-
-		ArrayList<Pair<Double,Integer>> refAndMPD = new ArrayList<Pair<Double,Integer>>();
-		ArrayList<Pair<Double,Integer>> refAndAMAP = new ArrayList<Pair<Double,Integer>>();
-		ArrayList<Pair<Double,Integer>> refAndAMAP4 = new ArrayList<Pair<Double,Integer>>();
-
-
-
-		mpd1.add("GGGUGCUUGAGGCUGUCUGCCUCGGGCA--UGCCAC---UGUAAGGCAGACAGAGAAAAGCCCCAGUU-AACAUUACGCGUCCUGCAAGACGCUUAACAUUAA-UCUGAGGCCCAAUCU-AUGUCUCA-CAAA---UGU---AGGUUAGCCUCUUACGUGCCGAAAGGCAA----GGAGAAGCAGGCU-AUGAAG");
-		mpd1.add("GGGUGCUUGAAGCUGUCUGCUUUAAGUGCUUGCAUCAGGCUGAGAGUAGGCAGAGAAAAGCCCCGUAUCAAUGUUA----------------------AUCAA-UACGAGGCCCUCUGUAAUGCACGA-CAAC---AUU---ACGGUAGCCUUUUACCCGCCGAAAGGCAA----GGAG------GCUGAAGAUG");
-		mpd1.add("GGGUGCUUGAGACUGUUUGUCUCAGGUAUU---UAC---CAAAAGGCAGACAGAGAAAAGCCCCACCUGACUAUAA----------------------AUCAAAAGUGCAUUGCAC-CC-AUUAUUGAUCUCUUCAAUAACGAAGCUAUCCCCU-----ACAGUAUUUCAG----AACG------UCCAACCAUG");
-		mpd1.add("GGGUGCUUGAGGCUGUCUGCCUCGGGCA--UGCCAC---CGUAAGGCAGACAGAGAAAAGCCCCAGUU-AACAUUACGCGUCCUGCAAGACGCCUAACAUUAA-UCUGAGGCCAAUUUC-AUGCUAGA-CACA---UGU---AGGUUAGCCUCUUACGCGCCGAAAGGCAA----GGAGAAGCA-GCU-AUG---");
-		mpd1.add("GGGUGCUUGAGACUGUUUGUCUCAGGUAUU---CAC---CGAAAGGCAGACAGAGAAAAGCCCCACCUGACUAUAA----------------------AUCAA-AGUGAGGCU-ACCCU-AUGCCUGAACACC---AUA---AGGUUAGCCUCUUACUCGUUGGAAAUCAACACAGGGG------GCUGGGAAUG");
-		refAndMPD.add(new Pair<Double,Integer>(Distance.AMA(mpd1, referenceA1),1));
-
-		amapnormTest1.add("GGGUGCUUGAAGCUG----UCUGCUUUAAGUGCUUGCAUCAGGC--------------UGAGAGU-----AGGCAGAGAAAAGCCCCGUAUCAAUGUUAAUCAAU----ACG------------------------AGG--------CCCUCUGUAAUG--CACGAC----AACAUU----------------------------------------------------A--CGG-UAGCCU----UUUAC----------------------------------CCGCCGAAAGGC------------AAGGA------GGCU---GAAGAUG");
-		amapnormTest1.add("GGGUGCUUGAGACUGUUUGUCU-----------------CAGG-UAUUUA--CCAA---------AAGGCAGACAGAGAAAAGCCCCA---------------------------CCUGACUAUAAAUCAAAAGUG---CAUUGC----------------------AC------------------CCAUUAUUG-A--U--CUCUUCA-----------------------------------------AUAACGAAGCUAUCCCCUACAGUAUUUCA-----------------GAACGUCCAACC----------------------AUG");
-		amapnormTest1.add("GGGUGCUUGAGGCUG----UCUG-------------CCUCGGGC-----AUGCCACUGU------AAGGCAGACAGAGAAAAGCCCCA-------GUUAA-----CAUUACGCGUCC----------------------------------------UG--CAAGACGCUUAACAUUAAUCUGAGGCCC-------AA--U------------CUAUGUCUCACAA-AU-GUAGGUUAGCCUCUUA----CGU----------------------------------GCCGAAAGGC------------AAGGAGAAGCAGGC-UAUGAAG---");
-		amapnormTest1.add("GGGUGCUUGAGACUGUUUGUCU-----------------CAGG-UAUUCA--CCGA---------AAGGCAGACAGAGAAAAGCCCCA---------------------------CCUGACUAUAAAUCAA-AGUGAGG-----CUACCCUAUG-CC--UGAAC-------A-----------------------------------------------------CCAUA--AGGUUAGCCUCUUA----C-----------------------------UCGUU------------GGAAAUCAACACAGG-G------GGCU---GGGAAUG");
-		amapnormTest1.add("GGGUGCUUGAGGCUG----UCUG-------------CCUCGGGC-----AUGCCACCGU------AAGGCAGACAGAGAAAAGCCCCA-------GUUAA-----CAUUACGCGUCC----------------------------------------UG--CAAGACGCCUAACAUUAAUCUGAGGCCA-------A-UU-UC-------AUGCUA-----GACAC-AU-GUAGGUUAGCCUCUUA----C----------------------------------GCGCCGAAAGGC------------AAGGAGAAGCA-GC-UAU------G");
-		refAndAMAP.add(new Pair<Double,Integer>(Distance.AMA(amapnormTest1, referenceA1),1));
-
-		amapseq4Test1.add("GGGUGCUUGAAGCUG-----UCUGCUUUAAGUGCUUGC--AU-CAGGCUGAGA----------GU--------------AGGCAGAGAAAAGCCCCGUAUCAAU-GUUAAUCAAUA---------CGA--------------------------GGC-----CCUCUGUAAUGCACGAC----------------------------------------------------------------------------AAC----AUUACGGU--------------------------------------------------AGCC------UUUUAC-----C--CGCCGAAAGGCAAGG-----------------AGGCU--------------GAAGAU-G");
-		amapseq4Test1.add("GGGUGCUUGAGACU-GUUUGUC--------------------UC---------AGGUAUUUA-----CCAA---AAGGCAGACAGAGAAAAGCCCC--------A--------------------------CCUGACUAUAAAUCAA-AAG-----------------------------------UGCAUUGCACCCAUUAUUGAUCUCUUC-AAUAACGAAGCU-AUCCCCUACAGUAUUUCAGAACGU------------------------------------------------------------------------------------------------------------------CCAACC----------------------------AU-G");
-		amapseq4Test1.add("GGGUGCUUGAGGCUG-----UCU---------------GCCU-CGGGC--------------A--UGCCACUGUAAGGCAGACAGAGAAAAGCCCC--------AG----------UUAACAUUACG-CGUCC--------------------------------------UGCAAGACGCUUA------------------------------------------------------------------------AC----AUU-----AAUCUGAGGCCCAAUCUAUGUCUC-------------ACAAAUGUAGGUUAGCCUCUUAC------------GU-GCCGAAAGGCAAGG----------------------AGAAGCAGG-CUAUGAA---G-");
-		amapseq4Test1.add("GGGUGCUUGAGACU-GUUUGUC--------------------UC---------AGGUAUUCA-----CCGA---AAGGCAGACAGAGAAAAGCCCC--------A--------------------------CCUGACUAUAAAUCAAA--GUGAG--GCUACCCUAU-----------------GC---------------------------C------------U------------------------GAACA--CCAU---AA-------------------------------------------------GGUUAGCCUCUUAC------UCGUU------------------GGAAAUCAAC--ACAGGGGGCU--------------GGGAAU-G");
-		amapseq4Test1.add("GGGUGCUUGAGGCUG-----UCU---------------GCCU-CGGGC--------------A--UGCCACCGUAAGGCAGACAGAGAAAAGCCCC--------AG----------UUAACAUUACG-CGUCC--------------------------------------UGCAAGACGCCUA------------------------------------------------------------------------AC----AUU-----AAUCUGAGGCC-------------AAUUUCAUGCUAGACACAUGUAGGUUAGCCUCUUAC-----------G--CGCCGAAAGGCAAGG----------------------AGAAGCA--GCUAU-------G");
-		refAndAMAP4.add(new Pair<Double,Integer>(Distance.AMA(amapseq4Test1, referenceA1),1));
-
-		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-		referenceA17.add("C--------------------------------------------G-U-G-----------C--------------------------------------------AGCCUCCAGGACCCCCCCUCCCGGGAGAGCCAUAGUGGUCUGCGGAACCGGUGAGUACACCGGAAUCGCUGGGGCGACCGGGUCCUUUCUUGGAACAACCCGCUCAAUACCCAGAGAUUUGGGCGUGCCCCCGCAAGACCACUAGCCGAGUAGUGUUGGGUCGCGAAAGGCCUUGUGGUACUGCCUGAUAGGGUGCUUGCGAGUGCCCCGGGAGGUCUCGUAGACCGUGCAACAUGAGCACACUUCCUAAACCUCA");
-		referenceA17.add("---------------------------------------------G-GCG-----------UUA---------------------------GUAUGAGUGUUGUACAGCCUCCAGGCCCCCCCCUCCCGGGAGAGCCAUAGUGGUCUGCGGAACCGGUGAGUACACCGGAAUCGCCGGGAUGACCGGGUCCUUUCUUGGAUUAACCCGCUCAAUGCCCGGAAAUUUGGGCGUGCCCCCGCAAGACUGCUAG-------------------------CCGAGUAGUGUU--------------GG----GU--CGCGAAAGG-----------------------------------------");
-		referenceA17.add("GCCAGCCCCUAAUGGGGCGACACUCCACCAUGAUCACUCCCCUGUGAG-GAACUACUGUCUUCACGCAGAAAGCGUCUAGCCAUGGCGUUAGUAUGAGUGUCGUGCAGCCUCCAGGACUCCCCCUCCCGGGAGAGCCAUAGUAGUCUGCGGAACCGGUGAGUACACCGGAAUUGCCAGGAUGACCGGGUCCUUUCUUGGAUCAACCCGCUCGAUGCCUGGAGAUUUGGGCGUGCCCCCGCAAGAUUGCUAGCCGAGUAGUGUUGGGUCGCGAAAGGCCUUGUGGUACUGCCUGAUAGGGUGCUUGCGAGUGCCCCGGGAGGUCUCGUAGACCGUGCAACAUGAGCACACUUCCAAAACCCCA");
-		referenceA17.add("---------------------------------------------G-GCG-----------U---------------------U------AGUAUAUAGUGCGUGCAGCCUCCAGGACCCCCCCUCCCGGGAGAGCCAUAGUGGUCUGCGGAACCGGUGAGUACACCGGAAUUGCCAGGAUGACCGGGUCCUUUCUUGGAUUAACCCGCUCAGUGCCUGGAGAUUUGGGCGUGCCCCCGCGAGACUGCUAGCCGAGUAGUGUUGGGUCGCGAAAGGCCUUGUGGUACUGCCUGAUAGGGUGCUUGCGAGUGCCCCGGGAGGUCUCGUAGACCGUGCAUCAUGAGCACACUUCCAAAACCCCA");
-		referenceA17.add("---------------------------------------------------------------------------------------------------------CAGCCCCCAGGACCCCCCCUCCCGGGAGAGCCAUAGUGGUCUGCGGAACCGGUGAGUACACCGGAAUCGCCGGGAUGACCGGGUCCUUUCUUGGAUAAACCCGCUCAAUGCCCGGAAAUUUGGGCGUGCCCCCGCGAGACCGUUAGCCGAGUAGUGUUGGGUCGCAAAAGGC---------CU---------------------U-------GUGG-----------------------------------------");
-
-		mpd17.add("---------------------------------------------------------------------------------------------------------CAGCCCCCAGGACCCCCCCUCCCGGGAGAGCCAUAGUGGUCUGCGGAACCGGUGAGUACACCGGAAUCGCCGGGAUGACCGGGUCCUUUCUUGGAUAAACCCGCUCAAUGCCCGGAAAUUUGGGCGUGCCCCCGCGAGACCGUUAGCCGAGUAGUGUUGGGUCGCAAAAGGCCUUGUGG------------------------------------------------------------------------------");
-		mpd17.add("GCCAGCCCCUAAUGGGGCGACACUCCACCAUGAUCACUCCCCUGUGAGGAACUACUGUCUUCACGCAGAAAGCGUCUAGCCAUGGCGUUAGUAUG-AGUGUCGUGCAGCCUCCAGGACUCCCCCUCCCGGGAGAGCCAUAGUAGUCUGCGGAACCGGUGAGUACACCGGAAUUGCCAGGAUGACCGGGUCCUUUCUUGGAUCAACCCGCUCGAUGCCUGGAGAUUUGGGCGUGCCCCCGCAAGAUUGCUAGCCGAGUAGUGUUGGGUCGCGAAAGGCCUUGUGGUACUGCCUGAUAGGGUGCUUGCGAGUGCCCCGGGAGGUCUCGUAGACCGUGCAACAUGAGCACACUUCCAAAACCCCA");
-		mpd17.add("-----------------------------------------------------------------------------------GGCGUUAGUAUAUAGUG-CGUGCAGCCUCCAGGACCCCCCCUCCCGGGAGAGCCAUAGUGGUCUGCGGAACCGGUGAGUACACCGGAAUUGCCAGGAUGACCGGGUCCUUUCUUGGAUUAACCCGCUCAGUGCCUGGAGAUUUGGGCGUGCCCCCGCGAGACUGCUAGCCGAGUAGUGUUGGGUCGCGAAAGGCCUUGUGGUACUGCCUGAUAGGGUGCUUGCGAGUGCCCCGGGAGGUCUCGUAGACCGUGCAUCAUGAGCACACUUCCAAAACCCCA");
-		mpd17.add("-----------------------------------------------------------------------------------------------------CGUGCAGCCUCCAGGACCCCCCCUCCCGGGAGAGCCAUAGUGGUCUGCGGAACCGGUGAGUACACCGGAAUCGCUGGGGCGACCGGGUCCUUUCUUGGAACAACCCGCUCAAUACCCAGAGAUUUGGGCGUGCCCCCGCAAGACCACUAGCCGAGUAGUGUUGGGUCGCGAAAGGCCUUGUGGUACUGCCUGAUAGGGUGCUUGCGAGUGCCCCGGGAGGUCUCGUAGACCGUGCAACAUGAGCACACUUCCUAAACCUCA");
-		mpd17.add("-----------------------------------------------------------------------------------GGCGUUAGUAUG-AGUGUUGUACAGCCUCCAGGCCCCCCCCUCCCGGGAGAGCCAUAGUGGUCUGCGGAACCGGUGAGUACACCGGAAUCGCCGGGAUGACCGGGUCCUUUCUUGGAUUAACCCGCUCAAUGCCCGGAAAUUUGGGCGUGCCCCCGCAAGACUGCUAGCCGAGUAGUGUUGGGUCGCGAAAGG--------------------------------------------------------------------------------------");
-		refAndMPD.add(new Pair<Double,Integer>(Distance.AMA(mpd17, referenceA17),17));
-
-		amapnormTest17.add("------------------------------------------------------------------------------------------------------CGUGCAGCCUCCAGGACCCCCCCUCCCGGGAGAGCCAUAGUGGUCUGCGGAACCGGUGAGUACACCGGAAUCGCUGGGGC-GACCGGGUCCUUUCUUGGAAC--AACCCGCUCAAUACCCAGAGAUUUGGGCGUGCCCCCGCAAGAC--CACUAGCCGAGUAGUGUUGGGUCGCGAAAGGCCUUGUGGUACUGCCUGAUAGGGUGCUUGCGAGUGCCCCGGGAGGUCUCGUAGACCGUGCAACAUGAGCACACUUCCUAAA--CCUCA");
-		amapnormTest17.add("-----------------------------------------------------------------------------------GGCGUUAGUAUG-AGUGUU-GUACAGCCUCCAGGCCCCCCCCUCCCGGGAGAGCCAUAGUGGUCUGCGGAACCGGUGAGUACACCGGAAUCGC-CGGGAUGACCGGGUCCUUUCUUGGA--UUAACCCGCUCAAUGCCCGGAAAUUUGGGCGUGCCCCCGCAAGACUGC--UAGCCGAGUAGUGUUGGGUCGCGAAAGG----------------------------------------------------------------------------------------");
-		amapnormTest17.add("GCCAGCCCCUAAUGGGGCGACACUCCACCAUGAUCACUCCCCUGUGAGGAACUACUGUCUUCACGCAGAAAGCGUCUAGCCAUGGCGUUAGUAUG-AGUGU-CGUGCAGCCUCCAGGACUCCCCCUCCCGGGAGAGCCAUAGUAGUCUGCGGAACCGGUGAGUACACCGGAAUUGC-CAGGAUGACCGGGUCCUUUCUUGGA--UCAACCCGCUCGAUGCCUGGAGAUUUGGGCGUGCCCCCGCAAGAUUGC--UAGCCGAGUAGUGUUGGGUCGCGAAAGGCCUUGUGGUACUGCCUGAUAGGGUGCUUGCGAGUGCCCCGGGAGGUCUCGUAGACCGUGCAACAUGAGCACACUUCC-AAAACCC-CA");
-		amapnormTest17.add("-----------------------------------------------------------------------------------GGCGUUAGUAUAUAGUG--CGUGCAGCCUCCAGGACCCCCCCUCCCGGGAGAGCCAUAGUGGUCUGCGGAACCGGUGAGUACACCGGAAUUGC-CAGGAUGACCGGGUCCUUUCUUGGA--UUAACCCGCUCAGUGCCUGGAGAUUUGGGCGUGCCCCCGCGAGACUGC--UAGCCGAGUAGUGUUGGGUCGCGAAAGGCCUUGUGGUACUGCCUGAUAGGGUGCUUGCGAGUGCCCCGGGAGGUCUCGUAGACCGUGCAUCAUGAGCACACUUCC-AAAACCC-CA");
-		amapnormTest17.add("--CAGCCC--------------------------------------------------------------------------------------------------------CCAGGACCCCCCCUCCCGGGAGAGCCAUAGUGGUCUGCGGAACCGGUGAGUACACCGGAAUCGC-CGGGAUGACCGGGUCCUUUCUUGGA--UAAACCCGCUCAAUGCCCGGAAAUUUGGGCGUGCCCCCGCGAGAC--CGUUAGCCGAGUAGUGUUGGGUCGCAAAAGGCCUUGUGG--------------------------------------------------------------------------------");
-		refAndAMAP.add(new Pair<Double,Integer>(Distance.AMA(amapnormTest17, referenceA17),17));
-
-		amapseq4Test17.add("-------------------------------------------------------------------------------------------------------------CGUGCAGCCUCCAGGAC-CCCCCCUCCCGGGAGAGCCAUAGUGGUCUGCGGAACCGGUGAGUACACCGGAAUCGCUGG-----GGC-GACCGGGUCCUUUCUUGGAAC--A-ACCCGCUCAAUACCCAGAGAUUUGGGCGUGCCCCCGCAAGACCAC----UAGCCGAGUAGUGUUGGGUCGCGAAAGGCCUUGUGGUACUGCCUGAUAGGGUGCUUGCGAGUGCCCCGGGAGGUCUCGUAGACCGUGCAACAUGAGCACACUUCCUAAA---CCUCA");
-		amapseq4Test17.add("-----------------------------------------------------------------------------------GGCGUUAGUAU-----GAGU-GUUGU---ACAGCCUCCAGGCC-CCCCCCUCCCGGGAGAGCCAUAGUGGUCUGCGGAACCGGUGAGUACACCGGAAUCG------CCGGGAUGACCGGGUCCUUUCUUGGA--UU-AACCCGCUCAAUGCCCGGAAAUUUGGGCGUGCCCCCGCAAGAC----UGCUAGCCGAGUAGUGUUGGGUCGCGAAAGG-----------------------------------------------------------------------------------------");
-		amapseq4Test17.add("GCCAGCCCCUAAUGGGGCGACACUCCACCAUGAUCACUCCCCUGUGAGGAACUACUGUCUUCACGCAGAAAGCGUCUAGCCAUGGCGUUAGUAU-----GAGUG-U---CGUGCAGCCUCCAGGACU-CCCCCUCCCGGGAGAGCCAUAGUAGUCUGCGGAACCGGUGAGUACACCGGAAU------UGCCAGGAUGACCGGGUCCUUUCUUGGA--UCA-ACCCGCUCGAUGCCUGGAGAUUUGGGCGUGCCCCCGCAAGA----UUGCUAGCCGAGUAGUGUUGGGUCGCGAAAGGCCUUGUGGUACUGCCUGAUAGGGUGCUUGCGAGUGCCCCGGGAGGUCUCGUAGACCGUGCAACAUGAGCACACUUCC-AA-AACCC-CA");
-		amapseq4Test17.add("-----------------------------------------------------------------------------------GGCGUUAGUAUAUAGU----G-----CGUGCAGCCUCCAGGAC-CCCCCCUCCCGGGAGAGCCAUAGUGGUCUGCGGAACCGGUGAGUACACCGGAAU------UGCCAGGAUGACCGGGUCCUUUCUUGGA--UU-AACCCGCUCAGUGCCUGGAGAUUUGGGCGUGCCCCCGCGAGAC----UGCUAGCCGAGUAGUGUUGGGUCGCGAAAGGCCUUGUGGUACUGCCUGAUAGGGUGCUUGCGAGUGCCCCGGGAGGUCUCGUAGACCGUGCAUCAUGAGCACACUUCC-AA-AACCC-CA");
-		amapseq4Test17.add("--CAGCCC---------------------------------------------------------------------------------------------------------------CCAGGAC-CCCCCCUCCCGGGAGAGCCAUAGUGGUCUGCGGAACCGGUGAGUACACCGGAAUCG------CCGGGAUGACCGGGUCCUUUCUUGGA--UAA-ACCCGCUCAAUGCCCGGAAAUUUGGGCGUGCCCCCGCGAGACCGU----UAGCCGAGUAGUGUUGGGUCGCAAAAGGCCUUGUGG---------------------------------------------------------------------------------");
-		refAndAMAP4.add(new Pair<Double,Integer>(Distance.AMA(amapseq4Test17, referenceA17),17));
-
-		////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-		referenceA14.add("GCUUUCUCCCAGGUG-GGACUGGGGGUAAAGCGAGCGUCGAACUGGUAGCCGCCGGUUCGGCGCUCAU--UUUUUCGU-UU");
-		referenceA14.add("GCUUUCUCCCAGGUGUGUGCUGGGUGAUAAGCGAAAGUC-AUCGGGUUGCCGCCCGGU-GGCUUUCUUCGUUUUUCAUUGU");
-		referenceA14.add("GCUUUCUCCCAGCUGAUGACUGGGGG-UUAGCCGACGCCUCGACAGUUACAGCUGUCGGGGCGUUCAACAUUUUUCAA-GU");
-		referenceA14.add("GCUUUCUCCCAGCUGAUGACUGGGGG-UUAGCCGACGCCCUGUGAGUUCCCGCUCACGGGGCGUUCAAC-UUUUUCAG-GU");
-		referenceA14.add("GCUUUCUCCCAGGUAGUGGCUGGGUGUAAAGCGAGCGUCGAACUGGUUGCAGCCGGUUCGGCGCUCAUU-UUUUUCGU-UU");
-
-		mpd14.add("GCUUUCUCCCAGCUGAUGACUGGGGGUUAGCCGA-CGCC-UCGACAGUUACAGCUGUCGGGGCGUUCAACAUUUUUCAA-GU");
-		mpd14.add("GCUUUCUCCCAGGUGG-GACUGGGGGUAAAGCGAGCGUCGAACUG-GUAGCCGCCGGUUCGGCGCUCAUU--UUUUCGU-UU");
-		mpd14.add("GCUUUCUCCCAGGUGUGUGCUGGGUGAUAAGCGAAAGUC-AUCGG-GUUGCCGCCCGGU-GGCUUUCUUCGUUUUUCAUUGU");
-		mpd14.add("CUUUCUCCCAGGUAGUGGCUGGGUGUAAAGCGAGCGUCGAACUG-GUUGCAGCCGGUUCGGCGCUCAUU-UUUUUCGU-UU");
-		mpd14.add("GCUUUCUCCCAGCUGAUGACUGGGGGUUAGCCGA-CGCC-CUGUGAGUUCCCGCUCACGGGGCGUUCAAC-UUUUUCAG-GU");
-		refAndMPD.add(new Pair<Double,Integer>(Distance.AMA(mpd14, referenceA14),14));
-
-		amapnormTest14.add("GCUUUCUCCCAGGUGG-G--ACUGGG--GG-UAA--AGCGA-GC---GUCGAACUG----GUA-----GCCGC---C-GGUUCGG----CG-------------------CUCAUUU-UUUCGUUU--------");
-		amapnormTest14.add("GCUUUCUCCCAGGUG-U-GUGCUGGGUG-A-U---AAGCGA-AAGUCAUCG-------------GGUUGCCGC---CCG-----GUGGC---------------UUUC-----------UUCGUUUUUCAUUGU");
-		amapnormTest14.add("GCUUUCUCCCAGCUGAUG--ACUGGG--GGU---UAGCCGACG---CCUCGA----C-------AGUUACAGCUGUC-GG------GGC-GUUCAACAUUUUUC----AA----------------------GU");
-		amapnormTest14.add("GCUUUCUCCCAGCUGAUG--ACUGGG--GGU---UAGCCGACG---C-----C---CUGU---GAGUUCCCGCUCA-CGG------GGC-GUUCAAC-UUUUUC----AG----------------------GU");
-		amapnormTest14.add("GCUUUCUCCCAGGUAGUG--GCUGGGUG---UAA--AGCGA-GC---GUCGAACUG---------GUUGCAGC---C-GGUUCGG----CG-------------------CUCAUUUUUUUCGUUU--------");
-		refAndAMAP.add(new Pair<Double,Integer>(Distance.AMA(amapnormTest14, referenceA14),14));
-
-		amapseq4Test14.add("GCUUUCUCCCAGGUGG-GA-----CUGGG-----GGUAAAGCGAGC--------------GUCGAACU-G-----GUA------GCCGC----C-------------------------------------GGUUCGGCGCUCAUUU-UUUCGUU---------U");
-		amapseq4Test14.add("GCUUUCUCCCAGGU-----GUGUGCUGGGUGAUA-----AGCGAAAGUC-----------AUCG----G-----------GUUG-CCGC----C--CGGUG----------------------GCUUUCUU--------------------CGUUUUUCAUUGU-");
-		amapseq4Test14.add("GCUUUCUCCCAGCUGAUGA-----CUGGG-----GG-------------UUAGCCGACGCCUCGA------C-------AGUUA-CAGCUGUC--------GGGGCGUUCAACAUUUUUCAAG----------------------------------------U-");
-		amapseq4Test14.add("GCUUUCUCCCAGCUGAUGA-----CUGGG-----GG-------------UUAGCCGACGC----------CCUGU---GAGUUC-CCGCU----CAC----GGGGCGUUCAAC-UUUUUCAGG----------------------------------------U-");
-		amapseq4Test14.add("GCUUUCUCCCAGGUAGUGG-----CUGGGUG-----UAAAGCGAGC--------------GUCGAACU-G----------GUUG-CAGC----C-------------------------------------GGUUCGGCGCUCAUUUUUUUCGUU---------U");
-		refAndAMAP4.add(new Pair<Double,Integer>(Distance.AMA(amapseq4Test14, referenceA14),14));
-
-
-
-
-
-		for(int i = 0; i<refAndMPD.size(); ++i){
-			System.out.println("Test" + refAndMPD.get(i).getRight());
-			System.out.println("The AMA between the reference alignment and the MPD from Test" +refAndMPD.get(i).getRight() + ": " + refAndMPD.get(i).getLeft());
-			System.out.println("The AMA between the reference alignment and the AMAP from Test" +refAndAMAP.get(i).getRight() + ": " + refAndAMAP.get(i).getLeft());
-			System.out.println("The AMA between the reference alignment and the AMAP4 from Test" +refAndAMAP4.get(i).getRight() + ": " + refAndAMAP4.get(i).getLeft());
-			System.out.println();
-		}
-
-		System.out.println("The distance between the reference alignment and the MPD from Test1: "+Distance.multiDistance(referenceA1,mpd1));
-		//System.out.println(Distance.distance(A1.toArray(),A2.toArray()));
-		System.out.println("The AMA between the reference alignment and the MPD from Test1: "+Distance.AMA(referenceA1,mpd1));
-		System.out.println("-----------------------------------------------------------------------------------");
-		System.out.println("-----------------------------------------------------------------------------------\n");
-
-		System.out.println("The distance between the reference alignment and the AMAP-4 from Test1: "+Distance.multiDistance(referenceA1,amapseq4Test1));
-		//System.out.println(Distance.distance(A1.toArray(),A2.toArray()));
-		System.out.println("AMA between those alignments: "+Distance.AMA(referenceA1,amapseq4Test1));
-		System.out.println("-----------------------------------------------------------------------------------");
-		System.out.println("The distance between the Normal AMAP and the reference alignment from Test1: "+Distance.multiDistance(amapnormTest1,referenceA1));
-		//System.out.println(Distance.distance(A1.toArray(),A2.toArray()));
-		System.out.println("AMA between those alignments: "+Distance.AMA(amapnormTest1,referenceA1));
-		System.out.println("-----------------------------------------------------------------------------------");
-		System.out.println("-----------------------------------------------------------------------------------");
-		System.out.println("-----------------------------------------------------------------------------------");
-		System.out.println();
-		System.out.println();
-
-		System.out.println("The distance between the reference alignment and the MPD from Test17: "+Distance.multiDistance(referenceA17,mpd17));
-		//System.out.println(Distance.distance(A1.toArray(),A2.toArray()));
-		System.out.println("AMA between those alignments: "+Distance.AMA(referenceA17,mpd17));
-		System.out.println("-----------------------------------------------------------------------------------");
-		System.out.println("-----------------------------------------------------------------------------------\n");
-		System.out.println("The distance between the Normal AMAP and the reference alignment from Test17: "+Distance.multiDistance(amapnormTest17,referenceA17));
-		System.out.println("AMA between those alignments: "+Distance.AMA(amapnormTest17,referenceA17));
-		System.out.println("-----------------------------------------------------------------------------------");
-		System.out.println("The distance between the  AMAP-4 and the reference alignment from Test17: "+Distance.multiDistance(amapseq4Test17,referenceA17));
-		System.out.println("AMA between those alignments: "+Distance.AMA(amapseq4Test17,referenceA17));
-		System.out.println("-----------------------------------------------------------------------------------");
-		System.out.println("-----------------------------------------------------------------------------------");
-		System.out.println("-----------------------------------------------------------------------------------");
-		System.out.println("-----------------------------------------------------------------------------------");
-		System.out.println();
-		System.out.println();
-
-
-		System.out.println("The distance between the reference alignment and the MPD from Test17: "+Distance.multiDistance(referenceA14,mpd14));
-		//System.out.println(Distance.distance(A1.toArray(),A2.toArray()));
-		System.out.println("AMA between those alignments: "+Distance.AMA(referenceA14,mpd14));
-		System.out.println("-----------------------------------------------------------------------------------");
-		System.out.println("-----------------------------------------------------------------------------------\n");
-		System.out.println("The distance between the Normal AMAP and the reference alignment from Test17: "+Distance.multiDistance(amapnormTest14,referenceA14));
-		System.out.println("AMA between those alignments: "+Distance.AMA(amapnormTest14,referenceA14));
-		System.out.println("-----------------------------------------------------------------------------------");
-
-
-
-
-		ArrayList<String> B1 = new ArrayList<String>();
-		ArrayList<String> B2 = new ArrayList<String>();
-
-		B1.add("C--------------------------------------------G-U-G-----------C--------------------------------------------AGCCUCCAGGACCCCCCCUCCCGGGAGAGCCAUAGUGGUCUGCGGAACCGGUGAGUACACCGGAAUCGCUGGGGCGACCGGGUCCUUUCUUGGAACAACCCGCUCAAUACCCAGAGAUUUGGGCGUGCCCCCGCAAGACCACUAGCCGAGUAGUGUUGGGUCGCGAAAGGCCUUGUGGUACUGCCUGAUAGGGUGCUUGCGAGUGCCCCGGGAGGUCUCGUAGACCGUGCAACAUGAGCACACUUCCUAAACCUCA");
-		B1.add("---------------------------------------------G-GCG-----------UUA---------------------------GUAUGAGUGUUGUACAGCCUCCAGGCCCCCCCCUCCCGGGAGAGCCAUAGUGGUCUGCGGAACCGGUGAGUACACCGGAAUCGCCGGGAUGACCGGGUCCUUUCUUGGAUUAACCCGCUCAAUGCCCGGAAAUUUGGGCGUGCCCCCGCAAGACUGCUAG-------------------------CCGAGUAGUGUU--------------GG----GU--CGCGAAAGG-----------------------------------------");
-		B1.add("GCCAGCCCCUAAUGGGGCGACACUCCACCAUGAUCACUCCCCUGUGAG-GAACUACUGUCUUCACGCAGAAAGCGUCUAGCCAUGGCGUUAGUAUGAGUGUCGUGCAGCCUCCAGGACUCCCCCUCCCGGGAGAGCCAUAGUAGUCUGCGGAACCGGUGAGUACACCGGAAUUGCCAGGAUGACCGGGUCCUUUCUUGGAUCAACCCGCUCGAUGCCUGGAGAUUUGGGCGUGCCCCCGCAAGAUUGCUAGCCGAGUAGUGUUGGGUCGCGAAAGGCCUUGUGGUACUGCCUGAUAGGGUGCUUGCGAGUGCCCCGGGAGGUCUCGUAGACCGUGCAACAUGAGCACACUUCCAAAACCCCA");	
-		B1.add("---------------------------------------------G-GCG-----------U---------------------U------AGUAUAUAGUGCGUGCAGCCUCCAGGACCCCCCCUCCCGGGAGAGCCAUAGUGGUCUGCGGAACCGGUGAGUACACCGGAAUUGCCAGGAUGACCGGGUCCUUUCUUGGAUUAACCCGCUCAGUGCCUGGAGAUUUGGGCGUGCCCCCGCGAGACUGCUAGCCGAGUAGUGUUGGGUCGCGAAAGGCCUUGUGGUACUGCCUGAUAGGGUGCUUGCGAGUGCCCCGGGAGGUCUCGUAGACCGUGCAUCAUGAGCACACUUCCAAAACCCCA");
-		B1.add("---------------------------------------------------------------------------------------------------------CAGCCCCCAGGACCCCCCCUCCCGGGAGAGCCAUAGUGGUCUGCGGAACCGGUGAGUACACCGGAAUCGCCGGGAUGACCGGGUCCUUUCUUGGAUAAACCCGCUCAAUGCCCGGAAAUUUGGGCGUGCCCCCGCGAGACCGUUAGCCGAGUAGUGUUGGGUCGCAAAAGGC---------CU---------------------U-------GUGG-----------------------------------------");
-
-		B2.add("-----------------------------------------------------------------------------------------------------CGUGCAGCCUCCAGGACCCCCCCUCCCGGGAGAGCCAUAGUGGUCUGCGGAACCGGUGAGUACACCGGAAUCGCUGGGGCGACCGGGUCCUUUCUUGGAACAACCCGCUCAAUACCCAGAGAUUUGGGCGUGCCCCCGCAAGACCACUAGCCGAGUAGUGUUGGGUCGCGAAAGGCCUUGUGGUACUGCCUGAUAGGGUGCUUGCGAGUGCCCCGGGAGGUCUCGUAGACCGUGCAACAUGAGCACACUUCCUAAACCUCA");
-		B2.add("-----------------------------------------------------------------------------------GGCGUUAGUAUAUAGUG-CGUGCAGCCUCCAGGACCCCCCCUCCCGGGAGAGCCAUAGUGGUCUGCGGAACCGGUGAGUACACCGGAAUUGCCAGGAUGACCGGGUCCUUUCUUGGAUUAACCCGCUCAGUGCCUGGAGAUUUGGGCGUGCCCCCGCGAGACUGCUAGCCGAGUAGUGUUGGGUCGCGAAAGGCCUUGUGGUACUGCCUGAUAGGGUGCUUGCGAGUGCCCCGGGAGGUCUCGUAGACCGUGCAUCAUGAGCACACUUCCAAAACCCCA");
-		B2.add("GCCAGCCCCUAAUGGGGCGACACUCCACCAUGAUCACUCCCCUGUGAGGAACUACUGUCUUCACGCAGAAAGCGUCUAGCCAUGGCGUUAGUAUG-AGUGUCGUGCAGCCUCCAGGACUCCCCCUCCCGGGAGAGCCAUAGUAGUCUGCGGAACCGGUGAGUACACCGGAAUUGCCAGGAUGACCGGGUCCUUUCUUGGAUCAACCCGCUCGAUGCCUGGAGAUUUGGGCGUGCCCCCGCAAGAUUGCUAGCCGAGUAGUGUUGGGUCGCGAAAGGCCUUGUGGUACUGCCUGAUAGGGUGCUUGCGAGUGCCCCGGGAGGUCUCGUAGACCGUGCAACAUGAGCACACUUCCAAAACCCCA");
-		B2.add("-----------------------------------------------------------------------------------GGCGUUAGUAUG-AGUGUUGUACAGCCUCCAGGCCCCCCCCUCCCGGGAGAGCCAUAGUGGUCUGCGGAACCGGUGAGUACACCGGAAUCGCCGGGAUGACCGGGUCCUUUCUUGGAUUAACCCGCUCAAUGCCCGGAAAUUUGGGCGUGCCCCCGCAAGACUGCUAGCCGAGUAGUGUUGGGUCGCGAAAGG--------------------------------------------------------------------------------------");
-		B2.add("---------------------------------------------------------------------------------------------------------CAGCCCCCAGGACCCCCCCUCCCGGGAGAGCCAUAGUGGUCUGCGGAACCGGUGAGUACACCGGAAUCGCCGGGAUGACCGGGUCCUUUCUUGGAUAAACCCGCUCAAUGCCCGGAAAUUUGGGCGUGCCCCCGCGAGACCGUUAGCCGAGUAGUGUUGGGUCGCAAAAGGCCUUGUGG------------------------------------------------------------------------------");
-		 */
-	}
 
 
 	/**
 	 * Given a set of sequences and an AMA score, returns the corresponding distance.
-	 * @param sequences
-	 * @param amaScore
-	 * @return
-	 * @param sim
-	 * @return 
+	 * @param sequences  sequences (possibly having gaps)
+	 * @param amaScore	 similarity score between 0 and 1
+	 * @return  		 the distance between the alignments
 	 */
-	public static double amaScoreToMultiDistance(ArrayList<String> sequences, double amaScore)
+	public static double amaScoreToDistance(ArrayList<String> sequences, double amaScore)
 	{
 		double lengthSum = 0;
 		for(int i = 0 ; i < sequences.size() ; i++)
@@ -357,15 +41,32 @@ public class Distance {
 
 		return (1-amaScore)*ksub1*lengthSum;
 	}
+	/**
+	 * So we can use Strings instead of list
+	 * 
+	 * @see #distance(ArrayList, ArrayList)
+	 * 
+	 */
 
-	public static int multiDistance(String [] A, String [] B){
+	public static int distance(String [] A, String [] B){
 		ArrayList<String> arListA = new ArrayList <String> (Arrays.asList(A));
 		ArrayList<String> arListB = new ArrayList <String> (Arrays.asList(B));
-		return Distance.multiDistance(arListA, arListB);
+		return Distance.distance(arListA, arListB);
 
 	}
+	
+	/**
+	 * Calculates the distance between two alignments, if the function
+	 * returns 0, the alignments are the same. Higher number means the
+	 * alignments are more distant.
+	 * 
+	 * 
+	 * @param A     The first alignment
+	 * @param B		The second alignment	
+	 * @return		Integer between 0 and infinity
+	 */
 
-	public static int multiDistance(ArrayList<String>  A, ArrayList<String>  B){
+	public static int distance(ArrayList<String>  A, ArrayList<String>  B){
 		ArrayList<String> cloneA = new ArrayList<String>();
 		ArrayList<String> cloneB = new ArrayList<String>();
 
@@ -388,7 +89,7 @@ public class Distance {
 				tempA[1] = A.get(j);
 				tempB[0] = B.get(i);
 				tempB[1] = B.get(j);
-				d += Distance.distance(tempA, tempB);
+				d += Distance.distanceBetweenTwoAlignments(tempA, tempB);
 			}
 		}
 
@@ -421,7 +122,7 @@ public class Distance {
 		}
 	}
 
-	private static int distance(String[] A, String[] B){
+	private static int distanceBetweenTwoAlignments(String[] A, String[] B){
 		String seqA1 = A[0].replaceAll("-", "");
 		String seqA2 = A[1].replaceAll("-", "");
 
@@ -571,26 +272,51 @@ public class Distance {
 		}
 		return deletionUnion.size() + insertionUnion.size();
 	}
+	
+	/**
+	 * 
+	 * The same as {@link #AMA(ArrayList, ArrayList)} but here you can use arrays instead of lists
+	 * 
+	 */
 
 	public static double AMA(String[] A, String[] B){
 		ArrayList<String> arListA = new ArrayList <String> (Arrays.asList(A));
 		ArrayList<String> arListB = new ArrayList <String> (Arrays.asList(B));
 		return Distance.AMA(arListA, arListB);
 	}
-
+	
+	
+	/**
+	 * Does the same as the {@link Distance#distance(ArrayList, ArrayList)} but outputs a more
+	 * meaningful number since it is between 0 and 1. 1 means we have the same alignments while 0 means they are as distance as possible.
+	 * 
+	 * @param A		The first alignment
+	 * @param B		The second alignment
+	 * @return		Number between 0 and 1
+	 */
 	public static double AMA(ArrayList<String>  A, ArrayList<String>  B){
 		int sum = 0;
 		for(int i = 0; i<A.size(); ++i){
 			sum += A.get(i).replaceAll("-","").length();
 		}
-		return 1 - Distance.multiDistance(A, B)/ (double)( (A.size()-1) *sum );
+		return 1 - Distance.distance(A, B)/ (double)( (A.size()-1) *sum );
 	}
+	
+	/**
+	 * Overloading the sequenceSimilarityScore method so one can use arrays instead of lists
+	 */
 
 	public static double sequenceSimilarityScore(String []  A){
 		ArrayList<String> temp = new ArrayList<String>(Arrays.asList(A)); 
 		return sequenceSimilarityScore(temp);
 	}
-
+	
+	/**
+	 * Calculates the similarity of the sequences. 
+	 * 
+	 * @param A	List of strings where each string is a sequence ()
+	 * @return 	A double between 0 and 1, 1 means all sequences are the same. 0 they are as different as possible 
+	 */
 	public static double sequenceSimilarityScore(List<String>  A){
 		double score = 0;
 		int count = 0;
@@ -619,6 +345,16 @@ public class Distance {
 		}
 		return score /count;
 	}
+	
+	/**
+	 * Used when determining the step rate in the automation of the MCMC. Gives you
+	 * a much better idea how the MCMC progress behaves that is, how the space looks like
+	 * on average.
+	 * 
+	 * 
+	 * @param allAlignments	List of alignments
+	 * @return	A list of average similarity between all possible pairs of alignments
+	 */
 
 	public static ArrayList<Double> spaceAMA(ArrayList<String[]> allAlignments){
 		ArrayList<Double> sum = new ArrayList<Double>(allAlignments.size()+1);

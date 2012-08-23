@@ -47,7 +47,7 @@ public class Mcmc extends Stoppable {
 	// substitutionparameter
 	final static int FOURCHOOSE[] = { 35, 5, 25, 35 }; // edge, topology, indel
 	// parameter, alignment
-	private static final int SAMPLE_RATE_WHEN_DETERMINE_THE_SPACE = 100;
+	private static final int SAMPLE_RATE_WHEN_DETERMINING_THE_SPACE = 100;
 	private static final int BURNIN_TO_CALCULATE_THE_SPACE = 25000;
 
 
@@ -154,7 +154,6 @@ public class Mcmc extends Stoppable {
 			ArrayList<String[]> alignmentsFromSamples = new ArrayList<String[]>(); 
 			int burnIn = mcmcpars.burnIn;
 			boolean stopBurnIn = false;
-			int counterToRealStop = 0;
 
 
 			if(AutomateParameters.shouldAutomateBurnIn()){
@@ -202,19 +201,13 @@ public class Mcmc extends Stoppable {
 					}else{
 						text = "Burn In: " + (i + 1);
 					}
-
-					//if (i > 10)
-					//	text += "  "
-					//			+ remainingTime((currentTime - start)
-					//					* (burnIn - i - 1 + mcmcpars.cycles)
-					//					/ (i + 1));
 					frame.statusText.setText(text);
 				} else if (i % 1000 == 999) {
 					System.out.println("Burn in: " + (i + 1));
 				}
 
 
-				if( AutomateParameters.shouldAutomateStepRate() && (i >= burnIn - BURNIN_TO_CALCULATE_THE_SPACE) && i % SAMPLE_RATE_WHEN_DETERMINE_THE_SPACE == 0)   {
+				if( AutomateParameters.shouldAutomateStepRate() && (i >= burnIn - BURNIN_TO_CALCULATE_THE_SPACE) && i % SAMPLE_RATE_WHEN_DETERMINING_THE_SPACE == 0)   {
 					String[] align = getState().getLeafAlign();
 					alignmentsFromSamples.add(align);
 				}	
@@ -233,7 +226,7 @@ public class Mcmc extends Stoppable {
 			if(AutomateParameters.shouldAutomateStepRate()){
 				frame.statusText.setText("Calculating the sample rate");
 				ArrayList<Double> theSpace = Distance.spaceAMA(alignmentsFromSamples);
-				sampRate = AutomateParameters.getSampleRateOfTheSpace(theSpace,SAMPLE_RATE_WHEN_DETERMINE_THE_SPACE);
+				sampRate = AutomateParameters.getSampleRateOfTheSpace(theSpace,SAMPLE_RATE_WHEN_DETERMINING_THE_SPACE);
 
 			}else{
 				sampRate = mcmcpars.sampRate;
