@@ -1,0 +1,90 @@
+
+<html>
+
+
+<head>
+<title>StatAlign</title>
+</head>
+
+<body>
+
+<table width="85%" align="center">
+<tr>
+<td>
+<center>
+        <a href="/"><img src="StatAlign/img/Phylogeny_cafe.jpg" width=300 height=81></a>
+        <br>
+        <font size="24" face="Times" color="3526a0"><i>StatAlign</i></font>
+        <br>
+        <font face="Times" color="000000"><i>(c) 2008 
+         <a href="/people/adam_novak/">&Aacute;d&aacute;m Nov&aacute;k</a>,
+         <a href="/people/miklos/">Istv&aacute;n Mikl&oacute;s</a>,
+         Rune Lyngsoe,  Jotun Hein</i></font>
+</center>
+
+<br>
+<p align="justify">
+<i>StatAlign</i> is an extendable software package for Bayesian
+analysis of Protein, DNA and RNA sequences.
+Multiple alignments, phylogenetic trees and evolutionary parameters
+are co-estimated in a Markov Chain Monte Carlo framework, allowing
+for reliable measurement of the accuracy of the results.
+<br><br>
+This approach eliminates common artifacts that traditional methods
+suffer from, at the cost of increased computational time. These
+artifacts include the dependency of the constructed phylogeny on a
+single (probably suboptimal) alignment and bias towards the guide
+tree upon which the alignment relies.
+<br><br>
+The models behind the analysis permit the comparison of evolutionarily
+distant sequences: the TKF92 insertion-deletion model can be coupled
+to an arbitrary substitution model. A broad range of models for
+nucleotide and amino acid data is included in the package and the
+plug-in management system ensures that new models can be easily added.
+<br><br>
+
+<p align="justify">
+<i>StatAlign</i> is written in Java 1.5. No installation is needed to run the program, but you must have
+a Java Virtual Machine (JVM) 1.5 or higher installed. If you do not have such a JVM on your
+computer, please, visit <a href="http://www.sun.com">www.sun.com</a> for a free download.<br><br>
+
+<p align="justify">
+The package with full documentation and source code can be downloaded from <a href="statalign.tar.gz">here</a>.
+The downloaded file is a tar.gz file. Under Windows operating system, you can uncompress this
+using <a href="http://www.win-rar.com/download.html">WinRAR</a>. Under Linux/Unix, use the command
+<center>
+tar -xzf statalign.tar.gz
+</center><br>
+In Mac OS/X, just double-click the icon in Finder, and Finder will automatically decompress
+the package.
+<br>
+The package contains the source code in the src/ folder, the binaries in the bin/ folder, documentation in the doc/ folder and
+some auxiliary data in a few other folders (e.g. you will find nice sample sequence files in the data/ folder).
+
+<p align="justify">
+The easiest way to run the program is by
+clicking the jar file which is included in the package.
+You can also run the program from command line. To do so,
+change directory to bin/, and type<br><br>
+
+<center>
+java -Xmx512M -server -cp .:.. statalign.StatAlign
+</center><br><br>
+
+If you would like to download the jar file only (contains everything you need for running the program, including documentation but no source code), use
+<a href="StatAlign/statalign.jar">this link</a>.
+
+<p align="justify">
+The help page of the program is available from
+<a href="StatAlign/doc/help/index.html">here</a><br>
+
+The help page for developers is available from
+<a href="StatAlign/doc/plugin_description/index.html">here</a><br>
+
+The documentation of the classes can be found <a href="StatAlign/doc/index.html">here</a>
+or without frames <a href="http://phylogeny-cafe.elte.hu/StatAlign/StatAlign/doc/overview-summary.html">here</a>
+
+</table>
+</body>
+
+</html>
