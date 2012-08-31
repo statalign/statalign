@@ -561,7 +561,7 @@ public class Benchmarks
 	public static void automatedTests()
 	{
 		String dir = "/home/michael/Dropbox/RNA and StatAlign/TestRNAData/";
-		String resultsDir = "/home/michael/workspace/StatAlignExecute/combined/";
+		String resultsDir = "/home/michael/workspace/StatAlignExecute/longrun2/";
 		File outFile = new File("Benchmarks.txt");
 		String suffix = "_5seqs";
 		if(!suffix.equals("_5seqs"))
@@ -580,7 +580,13 @@ public class Benchmarks
 		+"entropy_mpd\tentropy_perc_mpd\tentropy_max_mpd\t"
 		+"entropy_ppfold\tentropy_perc_ppfold\tentropy_max_ppfold\t"
 		+"entropy_sample_mean\tentropy_perc_sample_mean\tentropy_max_sample_mean\t"
-		+"fsc_sample_alifold_mean\tfsc_sample_alifold_median\tfsc_alifold\tfsc_alifold_mpd\talifold_ref\trel3_stat\trel3_mpd\trel3_entropy_obs";
+		+"fsc_sample_alifold_mean\tfsc_sample_alifold_median\tfsc_alifold\tfsc_alifold_mpd\talifold_ref\trel3_stat\trel3_mpd\trel3_entropy_obs\t"
+		+"fsc_combined\tcombined\tcombined\t"
+		+"sen_sample_mean\tsen_sample_median\tsen_stat\tsen_stat_weighted\tsen_mpd\tsen_ppfold\tsen_entropy_exp\tsen_entropy_obs\t"
+		+"ppv_sample_mean\tppv_sample_median\tppv_stat\tppv_stat_weighted\tppv_mpd\tppv_ppfold\tppv_entropy_exp\tppv_entropy_obs\t"
+		+"sen_sample_alifold_mean\tsen_sample_alifold_median\tsen_alifold\tsen_alifold_mpd\talifold_ref\t"
+		+"ppv_sample_alifold_mean\tppv_sample_alifold_median\tppv_alifold\tppv_alifold_mpd\talifold_ref\t";
+		
 		RNAFoldingTools.writeToFile(outFile, header, false);
 		
 		File [] files = new File(resultsDir).listFiles();
@@ -672,10 +678,10 @@ public class Benchmarks
 			System.out.println("P:"+RNAFoldingTools.getDotBracketStringFromPairedSites(pairedSitesPPfold));
 			System.out.println(dataset.posteriorsAverage+"\t"+dataset.mpdVsInputSim);
 			
-			double sensExpStat = Benchmarks.calculateSensitivity(pairedSitesExperimental, pairedSitesStatAlign);
-			double sensExpPPfold = Benchmarks.calculateSensitivity(pairedSitesExperimental, pairedSitesPPfold);
-			double ppvExpStat = Benchmarks.calculatePPV(pairedSitesExperimental, pairedSitesStatAlign);
-			double ppvExpPPfold = Benchmarks.calculatePPV(pairedSitesExperimental, pairedSitesPPfold);
+			//double sensExpStat = Benchmarks.calculateSensitivity(pairedSitesExperimental, pairedSitesStatAlign);
+			//double sensExpPPfold = Benchmarks.calculateSensitivity(pairedSitesExperimental, pairedSitesPPfold);
+			//double ppvExpStat = Benchmarks.calculatePPV(pairedSitesExperimental, pairedSitesStatAlign);
+			//double ppvExpPPfold = Benchmarks.calculatePPV(pairedSitesExperimental, pairedSitesPPfold);
 			double fscExpStat = getDouble(Benchmarks.calculateFScore(pairedSitesExperimental, pairedSitesStatAlign));
 			double fscExpPPfold = getDouble(Benchmarks.calculateFScore(pairedSitesExperimental, pairedSitesPPfold));
 			double fscExpStatWeighted = getDouble(Benchmarks.calculateFScore(pairedSitesExperimental, pairedSitesStatAlignWeighted));
@@ -683,7 +689,11 @@ public class Benchmarks
 			double fscSamplingExp = getDouble(Benchmarks.calculateFScore(pairedSitesExperimental, dataset.pairedSitesEntropyExp));
 			double fscSamplingObs = getDouble(Benchmarks.calculateFScore(pairedSitesExperimental, dataset.pairedSitesEntropyObs));
 			double fscRNAalifold = getDouble(Benchmarks.calculateFScore(pairedSitesExperimental, dataset.pairedSitesRNAalifold));
-			double fscCombined = getDouble(Benchmarks.calculateFScore(pairedSitesExperimental, dataset.pairedSitesCombined));
+			double fscCombined = -1;
+			if(dataset.pairedSitesCombined != null)
+			{
+				fscCombined = getDouble(Benchmarks.calculateFScore(pairedSitesExperimental, dataset.pairedSitesCombined));
+			}
 			System.out.println(dataset.title);
 			double fscRNAalifoldMPD = getDouble(Benchmarks.calculateFScore(pairedSitesExperimental, dataset.pairedSitesRNAalifoldMPDProjected));
 			double fscRNAalifoldRef = -1;
@@ -695,36 +705,123 @@ public class Benchmarks
 			{
 				System.err.println("Could not load.");
 			}
+			
+			double senExpStat = getDouble(Benchmarks.calculateSensitivity(pairedSitesExperimental, pairedSitesStatAlign));
+			double senExpPPfold = getDouble(Benchmarks.calculateSensitivity(pairedSitesExperimental, pairedSitesPPfold));
+			double senExpStatWeighted = getDouble(Benchmarks.calculateSensitivity(pairedSitesExperimental, pairedSitesStatAlignWeighted));
+			double senExpStatMPD= getDouble(Benchmarks.calculateSensitivity(pairedSitesExperimental, pairedSitesMPD));
+			double senSamplingExp = getDouble(Benchmarks.calculateSensitivity(pairedSitesExperimental, dataset.pairedSitesEntropyExp));
+			double senSamplingObs = getDouble(Benchmarks.calculateSensitivity(pairedSitesExperimental, dataset.pairedSitesEntropyObs));
+			double senRNAalifold = getDouble(Benchmarks.calculateSensitivity(pairedSitesExperimental, dataset.pairedSitesRNAalifold));
+			double senCombined = -1;
+			if(dataset.pairedSitesCombined != null)
+			{
+				senCombined = getDouble(Benchmarks.calculateSensitivity(pairedSitesExperimental, dataset.pairedSitesCombined));
+			}
+			System.out.println(dataset.title);
+			double senRNAalifoldMPD = getDouble(Benchmarks.calculateSensitivity(pairedSitesExperimental, dataset.pairedSitesRNAalifoldMPDProjected));
+			double senRNAalifoldRef = -1;
+			if(dataset.pairedSitesRNAalifoldRefProjected != null)
+			{
+				senRNAalifoldRef = getDouble(Benchmarks.calculateSensitivity(pairedSitesExperimental, dataset.pairedSitesRNAalifoldRefProjected));
+			}
+			else
+			{
+				System.err.println("Could not load.");
+			}
+			
+			double ppvExpStat = getDouble(Benchmarks.calculatePPV(pairedSitesExperimental, pairedSitesStatAlign));
+			double ppvExpPPfold = getDouble(Benchmarks.calculatePPV(pairedSitesExperimental, pairedSitesPPfold));
+			double ppvExpStatWeighted = getDouble(Benchmarks.calculatePPV(pairedSitesExperimental, pairedSitesStatAlignWeighted));
+			double ppvExpStatMPD= getDouble(Benchmarks.calculatePPV(pairedSitesExperimental, pairedSitesMPD));
+			double ppvSamplingExp = getDouble(Benchmarks.calculatePPV(pairedSitesExperimental, dataset.pairedSitesEntropyExp));
+			double ppvSamplingObs = getDouble(Benchmarks.calculatePPV(pairedSitesExperimental, dataset.pairedSitesEntropyObs));
+			double ppvRNAalifold = getDouble(Benchmarks.calculatePPV(pairedSitesExperimental, dataset.pairedSitesRNAalifold));
+			double ppvCombined = -1;
+			if(dataset.pairedSitesCombined != null)
+			{
+				ppvCombined = getDouble(Benchmarks.calculatePPV(pairedSitesExperimental, dataset.pairedSitesCombined));
+			}
+			System.out.println(dataset.title);
+			double ppvRNAalifoldMPD = getDouble(Benchmarks.calculatePPV(pairedSitesExperimental, dataset.pairedSitesRNAalifoldMPDProjected));
+			double ppvRNAalifoldRef = -1;
+			if(dataset.pairedSitesRNAalifoldRefProjected != null)
+			{
+				ppvRNAalifoldRef = getDouble(Benchmarks.calculatePPV(pairedSitesExperimental, dataset.pairedSitesRNAalifoldRefProjected));
+			}
+			else
+			{
+				System.err.println("Could not load.");
+			}
 					
-			System.out.println(RNAFoldingTools.pad("", 14)+RNAFoldingTools.pad("StatAl", 10)+RNAFoldingTools.pad("PPfold", 10));
-			System.out.println(RNAFoldingTools.pad("Senstivity", 14)+RNAFoldingTools.pad(sensExpStat+"", 6)+"    "+RNAFoldingTools.pad(sensExpPPfold+"", 6));
-			System.out.println(RNAFoldingTools.pad("PPV", 14)+RNAFoldingTools.pad(ppvExpStat+"", 6)+"    "+RNAFoldingTools.pad(ppvExpPPfold+"", 6));
-			System.out.println(RNAFoldingTools.pad("F-score", 14)+RNAFoldingTools.pad(fscExpStat+"", 6)+"    "+RNAFoldingTools.pad(fscExpPPfold+"", 6));
+			//System.out.println(RNAFoldingTools.pad("", 14)+RNAFoldingTools.pad("StatAl", 10)+RNAFoldingTools.pad("PPfold", 10));
+			//System.out.println(RNAFoldingTools.pad("Senstivity", 14)+RNAFoldingTools.pad(sensExpStat+"", 6)+"    "+RNAFoldingTools.pad(sensExpPPfold+"", 6));
+			//System.out.println(RNAFoldingTools.pad("PPV", 14)+RNAFoldingTools.pad(ppvExpStat+"", 6)+"    "+RNAFoldingTools.pad(ppvExpPPfold+"", 6));
+			//System.out.println(RNAFoldingTools.pad("F-score", 14)+RNAFoldingTools.pad(fscExpStat+"", 6)+"    "+RNAFoldingTools.pad(fscExpPPfold+"", 6));
 			System.out.print("StatAl: ");
 			printValues(pairedSitesExperimental, pairedSitesStatAlign);
 			System.out.print("PPfold: ");
 			printValues(pairedSitesExperimental, pairedSitesPPfold);
 			System.out.println("---------------------------------------------------------------------");
 			System.out.println();
-			ArrayList<Double> ppfoldValues = new ArrayList<Double>();
-			ArrayList<Double> rnaAlifoldValues = new ArrayList<Double>();
+			ArrayList<Double> ppfoldFscValues = new ArrayList<Double>();
+			ArrayList<Double> rnaAlifoldFscValues = new ArrayList<Double>();
 			for(int k= 0 ; k < dataset.pairedSitesProjectedSamples.size() ; k++)
 			{
 				String val = "" + getDouble(Benchmarks.calculateFScore(pairedSitesExperimental, dataset.pairedSitesProjectedSamples.get(k)));
-				ppfoldValues.add(new Double(val));
+				ppfoldFscValues.add(new Double(val));
 				
 			}
 			
 			for(int k= 0 ; k < dataset.pairedSitesProjectedRnaAlifoldSamples.size() ; k++)
 			{
 				//System.out.println(dataset.pairedSitesProjectedSamples.size()+"\t"+dataset.pairedSitesProjectedRnaAlifoldSamples.size());
-				rnaAlifoldValues.add(getDouble(Benchmarks.calculateFScore(pairedSitesExperimental, dataset.pairedSitesProjectedRnaAlifoldSamples.get(k))));
+				rnaAlifoldFscValues.add(getDouble(Benchmarks.calculateFScore(pairedSitesExperimental, dataset.pairedSitesProjectedRnaAlifoldSamples.get(k))));
 			}
-			double fscSampleMean = mean(ppfoldValues);
-			double fscSampleMedian = getMedian(ppfoldValues);
+			double fscSampleMean = mean(ppfoldFscValues);
+			double fscSampleMedian = getMedian(ppfoldFscValues);			
+			double fscRnaAlifoldSampleMean = mean(rnaAlifoldFscValues);
+			double fscRnaAlifoldSampleMedian = getMedian(rnaAlifoldFscValues);
 			
-			double fscRnaAlifoldSampleMean = mean(rnaAlifoldValues);
-			double fscRnaAlifoldSampleMedian = getMedian(rnaAlifoldValues);
+			ArrayList<Double> ppfoldSenValues = new ArrayList<Double>();
+			ArrayList<Double> rnaAlifoldSenValues = new ArrayList<Double>();
+			for(int k= 0 ; k < dataset.pairedSitesProjectedSamples.size() ; k++)
+			{
+				String val = "" + getDouble(Benchmarks.calculateSensitivity(pairedSitesExperimental, dataset.pairedSitesProjectedSamples.get(k)));
+				ppfoldSenValues.add(new Double(val));
+				
+			}
+			
+			for(int k= 0 ; k < dataset.pairedSitesProjectedRnaAlifoldSamples.size() ; k++)
+			{
+				//System.out.println(dataset.pairedSitesProjectedSamples.size()+"\t"+dataset.pairedSitesProjectedRnaAlifoldSamples.size());
+				rnaAlifoldSenValues.add(getDouble(Benchmarks.calculateSensitivity(pairedSitesExperimental, dataset.pairedSitesProjectedRnaAlifoldSamples.get(k))));
+			}
+			double senSampleMean = mean(ppfoldSenValues);
+			double senSampleMedian = getMedian(ppfoldSenValues);			
+			double senRnaAlifoldSampleMean = mean(rnaAlifoldSenValues);
+			double senRnaAlifoldSampleMedian = getMedian(rnaAlifoldSenValues);
+			
+			ArrayList<Double> ppfoldPpvValues = new ArrayList<Double>();
+			ArrayList<Double> rnaAlifoldPpvValues = new ArrayList<Double>();
+			for(int k= 0 ; k < dataset.pairedSitesProjectedSamples.size() ; k++)
+			{
+				String val = "" + getDouble(Benchmarks.calculatePPV(pairedSitesExperimental, dataset.pairedSitesProjectedSamples.get(k)));
+				ppfoldPpvValues.add(new Double(val));
+				
+			}
+			
+			for(int k= 0 ; k < dataset.pairedSitesProjectedRnaAlifoldSamples.size() ; k++)
+			{
+				//System.out.println(dataset.pairedSitesProjectedSamples.size()+"\t"+dataset.pairedSitesProjectedRnaAlifoldSamples.size());
+				rnaAlifoldPpvValues.add(getDouble(Benchmarks.calculatePPV(pairedSitesExperimental, dataset.pairedSitesProjectedRnaAlifoldSamples.get(k))));
+			}
+			double ppvSampleMean = mean(ppfoldPpvValues);
+			double ppvSampleMedian = getMedian(ppfoldPpvValues);			
+			double ppvRnaAlifoldSampleMean = mean(rnaAlifoldPpvValues);
+			double ppvRnaAlifoldSampleMedian = getMedian(rnaAlifoldPpvValues);
+			
+			
 			
 			ArrayList<Double> entropySamples = new ArrayList<Double>();
 			ArrayList<Double> entropyPercSamples = new ArrayList<Double>();
@@ -756,7 +853,11 @@ public class Benchmarks
 			+"\t"+entropySampleMean+"\t"+(entropyPercSampleMean/100)+"\t"+entropyMaxSampleMean+"\t"
 			+fscRnaAlifoldSampleMean+"\t"+fscRnaAlifoldSampleMedian+"\t"+fscRNAalifold+"\t"+fscRNAalifoldMPD+"\t"+fscRNAalifoldRef
 			+"\t"+dataset.pairsOnlyReliabilityScoreSamplingAndAveragingPosteriorWeighted+"\t"+dataset.pairsOnlyMPDPosteriorWeighted+"\t"+dataset.pairsOnlyReliabilityEntropyObsPosteriorWeighted
-			+"\t"+fscCombined+"\t"+dataset.pairsOnlyReliabilityScoreCombined+"\t"+dataset.ppfoldReliabilityScoreCombined;
+			+"\t"+fscCombined+"\t"+dataset.pairsOnlyReliabilityScoreCombined+"\t"+dataset.ppfoldReliabilityScoreCombined
+			+"\t"+senSampleMean+"\t"+senSampleMedian+"\t"+senExpStat+"\t"+senExpStatWeighted+"\t"+senExpStatMPD+"\t"+senExpPPfold+"\t"+senSamplingExp+"\t"+senSamplingObs
+			+"\t"+ppvSampleMean+"\t"+ppvSampleMedian+"\t"+ppvExpStat+"\t"+ppvExpStatWeighted+"\t"+ppvExpStatMPD+"\t"+ppvExpPPfold+"\t"+ppvSamplingExp+"\t"+ppvSamplingObs
+			+"\t"+senRnaAlifoldSampleMean+"\t"+senRnaAlifoldSampleMedian+"\t"+senRNAalifold+"\t"+senRNAalifoldMPD+"\t"+senRNAalifoldRef
+			+"\t"+ppvRnaAlifoldSampleMean+"\t"+ppvRnaAlifoldSampleMedian+"\t"+ppvRNAalifold+"\t"+ppvRNAalifoldMPD+"\t"+ppvRNAalifoldRef;
 
 			
 		
@@ -795,9 +896,9 @@ public class Benchmarks
 				buffer.write("MPD="+fscExpStatMPD+"\n");
 				buffer.write("PP="+fscExpPPfold+"\n");
 				buffer.write("STE="+fscSamplingObs+"\n");
-				for(int l = 0 ; l < ppfoldValues.size() ; l++)
+				for(int l = 0 ; l < ppfoldFscValues.size() ; l++)
 				{
-					double val =ppfoldValues.get(l);
+					double val =ppfoldFscValues.get(l);
 					if(Double.isNaN(val))
 					{
 						val = 0;
@@ -1426,6 +1527,9 @@ public class Benchmarks
 		}
 	}
 	
+	/**
+	 * A class for holding entropy data
+	 */
 	static class EntropyData
 	{
 		ArrayList<Double> sampleNo = new ArrayList<Double>();
@@ -1486,6 +1590,11 @@ public class Benchmarks
 		return count / ((double)values.size());
 	}
 	
+	/** 
+	 * Calculates the mean from a list values
+	 * @param values
+	 * @return
+	 */
 	public static double mean(ArrayList<Double> values)
 	{
 		double sum = 0;
@@ -1496,6 +1605,11 @@ public class Benchmarks
 		return sum / ((double) values.size());
 	}
 	
+	/**
+	 * Calculates the standard deviation of a list of values.
+	 * @param values
+	 * @return
+	 */
 	public static double stdev(ArrayList<Double> values)
 	{
 		double mean = mean(values);
@@ -1518,6 +1632,12 @@ public class Benchmarks
 		System.out.println(ret);
 	}
 	
+	/**
+	 * Takes an integer array of paired sites and deletes nucleotide positions corresponding to gaps in the aligned sequence. A site whose base-pairing partner is deleted becomes single-stranded, unless it was deleted as well.
+	 * @param alignedSequence
+	 * @param pairedSites
+	 * @return
+	 */
 	public static int [] projectPairedSites(String alignedSequence, int [] pairedSites)
 	{
 		int [] ungappedToGapped = Mapping.getUngappedToGappedMapping(alignedSequence);
@@ -1544,6 +1664,12 @@ public class Benchmarks
 		saveAsFasta(expData.sequences, expData.sequenceNames, outFile);
 	}
 	
+	/**
+	 * Save a list of sequences and sequence names as a FASTA file.
+	 * @param sequences
+	 * @param sequenceNames
+	 * @param outFile
+	 */
 	public static void saveAsFasta(ArrayList<String> sequences, ArrayList<String> sequenceNames, File outFile)
 	{
 		try
@@ -1622,6 +1748,7 @@ public class Benchmarks
 	 * and an array corrsponding to the predicted structure returns the sensitivity.
 	 * @param realPairedSites
 	 * @param predictedPairedSites
+	 * @return
 	 */
 	public static double calculateSensitivity (int [] realPairedSites, int [] predictedPairedSites)
 	{/* The sensitivity for a predicted structure
@@ -1673,6 +1800,7 @@ public class Benchmarks
 	 * and an array corresponding to the predicted structure returns the PPV.
 	 * @param realPairedSites
 	 * @param predictedPairedSites
+	 * @return
 	 */
 	public static double calculatePPV (int [] realPairedSites, int [] predictedPairedSites)
 	{	
@@ -1721,6 +1849,7 @@ public class Benchmarks
 	 * and an array corresponding to the predicted structure returns the F-score.
 	 * @param realPairedSites
 	 * @param predictedPairedSites
+	 * @return
 	 */
 	public static double calculateFScore (int [] realPairedSites, int [] predictedPairedSites)
 	{
@@ -1822,11 +1951,21 @@ public class Benchmarks
     	}
     }
     
+    /**
+     * Calculates the Interquartile Range from a given list of values.
+     * @param values
+     * @return
+     */
     public static double IQR(ArrayList<Double> values)
     {
     	return getValue(values, 0.75) - getValue(values, 0.25);
     }
     
+    /**
+     * Returns the median from a list of values
+     * @param values
+     * @return
+     */
     public static double getMedian(ArrayList<Double> values)
     {
     	ArrayList<Double> sortedValues = (ArrayList<Double>) values.clone();
@@ -1839,6 +1978,12 @@ public class Benchmarks
     	return (sortedValues.get(floor)+sortedValues.get(ceil))/2;
     }
     
+    /**
+     * Returns a value at a given percentile.
+     * @param values
+     * @param percentile
+     * @return
+     */
     public static double getValue(ArrayList<Double> values, double percentile)
     {
     	ArrayList<Double> sortedValues = (ArrayList<Double>) values.clone();
@@ -1850,7 +1995,13 @@ public class Benchmarks
     	return (sortedValues.get(lower)+sortedValues.get(upper))/2;
     }
     
-    public double percentile(ArrayList<Double> values, double x)
+    /**
+     * Returns the percentile of the specified value in the specified list of values.
+     * @param values
+     * @param x
+     * @return
+     */
+    public static double percentile(ArrayList<Double> values, double x)
     {
     	ArrayList<Double> sortedValues = (ArrayList<Double>) values.clone();
     	Collections.sort(sortedValues);

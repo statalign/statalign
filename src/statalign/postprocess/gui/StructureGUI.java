@@ -36,12 +36,9 @@ public class StructureGUI extends VARNAPanel{
 	private static String sequence;
 	private static String structure;
 	
-	public boolean probMode = false;
-	
 	private Graphics2D g2;
 	private ColorGradient cg = new ColorGradient(Color.WHITE, Color.BLACK);
 	
-	//private RNAProxy _RNA = new RNAProxy();
 	private RNA _RNA = new RNA();
 	
 	
@@ -56,10 +53,7 @@ public class StructureGUI extends VARNAPanel{
 	UndoManager _manager;
 	
 	private ControleurBlinkingThread _blink;
-	
 
-
-	// private Point _positionRelativeSouris;
 	private Point _translation;
 	private boolean _horsCadre;
 	private boolean _premierAffichage;
@@ -91,11 +85,7 @@ public class StructureGUI extends VARNAPanel{
 			g2.drawString("Waiting for data..", 30, 30);
             return;
 		}
-		
-		//setColorNonStandardBases(true);
-		
-		
-		
+	
 		g2.setPaint(Color.BLACK);
 		g2.setFont(new Font("SANS_SERIF", Font.BOLD, 16));
 		g2.drawString(title, 10, 20);
@@ -103,13 +93,7 @@ public class StructureGUI extends VARNAPanel{
 		
 	}
 	
-	public void updateAndDraw(String seq, String str) {
-		
-		//setColorNonStandardBases(true);
-		
-		//setBaseInnerColor(Color.GREEN);
-		//setBaseNameColor(Color.BLUE);
-		
+	public void updateAndDraw(String seq, String str) {		
 		sequence = seq;
 		structure = str;
 		
@@ -313,12 +297,7 @@ public class StructureGUI extends VARNAPanel{
 		probs = probMatrix;
 	}
 	
-	public void setProbMode(boolean prob) {
-		probMode = prob;
-		_RNA.probMode = prob;
-	}
-	
-	}
+}
 	
 	
 	

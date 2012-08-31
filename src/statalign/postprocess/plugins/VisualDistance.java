@@ -4,6 +4,7 @@ import java.awt.BorderLayout;
 import java.util.ArrayList;
 
 import javax.swing.Icon;
+import javax.swing.ImageIcon;
 import javax.swing.JPanel;
 
 import statalign.distance.Distance;
@@ -44,7 +45,7 @@ public class VisualDistance extends statalign.postprocess.Postprocess {
 	@Override
 	public Icon getIcon() {
 		// TODO Auto-generated method stub
-		return null;
+		return new ImageIcon(ClassLoader.getSystemResource("icons/loglikelihood1.gif"));
 	}
 
 	@Override

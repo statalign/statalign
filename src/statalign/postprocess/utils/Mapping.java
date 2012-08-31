@@ -436,4 +436,25 @@ public class Mapping {
 		
 		return gappedToUngapped;
 	}
+	
+	public static int [] projectPairedSites(String alignedSequence, int [] pairedSites)
+	{
+		int [] ungappedToGapped = Mapping.getUngappedToGappedMapping(alignedSequence);
+		int [] gappedToUngapped = Mapping.getGappedToUngappedMapping(alignedSequence);
+		
+		int [] projectedPairedSites = new int[ungappedToGapped.length];
+		for(int i = 0 ; i < pairedSites.length ; i++)
+		{
+			if(pairedSites[i] != 0) // if paired, map
+			{
+				int x = gappedToUngapped[i];
+				if(x != -1);
+				{
+					int y = Math.max(0, gappedToUngapped[pairedSites[i]-1]) + 1;
+					projectedPairedSites[x] = y;
+				}
+			}
+		}
+		return projectedPairedSites;
+	}
 }

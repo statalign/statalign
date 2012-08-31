@@ -1,6 +1,7 @@
 package statalign.ui;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
@@ -140,8 +141,8 @@ public class RNASettingsDlg extends JDialog implements ActionListener, ChangeLis
 		super(owner, "RNAalifold parameters", true);
 		this.owner = owner;
 		//pars = owner.manager.inputData.pars;
-		Container cp = getContentPane();
-		cp.setLayout(new BorderLayout());
+		//Container cp = getContentPane();
+		setLayout(new BorderLayout());
 		Box bigBox = Box.createVerticalBox();
 		GridBagLayout l = new GridBagLayout();
 		GridBagConstraints c = new GridBagConstraints();
@@ -163,11 +164,11 @@ public class RNASettingsDlg extends JDialog implements ActionListener, ChangeLis
 		optionsPanel.add(useSamplingAndAveragingButton, c);
 		optionsPanel.add(fuzzyNucleotidePredictionAndEntropy, c);
 		optionsPanel.add(useSamplingAndAveragingRNAalifoldButton, c);
-		optionsPanel.setOpaque(false);
+		//cp.setB
 
 		//c.gridx = 0;
 		//c.gridy = 0;
-		cp.add(optionsPanel, BorderLayout.NORTH);
+		add(optionsPanel, BorderLayout.NORTH);
 		
 		c.gridx = 0;
 		c.gridy = 3;
@@ -250,11 +251,11 @@ public class RNASettingsDlg extends JDialog implements ActionListener, ChangeLis
 		box.add(butt=new JButton("Cancel"));
 		butt.addActionListener(this);
 		bigBox.add(box);
-		cp.add(bigBox, SwingConstants.CENTER);
-		cp.add(Box.createHorizontalStrut(20), BorderLayout.LINE_START);
-		cp.add(Box.createHorizontalStrut(20), BorderLayout.LINE_END);
+		add(bigBox, SwingConstants.CENTER);
+		add(Box.createHorizontalStrut(20), BorderLayout.LINE_START);
+		add(Box.createHorizontalStrut(20), BorderLayout.LINE_END);
 		//cp.add(Box.createVerticalStrut(15), BorderLayout.PAGE_START);
-		cp.add(Box.createVerticalStrut(15), BorderLayout.PAGE_END);
+		add(Box.createVerticalStrut(15), BorderLayout.PAGE_END);
 		addKeyListener(this);
 		pack();
 		loadOptions();

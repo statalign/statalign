@@ -67,6 +67,11 @@ public class RNAalifold {
 	
 	public static RNAalifoldResult fold(List<String> sequences, List<String> sequenceNames, String arguments) throws Exception
 	{
+		return fold(sequences, sequenceNames, arguments, true);
+	}
+	
+	public static RNAalifoldResult fold(List<String> sequences, List<String> sequenceNames, String arguments, boolean useMatrix) throws Exception
+	{
 		if(useOldParams)
 		{
 			arguments.replaceAll(" --cfactor ", " -cv ");
@@ -115,7 +120,10 @@ public class RNAalifold {
 			}
 
 			RNAalifoldResult result = new RNAalifoldResult();
-			result.matrix = loadBasePairProbMatrix(new File("alidot.ps"), sequences.get(0).length());
+			if(useMatrix)
+			{
+				result.matrix = loadBasePairProbMatrix(new File("alidot.ps"), sequences.get(0).length());
+			}
 			result.pairedSites = RNAFoldingTools.getPairedSitesFromDotBracketString(loadDotBracketStructure(new File("alifold.out")));
 			return result;
 		}

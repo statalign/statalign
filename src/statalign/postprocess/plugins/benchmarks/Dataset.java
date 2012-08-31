@@ -66,6 +66,12 @@ public class Dataset implements Serializable {
 	public ResultBundle resultBundleEntropyExp;
 	public ResultBundle resultBundleEntropyObs;
 	public ResultBundle resultBundlePPfold;
+	
+	public double fuzzyAlignmentObsEntropyVal= 0;
+	public double fuzzyAlignmentObsEntropyPerc= 0;
+	public double fuzzyAlignmentObsEntropyMax= 0;
+	public double ppfoldReliabilityEntropyObs;
+	public double pairsOnlyReliabilityEntropyObs;
 	public double pairsOnlyReliabilityEntropyObsPosteriorWeighted = -1;
 	
 	public double ppfoldReliabilityScoreSamplingAndAveraging = -1;

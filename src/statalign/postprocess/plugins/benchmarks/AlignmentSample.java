@@ -36,6 +36,11 @@ class AlignmentSample implements Serializable {
 	}
 	
 
+	/**
+	 * Loads an alignment sample object from a file.
+	 * @param file
+	 * @return
+	 */
 	public static AlignmentSample loadAlignments(File file) {
 
 		AlignmentSample sample = new AlignmentSample();
@@ -146,6 +151,12 @@ class AlignmentSample implements Serializable {
 		return sample;
 	}
 	
+	/**
+	 * Fills a vector of sequences and vector of sequence names from a specified fasta alignment string.
+	 * @param alignmentString
+	 * @param sequences
+	 * @param sequenceNames
+	 */
 	public static void parseAlignmentString(String alignmentString, ArrayList<String> sequences,  ArrayList<String> sequenceNames)
 	{
 

@@ -141,7 +141,13 @@ public class FuzzyAlignment implements Serializable {
 	
 	public static AlignmentData projectAlignment(AlignmentData input, String refSeqName)
 	{
-		int seqno = input.names.indexOf(refSeqName);
+		ArrayList<String> names = new ArrayList<String>(input.names.size());
+		for(int i = 0 ; i < input.names.size() ; i++)
+		{
+			names.add(input.names.get(i).trim());
+		}
+		
+		int seqno = names.indexOf(refSeqName.trim());
 		if(seqno == -1)
 		{
 			System.err.println("Could not find refseqname:" +refSeqName);

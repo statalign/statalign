@@ -763,21 +763,31 @@ public class PPFold extends statalign.postprocess.Postprocess {
 	
 	public void computeFuzzyAlignment()
 	{
-		FuzzyAlignment fuzzyAlignment = FuzzyAlignment.getFuzzyAlignmentAndProject(alignments, refSeqName);		
+		FuzzyAlignment fuzzyAlignment = FuzzyAlignment.getFuzzyAlignmentAndProject(alignments, refSeqName);
+		System.out.println("Fuzzy alignment size"+fuzzyAlignment.columns.size());
 		List<ExtraData> extradata = new ArrayList<ExtraData>();
 		try {
 			Tree tree = null;
 			ResultBundle fuzzyResultObs = PPfoldMain.foldFuzzyAlignment(progress, fuzzyAlignment, tree, param, extradata, false);
+			System.out.println("Fuzzy matrix size"+fuzzyResultObs.finalmatrix[0].length);
 			int [] fuzzyPairedSitesObs = rnaTools.getPosteriorDecodingConsensusStructureMultiThreaded(fuzzyResultObs.finalmatrix);			
 			char [] structure = fuzzyResultObs.getStructure();
 			
 			RNAFoldingTools.saveCtFile(new File(title+".fuzzy.ct"), fuzzyPairedSitesObs, title, refSeq);
 			RNAFoldingTools.saveDotBracketFile(new File(title+".fuzzy.dbn"), fuzzyPairedSitesObs, title, refSeq);
 			
-			if(experimental)
-			{
-				dataset.pairsOnlyReliabilityEntropyObsPosteriorWeighted = RNAFoldingTools.calculatePairsOnlyReliabilityScore(fuzzyPairedSitesObs, RNAFoldingTools.getDoubleMatrix(fuzzyResultObs.finalmatrix), dataset.posteriors);
-			}
+			//if(experimental)
+			//{
+				//dataset.pp
+			dataset.pairedSitesEntropyObs = fuzzyPairedSitesObs;
+			dataset.ppfoldReliabilityEntropyObs = RNAFoldingTools.calculatePPfoldReliabilityScore(fuzzyPairedSitesObs, RNAFoldingTools.getDoubleMatrix(fuzzyResultObs.finalmatrix)); 
+			dataset.pairsOnlyReliabilityEntropyObs = RNAFoldingTools.calculatePairsOnlyReliabilityScore(fuzzyPairedSitesObs, RNAFoldingTools.getDoubleMatrix(fuzzyResultObs.finalmatrix));
+			dataset.pairsOnlyReliabilityEntropyObsPosteriorWeighted = RNAFoldingTools.calculatePairsOnlyReliabilityScore(fuzzyPairedSitesObs, RNAFoldingTools.getDoubleMatrix(fuzzyResultObs.finalmatrix), dataset.posteriors);
+			dataset.fuzzyAlignmentObsEntropyVal = fuzzyResultObs.entropyVal;
+			dataset.fuzzyAlignmentObsEntropyPerc = fuzzyResultObs.entropyPercOfMax;
+			dataset.fuzzyAlignmentObsEntropyMax = fuzzyResultObs.entropyMax;
+				
+			//}
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		} catch (Exception e) {
@@ -815,12 +825,9 @@ public class PPFold extends statalign.postprocess.Postprocess {
 			}
 
 			int [] pairedSitesRNAalifold = rnaTools.getPosteriorDecodingConsensusStructureMultiThreaded(doubleSummedArrayRNAalifold);
-			if(experimental)
-			{
-				dataset.pairedSitesRNAalifold = pairedSitesRNAalifold;
-				dataset.ppfoldReliabilityScoreRNAalifold = RNAFoldingTools.calculatePPfoldReliabilityScore(dataset.pairedSitesRNAalifold, doubleSummedArrayRNAalifold);
-				dataset.pairsOnlyReliabilityScoreRNAalifold =  RNAFoldingTools.calculatePairsOnlyReliabilityScore(dataset.pairedSitesRNAalifold, doubleSummedArrayRNAalifold);		
-			}
+			dataset.pairedSitesRNAalifold = pairedSitesRNAalifold;
+			dataset.ppfoldReliabilityScoreRNAalifold = RNAFoldingTools.calculatePPfoldReliabilityScore(dataset.pairedSitesRNAalifold, doubleSummedArrayRNAalifold);
+			dataset.pairsOnlyReliabilityScoreRNAalifold =  RNAFoldingTools.calculatePairsOnlyReliabilityScore(dataset.pairedSitesRNAalifold, doubleSummedArrayRNAalifold);		
 			
 			RNAFoldingTools.saveCtFile(new File(title+".rnaalifold.ct"), pairedSitesRNAalifold, title, refSeq);
 			RNAFoldingTools.saveDotBracketFile(new File(title+".rnaalifold.dbn"), pairedSitesRNAalifold, title, refSeq);
@@ -843,8 +850,8 @@ public class PPFold extends statalign.postprocess.Postprocess {
 			RNAFoldingTools.saveCtFile(new File(title+".ppfold.ct"), pairedSites, title, refSeq);
 			RNAFoldingTools.saveDotBracketFile(new File(title+".ppfold.dbn"), pairedSites, title, refSeq);
 			
-			if(experimental)
-			{
+			//if(experimental)
+			//{
 				for (int i = 0; i < d; ++i) {
 					for (int j = 0; j < d; ++j) {
 						weightedBasePairProb[i][j] = (double) weightedBasePairProb[i][j] / (double) noSamples;			
@@ -861,12 +868,6 @@ public class PPFold extends statalign.postprocess.Postprocess {
 				dataset.pairsOnlyReliabilityScoreSamplingAndAveragingPosteriorWeighted = RNAFoldingTools.calculatePairsOnlyReliabilityScore(pairedSites, doubleSummedArray, dataset.posteriors);
 				dataset.pairedSitesRefSeq = refSeqGapped;
 				
-				
-				//RNAFoldingTools.writeMatrix(doubleSummedArray, new File(outDir+"bp.matrix"));
-				System.out.println("num samples" + noSamples);
-				//RNAFoldingTools.writeMatrix(summedArray, new File("bp2.matrix"));
-				double[] singleBaseProb = RNAFoldingTools.getSingleBaseProb(doubleSummedArray);
-				//& saveResult(refSeqGapped, pairedSites, doubleSummedArray, singleBaseProb, new File(outDir+title+".dat.res"));
 				
 				for (int i = 0; i < d; ++i) {
 					for (int j = 0; j < d; ++j) {
@@ -889,12 +890,8 @@ public class PPFold extends statalign.postprocess.Postprocess {
 				}
 				dataset.ppfoldReliabilityScoreSamplingAndAveraging = statalignPpfoldReliablityScore;
 				
-				System.out.println("Structure reliability score = " + statalignPpfoldReliablityScore);
-		
 				double ppfoldReliablityScore = RNAFoldingTools.calculatePPfoldReliabilityScore(pairedSites, doubleSummedArray);
-				System.out.println("Structure reliability score = " + ppfoldReliablityScore);
 				double proxySim = getProxySimilarityFromAvgPosterior(posteriorProbabilityAvg);
-				System.out.println("Proxy similiarity = " + proxySim);
 				ArrayList<String> mpdSequences = new ArrayList<String>();
 				ArrayList<String> mpdNames = new ArrayList<String>();
 				//String [] Utils.alignmentTransformation(mpdAlignment.alignment, "Fasta", mpdAlignment.input);
@@ -903,8 +900,6 @@ public class PPFold extends statalign.postprocess.Postprocess {
 					mpdNames.add(mpdAlignment.alignment[i].split("(\\s)+")[0]);
 					mpdSequences.add(mpdAlignment.alignment[i].split("(\\s)+")[1]);
 				}			
-				System.out.println(sequences);
-				System.out.println(dataset.inputAlignment.sequences);
 				dataset.mpdVsInputSim = Distance.AMA(mpdSequences, dataset.inputAlignment.sequences);
 		
 				
@@ -913,32 +908,8 @@ public class PPFold extends statalign.postprocess.Postprocess {
 				//System.out.println("Proxy distance = " + Distance.amaScoreToMultiDistance(mpdSequences,proxySim));
 				double improvedReliabilityScore1 = posteriorProbabilityAvg*statalignPpfoldReliablityScore;		
 				//System.out.println("Improved reliability score 1 = " + improvedReliabilityScore1);
-				double improvedReliabilityScore2 = proxySim*statalignPpfoldReliablityScore;		
-		
-		
-				System.out.println("Improved reliability score 2 = " + improvedReliabilityScore2);
-		
-				// save mpd alignment
-				appendAlignment("mpd", mpdAlignment.alignment, new File(outDir+mpdAlignment.input.title+".samples"), true, mpdAlignment.input);
-				//double ppfoldReliabilityScoreMPD = saveMPDToFile(Utils.alignmentTransformation(mpdAlignment.alignment,"Fasta", mpdAlignment.input), new File(outDir+mpdAlignment.input.title+".dat.res.mpd"));
-				try
-				{
-		
-					BufferedWriter buffer = new BufferedWriter(new FileWriter(outDir+mpdAlignment.input.title+".samples", true));
-					buffer.write("%logLiklihood\n");
-					for(int i = 0; i<logLikelihood.size(); ++i){
-						buffer.write(logLikelihood.get(i) + "\n");
-					}
-		
-					buffer.close();
-		
-					//System.out.println(noSambles+"\t"+mcmc.mcmcStep.newLogLike);
-				}
-				catch(IOException ex)
-				{
-					ex.printStackTrace();
-				}
-			}
+				double improvedReliabilityScore2 = proxySim*statalignPpfoldReliablityScore;
+			//}
 		}	
 		
 		if(samplingAndAveragingPPfold && samplingAndAveragingRNAalifold)
@@ -954,12 +925,9 @@ public class PPFold extends statalign.postprocess.Postprocess {
 			
 			int [] combinedPairedSites = rnaTools.getPosteriorDecodingConsensusStructureMultiThreaded(combinedBasePairProb);
 			
-			if(experimental)
-			{
-				dataset.pairedSitesCombined = combinedPairedSites;
-				dataset.ppfoldReliabilityScoreCombined = RNAFoldingTools.calculatePPfoldReliabilityScore(combinedPairedSites, combinedBasePairProb);
-				dataset.pairsOnlyReliabilityScoreCombined = RNAFoldingTools.calculatePairsOnlyReliabilityScore(combinedPairedSites, combinedBasePairProb);
-			}
+			dataset.pairedSitesCombined = combinedPairedSites;
+			dataset.ppfoldReliabilityScoreCombined = RNAFoldingTools.calculatePPfoldReliabilityScore(combinedPairedSites, combinedBasePairProb);
+			dataset.pairsOnlyReliabilityScoreCombined = RNAFoldingTools.calculatePairsOnlyReliabilityScore(combinedPairedSites, combinedBasePairProb);			
 		}
 
 		if(fuzzyFolding)
@@ -970,6 +938,28 @@ public class PPFold extends statalign.postprocess.Postprocess {
 		if(experimental)
 		{
 			dataset.saveDatasetResult(new File(outDir+title+".serialized"));
+		}
+		
+		DecimalFormat df = new DecimalFormat("0.000");
+		
+		try
+		{
+			BufferedWriter buffer = new BufferedWriter(new FileWriter(title+".info"));
+			buffer.write(">method=sampling_and_averaging_ppfold\ttitle="+dataset.title+"\tlength="+dataset.pairedSites.length+"\treliability_score="+df.format(dataset.pairsOnlyReliabilityScoreSamplingAndAveraging)+"\n");
+			buffer.write(refSeqGapped.replaceAll("-", "")+"\n");
+			buffer.write(RNAFoldingTools.getDotBracketStringFromPairedSites(dataset.pairedSites)+"\n");
+			buffer.write(">method=sampling_and_averaging_rnaalifold\ttitle="+dataset.title+"\tlength="+dataset.pairedSitesRNAalifold.length+"\treliability_score="+df.format(dataset.pairsOnlyReliabilityScoreRNAalifold)+"\n");
+			buffer.write(refSeqGapped.replaceAll("-", "")+"\n");
+			buffer.write(RNAFoldingTools.getDotBracketStringFromPairedSites(dataset.pairedSitesRNAalifold)+"\n");
+			buffer.write(">method=fuzzy_alignment_ppfold\ttitle="+dataset.title+"\tlength="+dataset.pairedSitesEntropyObs.length+"\treliability_score="+df.format(dataset.pairsOnlyReliabilityEntropyObs)+"\tentropy="+dataset.fuzzyAlignmentObsEntropyVal+"\tperc_of_max_entropy="+dataset.fuzzyAlignmentObsEntropyPerc+"\t"+"\tmax_entropy="+dataset.fuzzyAlignmentObsEntropyMax+"\t"+"\n");
+			buffer.write(refSeqGapped.replaceAll("-", "")+"\n");
+			buffer.write(RNAFoldingTools.getDotBracketStringFromPairedSites(dataset.pairedSitesEntropyObs)+"\n");
+			buffer.close();
+			
+		}
+		catch(IOException ex)
+		{
+			ex.printStackTrace();
 		}
 	}
 
@@ -990,7 +980,7 @@ public class PPFold extends statalign.postprocess.Postprocess {
 			{
 				sequences.add(mpdAlignment.alignment[i]);
 			}
-			double proxyDistance = Distance.amaScoreToDistance(sequences,proxySimilarity);
+			double proxyDistance = Distance.amaScoreToMultiDistance(sequences,proxySimilarity);
 			buffer.write(title+"\t");
 			buffer.write(posteriorProbabilityAvg+"\t");
 			buffer.write(proxySimilarity+"\t");

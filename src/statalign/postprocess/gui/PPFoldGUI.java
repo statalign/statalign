@@ -78,20 +78,8 @@ public class PPFoldGUI extends JPanel {
 			//System.out.println(PPFold.getSequences()[0][0]);
 			//if(owner.getSequences()[0][0] == "String")
 			int sum = 0;
-			
-			/*for(String element : transposedSequences[(i-x)/OFFSET]) {
-				if(element.equals("-")) {sum += 1;}
-			}*/
-			
-			for(int m = 0; m < PPFold.getSequences().length; m++) {
-				String sequence = PPFold.getSequences()[m][1];
-				if(sequence.charAt((i-x)/OFFSET) == '-') {sum += 1;}
-			}
-			
-			System.out.println("THIS IS THE GAP RATIO: " + (double)(sum / PPFold.getSequences().length));
 		
 			if((double)sum / PPFold.getSequences().length >= 0.25) {
-				System.out.println("THIS IS THE GAP RATIO: " + (double)(sum / PPFold.getSequences().length));
 				gr2.setPaint(Color.GRAY);
 				gr2.fillRect(i, y, OFFSET, dimension);
 				continue;

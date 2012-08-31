@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.util.ArrayList;
 
 import javax.swing.JLabel;
@@ -30,7 +31,7 @@ public class EntropyGUI extends JPanel {
 	public String title;
 	private Entropy owner;
 
-	private JLabel oe = new JLabel("Observed Entropy");
+	private JLabel oe = new JLabel("Consensus Entropy");
 	private JLabel se = new JLabel("Sample Entropy");
 	
 	public static final int OFFSET_X = 50;
@@ -43,7 +44,10 @@ public class EntropyGUI extends JPanel {
 	/**
 	 * Constructor to initialise the GUI for entropy
 	 *
-	 * @param owner    The Entropy postprocess handler
+	 * @param parent
+	 *            The main panel
+	 * @param owner
+	 *            The Entropy postprocess handler
 	 */
 	public EntropyGUI(String title, Entropy owner) {
 //		super((int) (panel.getWidth() / 6.6), panel.getHeight() / 13);
@@ -67,28 +71,29 @@ public class EntropyGUI extends JPanel {
 		//this.add(oe);
 		//this.add(se);
 		super.paintComponent(gr);
+		Graphics2D g2 = (Graphics2D) gr;
 		
 		border = 10;
 		
-		gr.setColor(Color.white);
-		gr.fillRect(0, 0, getWidth(), getHeight());
-		gr.setColor(Color.black);
+		g2.setColor(Color.white);
+		g2.fillRect(0, 0, getWidth(), getHeight());
+		g2.setColor(Color.black);
 		
 		int maxWidth = getWidth()-50-border;
 		int maxHeight = getHeight()-2*border;
 		int minX = border;
 		int minY = border;
-		gr.drawLine(50+minX, minY, 50+minX, maxHeight);
-		gr.drawLine(50+minX, minY, 40+minX, 10+minY);
-		gr.drawLine(50+minX, minY, 60+minX, 10+minY);
-		gr.drawLine(50+minX, maxHeight, maxWidth + 50, maxHeight);
-		gr.drawLine(maxWidth + 50, maxHeight, maxWidth + 40, maxHeight - 10);
-		gr.drawLine(maxWidth + 50, maxHeight, maxWidth + 40, maxHeight + 10);
+		g2.drawLine(50+minX, minY, 50+minX, maxHeight);
+		g2.drawLine(50+minX, minY, 40+minX, 10+minY);
+		g2.drawLine(50+minX, minY, 60+minX, 10+minY);
+		g2.drawLine(50+minX, maxHeight, maxWidth + 50, maxHeight);
+		g2.drawLine(maxWidth + 50, maxHeight, maxWidth + 40, maxHeight - 10);
+		g2.drawLine(maxWidth + 50, maxHeight, maxWidth + 40, maxHeight + 10);
 		ArrayList<EntropyContainer> list = owner.entropyList;
 		
 		
 		// finding the maximum and minimum
-		double maxLik = 50.0, minLik = 0.0;
+		double maxLik = 20.0, minLik = 0.0;
 		for (int i = 0; i < list.size(); i++) {
 			double x = (list.get(i)).obsEntropy;
 			if (x < minLik) {
@@ -101,25 +106,30 @@ public class EntropyGUI extends JPanel {
 		/*if (minLik > -0.1) {
 			maxLik = 0.0;
 		}*/
-		gr.setFont(LLT_FONT);
-		gr.drawString("" + ((int) maxLik), minX, 15+minY);
-		gr.drawString("" + ((int) minLik), minX, maxHeight);
-		// drawing the loglikelihood trace
+		g2.setFont(LLT_FONT);
+		//gr.drawString("" + ((int) maxLik), minX, 15+minY);
+		//gr.drawString("" + ((int) minLik), minX, maxHeight);
+		
+		g2.rotate(Math.PI/2);
+		g2.drawString("Entropy in bits", maxHeight/2 - 20, -20);
+		g2.rotate(Math.PI*1.5);  
+		g2.drawString("Sample", 700, 15+maxHeight);
+		
+		
+		// drawing the entropy
 		if (list.size() <= 1) {
-			System.out.println("CYCLES AND SAMPLING RATE: " + owner.mcmc.mcmcpars.cycles + "; " + owner.mcmc.mcmcpars.sampRate);
-			gr.drawString("Waiting for data..", TITLE_X, TITLE_Y);
+			g2.drawString("Waiting for data..", TITLE_X, TITLE_Y);
 			return;
 		}
 		
-		System.out.println("CYCLES AND SAMPLING RATE HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH: " + owner.mcmc.mcmcpars.cycles + "; " + owner.mcmc.mcmcpars.sampRate);
-		gr.setColor(Color.BLACK);
-		gr.setFont(new Font("SANS_SERIF", Font.BOLD, 16));
-		gr.drawString(title, TITLE_X, TITLE_Y);
-		gr.setFont(new Font("MONOSPACED", Font.PLAIN, 12));
+		g2.setColor(Color.BLACK);
+		g2.setFont(new Font("SANS_SERIF", Font.BOLD, 16));
+		g2.drawString(title, TITLE_X, TITLE_Y);
+		g2.setFont(new Font("MONOSPACED", Font.PLAIN, 12));
 		
 		this.add(oe);
 		this.add(se);
-		gr.setColor(Color.BLUE);
+		g2.setColor(Color.BLUE);
 		double actual;
 		double next = (list.get(0)).obsEntropy;
 		for (int i = 0; i < list.size() - 1; i++) {
@@ -160,12 +170,12 @@ public class EntropyGUI extends JPanel {
 			// i++;
 		}*/
 		
-		gr.setColor(Color.RED);
+		g2.setColor(Color.RED);
 		for (int i = 0; i < list.size() - 1; i++) {
 			actual = next;
 			next = (list.get(i + 1)).sampleEntropy;
 			//System.out.println("DRAWING LINES");
-			gr.drawLine(minX+(1000-border) * i * 2 / 300 + 50,
+			g2.drawLine(minX+(1000-border) * i * 2 / 300 + 50,
 					minY+(int) ((maxLik - actual) * (maxHeight-border) / (maxLik - minLik + 1.0)),
 					minX+(1000-border) * (i + 1) * 2 / 300 + 50,
 					minY+(int) ((maxLik - next) * (maxHeight-border) / (maxLik - minLik + 1.0)));
