@@ -2,8 +2,6 @@
 *~
 *.fas*
 bin/
-*.classpath
-*.project
 doc/*
 *.txt
 *.matrix
