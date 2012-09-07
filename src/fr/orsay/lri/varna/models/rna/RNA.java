@@ -186,7 +186,7 @@ public class RNA extends InterfaceVARNAObservable implements Serializable{
 	
 	
 	private boolean _drawn = false;
-	public boolean probMode = true;
+	public static boolean probMode = true;
 	
 	private ColorGradient cg = new ColorGradient(Color.WHITE, Color.BLUE);
 	
