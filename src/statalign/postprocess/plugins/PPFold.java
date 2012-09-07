@@ -207,6 +207,11 @@ public class PPFold extends statalign.postprocess.Postprocess {
 	public String getTip() {
 		return "Base-pairing matrix of the current consensus structure given by PPFold";
 	}
+	
+	@Override
+    public double getTabOrder() {
+        return 8.0d;
+    }
 
 	@Override
 	public void setSampling(boolean enabled) {

@@ -7,6 +7,7 @@ import statalign.base.Mcmc;
 import statalign.base.Tree;
 import statalign.io.RawSequences;
 import statalign.ui.ErrorMessage;
+import statalign.ui.MainFrame;
 
 /**
  * The main (suspendable) thread for background MCMC calculation.
@@ -68,10 +69,17 @@ public class MainThread extends StoppableThread {
 			Mcmc mcmc = new Mcmc(tree, owner.inputData.pars, owner.postProcMan);
 			mcmc.doMCMC();
 		} catch(StoppedException e) {
-			// stopped during tree construction
+			owner.finished();
+			if (owner.frame != null) {
+				owner.frame.statusText.setText(MainFrame.IDLE_STATUS_MESSAGE);
+			}
 		} catch(Exception e) {
-			if(owner.frame != null)
-				ErrorMessage.showPane(owner.frame,e,true);
+			owner.finished();
+			if(owner.frame != null) {
+				System.out.println("Here is the error: " + e.getClass());
+				owner.frame.statusText.setText(MainFrame.IDLE_STATUS_MESSAGE);
+				//ErrorMessage.showPane(owner.frame,e.getLocalizedMessage(),true);
+			}
 			else
 				e.printStackTrace();
 		}

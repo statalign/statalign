@@ -75,9 +75,9 @@ public class DistanceGUI extends JPanel {
 		/*if (minLik > -0.1) {
 			maxLik = 0.0;
 		}*/
-		g2.setFont(LLT_FONT);
+		g2.setFont(new Font("SANS_SERIF", Font.BOLD, 16));
 		g2.rotate(Math.PI/2);
-		g2.drawString("AMA similarity score", maxHeight/2 - 20, -20);
+		g2.drawString("AMA similarity score", maxHeight/2 - 60, -20);
 		g2.rotate(Math.PI*1.5);  
 		g2.drawString("Sample", 700, 15+maxHeight);
 		

@@ -186,7 +186,7 @@ public class RNA extends InterfaceVARNAObservable implements Serializable{
 	
 	
 	private boolean _drawn = false;
-	public static boolean probMode = true;
+	public static boolean probMode = false;
 	
 	private ColorGradient cg = new ColorGradient(Color.WHITE, Color.BLUE);
 	
@@ -288,25 +288,11 @@ public class RNA extends InterfaceVARNAObservable implements Serializable{
 	}
 
 	public Color getBaseInnerColor(int i, VARNAConfig conf) {
-		/*Color result = _listeBases.get(i).getStyleBase()
-				.get_base_inner_color();
-		String res = _listeBases.get(i).getContent();
-		if (conf._drawColorMap)
-		{
-			result = conf._cm.getColorForValue(_listeBases.get(i).getValue());			
-		}
-		else if ((conf._colorDashBases && (res.contains("-")))) {
-			result = conf._dashBasesColor;
-		}
-		else if ((conf._colorSpecialBases && !_normalBases.contains(res.toLowerCase()))) {
-			result = conf._specialBasesColor;
-		} */
-		
 		Color result = _listeBases.get(i).getStyleBase()
 		.get_base_inner_color();
 		String res = _listeBases.get(i).getContent();
 		
-		if(!probMode) {
+		if(!probMode) { // GUI displayed normal mode.
 			if(res.toLowerCase().equals("a")) {result = Color.RED;}
 			
 			else if(res.toLowerCase().equals("c")) {result = Color.BLUE;}
@@ -318,18 +304,34 @@ public class RNA extends InterfaceVARNAObservable implements Serializable{
 			} 
 		}
 		
-		else {
+		else { // GUI displayed is base-pairing probability mode. 
+			
+			
+			ColorGradient cg; // Color gradient to weight coloring based on float probabilities
+			
+			/* If a nucleotide is base-paired with another nucleotide with some
+			 * probability, use color gradient to paint nucleotide blue weighted with the base-pairing
+			 * probability.
+			 */
 			if(Structure.currentDotBracketStructure.charAt(i) == '(') {
+				cg = new ColorGradient(Color.WHITE, Color.BLUE);
 				int j = _listeBases.get(i).getStyleBP().getIndex3();
 				result = cg.getColor(Structure.probMatrix[i][j]);
 			}
 			
 			else if(Structure.currentDotBracketStructure.charAt(i) == ')') {
+				cg = new ColorGradient(Color.WHITE, Color.BLUE);
 				int j = _listeBases.get(i).getStyleBP().getIndex5();
 				result = cg.getColor(Structure.probMatrix[i][j]);
 			}
 			
+			
+			/*
+			 * Else if the nucleotide is single, paint it red weighted with the probability
+			 * that the nucleotide is not base-paired.
+			 */
 			else if(Structure.currentDotBracketStructure.charAt(i) == '.') {
+				cg = new ColorGradient(Color.WHITE, Color.RED);
 				result = cg.getColor(Structure.singleMatrix[i]);
 			}
 		}

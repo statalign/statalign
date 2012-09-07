@@ -22,6 +22,7 @@ import statalign.postprocess.Postprocess;
 import statalign.postprocess.gui.StructureGUI;
 import statalign.postprocess.utils.RNAFoldingTools;
 import fr.orsay.lri.varna.exceptions.ExceptionNonEqualLength;
+import fr.orsay.lri.varna.models.rna.RNA;
 
 public class Structure extends statalign.postprocess.Postprocess {
 
@@ -139,7 +140,7 @@ public class Structure extends statalign.postprocess.Postprocess {
 		toolbar.add(new JToolBar.Separator());
 		group = new ButtonGroup();
 		
-		JToggleButton normalButton = new JToggleButton(new ImageIcon("icons/rna1.png"));
+		JToggleButton normalButton = new JToggleButton(new ImageIcon("icons/normalRNA.png"));
 		String text = "Normal mode";
 		normalButton.setToolTipText(text);
     	normalButton.setActionCommand(text);
@@ -148,15 +149,14 @@ public class Structure extends statalign.postprocess.Postprocess {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
+				RNA.probMode = false;
 				probMode = false;
-//				RNA.probMode = false;
-				//gui.setProbMode(false);
 				gui.repaint();
 			}
     		
     	});
 		
-    	JToggleButton probButton = new JToggleButton(new ImageIcon("icons/rna1.png"));
+    	JToggleButton probButton = new JToggleButton(new ImageIcon("icons/probRNA.png"));
     	String probText = "Probability mode";
     	probButton.setToolTipText(probText);
     	probButton.setActionCommand(probText);
@@ -164,8 +164,8 @@ public class Structure extends statalign.postprocess.Postprocess {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
+				RNA.probMode = true;
 				probMode = true;
-//				RNA.probMode = true;
 				gui.repaint();
 			}
     		

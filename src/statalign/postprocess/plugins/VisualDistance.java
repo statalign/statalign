@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 
 import statalign.distance.Distance;
 
@@ -13,6 +14,7 @@ import statalign.base.InputData;
 import statalign.base.State;
 import statalign.postprocess.Postprocess;
 import statalign.postprocess.gui.DistanceGUI;
+import statalign.postprocess.gui.EntropyGUI;
 
 public class VisualDistance extends statalign.postprocess.Postprocess {
 	
@@ -90,9 +92,14 @@ public class VisualDistance extends statalign.postprocess.Postprocess {
 		if(show) {
 			title = input.title;
 			pan.removeAll();
-			pan.add(gui = new DistanceGUI(title, this));
+			gui = new DistanceGUI(title, this);
+			
+			JScrollPane scroll = new JScrollPane();
+			scroll.setViewportView(gui);
+			
+			pan.add(scroll);
 			System.out.println("Distance parent: " + pan.getParent());
-			pan.getParent().getParent().validate();
+			pan.getParent().getParent().getParent().validate();
 		}
 		
 		distances = new ArrayList<Double>();

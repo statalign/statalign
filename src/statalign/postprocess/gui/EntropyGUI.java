@@ -110,8 +110,9 @@ public class EntropyGUI extends JPanel {
 		//gr.drawString("" + ((int) maxLik), minX, 15+minY);
 		//gr.drawString("" + ((int) minLik), minX, maxHeight);
 		
+		g2.setFont(new Font("SANS_SERIF", Font.BOLD, 16));
 		g2.rotate(Math.PI/2);
-		g2.drawString("Entropy in bits", maxHeight/2 - 20, -20);
+		g2.drawString("Entropy in bits", maxHeight/2 - 50, -20);
 		g2.rotate(Math.PI*1.5);  
 		g2.drawString("Sample", 700, 15+maxHeight);
 		
