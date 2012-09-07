@@ -2,9 +2,6 @@ package com.ppfold.algo;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
-
-import com.sun.xml.internal.bind.v2.runtime.unmarshaller.XsiNilLoader.Array;
 
 public class AlignmentData implements Serializable
 {

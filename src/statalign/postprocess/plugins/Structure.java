@@ -1,11 +1,9 @@
 package statalign.postprocess.plugins;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.Enumeration;
 
 import javax.swing.AbstractButton;
@@ -18,14 +16,12 @@ import javax.swing.JScrollPane;
 import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
 
-import fr.orsay.lri.varna.exceptions.ExceptionNonEqualLength;
-import fr.orsay.lri.varna.models.rna.RNA;
-
 import statalign.base.InputData;
 import statalign.base.State;
 import statalign.postprocess.Postprocess;
 import statalign.postprocess.gui.StructureGUI;
 import statalign.postprocess.utils.RNAFoldingTools;
+import fr.orsay.lri.varna.exceptions.ExceptionNonEqualLength;
 
 public class Structure extends statalign.postprocess.Postprocess {
 
@@ -153,7 +149,7 @@ public class Structure extends statalign.postprocess.Postprocess {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				probMode = false;
-				RNA.probMode = false;
+//				RNA.probMode = false;
 				//gui.setProbMode(false);
 				gui.repaint();
 			}
@@ -169,7 +165,7 @@ public class Structure extends statalign.postprocess.Postprocess {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				probMode = true;
-				RNA.probMode = true;
+//				RNA.probMode = true;
 				gui.repaint();
 			}
     		

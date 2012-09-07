@@ -15,12 +15,25 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Random;
 
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+
+import statalign.base.InputData;
+import statalign.base.Mcmc;
+import statalign.base.State;
+import statalign.base.Utils;
+import statalign.distance.Distance;
+import statalign.postprocess.Postprocess;
+import statalign.postprocess.PostprocessManager;
+import statalign.postprocess.gui.PPFoldGUI;
+import statalign.postprocess.plugins.benchmarks.Benchmarks;
+import statalign.postprocess.plugins.benchmarks.Dataset;
+import statalign.postprocess.utils.Mapping;
+import statalign.postprocess.utils.RNAFoldingTools;
+import statalign.postprocess.utils.RNAalifold;
 
 import com.ppfold.algo.AlignmentData;
 import com.ppfold.algo.FuzzyAlignment;
@@ -34,21 +47,6 @@ import com.ppfold.main.Alignment;
 import com.ppfold.main.AlignmentReader;
 import com.ppfold.main.NewickReader;
 import com.ppfold.main.PPfoldMain;
-
-import statalign.base.InputData;
-import statalign.base.Mcmc;
-import statalign.base.McmcStep;
-import statalign.base.State;
-import statalign.base.Utils;
-import statalign.distance.Distance;
-import statalign.postprocess.Postprocess;
-import statalign.postprocess.PostprocessManager;
-import statalign.postprocess.plugins.benchmarks.Benchmarks;
-import statalign.postprocess.plugins.benchmarks.Dataset;
-import statalign.postprocess.gui.PPFoldGUI;
-import statalign.postprocess.utils.Mapping;
-import statalign.postprocess.utils.RNAFoldingTools;
-import statalign.postprocess.utils.RNAalifold;
 
 public class PPFold extends statalign.postprocess.Postprocess {
 
@@ -227,6 +225,7 @@ public class PPFold extends statalign.postprocess.Postprocess {
 	}
 
 	static Comparator<String[]> compStringArr = new Comparator<String[]>() {
+		@Override
 		public int compare(String[] a1, String[] a2) {
 			return a1[0].compareTo(a2[0]);
 		}
@@ -480,13 +479,13 @@ public class PPFold extends statalign.postprocess.Postprocess {
 		
 		if(no == 0)
 		{
-			if(this.samplingAndAveragingPPfold)
+			if(samplingAndAveragingPPfold)
 			{
 				summedBasePairProbMatrix = new double[d][d];
 				weightedBasePairProb = new double[d][d];
 				summedSingleBaseProb = new double[d];
 			}
-			if(this.samplingAndAveragingRNAalifold)
+			if(samplingAndAveragingRNAalifold)
 			{
 				summedBasePairProbRNAalifold = new double[d][d];			
 			}
@@ -522,10 +521,10 @@ public class PPFold extends statalign.postprocess.Postprocess {
 
 				Tree tree = getPPfoldTree(mcmc);
 				
-				if(this.samplingAndAveragingPPfold)
+				if(samplingAndAveragingPPfold)
 				{
 					ResultBundle sampleResult = PPfoldMain.fold(progress, align.getSequences(),	align.getNames(), tree, param, extradata);
-					this.entropySample = sampleResult.entropyVal;
+					entropySample = sampleResult.entropyVal;
 					float[][] basePairProb = sampleResult.finalmatrix;
 					float[] singleBaseProb = new float[basePairProb.length];
 					for (int x = 0; x < basePairProb.length; x++) {
@@ -571,10 +570,10 @@ public class PPFold extends statalign.postprocess.Postprocess {
 					float [] singleMatrix = new float[d];
 					for (int i = 0; i < d; ++i) {
 						summedSingleBaseProb[i] += projectSingleBaseProb[i];
-						singleMatrix[i] = (float)summedSingleBaseProb[i] / (float)(noSamples+1);
+						singleMatrix[i] = (float)summedSingleBaseProb[i] / (noSamples+1);
 						for (int j = 0; j < d; ++j) {
 							summedBasePairProbMatrix[i][j] += projectSample[i][j];
-							probMatrix[i][j] = (float)(summedBasePairProbMatrix[i][j]/(double)(noSamples+1));
+							probMatrix[i][j] = (float)(summedBasePairProbMatrix[i][j]/(noSamples+1));
 							weightedBasePairProb[i][j] += projectSample[i][j]*weight;
 						}
 					}
@@ -602,7 +601,7 @@ public class PPFold extends statalign.postprocess.Postprocess {
 					}
 				}
 				
-				if(this.samplingAndAveragingRNAalifold)
+				if(samplingAndAveragingRNAalifold)
 				{
 					RNAalifoldResult rnaAlifoldSampleResult = RNAalifold.fold(align.getSequences(), align.getNames(), Postprocess.pluginParameters.getParameter("rnaalifold"));
 					double [][] rnaAlifoldMatrixSample = rnaAlifoldSampleResult.matrix;
@@ -712,8 +711,8 @@ public class PPFold extends statalign.postprocess.Postprocess {
 				FuzzyAlignment fuzzyAlignment2 = FuzzyAlignment.getFuzzyAlignmentAndProject(alignments, refSeqName);
 				ResultBundle fuzzyResultExp2 = PPfoldMain.foldFuzzyAlignment(progress, fuzzyAlignment2, null, param, extradata, true);
 				ResultBundle fuzzyResultObs2 = PPfoldMain.foldFuzzyAlignment(progress, fuzzyAlignment2, null, param, extradata, false);
-				this.entropyObs = fuzzyResultObs2.entropyVal;
-				this.entropyExp = fuzzyResultExp2.entropyVal;
+				entropyObs = fuzzyResultObs2.entropyVal;
+				entropyExp = fuzzyResultExp2.entropyVal;
 			}
 			catch(Exception ex)
 			{
@@ -807,7 +806,7 @@ public class PPFold extends statalign.postprocess.Postprocess {
 			dataset.posteriors.add(mpdAlignment.decoding[i]);
 		}
 
-		posteriorProbabilityAvg /= (double)(mpdAlignment.decoding.length);
+		posteriorProbabilityAvg /= (mpdAlignment.decoding.length);
 		if(experimental)
 		{
 			dataset.posteriorsAverage = posteriorProbabilityAvg;
@@ -815,12 +814,12 @@ public class PPFold extends statalign.postprocess.Postprocess {
 
 		
 		
-		if(this.samplingAndAveragingRNAalifold)
+		if(samplingAndAveragingRNAalifold)
 		{
 			double[][] doubleSummedArrayRNAalifold = new double[d][d];
 			for (int i = 0; i < d; ++i) {
 				for (int j = 0; j < d; ++j) {
-					doubleSummedArrayRNAalifold[i][j] = (double) summedBasePairProbRNAalifold[i][j] / (double) noSamples;
+					doubleSummedArrayRNAalifold[i][j] = summedBasePairProbRNAalifold[i][j] / noSamples;
 				}
 			}
 
@@ -834,15 +833,15 @@ public class PPFold extends statalign.postprocess.Postprocess {
 		}
 		
 		
-		if(this.samplingAndAveragingPPfold)
+		if(samplingAndAveragingPPfold)
 		{
 			// average matrices, important for posterior decoding
 			double[][] doubleSummedArray = new double[d][d];			
 			double[] doubleSingleBaseProb = new double[d];
 			for (int i = 0; i < d; ++i) {
-				doubleSingleBaseProb[i] = summedSingleBaseProb[i] / (double) noSamples;
+				doubleSingleBaseProb[i] = summedSingleBaseProb[i] / noSamples;
 				for (int j = 0; j < d; ++j) {
-					doubleSummedArray[i][j] = (double) summedBasePairProbMatrix[i][j] / (double) noSamples;			
+					doubleSummedArray[i][j] = summedBasePairProbMatrix[i][j] / noSamples;			
 				}
 			}
 			int[] pairedSites = rnaTools.getPosteriorDecodingConsensusStructureMultiThreaded(doubleSummedArray);
@@ -854,7 +853,7 @@ public class PPFold extends statalign.postprocess.Postprocess {
 			//{
 				for (int i = 0; i < d; ++i) {
 					for (int j = 0; j < d; ++j) {
-						weightedBasePairProb[i][j] = (double) weightedBasePairProb[i][j] / (double) noSamples;			
+						weightedBasePairProb[i][j] = weightedBasePairProb[i][j] / noSamples;			
 					}
 				}
 				
@@ -871,7 +870,7 @@ public class PPFold extends statalign.postprocess.Postprocess {
 				
 				for (int i = 0; i < d; ++i) {
 					for (int j = 0; j < d; ++j) {
-						this.weightedBasePairProb[i][j] /= weightedSum;
+						weightedBasePairProb[i][j] /= weightedSum;
 					}
 				}
 		
@@ -980,7 +979,7 @@ public class PPFold extends statalign.postprocess.Postprocess {
 			{
 				sequences.add(mpdAlignment.alignment[i]);
 			}
-			double proxyDistance = Distance.amaScoreToMultiDistance(sequences,proxySimilarity);
+			double proxyDistance = Distance.amaScoreToDistance(sequences,proxySimilarity);
 			buffer.write(title+"\t");
 			buffer.write(posteriorProbabilityAvg+"\t");
 			buffer.write(proxySimilarity+"\t");
