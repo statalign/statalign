@@ -154,6 +154,7 @@ public class EntropyGUI extends JPanel {
 			//JLabel oe = new JLabel("Observed Entropy");
 			//oe.setForeground(Color.BLUE);
 			//this.add(oe);
+			oe.setText("Consensus Entropy = " + (list.get(i + 1)).obsEntropy);
 			oe.setLocation((minX+(1000-border) * (i + 1) * 2 / 300 + 50) + 10, 
 					minY+(int) ((maxLik - next) * (maxHeight-border) / (maxLik - minLik + 1.0)));
 		}
@@ -172,23 +173,45 @@ public class EntropyGUI extends JPanel {
 		}*/
 		
 		g2.setColor(Color.RED);
+		
+		double actualS;
+		double nextS = (list.get(0)).sampleEntropy;
 		for (int i = 0; i < list.size() - 1; i++) {
-			actual = next;
-			next = (list.get(i + 1)).sampleEntropy;
+			actualS = nextS;
+			nextS = (list.get(i + 1)).sampleEntropy;
 			//System.out.println("DRAWING LINES");
 			g2.drawLine(minX+(1000-border) * i * 2 / 300 + 50,
-					minY+(int) ((maxLik - actual) * (maxHeight-border) / (maxLik - minLik + 1.0)),
+					minY+(int) ((maxLik - actualS) * (maxHeight-border) / (maxLik - minLik + 1.0)),
 					minX+(1000-border) * (i + 1) * 2 / 300 + 50,
-					minY+(int) ((maxLik - next) * (maxHeight-border) / (maxLik - minLik + 1.0)));
+					minY+(int) ((maxLik - nextS) * (maxHeight-border) / (maxLik - minLik + 1.0)));
 			// i++;
 			
 			//JLabel se = new JLabel("Sample Entropy");
 			//se.setForeground(Color.RED);
 			//this.add(se);
 			
+			se.setText("Sample Entropy = " + (list.get(i + 1)).sampleEntropy);
 			se.setLocation((minX+(1000-border) * (i + 1) * 2 / 300 + 50) + 10, 
-					minY+(int) ((maxLik - next) * (maxHeight-border) / (maxLik - minLik + 1.0)));
+					minY+(int) ((maxLik - nextS) * (maxHeight-border) / (maxLik - minLik + 1.0)));
+			
+			/*if(oe.getY() - se.getY() > 0 && oe.getY() - se.getY() <= 20) {
+				oe.setLocation((minX+(1000-border) * (i + 1) * 2 / 300 + 50) + 10, 
+						(minY+(int) ((maxLik - next) * (maxHeight-border) / (maxLik - minLik + 1.0))) - 10);
+				se.setLocation((minX+(1000-border) * (i + 1) * 2 / 300 + 50) + 10, 
+						(minY+(int) ((maxLik - nextS) * (maxHeight-border) / (maxLik - minLik + 1.0))) + 10);
+			}
+			
+			else if(se.getY() - oe.getY() > 0 && se.getY() - oe.getY() <= 20) {
+				oe.setLocation((minX+(1000-border) * (i + 1) * 2 / 300 + 50) + 10, 
+						(minY+(int) ((maxLik - next) * (maxHeight-border) / (maxLik - minLik + 1.0))) + 10);
+				se.setLocation((minX+(1000-border) * (i + 1) * 2 / 300 + 50) + 10, 
+						(minY+(int) ((maxLik - nextS) * (maxHeight-border) / (maxLik - minLik + 1.0))) - 10);
+			}*/
+			
 		}
+		
+		
+		
 	}
 	
 	/**
