@@ -1,0 +1,38 @@
+body {
+    padding-left: 50px;
+    padding-right: 50px;
+    padding-bottom: 50px;
+    padding-top: 50px;
+}
+
+div.allContent {
+    padding-left: 50px;
+    padding-right: 50px;
+    padding-bottom: 50px;
+    padding-top: 50px;
+    border: groove;
+    border-color: brown;
+    border-width: 5px;
+}
+
+div.container {
+    text-align: justify;
+}
+
+table.menu {
+    text-align:center;
+    float:left;
+    padding-right: 55px;
+}
+
+td.subtitle {
+    padding-top: 20px;
+    padding-bottom: 20px;
+    padding-left: 50px;
+    font-family:"Ariel", Verdana, sans-serif;
+    font-style:italic;
+}
+
+image.logo {
+    float:left;
+}
