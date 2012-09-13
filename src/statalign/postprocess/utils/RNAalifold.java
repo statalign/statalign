@@ -74,9 +74,11 @@ public class RNAalifold {
 	{
 		if(useOldParams)
 		{
-			arguments.replaceAll(" --cfactor ", " -cv ");
-			arguments.replaceAll(" --nfactor ", " -nc ");
-			//System.out.println(arguments);
+			System.out.println("using old");
+			System.out.println("C"+arguments);
+			arguments = arguments.replaceAll(" --cfactor ", " -cv ");
+			arguments = arguments.replaceAll(" --nfactor ", " -nc ");
+			System.out.println("D"+arguments);
 		}
 		
 		try
@@ -84,11 +86,14 @@ public class RNAalifold {
 			System.out.println(arguments);
 			File tempClustalFile = new File("temp.clustalw");
 			saveClustalW(sequences, sequenceNames, tempClustalFile);
-			String args = executable + " " + "-p --bppmThreshold=0 "+arguments+" "+tempClustalFile.getAbsolutePath();
+			String args = executable + " " + "-p "+arguments+" \""+tempClustalFile.getAbsolutePath()+"\"";
+			//String args = executable + " " + "-p --bppmThreshold=0 "+arguments+" "+tempClustalFile.getAbsolutePath();
 			if(useOldParams)
 			{
-				args = executable + " " + "-p "+arguments+" "+tempClustalFile.getAbsolutePath();
+				args = executable + " " + "-p "+arguments+" \""+tempClustalFile.getAbsolutePath()+"\"";
 			}
+			System.out.println("X"+useOldParams);
+			System.out.println("Y"+args);
 			Process p = Runtime.getRuntime().exec(args);
 			InputStream is = p.getErrorStream();
 			BufferedReader buffer = new BufferedReader(new InputStreamReader(is));

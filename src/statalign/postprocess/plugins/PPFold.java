@@ -167,10 +167,10 @@ public class PPFold extends statalign.postprocess.Postprocess {
 
 	String outDir = "output/";
 	
-	boolean samplingAndAveragingPPfold = true;
-	boolean samplingAndAveragingRNAalifold = true;
-	boolean fuzzyFolding = true;
-	boolean experimental = true;
+	boolean samplingAndAveragingPPfold = false;
+	boolean samplingAndAveragingRNAalifold = false;
+	boolean fuzzyFolding = false;
+	boolean experimental = false;
 
 	public PPFold() {
 		new File(outDir).mkdirs();
@@ -270,11 +270,15 @@ public class PPFold extends statalign.postprocess.Postprocess {
 		System.out.println("IS NULL = " +pluginParameters);
 		if(pluginParameters != null)
 		{
+			System.out.println("Parameters");
+			pluginParameters.print();
 			String ppfoldParameter = pluginParameters.getParameter("ppfold");
 			String rnaAlifoldParameter = pluginParameters.getParameter("rnaalifold");
+			String fuzzyParameter = pluginParameters.getParameter("fuzzy");
 			
 			samplingAndAveragingPPfold = ppfoldParameter != null;
 			samplingAndAveragingRNAalifold = rnaAlifoldParameter != null;
+			fuzzyFolding = true;
 			
 			if(samplingAndAveragingRNAalifold)
 			{
@@ -283,7 +287,6 @@ public class PPFold extends statalign.postprocess.Postprocess {
 			
 			if(pluginParameters.getParameter("experimental") != null)
 			{
-				System.out.println("USING EXPERIMENTAL PARAMETERS");
 				samplingAndAveragingPPfold = true;
 				samplingAndAveragingRNAalifold = true;
 				fuzzyFolding = true;
@@ -342,29 +345,30 @@ public class PPFold extends statalign.postprocess.Postprocess {
 			e.printStackTrace();
 		}
 
-		
+		// initialise new dataset
+		dataset = new Dataset();
+			
+
+		String [] [] inputAlignment = new String[input.seqs.sequences.size()][2];
+
+		for(int k = 0 ; k < inputAlignment.length ; k++)
+		{
+			inputAlignment[k][0] = input.seqs.seqNames.get(k);
+			inputAlignment[k][1] = input.seqs.sequences.get(k);
+		}
+		Arrays.sort(inputAlignment, compStringArr);
+
+		dataset.inputAlignment = new AlignmentData();
+		for(int i = 0 ; i < inputAlignment.length ; i++)
+		{
+			dataset.inputAlignment.names.add(inputAlignment[i][0]);
+			dataset.inputAlignment.sequences.add(inputAlignment[i][1]);
+		}		
+
 
 		if(experimental)
 		{
-			// initialise new dataset
-			dataset = new Dataset();
-			
-			String [] [] inputAlignment = new String[input.seqs.sequences.size()][2];
-
-			for(int k = 0 ; k < inputAlignment.length ; k++)
-			{
-				inputAlignment[k][0] = input.seqs.seqNames.get(k);
-				inputAlignment[k][1] = input.seqs.sequences.get(k);
-			}
-			Arrays.sort(inputAlignment, compStringArr);
-
-			dataset.inputAlignment = new AlignmentData();
-			for(int i = 0 ; i < inputAlignment.length ; i++)
-			{
-				dataset.inputAlignment.names.add(inputAlignment[i][0]);
-				dataset.inputAlignment.sequences.add(inputAlignment[i][1]);
-			}		
-			// perform calculation on reference sample
+						// perform calculation on reference sample
 			try {
 				
 				ResultBundle refResult = PPfoldMain.fold(progress, input.seqs.sequences, input.seqs.seqNames, null, param, extradata);
@@ -887,8 +891,8 @@ public class PPFold extends statalign.postprocess.Postprocess {
 				dataset.pairsOnlyReliabilityScoreSamplingAndAveragingWeighted = RNAFoldingTools.calculatePairsOnlyReliabilityScore(pairedSitesWeighted, weightedBasePairProb);
 				//& saveResult(refSeqGapped, pairedSitesWeighted, weightedBasePairProb, RNAFoldingTools.getSingleBaseProb(weightedBasePairProb), new File(outDir+title+".dat.res.weighted"));
 						
-				for(int i = 0 ; i < mpdAlignment.alignment.length ; i++)
-				{
+				for(int i = 0 ; i < mpdAlignment.alignment.length && i < dataset.inputAlignment.names.size() ; i++)
+				{					
 					dataset.mpdAlignment.names.add(dataset.inputAlignment.names.get(i));
 					dataset.mpdAlignment.sequences.add(mpdAlignment.alignment[i]);
 				}
@@ -948,7 +952,9 @@ public class PPFold extends statalign.postprocess.Postprocess {
 		
 		try
 		{
-			BufferedWriter buffer = new BufferedWriter(new FileWriter(title+".info"));
+			File outFile = new File(title+".info");
+			System.out.println("XXX"+outFile);
+			BufferedWriter buffer = new BufferedWriter(new FileWriter(outFile));
 			buffer.write(">method=sampling_and_averaging_ppfold\ttitle="+dataset.title+"\tlength="+dataset.pairedSites.length+"\treliability_score="+df.format(dataset.pairsOnlyReliabilityScoreSamplingAndAveraging)+"\n");
 			buffer.write(refSeqGapped.replaceAll("-", "")+"\n");
 			buffer.write(RNAFoldingTools.getDotBracketStringFromPairedSites(dataset.pairedSites)+"\n");

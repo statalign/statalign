@@ -76,6 +76,7 @@ public class MainThread extends StoppableThread {
 		} catch(Exception e) {
 			owner.finished();
 			if(owner.frame != null) {
+				e.printStackTrace();
 				System.out.println("Here is the error: " + e.getClass());
 				owner.frame.statusText.setText(MainFrame.IDLE_STATUS_MESSAGE);
 				//ErrorMessage.showPane(owner.frame,e.getLocalizedMessage(),true);

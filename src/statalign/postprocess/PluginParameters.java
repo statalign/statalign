@@ -1,6 +1,7 @@
 package statalign.postprocess;
 
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.Hashtable;
 
 public class PluginParameters {
@@ -48,6 +49,17 @@ public class PluginParameters {
 		if(parameters.containsKey(name))
 		{
 			parameters.remove(name);
+		}
+	}
+	
+	public void print()
+	{
+		Enumeration<String> keys = parameters.keys();
+		String key = null;
+		while(keys.hasMoreElements())
+		{
+			key = keys.nextElement();
+			System.out.println(key+":"+parameters.get(key));
 		}
 	}
 
