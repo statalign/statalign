@@ -1119,7 +1119,7 @@ public class RNAFoldingTools {
 			buffer.write(header+"\n");
 			for(int i = 0 ; i < pairedSites.length ; i++)
 			{
-				buffer.write((i+1)+sequence.charAt(i)+"\t"+i+"\t"+(i+2)+"\t"+pairedSites[i]+"\t"+(i+1)+"\n");
+				buffer.write((i+1)+"\t"+sequence.charAt(i)+"\t"+i+"\t"+(i+2)+"\t"+pairedSites[i]+"\t"+(i+1)+"\n");
 			}
 			buffer.close();
 		}
