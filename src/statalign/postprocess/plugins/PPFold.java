@@ -50,28 +50,7 @@ import com.ppfold.main.PPfoldMain;
 
 public class PPFold extends statalign.postprocess.Postprocess {
 
-	public static void main(String [] args)
-	{
-		//System.out.println(CalculateMCMCParameters.stepSize());
-		
-		ArrayList < ArrayList< ArrayList<String> > > allTests = readAllSamples("/home/ingolfur/oxford_workspace/cmdStatAlign/output/alisamples");
-		for(int i = 0; i<allTests.size(); ++i){
-			ArrayList< ArrayList<String> > currTest= allTests.get(i);
-			ArrayList<String> firstSample = currTest.get(0);
-			int size = 0;
-			int gaps = 0;
-			for(String row : firstSample){
-				for(int j = 0; j<row.length(); ++j){
-					size++;
-					if(row.charAt(j) == '-' || row.charAt(j) == '.'){
-						gaps++;
-					}
-				}
-			}
-			System.out.println((double)gaps/size);
-		}
-		
-	}
+	
 	
 	
 	
