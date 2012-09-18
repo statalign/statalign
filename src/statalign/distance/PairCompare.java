@@ -2,6 +2,14 @@ package statalign.distance;
 
 import java.util.Comparator;
 
+/**
+ * Makes it possible to compare two pairs. 
+ * The element to the left is the dominant one.
+ *  
+ * 
+ * @author ingolfur
+ *
+ */
 
 public class PairCompare implements Comparator < Pair <String,Integer> >  {
 

@@ -1,7 +1,14 @@
 package statalign.distance;
 
 
-
+/**
+ * A Pair container.
+ * 
+ * @author ingolfur
+ *
+ * @param <L>	Element to the left
+ * @param <R>	Element to the right
+ */
 public class Pair<L,R>  {
 
 	  private final L left;
