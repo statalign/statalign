@@ -57,7 +57,6 @@ public class PPFold extends statalign.postprocess.Postprocess {
 	public static ArrayList < ArrayList< ArrayList<String> > > readAllSamples(String path){
 		try {
 			ArrayList < ArrayList< ArrayList<String> > > allTests = new ArrayList<ArrayList<ArrayList<String>>>();
-			//File dir = new File("/home/ingolfur/oxford_workspace/cmdStatAlign/output/alisamples");
 			File dir = new File(path);
 			File[] sortedDir = dir.listFiles();
 			Arrays.sort(sortedDir);
@@ -361,10 +360,8 @@ public class PPFold extends statalign.postprocess.Postprocess {
 				
 				//RNAFoldingTools.writeToFile(new File(outDir+title+"_ref_structure.txt"), ""+refResult.getPPfoldReliability()+"\n"+RNAFoldingTools.getDotBracketStringFromPairedSites(pairedSites)+"\n", false);
 			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			} catch (Exception e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
