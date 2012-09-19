@@ -14,6 +14,7 @@ import ml.options.OptionSet;
 import ml.options.Options;
 import ml.options.Options.Multiplicity;
 import ml.options.Options.Separator;
+import statalign.base.AutomateParameters;
 import statalign.base.MainManager;
 import statalign.base.Utils;
 import statalign.io.RawSequences;
@@ -233,22 +234,19 @@ public class CommandLine {
 					}
 				}
 			}
-			
+
+			// retrieve all parameters starting with plugin:
 			OptionData plugins = set.getOption("plugin");
 			ArrayList<String> argsVector = new ArrayList<String>();
 			for(int i = 0 ; i < plugins.getResultCount() ; i++)
 			{
 				argsVector.add(plugins.getResultValue(i));
 			}
-			
-			
-			//Postprocess[] pps = manager.postProcMan.plugins;
 			Postprocess.pluginParameters = new PluginParameters(argsVector);
-			/*PluginParameters parameters = 
-			for(Postprocess pp : pps)
-			{
-				
-			}*/
+			
+			AutomateParameters.setAutomateBurnIn(false);
+			AutomateParameters.setAutomateStepRate(false);
+			AutomateParameters.setAutomateNumberOfSamples(false);
 
 		} catch (Exception e) {
 			e.printStackTrace();

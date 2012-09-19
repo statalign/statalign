@@ -73,10 +73,6 @@ public class PPFoldGUI extends JPanel {
 		
 		
 		for(int i = x; i < x+dimension; i = i+OFFSET) {
-			//System.out.println("YAYAYAYAYAYAY");
-			//System.out.println(PPFold.getSequences().length);
-			//System.out.println(PPFold.getSequences()[0][0]);
-			//if(owner.getSequences()[0][0] == "String")
 			int sum = 0;
 		
 			if((double)sum / PPFold.getSequences().length >= 0.25) {

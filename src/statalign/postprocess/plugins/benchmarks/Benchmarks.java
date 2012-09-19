@@ -557,11 +557,12 @@ public class Benchmarks
 		
 		return val;
 	}
+
 	
 	public static void automatedTests()
 	{
 		String dir = "/home/michael/Dropbox/RNA and StatAlign/TestRNAData/";
-		String resultsDir = "/home/michael/workspace/StatAlignExecute/longrun2/";
+		String resultsDir = "/home/michael/workspace/StatAlignExecute/output/";
 		File outFile = new File("Benchmarks.txt");
 		String suffix = "_5seqs";
 		if(!suffix.equals("_5seqs"))
@@ -859,7 +860,7 @@ public class Benchmarks
 			+"\t"+senRnaAlifoldSampleMean+"\t"+senRnaAlifoldSampleMedian+"\t"+senRNAalifold+"\t"+senRNAalifoldMPD+"\t"+senRNAalifoldRef
 			+"\t"+ppvRnaAlifoldSampleMean+"\t"+ppvRnaAlifoldSampleMedian+"\t"+ppvRNAalifold+"\t"+ppvRNAalifoldMPD+"\t"+ppvRNAalifoldRef;
 
-			
+			System.out.println("FSC " + fscCombined);
 		
 			ArrayList<Double> fuzzyDistances = new ArrayList<Double>();
 			for(int k = 1 ; k  < dataset.cumulativeFuzzyAlignment.size() ; k++)
@@ -867,7 +868,7 @@ public class Benchmarks
 				fuzzyDistances.add(FuzzyAlignment.distance(dataset.cumulativeFuzzyAlignment.get(k-1), dataset.cumulativeFuzzyAlignment.get(k)));
 			}
 			//System.out.println(dataset.title+"\t"+fuzzyDistances);
-			try
+			/*try
 			{
 				BufferedWriter buffer = new BufferedWriter(new FileWriter("distances/"+dataset.title+"_fuzzy_distances.txt"));
 				for(int k = 0 ; k  < fuzzyDistances.size() ; k++)
@@ -879,7 +880,7 @@ public class Benchmarks
 			catch(IOException ex)
 			{
 				ex.printStackTrace();
-			}
+			}*/
 			
 			
 			RNAFoldingTools.writeToFile(outFile, row, true);
