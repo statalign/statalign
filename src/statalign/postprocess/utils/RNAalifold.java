@@ -40,11 +40,11 @@ public class RNAalifold {
 			RNAalifoldResult res = null;
 			try
 			{
-				res = RNAalifold.fold(sequences, sequenceNames,newparams);
+				res = RNAalifold.fold(sequences, sequenceNames,newparams, true);
 			}
 			catch(Exception ex)
 			{
-				System.err.println("The following error occured with RNAalifold: " + ex.getMessage());
+				//System.err.println("The following error occured with RNAalifold: " + ex.getMessage());
 			}
 			//System.out.println("HERE " + res);
 			if(res != null)
@@ -55,13 +55,13 @@ public class RNAalifold {
 			{
 				String oldparams = " -T " + 37 +" -cv " +  1 + " -nc " + 1 + " ";
 				useOldParams = true;
-				res = RNAalifold.fold(sequences, sequenceNames,oldparams);
+				res = RNAalifold.fold(sequences, sequenceNames,oldparams, true);
 				return res != null;
 			}
 		}
 		catch(Exception ex)
 		{
-			System.err.println("The following error occured with RNAalifold: " + ex.getMessage());
+		//	System.err.println("The following error occured with RNAalifold: " + ex.getMessage());
 		}
 
 		useOldParams = false;
@@ -69,12 +69,17 @@ public class RNAalifold {
 		return false;
 	}
 	
-	public static RNAalifoldResult fold(List<String> sequences, List<String> sequenceNames, String arguments) throws Exception
+	public static RNAalifoldResult fold(List<String> sequences, List<String> sequenceNames, String arguments)  throws Exception
 	{
-		return fold(sequences, sequenceNames, arguments, true);
+		return fold(sequences, sequenceNames, arguments, true, false);
 	}
 	
-	public static RNAalifoldResult fold(List<String> sequences, List<String> sequenceNames, String arguments, boolean useMatrix) throws Exception
+	public static RNAalifoldResult fold(List<String> sequences, List<String> sequenceNames, String arguments, boolean noErrorMessages) throws Exception
+	{
+		return fold(sequences, sequenceNames, arguments, true, noErrorMessages);
+	}
+	
+	public static RNAalifoldResult fold(List<String> sequences, List<String> sequenceNames, String arguments, boolean useMatrix, boolean noErrorMessages) throws Exception
 	{
 		if(useOldParams)
 		{
@@ -120,8 +125,11 @@ public class RNAalifold {
 			//System.out.println(exitCode);
 			if(exitCode != 0)
 			{
+				if(!noErrorMessages)
+				{
 				System.err.println("RNAalifold generated the following error during execution:" +
 						"\n\"" + errorString+"\"");
+				}
 				return null;
 				//throw new Exception();
 				//System.out.println("The following error occured:");

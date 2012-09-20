@@ -146,6 +146,7 @@ public class PPFold extends statalign.postprocess.Postprocess {
 
 	String outDir = "output/";
 	
+	String rnaAlifoldParameters = "";
 	boolean samplingAndAveragingPPfold = false;
 	boolean samplingAndAveragingRNAalifold = false;
 	boolean fuzzyFolding = false;
@@ -159,7 +160,8 @@ public class PPFold extends statalign.postprocess.Postprocess {
 		postprocessWrite = true;
 		rnaAssociated = true;
 	
-		if(!show){
+		
+		if(this.gui == null){
 			PostprocessManager.rnaMode = true;	
 		}
 		
@@ -265,7 +267,29 @@ public class PPFold extends statalign.postprocess.Postprocess {
 			
 			if(samplingAndAveragingRNAalifold)
 			{
+				
 				System.out.println("Using RNAalifold with parameters: \"" + rnaAlifoldParameter+"\"");
+				String param = rnaAlifoldParameter.replaceAll("^\"", "").replaceAll("\"$", "");
+				String [] split = param.split("(\\s)+", 2);
+				if(split.length > 0)
+				{
+					RNAalifold.executable = split[0];
+					if(split.length > 1)
+					{
+						rnaAlifoldParameters = split[1];
+					}
+					
+					if(RNAalifold.checkRNAalifold())
+					{
+						//System.out.println(split[0]);
+						//System.out.println(split[1]);
+					}
+					else
+					{
+						this.samplingAndAveragingRNAalifold = false;
+						System.err.println("Disabling RNAalifold. Could not launch the executable, check that you have specified it correctly and have the latest version.");						
+					}					
+				}
 			}
 			
 			if(pluginParameters.getParameter("experimental") != null)
@@ -360,7 +384,7 @@ public class PPFold extends statalign.postprocess.Postprocess {
 				dataset.resultBundlePPfold = refResult.getSmallBundle();
 				dataset.pairedSitesPPfoldProjected = Benchmarks.projectPairedSites(RNAFoldingTools.getSequenceByName(refSeqName, input.seqs.sequences, input.seqs.seqNames), refPairedSites);
 				
-				dataset.rnaAlifoldRef = RNAalifold.fold(input.seqs.sequences, input.seqs.seqNames, Postprocess.pluginParameters.getParameter("rnaalifold")).getSmallResult();
+				dataset.rnaAlifoldRef = RNAalifold.fold(input.seqs.sequences, input.seqs.seqNames, rnaAlifoldParameters).getSmallResult();
 				dataset.pairedSitesRNAalifoldRefProjected = Benchmarks.projectPairedSites(RNAFoldingTools.getSequenceByName(refSeqName, input.seqs.sequences, input.seqs.seqNames), dataset.rnaAlifoldRef.pairedSites);
 				//dataset.pairedSitesRNAalifoldRefProjected = Benchmarks.projectPairedSites(refSeq, dataset.rnaAlifoldRef.pairedSites);
 				
@@ -414,7 +438,7 @@ public class PPFold extends statalign.postprocess.Postprocess {
 			
 			if(this.samplingAndAveragingRNAalifold)
 			{
-				RNAalifoldResult rnaAlifoldMPDResult = RNAalifold.fold(mpdSequences, mpdNames, Postprocess.pluginParameters.getParameter("rnaalifold"));
+				RNAalifoldResult rnaAlifoldMPDResult = RNAalifold.fold(mpdSequences, mpdNames, rnaAlifoldParameters);
 				dataset.rnaAlifoldMPD = rnaAlifoldMPDResult.getSmallResult();
 				dataset.pairedSitesRNAalifoldMPDProjected = Benchmarks.projectPairedSites(refSeqGapped, rnaAlifoldMPDResult.pairedSites);
 			}
@@ -595,7 +619,7 @@ public class PPFold extends statalign.postprocess.Postprocess {
 				
 				if(samplingAndAveragingRNAalifold)
 				{
-					RNAalifoldResult rnaAlifoldSampleResult = RNAalifold.fold(align.getSequences(), align.getNames(), Postprocess.pluginParameters.getParameter("rnaalifold"));
+					RNAalifoldResult rnaAlifoldSampleResult = RNAalifold.fold(align.getSequences(), align.getNames(), rnaAlifoldParameters);
 					double [][] rnaAlifoldMatrixSample = rnaAlifoldSampleResult.matrix;
 
 					ArrayList<String> sequences = new ArrayList<String>();

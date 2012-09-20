@@ -424,7 +424,7 @@ public class RNASettingsDlg extends JDialog implements ActionListener, ChangeLis
 		if(useSamplingAndAveragingRNAalifoldButton.isSelected())
 		{
 			RNAalifold.executable = this.executableField.getText();
-			String rnaalifold = " -T " + temperatureSpinner.getValue() +" --cfactor " + covarianceSpinner.getValue() + " --nfactor " + nonCompatibleSpinner.getValue() + " ";
+			String rnaalifold = RNAalifold.executable + " -T " + temperatureSpinner.getValue() +" --cfactor " + covarianceSpinner.getValue() + " --nfactor " + nonCompatibleSpinner.getValue() + " ";
 			if(this.circularButton.isSelected())
 			{
 				rnaalifold += " -circ ";
