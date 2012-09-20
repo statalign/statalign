@@ -33,18 +33,20 @@ public class CommandLine {
 
 	/** Does this instance belong to a parallel run? */
 	private boolean isParallel;
-	
-	/** Specifies whether the instance should output info to the stdout. */ 
+
+	/** Specifies whether the instance should output info to the stdout. */
 	private boolean verbose;
-	
+
 	private List<String> substModNames = new ArrayList<String>();
 	private Map<String, Integer> postprocAbbr = new HashMap<String, Integer>();
-	
+
 	// Functions
 
-	/** 
+	/**
 	 * Creates a <tt>CommandLine</tt> object with <tt>verbose</tt> set to false.
-	 * @param isParallel does this instance belong to a parallel run?
+	 * 
+	 * @param isParallel
+	 *            does this instance belong to a parallel run?
 	 */
 	public CommandLine(boolean isParallel) {
 		this.isParallel = isParallel;
@@ -64,23 +66,21 @@ public class CommandLine {
 		initArrays(manager);
 
 		/*
-		ArrayList<String> parsedArgs = new ArrayList<String>();
-		for(int i = 0 ; i < args.length ; i++)
-		{
-			if(!args[i].startsWith("plugin:"))
-			{
-				System.out.println(args[i]);
-				parsedArgs.add(args[i]);
-			}
-		}*/
-		
+		 * ArrayList<String> parsedArgs = new ArrayList<String>(); for(int i = 0
+		 * ; i < args.length ; i++) { if(!args[i].startsWith("plugin:")) {
+		 * System.out.println(args[i]); parsedArgs.add(args[i]); } }
+		 */
+
 		Options opt = new Options(args, Multiplicity.ZERO_OR_ONE, 1,
 				Integer.MAX_VALUE);
-		opt.addSet("run").addOption("subst", Separator.EQUALS)
+		opt.addSet("run")
+				.addOption("subst", Separator.EQUALS)
 				.addOption("mcmc", Separator.EQUALS)
 				.addOption("seed", Separator.EQUALS)
 				.addOption("ot", Separator.EQUALS)
-				.addOption("log", Separator.EQUALS).addOption("plugin", Separator.COLON, Multiplicity.ZERO_OR_MORE);
+				.addOption("log", Separator.EQUALS)
+				.addOption("plugin", Separator.COLON, Multiplicity.ZERO_OR_MORE)
+				.addOption("automate", Separator.EQUALS, Multiplicity.ZERO_OR_ONE);
 
 		OptionSet set;
 		if ((set = opt.getMatchingSet(false, false)) == null) {
@@ -238,15 +238,42 @@ public class CommandLine {
 			// retrieve all parameters starting with plugin:
 			OptionData plugins = set.getOption("plugin");
 			ArrayList<String> argsVector = new ArrayList<String>();
-			for(int i = 0 ; i < plugins.getResultCount() ; i++)
-			{
+			for (int i = 0; i < plugins.getResultCount(); i++) {
 				argsVector.add(plugins.getResultValue(i));
 			}
 			Postprocess.pluginParameters = new PluginParameters(argsVector);
-			
+
 			AutomateParameters.setAutomateBurnIn(false);
 			AutomateParameters.setAutomateStepRate(false);
 			AutomateParameters.setAutomateNumberOfSamples(false);
+
+			OptionData automation = set.getOption("automate");
+			if (automation != null) {
+				if (automation.getResultCount() > 0) {
+					String[] split = automation.getResultValue(0).split(",");
+					ArrayList<String> values = new ArrayList<String>();
+					for (int i = 0; i < split.length; i++) {
+						values.add(split[i].trim().toLowerCase());
+					}
+					//System.out.println(values);
+					if (values.contains("burn")) {
+						AutomateParameters.setAutomateBurnIn(true);
+					}
+					if (values.contains("rate")) {
+						AutomateParameters.setAutomateStepRate(true);
+					}
+					if (values.contains("cycl")) {
+						AutomateParameters.setAutomateNumberOfSamples(true);
+					}
+				}
+				/*
+				else if (automation.getResultCount() == 0) {
+					System.out.println("automating all parameters");
+					AutomateParameters.setAutomateBurnIn(true);
+					AutomateParameters.setAutomateStepRate(true);
+					AutomateParameters.setAutomateNumberOfSamples(true);
+				}*/
+			}
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -300,7 +327,8 @@ public class CommandLine {
 
 		sb.append("    -ot=OUTTYPE\n");
 		sb.append("        Sets output alignment type.\n");
-		sb.append("          (One of: " + Utils.joinStrings(MainManager.alignmentTypes, ", ") + ")\n");
+		sb.append("          (One of: "
+				+ Utils.joinStrings(MainManager.alignmentTypes, ", ") + ")\n");
 		sb.append("        Default: " + MainManager.alignmentTypes[0] + "\n\n");
 
 		sb.append("    -log=["
@@ -364,62 +392,64 @@ public class CommandLine {
 
 	private void fillPostprocAbbr(PostprocessManager man) {
 		Postprocess[] plugins = man.plugins;
-		
+
 		final String[] keys = new String[plugins.length];
 		Integer[] sorted = new Integer[plugins.length];
-		
-		for(int i = 0; i < plugins.length; i++) {
+
+		for (int i = 0; i < plugins.length; i++) {
 			keys[i] = plugins[i].getTabName().toUpperCase().replace(' ', '_');
 			sorted[i] = i;
 		}
-			
+
 		Arrays.sort(sorted, new Comparator<Integer>() {
 			@Override
 			public int compare(Integer o1, Integer o2) {
 				return keys[o1].compareTo(keys[o2]);
 			}
 		});
-		
+
 		int prevOverlap = 0;
-		for(int i = 0; i < plugins.length; i++) {
+		for (int i = 0; i < plugins.length; i++) {
 			int nextOverlap = 0;
-			if(i < plugins.length-1)
-				nextOverlap = checkOverlap(keys[i], keys[i+1]);
-			String key = keys[i].substring(0, Math.max(prevOverlap, nextOverlap)+1);
+			if (i < plugins.length - 1)
+				nextOverlap = checkOverlap(keys[i], keys[i + 1]);
+			String key = keys[i].substring(0,
+					Math.max(prevOverlap, nextOverlap) + 1);
 			postprocAbbr.put(key, i);
 			prevOverlap = nextOverlap;
 		}
-		
-//		LinkedList<Integer> list = new LinkedList<Integer>();
-//		for (int i = 0; i < man.plugins.length; i++)
-//			list.add(i);
-//
-//		for (int len = 1; list.size() > 0; len++) {
-//			for (ListIterator<Integer> it = list.listIterator(); it.hasNext();) {
-//				int pp = it.next();
-//				String str = man.plugins[pp].getTabName().substring(0, len)
-//						.toUpperCase().replace(' ', '_');
-//				Integer val;
-//				if ((val = postprocAbbr.get(str)) == null) { // empty slot
-//					postprocAbbr.put(str, pp);
-//					it.remove(); // pp is done
-//				} else if (val >= 0) { // first collision
-//					postprocAbbr.put(str, -1);
-//					// it.add(val); // pp is not done
-//				}
-//			}
-//		}
-//
-//		for (String key : postprocAbbr.keySet()) { // remove mappings for
-//													// collisions
-//			if (postprocAbbr.get(key) == -1)
-//				postprocAbbr.remove(key);
-//		}
+
+		// LinkedList<Integer> list = new LinkedList<Integer>();
+		// for (int i = 0; i < man.plugins.length; i++)
+		// list.add(i);
+		//
+		// for (int len = 1; list.size() > 0; len++) {
+		// for (ListIterator<Integer> it = list.listIterator(); it.hasNext();) {
+		// int pp = it.next();
+		// String str = man.plugins[pp].getTabName().substring(0, len)
+		// .toUpperCase().replace(' ', '_');
+		// Integer val;
+		// if ((val = postprocAbbr.get(str)) == null) { // empty slot
+		// postprocAbbr.put(str, pp);
+		// it.remove(); // pp is done
+		// } else if (val >= 0) { // first collision
+		// postprocAbbr.put(str, -1);
+		// // it.add(val); // pp is not done
+		// }
+		// }
+		// }
+		//
+		// for (String key : postprocAbbr.keySet()) { // remove mappings for
+		// // collisions
+		// if (postprocAbbr.get(key) == -1)
+		// postprocAbbr.remove(key);
+		// }
 	}
 
 	private int checkOverlap(String str1, String str2) {
 		int i = 0;
-		while(i < str1.length() && i < str2.length() && str1.charAt(i) == str2.charAt(i))
+		while (i < str1.length() && i < str2.length()
+				&& str1.charAt(i) == str2.charAt(i))
 			i++;
 		return i;
 	}
