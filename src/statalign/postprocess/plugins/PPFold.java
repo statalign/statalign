@@ -152,13 +152,13 @@ public class PPFold extends statalign.postprocess.Postprocess {
 	boolean experimental = false;
 
 	public PPFold() {
-		new File(outDir).mkdirs();
+		
 		screenable = true;
 		outputable = true;
 		postprocessable = true;
 		postprocessWrite = true;
 		rnaAssociated = true;
-		PostprocessManager.rnaMode = true;	
+	
 		if(!show){
 			PostprocessManager.rnaMode = true;	
 		}
@@ -270,6 +270,7 @@ public class PPFold extends statalign.postprocess.Postprocess {
 			
 			if(pluginParameters.getParameter("experimental") != null)
 			{
+				new File(outDir).mkdirs();
 				samplingAndAveragingPPfold = true;
 				samplingAndAveragingRNAalifold = true;
 				fuzzyFolding = true;
