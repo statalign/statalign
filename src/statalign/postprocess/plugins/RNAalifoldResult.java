@@ -4,7 +4,10 @@ import java.io.Serializable;
 
 import statalign.postprocess.utils.RNAFoldingTools;
 
-
+/**
+ * A class for storing an RNAalifoldResult.
+ *
+ */
 public class RNAalifoldResult implements Serializable {
 	
 	/**

@@ -229,7 +229,14 @@ public class Mcmc extends Stoppable {
 
 			int sampRate;
 			if(AutomateParameters.shouldAutomateStepRate()){
-				frame.statusText.setText("Calculating the sample rate");
+				if(frame != null)
+				{
+					frame.statusText.setText("Calculating the sample rate");
+				}
+				else
+				{
+					System.out.println("Calculating the sample rate");
+				}
 				ArrayList<Double> theSpace = Distance.spaceAMA(alignmentsFromSamples);
 				sampRate = AutomateParameters.getSampleRateOfTheSpace(theSpace,SAMPLE_RATE_WHEN_DETERMINING_THE_SPACE);
 
