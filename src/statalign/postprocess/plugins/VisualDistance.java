@@ -30,6 +30,7 @@ public class VisualDistance extends statalign.postprocess.Postprocess {
 	double currentDistance = 0;
 	
 	public VisualDistance() {
+		
 		sampling = true;
 		screenable = true;
 		outputable = true;
@@ -98,8 +99,11 @@ public class VisualDistance extends statalign.postprocess.Postprocess {
 			scroll.setViewportView(gui);
 			
 			pan.add(scroll);
-			System.out.println("Distance parent: " + pan.getParent());
-			pan.getParent().getParent().getParent().validate();
+			//System.out.println("Distance parent: " + pan.getParent());
+			if(pan.getParent() != null)
+			{
+				pan.getParent().getParent().getParent().validate();
+			}
 		}
 		
 		distances = new ArrayList<Double>();

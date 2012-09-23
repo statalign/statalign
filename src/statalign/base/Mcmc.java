@@ -201,9 +201,9 @@ public class Mcmc extends Stoppable {
 				if (frame != null) {
 					String text = "";
 					if((i > realBurnIn ) && AutomateParameters.shouldAutomateStepRate()){
-						text = "Burn In to get the space: " + (i-realBurnIn + 1) ;
+						text = "Automated burn-in: " + (i-realBurnIn + 1) ;
 					}else{
-						text = "Burn In: " + (i + 1);
+						text = "Burn-in: " + (i + 1);
 					}
 					frame.statusText.setText(text);
 				} else if (i % 1000 == 999) {

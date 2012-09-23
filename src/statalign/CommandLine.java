@@ -326,10 +326,10 @@ public class CommandLine {
 		
 		sb.append("    -plugins:ppfold,rnaalifold,fuzzy\n");
 		sb.append("        Specify which RNA plugins you want to run and the corresponding parameters for each.\n");
-		sb.append("        Each plugin should be specified seperately, e.g. \"-plugin:ppfold plugin:fuzzy\".\n");
+		sb.append("        Each plugin should be specified seperately, e.g. -plugin:ppfold plugin:fuzzy\n");
 		sb.append("        Currently only the RNAalifold plugin takes additional options.\n");
 		sb.append("        For RNAalifold you should specify the path of the RNAalifold executable followed by the  RNAalifold command-line options in inverted commas.\n");
-		sb.append("        e.g. \"-plugin:rnalifold=\"C:\\ViennaRNA\\RNAalifold.exe -T 37 -cv 1\"\n\n");
+		sb.append("        e.g. -plugin:rnalifold=\"C:\\ViennaRNA\\RNAalifold.exe -T 37 -cv 1\"\n\n");
 
 		sb.append("    -seed=value\n");
 		sb.append("        Sets the random seed (same value will reproduce same results for\n");

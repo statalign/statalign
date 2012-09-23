@@ -15,12 +15,14 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
+import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
@@ -79,7 +81,7 @@ public class RNASettingsDlg extends JDialog implements ActionListener, ChangeLis
 	private Preferences prefs;
 	
 	RNASettingsDlg(JFrame owner) {
-		super(owner, "RNAalifold parameters", true);
+		super(owner, "RNA options", true);
 		this.owner = owner;
 		prefs = Preferences.userNodeForPackage(this.getClass());
 		
@@ -104,6 +106,7 @@ public class RNASettingsDlg extends JDialog implements ActionListener, ChangeLis
 		useSamplingAndAveragingRNAalifoldButton.setSelected(false);
 		useSamplingAndAveragingRNAalifoldButton.addChangeListener(this);
 		rnaalifoldOptions.setEnabled(false);
+		rnaalifoldOptions.setBorder(BorderFactory.createTitledBorder("RNAalifold settings"));
 		optionsPanel.add(useSamplingAndAveragingButton, c);
 		optionsPanel.add(fuzzyNucleotidePredictionAndEntropy, c);
 		optionsPanel.add(useSamplingAndAveragingRNAalifoldButton, c);
@@ -250,7 +253,16 @@ public class RNASettingsDlg extends JDialog implements ActionListener, ChangeLis
 			useSamplingAndAveragingButton.setSelected(prefs.getBoolean("USE_SAMPLING_AND_AVERAGING_PPFOLD", true));
 			useSamplingAndAveragingRNAalifoldButton.setSelected(prefs.getBoolean("USE_SAMPLING_AND_AVERAGING_RNAALIFOLD", false));
 			fuzzyNucleotidePredictionAndEntropy.setSelected(prefs.getBoolean("USE_FUZZY_NUCLEOTIDE", true));
-			executableField.setText(prefs.get("RNAALIFOLD_EXECUTABLE", ""));
+			String defaultExec = "";
+			if(System.getProperty("os.name").toLowerCase().contains("windows"))
+			{
+				File execFile = new File("RNAalifold.exe");
+				if(execFile.exists())
+				{
+					defaultExec = execFile.getAbsolutePath();
+				}
+			}
+			executableField.setText(prefs.get("RNAALIFOLD_EXECUTABLE", defaultExec));
 			temperatureSpinner.setValue(prefs.getDouble("RNAALIFOLD_TEMPERATURE", 37.0));
 			boolean linear = prefs.getBoolean("IS_LINEAR", true);
 			linearButton.setSelected(linear);
@@ -333,10 +345,27 @@ public class RNASettingsDlg extends JDialog implements ActionListener, ChangeLis
 		try{
 			if(ev.getSource().equals(executableButton))
 			{
+				fileChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
 				int returnVal = fileChooser.showOpenDialog(this);
 				if(returnVal == JFileChooser.APPROVE_OPTION)
 				{
-					executableField.setText(fileChooser.getSelectedFile().getAbsolutePath());
+					File selectedFile = fileChooser.getSelectedFile();
+					if(selectedFile.isDirectory())
+					{
+						File [] files = selectedFile.listFiles();
+						for(int i = 0 ; i < files.length ; i++)
+						{
+							if(files[i].getName().toLowerCase().contains("rnaalifold"))
+							{
+								executableField.setText(files[i].getAbsolutePath());
+								break;
+							}
+						}
+					}
+					else
+					{
+						executableField.setText(selectedFile.getAbsolutePath());
+					}
 				}				
 			}			
 			if(ev.getActionCommand().equals("DEFAULTS"))

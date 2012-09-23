@@ -20,7 +20,7 @@ import statalign.postprocess.plugins.RNAalifoldResult;
  */
 public class RNAalifold {
 	
-	public static String executable = "/home/michael/Downloads/ViennaRNA-2.0.7/Progs/RNAalifold";
+	public static String executable = "RNAalifold.exe";
 	
 	static boolean useOldParams = false;
 	

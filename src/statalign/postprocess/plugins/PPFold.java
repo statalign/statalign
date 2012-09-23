@@ -171,7 +171,7 @@ public class PPFold extends statalign.postprocess.Postprocess {
 
 	@Override
 	public String getTabName() {
-		return "PPFold";
+		return "Base-pairing matrix";
 	}
 
 	@Override
@@ -317,7 +317,10 @@ public class PPFold extends statalign.postprocess.Postprocess {
 			}
 
 			pan.add(scroll, BorderLayout.CENTER);
-			pan.getParent().validate();
+			if(pan.getParent() != null)
+			{
+				pan.getParent().validate();
+			}
 			
 			gui.changeDimension(d);
 
@@ -345,8 +348,9 @@ public class PPFold extends statalign.postprocess.Postprocess {
 			BufferedReader paramFileReader = null;
 			if(param == null)
 			{
-				File file = new File("res/matrices.in");
-				paramFileReader = new BufferedReader(new InputStreamReader(	new FileInputStream(file)));
+				//File file = new File);
+				
+				paramFileReader = new BufferedReader(new InputStreamReader(getClass().getResourceAsStream("/res/matrices.in")));
 				param = Parameters.readParam(paramFileReader);				
 			}
 		} catch (IOException e) {
@@ -744,10 +748,14 @@ public class PPFold extends statalign.postprocess.Postprocess {
 			try
 			{
 				FuzzyAlignment fuzzyAlignment2 = FuzzyAlignment.getFuzzyAlignmentAndProject(alignments, refSeqName);
-				ResultBundle fuzzyResultExp2 = PPfoldMain.foldFuzzyAlignment(progress, fuzzyAlignment2, null, param, extradata, true);
+				//ResultBundle fuzzyResultExp2 = PPfoldMain.foldFuzzyAlignment(progress, fuzzyAlignment2, null, param, extradata, true);
 				ResultBundle fuzzyResultObs2 = PPfoldMain.foldFuzzyAlignment(progress, fuzzyAlignment2, null, param, extradata, false);
 				entropyObs = fuzzyResultObs2.entropyVal;
-				entropyExp = fuzzyResultExp2.entropyVal;
+				//entropyExp = fuzzyResultExp2.entropyVal;
+				/*if(!samplingAndAveragingPPfold) // if ppfold not running, display fuzzy folding on the GUI
+				{
+					
+				}*/
 			}
 			catch(Exception ex)
 			{

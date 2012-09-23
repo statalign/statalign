@@ -69,7 +69,7 @@ public class McmcSettingsDlg extends JDialog implements ActionListener, KeyListe
 		automateBurnIn.addActionListener(this);
 		pan.add(automateBurnIn);
 		
-		pan.add(new JLabel("Cycles after burn-In:"));
+		pan.add(new JLabel("Cycles after burn-in:"));
 		cycles.addKeyListener(this);
 		pan.add(cycles);
 		cycles.setEnabled(true);
