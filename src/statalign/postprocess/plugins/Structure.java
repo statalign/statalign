@@ -203,7 +203,10 @@ public class Structure extends statalign.postprocess.Postprocess {
 			JScrollPane scroll = new JScrollPane(gui);
 			pan.add(scroll, BorderLayout.CENTER);
 			System.out.println("Structure parent: " + pan.getParent());
-			pan.getParent().validate();
+			if(pan.getParent() != null)
+			{
+				pan.getParent().validate();
+			}
 			
 		}
 	}

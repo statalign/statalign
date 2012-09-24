@@ -120,6 +120,8 @@ public class Dataset implements Serializable {
 	public double ppfoldReliabilityScoreCombined;
 	public double pairsOnlyReliabilityScoreCombined;
 	
+	public ArrayList<ResultBundle> matrixFolds = new ArrayList<ResultBundle>();
+	
 	
 	public void saveDatasetResult(File outFile)
 	{

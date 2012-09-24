@@ -126,6 +126,35 @@ public class FuzzyAlignment implements Serializable {
 		return getFuzzyAlignment(projectedAlignments);
 	}
 	
+	
+	
+	public static AlignmentData projectAlignment(List<String> sequences, List<String> inputNames, String refSeqName)
+	{
+
+		ArrayList<String> names = new ArrayList<String>(inputNames.size());
+		for(int i = 0 ; i < inputNames.size() ; i++)
+		{
+			names.add(inputNames.get(i).trim());
+		}
+		
+		int seqno = names.indexOf(refSeqName.trim());
+		if(seqno == -1)
+		{
+			System.err.println("Could not find refseqname:" +refSeqName);
+		}
+		seqno = Math.max(seqno, 0);
+		
+		AlignmentData projectedAlignment = new AlignmentData();
+		projectedAlignment.sequences = new ArrayList<String>();
+		projectedAlignment.names = names;
+		String refSeq = sequences.get(seqno);
+		for(int i = 0 ; i < sequences.size() ; i++)
+		{
+			projectedAlignment.sequences.add(Mapping.projectSequence(refSeq, sequences.get(i), '-'));
+		}
+		return projectedAlignment;
+	}
+	
 	public static AlignmentData projectAlignment(AlignmentData input, int seqno)
 	{
 		AlignmentData projectedAlignment = new AlignmentData();

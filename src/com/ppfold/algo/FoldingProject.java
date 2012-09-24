@@ -1,11 +1,14 @@
 package com.ppfold.algo;
 
+import java.io.File;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import statalign.postprocess.utils.RNAFoldingTools;
 
 import com.ppfold.algo.extradata.ExtraData;
 import com.ppfold.algo.extradata.ForcedConstraints;
@@ -114,6 +117,154 @@ public class FoldingProject {
 				names, columns.size(), param, executor, verbose, execnr);
 
 		//If there are extra data, multiply probmatrix with the relevant values
+		
+		double[][] probmatrix2 = null;
+		if(diffbp&&extradata_list!=null){
+			probmatrix2= new double[probmatrix.length][probmatrix[0].length];
+			for (int a = 0; a<probmatrix2.length;a++){
+				for(int b = 0;b<probmatrix2[0].length; b++){
+					probmatrix2[a][b] = probmatrix[a][b]; 
+				}
+			}
+		}
+		
+		if(extradata_list!=null){
+			System.out.println("Number of auxiliary data items: " + extradata_list.size());
+			ArrayList<ForcedConstraints> fcList = new ArrayList<ForcedConstraints>();
+			for(ExtraData data:extradata_list){
+				if(data instanceof ForcedConstraints){
+					//If forcing constraints, collect them into one and remove from the list
+					fcList.add((ForcedConstraints) data);
+				}
+			}
+			for(ExtraData data:fcList){
+				extradata_list.remove(data);
+			}
+			if(fcList.size()>0){
+				System.out.println("Processing " + fcList.size () + " hard constraint datasets");
+				ForcedConstraints fcMerged = new ForcedConstraints();
+				fcMerged = fcMerged.combinedForcedConstraints(probmatrix.length, fcList);
+				extradata_list.add(fcMerged);
+			}
+
+		}
+		
+		System.out.println("Processing all auxiliary data");
+		if(extradata_list!=null){
+			for(ExtraData extradata:extradata_list){
+				for(int i = 0; i<probmatrix.length; i++){
+					for(int j = 0; j<i; j++){
+						probmatrix[i][j] *= extradata.getProbabilityGivenInnerPaired(i,j);
+						probmatrix[j][i] = probmatrix[i][j];
+					}
+					probmatrix[i][i] *= extradata.getProbabilityGivenUnpaired(i);
+				}
+			}
+		}
+		
+		if(diffbp&&extradata_list!=null){
+			//If inner and outer basepairs are distinguished
+			for(ExtraData extradata:extradata_list){
+				for(int i = 0; i<probmatrix2.length; i++){
+					for(int j = 0; j<i; j++){
+						probmatrix2[i][j] *= extradata.getProbabilityGivenOuterPaired(i,j);
+						probmatrix2[j][i] = probmatrix2[i][j];
+					}
+					probmatrix2[i][i] *= extradata.getProbabilityGivenUnpaired(i);
+				}
+			}
+			
+		}
+		
+		//System.out.println("Time in phylogenetic part: " + (System.currentTimeMillis()-starttime));
+		// do not allow basepairs less than 4 nucleotides apart.
+		for (int i = 0; i < probmatrix.length; i++) {
+			for (int j = 1; j < 4; j++) {
+				if (i + j < probmatrix.length) {
+					probmatrix[i][i + j] = 0;
+				}
+				if (i - j > 0) {
+					probmatrix[i][i - j] = 0;
+				}
+			}
+		}
+		
+		if(diffbp&&extradata_list!=null){
+			for (int i = 0; i < probmatrix2.length; i++) {
+				for (int j = 1; j < 4; j++) {
+					if (i + j < probmatrix2.length) {
+						probmatrix2[i][i + j] = 0;
+					}
+					if (i - j > 0) {
+						probmatrix2[i][i - j] = 0;
+					}
+				}
+			}
+		}
+		
+
+		System.out.println("Folding...");
+		act.setCurrentActivity("Applying grammar");
+		
+		//starttime = System.currentTimeMillis();
+		ResultBundle result = FoldingProject.calcSCFG(act
+				.getChildProgress(scfgpart), scfgjobsnr, param.getProb(),
+				probmatrix, probmatrix2, executor, verbose, diffbp, entropycalc);
+		//System.out.println("Time in SCFG part: " + (System.currentTimeMillis()-starttime));
+		result.phyloProbs = probmatrix;
+		RNAFoldingTools.writeMatrix(probmatrix, new File("probmatrix.txt"));
+		
+		//Shut down the executor so we aren't hanging at the end
+		executor.shutDown();
+		return result;
+
+	}
+	
+	public static ResultBundle foldMatrix(Progress act, int phylojobsnr,
+			int scfgjobsnr, List<char[]> columns,
+			List<String> names, double [][] inputMatrix, Parameters param,
+			AsynchronousJobExecutor executor, boolean verbose, int execnr,
+			List <ExtraData> extradata_list, boolean diffbp, boolean entropycalc)
+			throws InterruptedException {
+		
+		if(columns.size()<2){
+			return ResultBundle.tinyBundle();
+		}
+		
+		double scfg_to_phylo_ratio = 0.095 * columns.size()
+				/ columns.get(0).length;
+		double phylopart = 0.95 / (scfg_to_phylo_ratio + 1);
+		if (phylopart < 0 | phylopart > 1) {
+			System.err.println("Time estimation resulted "
+					+ "in illegal value for phylogenetic calculations: "
+					+ phylopart);
+			phylopart = 0.475; // in case the estimation results in a
+			// "weird number", just set it to 50-50%.
+		}
+		double scfgpart = 0.95 - phylopart; // max is 95% because processing
+		// must happen before and after
+		act.setCurrentActivity("Applying evolutionary model");
+
+		
+		long starttime = System.currentTimeMillis();
+		/*double[][] probmatrix = FoldingProject.createPhyloProb(act
+				.getChildProgress(phylopart), phylojobsnr, tree, columns,
+				names, columns.size(), param, executor, verbose, execnr);*/
+
+		//If there are extra data, multiply probmatrix with the relevant values
+		
+		double [][] probmatrix = new double[inputMatrix.length][inputMatrix[0].length];
+		for(int i = 0 ; i < probmatrix.length ; i++)
+		{
+			double sum = 0;
+			for(int j = 0 ; j < probmatrix[0].length ; j++)
+			{
+				probmatrix[i][j] = inputMatrix[i][j];
+				sum += probmatrix[i][j];
+			}
+			//probmatrix[i][i] = 1 - sum;
+			System.out.println("XVX"+sum);
+		}
 		
 		double[][] probmatrix2 = null;
 		if(diffbp&&extradata_list!=null){
@@ -347,6 +498,8 @@ public class FoldingProject {
 		return result;
 
 	}
+	
+	
 	
 	private static double[][] createPhyloProbForFuzzyAlignment(Progress act, int userjobsnr,
 			Tree tree, List<FuzzyNucleotide[]> columns_char, FuzzyAlignment fuzzyAlignment, List<String> names,

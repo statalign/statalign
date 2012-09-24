@@ -13,6 +13,7 @@ import java.io.InputStreamReader;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -150,7 +151,7 @@ public class PPFold extends statalign.postprocess.Postprocess {
 	boolean samplingAndAveragingPPfold = false;
 	boolean samplingAndAveragingRNAalifold = false;
 	boolean fuzzyFolding = false;
-	boolean experimental = false;
+	boolean experimental = true;
 
 	public PPFold() {
 		
@@ -465,6 +466,78 @@ public class PPFold extends statalign.postprocess.Postprocess {
 	//double finalEntropyExpReliabilityScore = -1;
 	//double finalEntropyObsReliabilityScore = -1;
 	
+	double [][] summedPhyloProbs;
+	double [][] countPhyloProbs;
+	double [] columnCounts;
+	double n;
+	
+	public static double [][] reconstituteMatrix(double [][] matrix, List<Integer> leftOutColumns)
+	{
+		double [] [] ret = new double[matrix.length+leftOutColumns.size()][matrix.length+leftOutColumns.size()];
+		int x = 0;
+		int y = 0;
+		for(int i = 0 ; i < ret.length ; i++)
+		{
+			if(!leftOutColumns.contains(i))
+			{
+				y = 0;
+				for(int j = 0 ; j < ret[0].length ; j++)
+				{
+					if(!leftOutColumns.contains(j))
+					{
+						ret[i][j] = matrix[x][y];
+						y++;
+					}
+				}
+				x++;
+			}
+		}
+		return ret;
+	}
+	
+	public static double [][] incrementCountMatrix(double [][] matrix, List<Integer> leftOutColumns)
+	{
+		for(int i = 0 ; i < matrix.length ; i++)
+		{
+			if(!leftOutColumns.contains(i))
+			{
+				for(int j = 0 ; j < matrix.length ; j++)
+				{
+					if(!leftOutColumns.contains(j))
+					{
+						matrix[i][j]++;
+					}
+				}
+			}
+		}
+		return matrix;
+	}
+	
+	public static double [][] leaveOutColumns(double [][] matrix, List<Integer> leftOutColumns)
+	{
+		double [] [] ret = new double[matrix.length-leftOutColumns.size()][matrix[0].length-leftOutColumns.size()];
+		System.out.println("LOC"+matrix.length+"\t"+ret.length+"\t"+leftOutColumns.size());
+		int x = 0;
+		int y = 0;
+		for(int i = 0 ; i < matrix.length ; i++)
+		{
+			if(!leftOutColumns.contains(i))
+			{
+				y = 0;
+				for(int j = 0 ; j < matrix[0].length ; j++)
+				{
+					if(!leftOutColumns.contains(j))
+					{
+						ret[x][y] = matrix[i][j];
+						y++;
+					}
+				}
+				x++;
+			}
+		}
+		return ret;
+	}
+	
 	@Override	
 	public void newSample(State state, int no, int total) {
 		for (int i = 0; i < t.length; i++) {
@@ -545,7 +618,7 @@ public class PPFold extends statalign.postprocess.Postprocess {
 				
 				if(samplingAndAveragingPPfold)
 				{
-					ResultBundle sampleResult = PPfoldMain.fold(progress, align.getSequences(),	align.getNames(), tree, param, extradata);
+					ResultBundle sampleResult = PPfoldMain.fold2(progress, align.getSequences(),	align.getNames(), tree, param, extradata);
 					entropySample = sampleResult.entropyVal;
 					float[][] basePairProb = sampleResult.finalmatrix;
 					float[] singleBaseProb = new float[basePairProb.length];
@@ -600,7 +673,139 @@ public class PPFold extends statalign.postprocess.Postprocess {
 						}
 					}
 					weightedSum += weight;
+					
+					if(experimental)
+					{
+						if(no == 0)
+						{
+							RNAFoldingTools.writeToFile(new File(title+"_entropy.txt"),"",false);
+							summedPhyloProbs = new double[d][d];
+							countPhyloProbs = new double[d][d];
+							columnCounts = new double[d];
+							n = 0;
+						}
+						AlignmentData input =  new AlignmentData();
+						for(int k = 0 ; k < t.length ; k++)
+						{
+							input.sequences.add(t[k][1]);
+							input.names.add(t[k][0]);
+						}
+						
+						AlignmentData projectedAlignment = FuzzyAlignment.projectAlignment(input.sequences, input.names, refSeqName);
+						
+						
+						RNAFoldingTools.writeToFile(new File(title+"_dimensions.txt"),  sampleResult.phyloProbs.length+"\t"+sampleResult.phyloProbs[0].length+"\t"+PPFold.getSequenceByName(t, refSeqName).length(), true);
+						
+						RNAFoldingTools.writeMatrix(PPFold.reconstituteMatrix(sampleResult.phyloProbs, sampleResult.leftOutColumns), new File(title+"_phylo_recon.bp"));
+						//double [] [] phyloProbs = PPFold.reconstituteMatrix(sampleResult.phyloProbs, sampleResult.leftOutColumns);
+						double [][] phyloProbs =  Mapping.projectMatrix(PPFold.getSequenceByName(t, refSeqName),PPFold.reconstituteMatrix(sampleResult.phyloProbs, sampleResult.leftOutColumns), '-');
+						
+						
+					
+						//ArrayList<Integer> projectedLeftOutColumns = new ArrayList<Integer>();
+						//projectedLeftOutColumns.addAll(sampleResult.leftOutColumns);
+						String ref = PPFold.getSequenceByName(t, refSeqName);
+						int [] columns = Mapping.getProjectionIndices(ref, '-');
+						/*int [] columns = new int[ref.length()];
+						Arrays.fill(columns, -1);
+						int x = 0;
+						for(int i = 0 ; i < ref.length() ; i++)
+						{
+							if(ref.charAt(i) == '-')
+							{
+							}
+							else
+							{
+								columns[i] = x;
+								x++;
+							}
+						}*/
+						ArrayList<Integer> projectedLeftOutColumns = new ArrayList<Integer>();
+						for(int i = 0 ; i < sampleResult.leftOutColumns.size() ; i++)
+						{
+							int y = sampleResult.leftOutColumns.get(i);
+							if(columns[y] != -1)
+							{
+								projectedLeftOutColumns.add(columns[y]);
+							}
+						}	
+						
+						/*
+						for(int i = 0 ; i < removedIndices.size() ; i++)
+						{
+							projectedLeftOutColumns.remove(removedIndices.get(i));
+						}					
+						
+						Collections.sort(removedIndices);
+						for(int i = 0 ; i < removedIndices.size() ; i++)
+						{
+							for(int j = 0 ; j < projectedLeftOutColumns.size() ; j++)
+							{
+								if(removedIndices.get(i) <= projectedLeftOutColumns.get(j))
+								{
+									projectedLeftOutColumns.set(j, projectedLeftOutColumns.get(j)-1);
+								}
+							}
+						}*/	
+						
+						PPFold.incrementCountMatrix(countPhyloProbs, projectedLeftOutColumns);
+						for(int i = 0 ; i < summedPhyloProbs.length ; i++)
+						{
+							for(int j = 0 ; j < summedPhyloProbs[0].length ; j++)
+							{
+								summedPhyloProbs[i][j] += phyloProbs[i][j];
+							}
+						}
+						RNAFoldingTools.writeMatrix(countPhyloProbs, new File(title+"_phylo_count.bp"));
+						RNAFoldingTools.writeMatrix(summedPhyloProbs, new File(title+"_phylo_summed.bp"));
+						for(int i = 0 ; i < columnCounts.length ; i++)
+						{
+							if(!projectedLeftOutColumns.contains(i))
+							{
+								columnCounts[i]++;
+							}
+						}
 
+						n++;
+						double [][] averagedPhyloProbs = new double[summedPhyloProbs.length][summedPhyloProbs[0].length];
+						for(int i = 0 ; i < summedPhyloProbs.length ; i++)
+						{
+							for(int j = 0 ; j < summedPhyloProbs[0].length ; j++)
+							{
+								//double divider = (columnCounts[i]+columnCounts[j])/2;
+								double divider = countPhyloProbs[i][j];
+								if(divider != 0)
+								{
+									//averagedPhyloProbs[i][j] = summedPhyloProbs[i][j]/n;
+									averagedPhyloProbs[i][j] = summedPhyloProbs[i][j]/divider;
+								}
+							}
+						}
+						
+						System.out.print(">=  ");
+						ArrayList<Integer> leftOutColumns = new ArrayList<Integer>();
+						for(int i = 0 ; i < columnCounts.length ; i++)
+						{
+							System.out.print((i+1)+":"+columnCounts[i]/n+"   ");
+								if(columnCounts[i]/n <= 0.25)
+								{
+									
+									leftOutColumns.add(i);
+								}
+						}
+						System.out.println();
+						RNAFoldingTools.writeMatrix(averagedPhyloProbs, new File(title+"_phylo_full.bp"));
+						averagedPhyloProbs = leaveOutColumns(averagedPhyloProbs, leftOutColumns);
+						RNAFoldingTools.writeMatrix(averagedPhyloProbs, new File(title+"_phylo.bp"));
+						//ResultBundle matrixResult = PPfoldMain.foldMatrix(progress, input.sequences,	input.names, sampleResult.phyloProbs, param, extradata);
+						//ResultBundle matrixResult = PPfoldMain.foldMatrix(progress, projectedAlignment.sequences,	projectedAlignment.names,  sampleResult.phyloProbs, param, extradata);
+						ResultBundle matrixResult = PPfoldMain.foldMatrix(progress, projectedAlignment.sequences,	projectedAlignment.names, averagedPhyloProbs, param, extradata);
+						//ResultBundle matrixResult = PPfoldMain.foldMatrix(progress, projectedAlignment.sequences,	projectedAlignment.names, RNAFoldingTools.getDoubleMatrix(probMatrix), param, extradata);
+						dataset.matrixFolds.add(matrixResult);
+						RNAFoldingTools.writeToFile(new File(title+"_entropy.txt"),  sampleResult.entropyVal+"\t"+sampleResult.entropyMax+"\t"+matrixResult.entropyVal+"\t"+matrixResult.entropyMax+"", true);
+						RNAFoldingTools.writeMatrix(averagedPhyloProbs, new File(title+"_phylo2.bp"));
+						//System.exit(0);
+					}
 					
 					Structure.updateBasePairMatrix(probMatrix);
 					Structure.updateSingleMatrix(singleMatrix);
