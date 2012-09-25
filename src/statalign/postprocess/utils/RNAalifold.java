@@ -92,18 +92,34 @@ public class RNAalifold {
 		
 		try
 		{
+			String tempPath = System.getProperty("java.io.tmpdir")+"/";			
+			
 			System.out.println(arguments);
-			File tempClustalFile = new File("temp.clustalw");
+			File tempClustalFile = new File(tempPath+"temp.clustalw");
 			saveClustalW(sequences, sequenceNames, tempClustalFile);
-			String args = executable + " " + "-p "+arguments+" "+tempClustalFile.getAbsolutePath()+"";
-			//String args = executable + " " + "-p --bppmThreshold=0 "+arguments+" "+tempClustalFile.getAbsolutePath();
+			String args = executable + " " + "-p "+arguments;
+			String file = tempClustalFile.getAbsolutePath();
 			if(useOldParams)
 			{
-				args = executable + " " + "-p "+arguments+" \""+tempClustalFile.getAbsolutePath()+"\"";
+				args = executable + " " + "-p "+arguments;
 			}
-			//System.out.println("X"+useOldParams);
-			//System.out.println("Y"+args);
-			Process p = Runtime.getRuntime().exec(args);
+			
+			
+			// create a process builder to execute in temporary directory
+			ProcessBuilder processBuilder = new ProcessBuilder();			
+			processBuilder.directory(new File(tempPath));
+			ArrayList<String> commands = new ArrayList<String>();
+			String [] split = args.split("(\\s)+");
+			for(int i = 0 ; i < split.length ; i++)
+			{
+				commands.add(split[i]);
+			}
+			commands.add(file);
+			//System.out.println(commands);
+			processBuilder.command(commands);
+			
+			Process p = processBuilder.start();
+			
 			InputStream is = p.getErrorStream();
 			BufferedReader buffer = new BufferedReader(new InputStreamReader(is));
 			String textline = null;
@@ -139,9 +155,9 @@ public class RNAalifold {
 			RNAalifoldResult result = new RNAalifoldResult();
 			if(useMatrix)
 			{
-				result.matrix = loadBasePairProbMatrix(new File("alidot.ps"), sequences.get(0).length());
+				result.matrix = loadBasePairProbMatrix(new File(tempPath+"alidot.ps"), sequences.get(0).length());
 			}
-			result.pairedSites = RNAFoldingTools.getPairedSitesFromDotBracketString(loadDotBracketStructure(new File("alifold.out")));
+			result.pairedSites = RNAFoldingTools.getPairedSitesFromDotBracketString(loadDotBracketStructure(new File(tempPath+"alifold.out")));
 			return result;
 		}
 		catch(Exception ex)
@@ -238,8 +254,10 @@ public class RNAalifold {
 		ArrayList<String> sequences = new ArrayList<String>();
 		ArrayList<String> sequenceNames = new ArrayList<String>();
 		RNAFoldingTools.loadFastaSequences(new File("/home/michael/Dropbox/RNA and StatAlign/Distance/Datasets2/TestRNAData1_5seqs.dat.fas"), sequences, sequenceNames);
+		RNAalifold.executable="/home/michael/Downloads/ViennaRNA-2.0.7/Progs/RNAalifold";
 		RNAalifoldResult res = RNAalifold.fold(sequences, sequenceNames,"-T 10");
 		System.out.println(RNAFoldingTools.getDotBracketStringFromPairedSites(res.pairedSites));
+		
 		res = RNAalifold.fold(sequences, sequenceNames,"-T 60");
 		System.out.println(RNAFoldingTools.getDotBracketStringFromPairedSites(res.pairedSites));
 		//RNAalifold.saveClustalW(sequences, sequenceNames, new File("/home/michael/Desktop/temp.clustalw"));

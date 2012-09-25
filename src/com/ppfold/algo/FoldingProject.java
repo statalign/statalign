@@ -212,7 +212,7 @@ public class FoldingProject {
 				probmatrix, probmatrix2, executor, verbose, diffbp, entropycalc);
 		//System.out.println("Time in SCFG part: " + (System.currentTimeMillis()-starttime));
 		result.phyloProbs = probmatrix;
-		RNAFoldingTools.writeMatrix(probmatrix, new File("probmatrix.txt"));
+		//RNAFoldingTools.writeMatrix(probmatrix, new File("probmatrix.txt"));
 		
 		//Shut down the executor so we aren't hanging at the end
 		executor.shutDown();

@@ -557,6 +557,16 @@ public class Benchmarks
 		
 		return val;
 	}
+	
+	public static int [] getPairedSites(char [] structure)
+	{
+		String s = "";
+		for(int i = 0 ; i < structure.length ; i++)
+		{
+			s += structure[i];
+		}
+		return RNAFoldingTools.getPairedSitesFromDotBracketString(s);
+	}
 
 	
 	public static void automatedTests()
@@ -679,6 +689,8 @@ public class Benchmarks
 			System.out.println("P:"+RNAFoldingTools.getDotBracketStringFromPairedSites(pairedSitesPPfold));
 			System.out.println(dataset.posteriorsAverage+"\t"+dataset.mpdVsInputSim);
 			
+			//System.out.println("M:"+RNAFoldingTools.getDotBracketStringFromPairedSites(getPairedSites(dataset.matrixFolds.get(dataset.matrixFolds.size()-1).getStructure()))+"\t"+dataset.matrixFolds.get(dataset.matrixFolds.size()-1).finalmatrix.length);
+			
 			//double sensExpStat = Benchmarks.calculateSensitivity(pairedSitesExperimental, pairedSitesStatAlign);
 			//double sensExpPPfold = Benchmarks.calculateSensitivity(pairedSitesExperimental, pairedSitesPPfold);
 			//double ppvExpStat = Benchmarks.calculatePPV(pairedSitesExperimental, pairedSitesStatAlign);
@@ -690,13 +702,20 @@ public class Benchmarks
 			double fscSamplingExp = getDouble(Benchmarks.calculateFScore(pairedSitesExperimental, dataset.pairedSitesEntropyExp));
 			double fscSamplingObs = getDouble(Benchmarks.calculateFScore(pairedSitesExperimental, dataset.pairedSitesEntropyObs));
 			double fscRNAalifold = getDouble(Benchmarks.calculateFScore(pairedSitesExperimental, dataset.pairedSitesRNAalifold));
+			double fscMatrixFold = getDouble(Benchmarks.calculateFScore(pairedSitesExperimental, dataset.pairedSitesMatrix));
 			double fscCombined = -1;
 			if(dataset.pairedSitesCombined != null)
 			{
 				fscCombined = getDouble(Benchmarks.calculateFScore(pairedSitesExperimental, dataset.pairedSitesCombined));
 			}
+			try
+			{
 			System.out.println(dataset.title);
-			double fscRNAalifoldMPD = getDouble(Benchmarks.calculateFScore(pairedSitesExperimental, dataset.pairedSitesRNAalifoldMPDProjected));
+			double fscRNAalifoldMPD = -1;
+			if(dataset.pairedSitesRNAalifoldMPDProjected != null)
+			{
+				fscRNAalifoldMPD = getDouble(Benchmarks.calculateFScore(pairedSitesExperimental, dataset.pairedSitesRNAalifoldMPDProjected));
+			}
 			double fscRNAalifoldRef = -1;
 			if(dataset.pairedSitesRNAalifoldRefProjected != null)
 			{
@@ -720,7 +739,11 @@ public class Benchmarks
 				senCombined = getDouble(Benchmarks.calculateSensitivity(pairedSitesExperimental, dataset.pairedSitesCombined));
 			}
 			System.out.println(dataset.title);
-			double senRNAalifoldMPD = getDouble(Benchmarks.calculateSensitivity(pairedSitesExperimental, dataset.pairedSitesRNAalifoldMPDProjected));
+			double senRNAalifoldMPD = -1;
+			if(dataset.pairedSitesRNAalifoldMPDProjected != null)
+			{
+				senRNAalifoldMPD = getDouble(Benchmarks.calculateSensitivity(pairedSitesExperimental, dataset.pairedSitesRNAalifoldMPDProjected));
+			}
 			double senRNAalifoldRef = -1;
 			if(dataset.pairedSitesRNAalifoldRefProjected != null)
 			{
@@ -744,7 +767,11 @@ public class Benchmarks
 				ppvCombined = getDouble(Benchmarks.calculatePPV(pairedSitesExperimental, dataset.pairedSitesCombined));
 			}
 			System.out.println(dataset.title);
-			double ppvRNAalifoldMPD = getDouble(Benchmarks.calculatePPV(pairedSitesExperimental, dataset.pairedSitesRNAalifoldMPDProjected));
+			double ppvRNAalifoldMPD = -1;
+			if(dataset.pairedSitesRNAalifoldMPDProjected != null)
+			{
+				getDouble(Benchmarks.calculatePPV(pairedSitesExperimental, dataset.pairedSitesRNAalifoldMPDProjected));
+			}
 			double ppvRNAalifoldRef = -1;
 			if(dataset.pairedSitesRNAalifoldRefProjected != null)
 			{
@@ -858,7 +885,8 @@ public class Benchmarks
 			+"\t"+senSampleMean+"\t"+senSampleMedian+"\t"+senExpStat+"\t"+senExpStatWeighted+"\t"+senExpStatMPD+"\t"+senExpPPfold+"\t"+senSamplingExp+"\t"+senSamplingObs
 			+"\t"+ppvSampleMean+"\t"+ppvSampleMedian+"\t"+ppvExpStat+"\t"+ppvExpStatWeighted+"\t"+ppvExpStatMPD+"\t"+ppvExpPPfold+"\t"+ppvSamplingExp+"\t"+ppvSamplingObs
 			+"\t"+senRnaAlifoldSampleMean+"\t"+senRnaAlifoldSampleMedian+"\t"+senRNAalifold+"\t"+senRNAalifoldMPD+"\t"+senRNAalifoldRef
-			+"\t"+ppvRnaAlifoldSampleMean+"\t"+ppvRnaAlifoldSampleMedian+"\t"+ppvRNAalifold+"\t"+ppvRNAalifoldMPD+"\t"+ppvRNAalifoldRef;
+			+"\t"+ppvRnaAlifoldSampleMean+"\t"+ppvRnaAlifoldSampleMedian+"\t"+ppvRNAalifold+"\t"+ppvRNAalifoldMPD+"\t"+ppvRNAalifoldRef
+			+"\t"+fscMatrixFold;
 
 			System.out.println("FSC " + fscCombined);
 		
@@ -912,20 +940,28 @@ public class Benchmarks
 			{
 				ex.printStackTrace();
 			}
+			}
+			catch(Exception ex)
+			{
+				ex.printStackTrace();
+			}
 			
 			try
 			{
-				File entropyFile = new File("/home/michael/Dropbox/RNA and StatAlign/Report/Entropy2/"+name+".txt");
+				
+				File entropyFile = new File("/home/michael/Dropbox/RNA and StatAlign/Report/Entropy3/"+name+".txt");
 				BufferedWriter buffer = new BufferedWriter(new FileWriter(entropyFile));
-				buffer.write("no\tobs_val\tobs_perc\tobs_max\texp_val\texp_perc\texp_max\tsam_val\tsam_perc\tsam_max\n");
+				buffer.write("no\tobs_val\tobs_perc\tobs_max\texp_val\texp_perc\texp_max\tsam_val\tsam_perc\tsam_max\tmatrix_val\tmatrix_perc\tmatrix_max\n");
 				for(int l = 0 ; l < dataset.sampledStructures.size() ; l++)
 				{
 					ResultBundle sample = dataset.sampledStructures.get(l);
 					ResultBundle obsSample = dataset.cumulativeFuzzyObsResults.get(l);
 					ResultBundle expSample = dataset.cumulativeFuzzyExpResults.get(l);
+					ResultBundle matrixFold = dataset.matrixFolds.get(l);
 					buffer.write(l+"\t"+obsSample.entropyVal+"\t"+obsSample.entropyPercOfMax+"\t"+obsSample.entropyMax+"\t");
 					buffer.write(expSample.entropyVal+"\t"+expSample.entropyPercOfMax+"\t"+expSample.entropyMax+"\t");
-					buffer.write(sample.entropyVal+"\t"+sample.entropyPercOfMax+"\t"+sample.entropyMax);
+					buffer.write(sample.entropyVal+"\t"+sample.entropyPercOfMax+"\t"+sample.entropyMax+"\t");
+					buffer.write(matrixFold.entropyVal+"\t"+matrixFold.entropyPercOfMax+"\t"+matrixFold.entropyMax);
 					buffer.newLine();
 				}
 				buffer.close();
