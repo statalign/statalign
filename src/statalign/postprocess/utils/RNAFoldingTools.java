@@ -128,8 +128,8 @@ public class RNAFoldingTools {
         //printMatrix(eMatrix);
         //System.out.println();
         //printMatrix(S);
-        writeMatrix(S, new File("e.matrix"));
-        writeMatrix(S, new File("s.matrix"));
+       // writeMatrix(S, new File("e.matrix"));
+        //writeMatrix(S, new File("s.matrix"));
         traceBack(S, 0, eMatrix.length - 1, pairedWith);
         
         return pairedWith;

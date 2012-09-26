@@ -77,7 +77,11 @@ public class DistanceGUI extends JPanel {
 		}*/
 		g2.setFont(new Font("SANS_SERIF", Font.BOLD, 16));
 		g2.rotate(Math.PI/2);
-		g2.drawString("AMA similarity score", maxHeight/2 - 60, -20);
+		//g2.rotate(-Math.PI*3/2);
+		g2.setFont(new Font("SANS_SERIF", Font.BOLD, 11));
+		g2.drawString("Similarity (alignment #1, current)", 40, -31);
+		g2.setFont(new Font("SANS_SERIF", Font.BOLD, 16));
+		//g2.rotate(Math.PI*3/2);
 		g2.rotate(Math.PI*1.5);  
 		g2.drawString("Sample", 700, 15+maxHeight);
 		
