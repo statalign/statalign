@@ -201,7 +201,7 @@ public class Mcmc extends Stoppable {
 				if (frame != null) {
 					String text = "";
 					if((i > realBurnIn ) && AutomateParameters.shouldAutomateStepRate()){
-						text = "Automated burn-in: " + (i-realBurnIn + 1) ;
+						text = "Burn-in to aid automation of MCMC parameters: " + (i-realBurnIn + 1) ;
 					}else{
 						text = "Burn-in: " + (i + 1);
 					}
