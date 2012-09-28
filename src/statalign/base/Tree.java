@@ -62,8 +62,8 @@ public class Tree extends Stoppable {
     /** The heat parameter for this MCMC chain. */
 	public double heat = 1.0d;
 
-	/* TODO: what the fuck? */
-    public CNetwork network; 
+	/* TODO: what the ...? */
+    public CNetwork network;
 
 
     Tree() {

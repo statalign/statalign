@@ -81,7 +81,7 @@ public class State {
 	 * Constructs a new {@link State} object, filling the given parameter and
 	 * pre-allocating arrays (first dimensions only). Does not create parameter arrays.
 	 * 
-	 * @param nn  number of nodes total (including leaves) , initialize if true. initializes the variables of this object.
+	 * @param nn  number of nodes total (including leaves)
 	 */
 	public State(int nn) {
 		this.nn = nn;
