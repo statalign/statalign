@@ -32,7 +32,7 @@ public class AutomateParameters {
 	final static double errorForTheAVG = 0.99;
 	
 	//stopsampling
-	public final static double PERCENT_CONST = 0.999;
+	public final static double PERCENT_CONST = 0.998;
 	
 	//burn-in
 	final static int DECLINE = 30;

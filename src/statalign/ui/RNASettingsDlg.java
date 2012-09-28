@@ -60,7 +60,8 @@ public class RNASettingsDlg extends JDialog implements ActionListener, ChangeLis
 	JPanel rnaalifoldOptions = new JPanel();
 	JCheckBox useSamplingAndAveragingButton = new JCheckBox("Perform sampling and averaging prediction (PPfold).");
 	JCheckBox useSamplingAndAveragingRNAalifoldButton = new JCheckBox("Perform sampling and averaging prediction (RNAalifold).");
-	JCheckBox fuzzyNucleotidePredictionAndEntropy = new JCheckBox("Perform fuzzy alignment prediction (PPfold).");	
+	JCheckBox fuzzyNucleotidePredictionAndEntropy = new JCheckBox("Perform fuzzy alignment prediction (PPfold).");
+	JCheckBox consensusEvolutionPrediction = new JCheckBox("Perform consensus alignment prediction (PPfold).");
 	
 	private JFileChooser fileChooser = new JFileChooser();
 	private JTextField executableField = new JTextField("");
@@ -102,14 +103,15 @@ public class RNASettingsDlg extends JDialog implements ActionListener, ChangeLis
 		//JCheckBox useSamplingAndAveragingRNAalifoldButton = new JCheckBox("Use sampling and averaging prediction (RNAalifold).");
 		//JCheckBox fuzzyNucleotidePredictionAndEntropy
 		useSamplingAndAveragingButton.setSelected(true);
-		fuzzyNucleotidePredictionAndEntropy.setSelected(true);
+		fuzzyNucleotidePredictionAndEntropy.setSelected(false);
 		useSamplingAndAveragingRNAalifoldButton.setSelected(false);
 		useSamplingAndAveragingRNAalifoldButton.addChangeListener(this);
 		rnaalifoldOptions.setEnabled(false);
 		rnaalifoldOptions.setBorder(BorderFactory.createTitledBorder("RNAalifold settings"));
 		optionsPanel.add(useSamplingAndAveragingButton, c);
-		optionsPanel.add(fuzzyNucleotidePredictionAndEntropy, c);
+		//optionsPanel.add(fuzzyNucleotidePredictionAndEntropy, c);
 		optionsPanel.add(useSamplingAndAveragingRNAalifoldButton, c);
+		//optionsPanel.add(consensusEvolutionPrediction, c);
 		//cp.setB
 
 		//c.gridx = 0;
@@ -252,7 +254,7 @@ public class RNASettingsDlg extends JDialog implements ActionListener, ChangeLis
 		{			
 			useSamplingAndAveragingButton.setSelected(prefs.getBoolean("USE_SAMPLING_AND_AVERAGING_PPFOLD", true));
 			useSamplingAndAveragingRNAalifoldButton.setSelected(prefs.getBoolean("USE_SAMPLING_AND_AVERAGING_RNAALIFOLD", false));
-			fuzzyNucleotidePredictionAndEntropy.setSelected(prefs.getBoolean("USE_FUZZY_NUCLEOTIDE", true));
+			fuzzyNucleotidePredictionAndEntropy.setSelected(prefs.getBoolean("USE_FUZZY_NUCLEOTIDE", false));
 			String defaultExec = "";
 			if(System.getProperty("os.name").toLowerCase().contains("windows"))
 			{

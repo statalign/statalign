@@ -898,7 +898,7 @@ public class Benchmarks
 			//System.out.println(dataset.title+"\t"+fuzzyDistances);
 			/*try
 			{
-				BufferedWriter buffer = new BufferedWriter(new FileWriter("distances/"+dataset.title+"_fuzzy_distances.txt"));
+				BufferedWriter buffer = new BufferedWriter(new FileWriter("distances/"+dataset.title+"_fuzzy_"));
 				for(int k = 0 ; k  < fuzzyDistances.size() ; k++)
 				{
 					buffer.write(fuzzyDistances.get(k)+"\n");	
@@ -1151,7 +1151,7 @@ public class Benchmarks
 				//System.out.println(dataset.title+"\t"+fuzzyDistances);
 				try
 				{
-					BufferedWriter buffer = new BufferedWriter(new FileWriter("distances/"+dataset.title+"_fuzzy_distances.txt"));
+					BufferedWriter buffer = new BufferedWriter(new FileWriter("distances/"+dataset.title+"_fuzzy_"));
 					for(int k = 0 ; k  < fuzzyDistances.size() ; k++)
 					{
 						buffer.write(fuzzyDistances.get(k)+"\n");	

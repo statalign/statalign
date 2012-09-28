@@ -149,9 +149,10 @@ public class PPFold extends statalign.postprocess.Postprocess {
 	
 	String rnaAlifoldParameters = "";
 	boolean samplingAndAveragingPPfold = false;
+	boolean consensusEvolutionPrediction = true;
 	boolean samplingAndAveragingRNAalifold = false;
 	boolean fuzzyFolding = false;
-	boolean experimental = true;
+	boolean experimental = false;
 
 	public PPFold() {
 		
@@ -264,7 +265,7 @@ public class PPFold extends statalign.postprocess.Postprocess {
 			
 			samplingAndAveragingPPfold = ppfoldParameter != null;
 			samplingAndAveragingRNAalifold = rnaAlifoldParameter != null;
-			fuzzyFolding = true;
+			fuzzyFolding = false;
 			
 			if(samplingAndAveragingRNAalifold)
 			{
@@ -466,10 +467,12 @@ public class PPFold extends statalign.postprocess.Postprocess {
 	//double finalEntropyExpReliabilityScore = -1;
 	//double finalEntropyObsReliabilityScore = -1;
 	
+	double [][] averagedPhyloProbs;
 	double [][] summedPhyloProbs;
 	double [][] countPhyloProbs;
 	double [] columnCounts;
 	double n;
+	ArrayList<Integer> leftOutColumns = new ArrayList<Integer>();
 	
 	public static double [][] reconstituteMatrix(double [][] matrix, List<Integer> leftOutColumns)
 	{
@@ -538,7 +541,6 @@ public class PPFold extends statalign.postprocess.Postprocess {
 		return ret;
 	}
 
-	ArrayList<Integer> leftOutColumns = new ArrayList<Integer>();
 	@Override	
 	public void newSample(State state, int no, int total) {
 		for (int i = 0; i < t.length; i++) {
@@ -674,24 +676,17 @@ public class PPFold extends statalign.postprocess.Postprocess {
 					}
 					weightedSum += weight;
 					
-					if(experimental)
+					if(consensusEvolutionPrediction)
 					{
 						if(no == 0)
 						{
-							RNAFoldingTools.writeToFile(new File(title+"_entropy.txt"),"",false);
+							//RNAFoldingTools.writeToFile(new File(title+"_entropy.txt"),"",false);
 							summedPhyloProbs = new double[d][d];
 							countPhyloProbs = new double[d][d];
 							columnCounts = new double[d];
 							n = 0;
 						}
-						AlignmentData input =  new AlignmentData();
-						for(int k = 0 ; k < t.length ; k++)
-						{
-							input.sequences.add(t[k][1]);
-							input.names.add(t[k][0]);
-						}
-						
-						AlignmentData projectedAlignment = FuzzyAlignment.projectAlignment(input.sequences, input.names, refSeqName);
+					
 						
 						
 						//RNAFoldingTools.writeToFile(new File(title+"_dimensions.txt"),  sampleResult.phyloProbs.length+"\t"+sampleResult.phyloProbs[0].length+"\t"+PPFold.getSequenceByName(t, refSeqName).length(), true);
@@ -767,7 +762,7 @@ public class PPFold extends statalign.postprocess.Postprocess {
 						}
 
 						n++;
-						double [][] averagedPhyloProbs = new double[summedPhyloProbs.length][summedPhyloProbs[0].length];
+						averagedPhyloProbs = new double[summedPhyloProbs.length][summedPhyloProbs[0].length];
 						for(int i = 0 ; i < summedPhyloProbs.length ; i++)
 						{
 							for(int j = 0 ; j < summedPhyloProbs[0].length ; j++)
@@ -782,13 +777,11 @@ public class PPFold extends statalign.postprocess.Postprocess {
 							}
 						}
 						
-						
 						if(no < 25)
 						{
 							leftOutColumns.clear();
 							for(int i = 0 ; i < columnCounts.length ; i++)
 							{
-									System.out.print((i+1)+":"+columnCounts[i]/n+"   ");
 									if(columnCounts[i]/n <= 0.25)
 									{
 										
@@ -796,28 +789,12 @@ public class PPFold extends statalign.postprocess.Postprocess {
 									}
 							}
 						}
-						System.out.println();
 						
-						//RNAFoldingTools.writeMatrix(averagedPhyloProbs, new File(title+"_phylo_full.bp"));
-						averagedPhyloProbs = leaveOutColumns(averagedPhyloProbs, leftOutColumns);
-						//RNAFoldingTools.writeMatrix(averagedPhyloProbs, new File(outDir+"/"+title+"_phylo.bp"));
-						//ResultBundle matrixResult = PPfoldMain.foldMatrix(progress, input.sequences,	input.names, sampleResult.phyloProbs, param, extradata);
-						//ResultBundle matrixResult = PPfoldMain.foldMatrix(progress, projectedAlignment.sequences,	projectedAlignment.names,  sampleResult.phyloProbs, param, extradata);
-						ResultBundle matrixResult = PPfoldMain.foldMatrix(progress, projectedAlignment.sequences,	projectedAlignment.names, averagedPhyloProbs, param, extradata);
-						//ResultBundle matrixResult = PPfoldMain.foldMatrix(progress, projectedAlignment.sequences,	projectedAlignment.names, RNAFoldingTools.getDoubleMatrix(probMatrix), param, extradata);
-						dataset.matrixFolds.add(matrixResult.getSmallBundle());
-						
-						RNAFoldingTools.writeToFile(new File(outDir+"/"+title+"_entropy.txt"),  sampleResult.entropyVal+"\t"+sampleResult.entropyMax+"\t"+matrixResult.entropyVal+"\t"+matrixResult.entropyMax+"", true);
-						Collections.sort(leftOutColumns);
-						StringBuffer structure = new StringBuffer("");
-						structure.append(matrixResult.getStructure());
-						for(int i = 0 ; i < leftOutColumns.size() ; i++)
-						{
-							structure.insert(leftOutColumns.get(i).intValue(), '.');
+
+						if(no % 5 == 0)
+						{							
+							performConsensusEvolutionPrediction();
 						}
-						dataset.pairedSitesMatrix = RNAFoldingTools.getPairedSitesFromDotBracketString(structure.toString());
-						//RNAFoldingTools.writeMatrix(averagedPhyloProbs, new File(title+"_phylo2.bp"));
-						//System.exit(0);
 					}
 					
 					Structure.updateBasePairMatrix(probMatrix);
@@ -953,22 +930,24 @@ public class PPFold extends statalign.postprocess.Postprocess {
 			dataset.logLikelihoods.add(mcmc.mcmcStep.newLogLike);
 		}
 		
+
+		al =  new AlignmentData();
+		for(int k = 0 ; k < t.length ; k++)
+		{
+			al.sequences.add(t[k][1]);
+			al.names.add(t[k][0]);
+		}
+		alignments.add(al);
+		
 		if(fuzzyFolding)
 		{
-			al =  new AlignmentData();
-			for(int k = 0 ; k < t.length ; k++)
-			{
-				al.sequences.add(t[k][1]);
-				al.names.add(t[k][0]);
-			}
-			alignments.add(al);
 
 			try
 			{
 				FuzzyAlignment fuzzyAlignment2 = FuzzyAlignment.getFuzzyAlignmentAndProject(alignments, refSeqName);
 				//ResultBundle fuzzyResultExp2 = PPfoldMain.foldFuzzyAlignment(progress, fuzzyAlignment2, null, param, extradata, true);
 				ResultBundle fuzzyResultObs2 = PPfoldMain.foldFuzzyAlignment(progress, fuzzyAlignment2, null, param, extradata, false);
-				entropyObs = fuzzyResultObs2.entropyVal;
+				//entropyObs = fuzzyResultObs2.entropyVal;
 				//entropyExp = fuzzyResultExp2.entropyVal;
 				/*if(!samplingAndAveragingPPfold) // if ppfold not running, display fuzzy folding on the GUI
 				{
@@ -1020,6 +999,49 @@ public class PPFold extends statalign.postprocess.Postprocess {
 
 	}
 	int stepCounter = 0;
+	
+	public ResultBundle performConsensusEvolutionPrediction()
+	{
+		ResultBundle consensusEvolutionResult = null;
+		
+		try
+		{
+		AlignmentData input =  new AlignmentData();
+		for(int k = 0 ; k < t.length ; k++)
+		{
+			input.sequences.add(t[k][1]);
+			input.names.add(t[k][0]);
+		}
+		
+			AlignmentData projectedAlignment = FuzzyAlignment.projectAlignment(input.sequences, input.names, refSeqName);
+			averagedPhyloProbs = leaveOutColumns(averagedPhyloProbs, leftOutColumns);
+			//RNAFoldingTools.writeMatrix(averagedPhyloProbs, new File(outDir+"/"+title+"_phylo.bp"));
+			//ResultBundle matrixResult = PPfoldMain.foldMatrix(progress, input.sequences,	input.names, sampleResult.phyloProbs, param, extradata);
+			//ResultBundle matrixResult = PPfoldMain.foldMatrix(progress, projectedAlignment.sequences,	projectedAlignment.names,  sampleResult.phyloProbs, param, extradata);
+			consensusEvolutionResult = PPfoldMain.foldMatrix(progress, projectedAlignment.sequences, projectedAlignment.names, averagedPhyloProbs, param, extradata);
+			//ResultBundle matrixResult = PPfoldMain.foldMatrix(progress, projectedAlignment.sequences,	projectedAlignment.names, RNAFoldingTools.getDoubleMatrix(probMatrix), param, extradata);
+			dataset.matrixFolds.add(consensusEvolutionResult.getSmallBundle());
+		
+			Collections.sort(leftOutColumns);
+			StringBuffer structure = new StringBuffer("");
+			structure.append(consensusEvolutionResult.getStructure());
+			for(int i = 0 ; i < leftOutColumns.size() ; i++)
+			{
+				structure.insert(leftOutColumns.get(i).intValue(), '.');
+			}
+			
+			entropyObs = consensusEvolutionResult.entropyVal;
+			dataset.pairedSitesMatrix = RNAFoldingTools.getPairedSitesFromDotBracketString(structure.toString());
+			dataset.ppfoldReliabilityScoreConsensusEvol = consensusEvolutionResult.getPPfoldReliability();
+			dataset.pairsOnlyReliabilityScoreConsensusEvol = consensusEvolutionResult.getPairsOnlyReliability();
+		}
+		catch(Exception ex)
+		{
+			ex.printStackTrace();
+		}
+		
+		return consensusEvolutionResult;
+	}
 	
 	public void computeFuzzyAlignment()
 	{
@@ -1171,6 +1193,11 @@ public class PPFold extends statalign.postprocess.Postprocess {
 				//System.out.println("Improved reliability score 1 = " + improvedReliabilityScore1);
 				double improvedReliabilityScore2 = proxySim*statalignPpfoldReliablityScore;
 			//}
+				
+				ResultBundle consensusEvolutionPrediction = performConsensusEvolutionPrediction();
+				RNAFoldingTools.saveCtFile(new File(title+".cons_evol.ct"), dataset.pairedSitesMatrix, title, refSeq);
+				RNAFoldingTools.saveDotBracketFile(new File(title+".cons_evol.dbn"),  dataset.pairedSitesMatrix, title, refSeq);
+				RNAFoldingTools.writeMatrix(RNAFoldingTools.getDoubleMatrix(consensusEvolutionPrediction.finalmatrix), new File(title+".cons_evol.bp"));
 		}	
 		
 		if(samplingAndAveragingPPfold && samplingAndAveragingRNAalifold)
@@ -1216,6 +1243,11 @@ public class PPFold extends statalign.postprocess.Postprocess {
 				buffer.write(">method=sampling_and_averaging_ppfold\ttitle="+title+"\tlength="+dataset.pairedSites.length+"\treliability_score="+df.format(dataset.pairsOnlyReliabilityScoreSamplingAndAveraging)+"\n");
 				buffer.write(refSeqGapped.replaceAll("-", "")+"\n");
 				buffer.write(RNAFoldingTools.getDotBracketStringFromPairedSites(dataset.pairedSites)+"\n");
+				
+				ResultBundle lastResult = dataset.matrixFolds.get(dataset.matrixFolds.size()-1);
+				buffer.write(">method=consensus_evolution_ppfold\ttitle="+title+"\tlength="+dataset.pairedSitesMatrix.length+"\treliability_score="+df.format(dataset.pairsOnlyReliabilityScoreConsensusEvol)+"\tentropy="+lastResult.entropyVal+"\tperc_of_max_entropy="+lastResult.entropyPercOfMax+"\t"+"\tmax_entropy="+lastResult.entropyMax+"\t"+"\n");
+				buffer.write(refSeqGapped.replaceAll("-", "")+"\n");
+				buffer.write(RNAFoldingTools.getDotBracketStringFromPairedSites(dataset.pairedSitesMatrix)+"\n");
 			}
 			if(this.samplingAndAveragingRNAalifold)
 			{

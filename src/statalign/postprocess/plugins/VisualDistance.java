@@ -122,7 +122,6 @@ public class VisualDistance extends statalign.postprocess.Postprocess {
 			//System.out.println("INITIAL ALIGNMENT: " + ppFold.al.sequences);
 			//System.out.println("TEMP ALIGNMENT: " + ppFold.tempAlignment);
 			currentDistance = Distance.AMA(ppFold.al.sequences, ppFold.tempAlignment);
-			RNAFoldingTools.writeToFile(new File("distances.txt"), currentDistance+"", true);
 			
 			if(no > 0)
 			{

@@ -263,7 +263,7 @@ public class FoldingProject {
 				sum += probmatrix[i][j];
 			}
 			//probmatrix[i][i] = 1 - sum;
-			System.out.println("XVX"+sum);
+			//System.out.println("XVX"+sum);
 		}
 		
 		double[][] probmatrix2 = null;

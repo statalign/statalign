@@ -3,6 +3,7 @@ package statalign.base;
 import java.awt.Cursor;
 import java.io.File;
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Random;
@@ -119,6 +120,8 @@ public class Mcmc extends Stoppable {
 	private int indelAccepted = 0;
 	private int substSampled = 0;
 	private int substAccepted = 0;
+	
+	private static final DecimalFormat df = new DecimalFormat("0.0000");
 
 	/**
 	 * In effect starts an MCMC run. It first performs a prescribed number of
@@ -292,7 +295,7 @@ public class Mcmc extends Stoppable {
 
 						text += "   The sampling rate: " + sampRate;
 						if(AutomateParameters.shouldAutomateNumberOfSamples()){
-							text +=  "  Similarity(alignment n-1, alignment n): " + currScore + " < " + AutomateParameters.PERCENT_CONST;
+							text +=  ",  Similarity(alignment n-1, alignment n): " + df.format(currScore) + " < " + df.format(AutomateParameters.PERCENT_CONST);
 						}
 						frame.statusText.setText(text );
 					}

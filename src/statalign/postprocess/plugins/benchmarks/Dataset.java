@@ -122,6 +122,8 @@ public class Dataset implements Serializable {
 	
 	public ArrayList<ResultBundle> matrixFolds = new ArrayList<ResultBundle>();
 	public int [] pairedSitesMatrix;
+	public double ppfoldReliabilityScoreConsensusEvol;
+	public double pairsOnlyReliabilityScoreConsensusEvol;
 	
 	public void saveDatasetResult(File outFile)
 	{

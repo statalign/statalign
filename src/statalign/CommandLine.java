@@ -324,9 +324,9 @@ public class CommandLine {
 		sb.append("        Automate MCMC parameters: burn-in, cycles after burn-in, sampling rate.\n");
 		sb.append("        Select which parameters to automate by listing one or more of: burn, cycl, rate\n\n");
 		
-		sb.append("    -plugins:ppfold,rnaalifold,fuzzy\n");
+		sb.append("    -plugins:ppfold,rnaalifold\n");
 		sb.append("        Specify which RNA plugins you want to run and the corresponding parameters for each.\n");
-		sb.append("        Each plugin should be specified seperately, e.g. -plugin:ppfold plugin:fuzzy\n");
+		sb.append("        Each plugin should be specified seperately, e.g. -plugin:ppfold plugin:rnaalifold\n");
 		sb.append("        Currently only the RNAalifold plugin takes additional options.\n");
 		sb.append("        For RNAalifold you should specify the path of the RNAalifold executable followed by the  RNAalifold command-line options in inverted commas.\n");
 		sb.append("        e.g. -plugin:rnalifold=\"C:\\ViennaRNA\\RNAalifold.exe -T 37 -cv 1\"\n\n");

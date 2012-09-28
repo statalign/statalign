@@ -707,7 +707,7 @@ public class PPfoldMain implements Runnable {
 		float[] finalreliability = new float[sequences.get(0).length()]; 
 		float[][] finalmatrix = new float[sequences.get(0).length()][sequences.get(0).length()];
 		float[][] finalexp = new float[sequences.get(0).length()][sequences.get(0).length()];
-		//List<Integer> leftoutcolumns = new ArrayList<Integer>(); 
+		List<Integer> leftoutcolumns = new ArrayList<Integer>(); // will always be empty in this method 
 
 		if(!entropycalc||entropyString==null||(entropyString!=null&&entropyString.trim().equals(""))){
 			for(int i = 0; i < sequences.get(0).length(); i++){
@@ -868,7 +868,7 @@ public class PPfoldMain implements Runnable {
 
 		System.out.println("Structure prediction complete. Transforming to include left-out columns " +
 				"(total " + leftoutcolumns.size() + ")...");
-
+*/
 		progress.setCurrentActivity("Finalizing...");
 		int icolcnt = 0;
 		for(int i = 0; i<result.getBasePairProb().length; i++){
@@ -897,7 +897,7 @@ public class PPfoldMain implements Runnable {
 		progress.setCurrentActivity("Folding finished.");
 		progress.setProgress(1.0);
 
-		result.finalmatrix = finalmatrix;*/
+		result.finalmatrix = finalmatrix;
 		return result;
 	}
 	
