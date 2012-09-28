@@ -537,7 +537,8 @@ public class PPFold extends statalign.postprocess.Postprocess {
 		}
 		return ret;
 	}
-	
+
+	ArrayList<Integer> leftOutColumns = new ArrayList<Integer>();
 	@Override	
 	public void newSample(State state, int no, int total) {
 		for (int i = 0; i < t.length; i++) {
@@ -586,7 +587,6 @@ public class PPFold extends statalign.postprocess.Postprocess {
 			}
 		}
 
-		
 		boolean cont = true;
 		if (cont) {
 			/*// initialise matrices
@@ -782,21 +782,25 @@ public class PPFold extends statalign.postprocess.Postprocess {
 							}
 						}
 						
-						System.out.print(">=  ");
-						ArrayList<Integer> leftOutColumns = new ArrayList<Integer>();
-						for(int i = 0 ; i < columnCounts.length ; i++)
+						
+						if(no < 25)
 						{
-							System.out.print((i+1)+":"+columnCounts[i]/n+"   ");
-								if(columnCounts[i]/n <= 0.75)
-								{
-									
-									leftOutColumns.add(i);
-								}
+							leftOutColumns.clear();
+							for(int i = 0 ; i < columnCounts.length ; i++)
+							{
+									System.out.print((i+1)+":"+columnCounts[i]/n+"   ");
+									if(columnCounts[i]/n <= 0.25)
+									{
+										
+										leftOutColumns.add(i);
+									}
+							}
 						}
 						System.out.println();
+						
 						//RNAFoldingTools.writeMatrix(averagedPhyloProbs, new File(title+"_phylo_full.bp"));
 						averagedPhyloProbs = leaveOutColumns(averagedPhyloProbs, leftOutColumns);
-						//RNAFoldingTools.writeMatrix(averagedPhyloProbs, new File(title+"_phylo.bp"));
+						//RNAFoldingTools.writeMatrix(averagedPhyloProbs, new File(outDir+"/"+title+"_phylo.bp"));
 						//ResultBundle matrixResult = PPfoldMain.foldMatrix(progress, input.sequences,	input.names, sampleResult.phyloProbs, param, extradata);
 						//ResultBundle matrixResult = PPfoldMain.foldMatrix(progress, projectedAlignment.sequences,	projectedAlignment.names,  sampleResult.phyloProbs, param, extradata);
 						ResultBundle matrixResult = PPfoldMain.foldMatrix(progress, projectedAlignment.sequences,	projectedAlignment.names, averagedPhyloProbs, param, extradata);

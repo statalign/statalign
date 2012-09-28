@@ -292,7 +292,7 @@ public class Mcmc extends Stoppable {
 
 						text += "   The sampling rate: " + sampRate;
 						if(AutomateParameters.shouldAutomateNumberOfSamples()){
-							text +=  "  Similarity between the last two alignments: " + currScore;
+							text +=  "  Similarity(alignment n-1, alignment n): " + currScore + " < " + AutomateParameters.PERCENT_CONST;
 						}
 						frame.statusText.setText(text );
 					}
