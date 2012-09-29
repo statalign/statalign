@@ -17,6 +17,7 @@ div.allContent {
 
 div.container {
     text-align: justify;
+	font-size: 18px
 }
 
 table.menu {
@@ -31,6 +32,7 @@ td.subtitle {
     padding-left: 50px;
     font-family:"Ariel", Verdana, sans-serif;
     font-style:italic;
+	font-size:14px;
 }
 
 image.logo {
