@@ -8,10 +8,10 @@ public class StructAlign extends ModelExtension {
 	/** alpha-C atomic coordinate for each sequence and each residue */
 	double[][][] coords;
 	
-	/** axes of rotations */
-	double[] axes;
-	/** rotation angle for each protein along each rotation axis */
-	double[][] rots;
+	/** axis of rotation for each sequence */
+	double[][] axes;
+	/** rotation angle for each protein along the rotation axis */
+	double[] rots;
 	/** translation vector for each protein */
 	double[][] xlats;
 	
