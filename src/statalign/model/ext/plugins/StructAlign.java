@@ -3,10 +3,15 @@ package statalign.model.ext.plugins;
 import statalign.base.Tree;
 import statalign.model.ext.ModelExtension;
 
+import org.apache.commons.math3.distribution.MultivariateNormalDistribution;
+
 public class StructAlign extends ModelExtension {
 
 	/** alpha-C atomic coordinate for each sequence and each residue */
 	double[][][] coords;
+	
+	/** alpha-C atomic coordinates under the current set of rotations/translations */
+	double[][][] rotCoords;
 	
 	/** axis of rotation for each sequence */
 	double[][] axes;
@@ -14,6 +19,9 @@ public class StructAlign extends ModelExtension {
 	double[] rots;
 	/** translation vector for each protein */
 	double[][] xlats;
+	
+	/** covariance matrix implied by current tree topology */
+	RealMatrix fullCovar;
 	
 	@Override
 	public double logLikeFactor(Tree tree) {
@@ -38,7 +46,33 @@ public class StructAlign extends ModelExtension {
 	 */
 	public double columnContrib(int[] col) {
 		// TODO calc
-		return 0;
+		// count the number of ungapped positions in the column
+		int numMatch = 0;
+		for(int i = 0; i < col.length; i++)
+			if(col[i] != -1)
+				numMatch++;
+		// collect indices of ungapped positions
+		int[] notgap = new int[numMatch];
+		int j = 0;
+		for(int i = 0; i < col.length; i++)
+			if(col[i] != -1)
+				notgap[j++] = i;
+		
+		// extract covariance corresponding to ungapped positions
+		RealMatrix subCovar = fullCovar.getSubMatrix(notgap, notgap);
+		
+		// probably need to convert RealMatrix to double[][] first
+		multiNorm = MultivariateNormalDistribution(new int[numMatch], subCovar);
+		
+		double li = 1;
+		double[] vals = new double[numMatch];
+		// loop over all 3 coordinates
+		for(int j = 0; j < 3; j++){
+			for(int i = 0; i < numMatch; i++)
+				vals[i] = rotCoords[notgap[i]][col[notgap[i]][j];
+			li *= multiNorm.density(vals);
+		}
+		return li;
 	}
 	
 	@Override
