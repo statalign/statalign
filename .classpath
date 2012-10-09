@@ -5,6 +5,6 @@
 	<classpathentry kind="lib" path="lib/options.jar"/>
 	<classpathentry kind="lib" path="lib/data.jar"/>
 	<classpathentry kind="lib" path="lib/mpj.jar"/>
-	<classpathentry kind="lib" path="lib/commons-math-3.0-SNAPSHOT.jar"/>
+	<classpathentry kind="lib" path="lib/commons-math-3.0-SNAPSHOT.jar" sourcepath="C:/Users/Challis/StrucAlign/statalign/commons-maths-src.zip"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

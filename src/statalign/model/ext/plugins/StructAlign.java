@@ -21,7 +21,7 @@ public class StructAlign extends ModelExtension {
 	double[][] xlats;
 	
 	/** covariance matrix implied by current tree topology */
-	RealMatrix fullCovar;
+	double[][] fullCovar;
 	
 	@Override
 	public double logLikeFactor(Tree tree) {
@@ -45,7 +45,6 @@ public class StructAlign extends ModelExtension {
 	 * @return the likelihood contribution
 	 */
 	public double columnContrib(int[] col) {
-		// TODO calc
 		// count the number of ungapped positions in the column
 		int numMatch = 0;
 		for(int i = 0; i < col.length; i++)
@@ -59,20 +58,42 @@ public class StructAlign extends ModelExtension {
 				notgap[j++] = i;
 		
 		// extract covariance corresponding to ungapped positions
-		RealMatrix subCovar = fullCovar.getSubMatrix(notgap, notgap);
+		double[][] subCovar = getSubMatrix(fullCovar, notgap, notgap);
 		
-		// probably need to convert RealMatrix to double[][] first
-		multiNorm = MultivariateNormalDistribution(new int[numMatch], subCovar);
+		// create normal distribution with mean 0 and covariance subCovar
+		MultivariateNormalDistribution multiNorm = new MultivariateNormalDistribution(new double[numMatch], subCovar);
 		
 		double li = 1;
 		double[] vals = new double[numMatch];
 		// loop over all 3 coordinates
-		for(int j = 0; j < 3; j++){
+		for(j = 0; j < 3; j++){
 			for(int i = 0; i < numMatch; i++)
-				vals[i] = rotCoords[notgap[i]][col[notgap[i]][j];
+				vals[i] = rotCoords[notgap[i]][col[notgap[i]]][j];
 			li *= multiNorm.density(vals);
 		}
 		return li;
+	}
+
+	/**
+	 * extracts the specified rows and columns of a 2d array
+	 * @param matrix, 2d array from which to extract; rows, rows to extract; cols, cols to extract
+	 * @return submatrix
+	 */
+	public double[][] getSubMatrix(double[][] matrix, int[] rows, int[] cols) {
+		double[][] submat = new double[rows.length][cols.length];
+		for(int i = 0; i < rows.length; i++)
+			for(int j = 0; j < cols.length; j++)
+				submat[i][j] = matrix[rows[i]][cols[j]];
+		return submat;
+	}
+	
+	/**
+	 * return the full covariance matrix for the tree toplogy and branch lenghts
+	 */	
+	public double[][] calcFullCovar(Tree tree) {
+		// TODO
+		 double[][] x = new double[5][6];
+		 return x;
 	}
 	
 	@Override
