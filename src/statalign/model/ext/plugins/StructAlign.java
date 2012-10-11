@@ -1,9 +1,10 @@
 package statalign.model.ext.plugins;
 
-import statalign.base.Tree;
-import statalign.model.ext.ModelExtension;
-
 import org.apache.commons.math3.distribution.MultivariateNormalDistribution;
+
+import statalign.base.Tree;
+import statalign.base.Vertex;
+import statalign.model.ext.ModelExtension;
 
 public class StructAlign extends ModelExtension {
 
@@ -105,5 +106,12 @@ public class StructAlign extends ModelExtension {
 	@Override
 	public boolean proposeParamChange(Tree tree, double loglike) {
 		return false;
+	}
+
+	@Override
+	public void afterTreeChange(Tree tree, Vertex nephew, boolean accepted) {
+		if(!accepted)
+			return;
+		// TODO recalculate things
 	}
 }
