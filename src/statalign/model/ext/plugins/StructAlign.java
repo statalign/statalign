@@ -114,4 +114,11 @@ public class StructAlign extends ModelExtension {
 			return;
 		// TODO recalculate things
 	}
+	
+	@Override
+	public void afterEdgeLenChange(Tree tree, Vertex vertex, boolean accepted) {
+		if(!accepted)
+			return;
+		// TODO recalculate
+	}
 }

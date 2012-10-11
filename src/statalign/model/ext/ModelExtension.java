@@ -97,6 +97,9 @@ public abstract class ModelExtension {
 	 */
 	public void afterTreeChange(Tree tree, Vertex nephew, boolean accepted) {}
 	
+	public void beforeEdgeLenChange(Tree tree, Vertex vertex) {}
+	public void afterEdgeLenChange(Tree tree, Vertex vertex, boolean accepted) {}
+	
 	public void beforeIndelParamChange(Tree tree, Hmm hmm, int ind) {}
 	public void afterIndelParamChange(Tree tree, Hmm hmm, int ind, boolean accepted) {}
 	
