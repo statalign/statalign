@@ -126,7 +126,7 @@ public class StructAlign extends ModelExtension {
 				subTree[i+j] = subRight[j];
 		}
 		else{
-			subTree[0] = vertex.leafCount;
+			subTree[0] = vertex.index;
 			for(int j = 0; j < distMat.length; j++)
 				subTree[j] = -1;
 		}
