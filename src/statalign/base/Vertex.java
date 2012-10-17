@@ -33,6 +33,9 @@ public class Vertex {
      * Used only if the vertex is a leaf of the tree.
      */
     public String name;
+    
+    /** Index of this vertex in the Tree.vertex array */
+    public int index;
 
     /** This reference points to the parent of the vertex */
     public Vertex parent;
