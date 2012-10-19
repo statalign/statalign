@@ -451,6 +451,27 @@ public class MainFrame extends JFrame implements ActionListener {
                 }
                 if(data instanceof RawSequences) {
                 	manager.inputData.seqs.add((RawSequences)data);
+                	manager.inputgui.updateSequences();
+                	manager.fullPath = inFile.getAbsolutePath();
+                	if (manager.inputData.model != null) {
+                		try {
+                			manager.inputData.model.acceptable(manager.inputData.seqs);
+                		} catch (RecognitionError e) {
+                			tryModels();
+                		}
+                	} else {
+                		tryModels();
+                	}
+                	if (manager.inputData.model != null) {
+                		runItem.setEnabled(true);
+                		runButton.setEnabled(true);
+                		
+                		if(!manager.inputData.seqs.isRNA()) {
+                			rnaButton.setEnabled(false);
+                		} else { 
+                			rnaButton.setEnabled(true);
+                		}
+                	}
                 } else {
                 	// TODO add Tree type as in console version
                 	manager.inputData.auxData.add(data);
