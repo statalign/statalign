@@ -3,21 +3,28 @@ package statalign.io.input.plugins;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.util.Arrays;
+import java.util.List;
 
 import statalign.exceptions.ExceptionNonFasta;
 import statalign.io.RawSequences;
-import statalign.io.input.FileFormatReader;
+import statalign.io.input.DataReader;
 
 /**
  * 
- * Class to read files in Fasta format.
+ * Class to read files in FASTA format.
  * 
  * @author novak
  *
  */
-public class FastaReader extends FileFormatReader {
+public class FastaReader extends DataReader {
 
 	private int errors;
+
+	@Override
+	public List<String> supportedExtensions() {
+		return Arrays.asList(new String[] { "fsa","fas","fasta" });
+	}
 
 	/**
 	 * Reads the contents (aligned/non-aligned sequences) of the given data source in

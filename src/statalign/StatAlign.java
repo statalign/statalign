@@ -9,6 +9,7 @@ import java.net.URLConnection;
 import javax.swing.JOptionPane;
 
 import statalign.base.MainManager;
+import statalign.postprocess.Postprocess;
 import statalign.ui.ErrorMessage;
 import statalign.ui.MainFrame;
 
@@ -56,6 +57,8 @@ public class StatAlign{
 			cl.setVerbose(true);
 			if(cl.fillParams(args, manager) > 0)
 				System.exit(1);
+			// TODO add pluginParameters as a param to fillParams, remove from Postprocess
+			manager.init(Postprocess.pluginParameters);
 			
 			manager.start();
 

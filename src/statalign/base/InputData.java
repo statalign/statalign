@@ -1,5 +1,9 @@
 package statalign.base;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import statalign.io.DataType;
 import statalign.io.RawSequences;
 import statalign.model.subst.SubstitutionModel;
 
@@ -9,6 +13,11 @@ public class InputData {
 	 * The loaded sequences are stored in the RawSequences class
 	 */
 	public RawSequences seqs = new RawSequences();
+
+	/**
+	 * Non-sequence type auxiliary data that has been loaded, can be used by model extension plugins
+	 */
+	public List<DataType> auxData = new ArrayList<DataType>();
 
 	/**
 	 * This class stores the parameters (number of burn-in cycles, number of

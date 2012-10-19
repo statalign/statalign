@@ -1,6 +1,8 @@
 package statalign.exceptions;
 
-public class ExceptionNonFasta extends Exception {
+import java.io.IOException;
+
+public class ExceptionNonFasta extends IOException {
 
 	/**
 	 * 

@@ -7,15 +7,18 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import statalign.io.DataReader;
 import statalign.io.ProteinSkeletons;
+import statalign.io.input.DataReader;
 
-public class CoorReader extends DataReader<ProteinSkeletons> {
+public class CoorReader extends DataReader {
 
 	/** minimum dimension allowed */
 	private int allowDimMin = 3;
 	/** maximum dimension allowed */
 	private int allowDimMax = 3;
+	
+	public CoorReader() {
+	}
 	
 	public void setAllowedDim(int dim) {
 		allowDimMin = allowDimMax = dim;

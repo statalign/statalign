@@ -66,7 +66,7 @@ public class State {
 	/** Substitution model parameters, as given by the substitution plugin */
 	public double[] substParams;
 	
-	/** Log-likelihood of the state */
+	/** Log-likelihood of the state, excluding model extension factors */
 	public double logLike;
 	
 	

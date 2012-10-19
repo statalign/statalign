@@ -6,7 +6,6 @@ import statalign.base.MainManager;
 import statalign.base.Mcmc;
 import statalign.base.Tree;
 import statalign.io.RawSequences;
-import statalign.ui.ErrorMessage;
 import statalign.ui.MainFrame;
 
 /**
@@ -36,6 +35,10 @@ public class MainThread extends StoppableThread {
 	@Override
 	public synchronized void run() {
 		try {
+
+			// initialise model extension plugins for run
+			owner.modelExtMan.initRun(owner.inputData);
+			
 			RawSequences seqs = owner.inputData.seqs;
 			
 			if(owner.frame != null) {
@@ -66,13 +69,20 @@ public class MainThread extends StoppableThread {
 					owner.inputData.model,
 					owner.inputData.model.attachedScoringScheme,
 					new File(owner.fullPath).getName());
-			Mcmc mcmc = new Mcmc(tree, owner.inputData.pars, owner.postProcMan);
+			Mcmc mcmc = new Mcmc(tree, owner.inputData.pars, owner.postProcMan, owner.modelExtMan);
 			mcmc.doMCMC();
+			
+			System.out.println("Ready.");
 		} catch(StoppedException e) {
 			owner.finished();
 			if (owner.frame != null) {
 				owner.frame.statusText.setText(MainFrame.IDLE_STATUS_MESSAGE);
 			}
+			System.out.println("Stopped.");
+		} catch (IllegalArgumentException e) {
+			String msg = e.getMessage();
+			if(msg != null)
+				System.out.println("Model extension plugin error: "+msg);
 		} catch(Exception e) {
 			owner.finished();
 			if(owner.frame != null) {
@@ -84,7 +94,6 @@ public class MainThread extends StoppableThread {
 			else
 				e.printStackTrace();
 		}
-		System.out.println("Ready.");
 		owner.finished();
 	}
 }

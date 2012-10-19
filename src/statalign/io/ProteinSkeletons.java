@@ -10,7 +10,7 @@ import java.util.List;
  * 
  * @author novak
  */
-public class ProteinSkeletons {
+public class ProteinSkeletons implements DataType {
 	
 	/** names of sequences */
 	public List<String> names = new ArrayList<String>();

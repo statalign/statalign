@@ -9,7 +9,7 @@ import java.util.ArrayList;
  * @author novak
  *
  */
-public class RawSequences {
+public class RawSequences implements DataType {
 
 	/**
 	 * Dynamic array of raw sequence data. Sequences can be aligned, in which case the

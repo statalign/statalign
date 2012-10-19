@@ -1,6 +1,6 @@
 package statalign;
 
-import java.io.IOException;
+import java.io.File;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -17,8 +17,8 @@ import ml.options.Options.Separator;
 import statalign.base.AutomateParameters;
 import statalign.base.MainManager;
 import statalign.base.Utils;
+import statalign.io.DataType;
 import statalign.io.RawSequences;
-import statalign.io.input.plugins.FastaReader;
 import statalign.model.subst.RecognitionError;
 import statalign.model.subst.SubstitutionModel;
 import statalign.model.subst.plugins.Dayhoff;
@@ -87,22 +87,34 @@ public class CommandLine {
 			return usage(manager);
 		}
 
-		FastaReader f = new FastaReader();
+//		FastaReader f = new FastaReader();
 		try {
 			for (String inputFile : set.getData()) {
-				try {
-					RawSequences seq = f.read(inputFile);
-					int errorNum = f.getErrors();
-					if (errorNum > 0)
-						warning(errorNum + " errors occured reading "
-								+ inputFile + ", please check file format");
-					if (verbose) {
-						System.out.println("INFO: read " + seq.size()
-								+ " sequences from " + inputFile);
-					}
-					manager.inputData.seqs.add(seq);
-				} catch (IOException e) {
-					return error("error reading input file " + inputFile);
+//				try {
+//					RawSequences seq = f.read(inputFile);
+//					int errorNum = f.getErrors();
+//					if (errorNum > 0)
+//						warning(errorNum + " errors occured reading "
+//								+ inputFile + ", please check file format");
+//					if (verbose) {
+//						System.out.println("INFO: read " + seq.size()
+//								+ " sequences from " + inputFile);
+//					}
+//					manager.inputData.seqs.add(seq);
+//				} catch (IOException e) {
+//					return error("error reading input file " + inputFile);
+//				}
+				File file = new File(inputFile);
+				if(!file.exists())
+					return error("input file does not exist: "+inputFile);
+				DataType data = manager.dataMan.read(file);
+				if(data == null) {
+					return error("input file does not appear to be in a known format: "+inputFile);
+				} else if(data instanceof RawSequences) {
+					manager.inputData.seqs.add((RawSequences)data);
+				} else {
+					// TODO separate a case for tree datatypes (so that initial tree can be given)
+					manager.inputData.auxData.add(data);
 				}
 			}
 

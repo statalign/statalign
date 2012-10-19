@@ -93,8 +93,9 @@ public class Vertex {
         old = new Vertex();
     }
 
-    Vertex(Tree owner, double edgeLength, int[][] seq, String name, String origSeq) {
+    Vertex(Tree owner, int index, double edgeLength, int[][] seq, String name, String origSeq) {
         this.owner = owner;
+        this.index = index;
         this.edgeLength = edgeLength;
         this.name = new String(name);
         this.seq = origSeq;

@@ -10,7 +10,10 @@ import mpi.MPI;
 import statalign.MPIUtils;
 import statalign.base.thread.MainThread;
 import statalign.base.thread.StoppedException;
+import statalign.io.DataManager;
+import statalign.model.ext.ModelExtInterface;
 import statalign.model.subst.SubstitutionModel;
+import statalign.postprocess.PluginParameters;
 import statalign.postprocess.Postprocess;
 import statalign.postprocess.PostprocessManager;
 import statalign.postprocess.gui.InputGUI;
@@ -37,6 +40,16 @@ public class MainManager {
 	 * postprocesses applied on the MCMC run.
 	 */
 	public PostprocessManager postProcMan;
+	
+	/**
+	 * Data manager that handles all input files.
+	 */
+	public DataManager dataMan;
+	
+	/**
+	 * Manager for model extension plugins
+	 */
+	public ModelExtInterface modelExtMan;
 
 	/**
 	 * Array of substitution model classes that can be selected for an analysis.
@@ -85,6 +98,19 @@ public class MainManager {
 	public MainManager(MainFrame frame) {
 		this.frame = frame;
 		postProcMan = new PostprocessManager(this);
+		dataMan = new DataManager();
+		dataMan.init();
+		modelExtMan = new ModelExtInterface();
+	}
+	
+	/**
+	 * Initialises submanagers after the command line has been processed. This is separated from
+	 * the constructor as some plugins require input from the command line.
+	 * @param params plugin parameters 
+	 */
+	public void init(PluginParameters params) {
+		// TODO add postProcMan here and an init() for postprocess plugins
+		modelExtMan.init(params);
 	}
 
 	/**
@@ -152,14 +178,14 @@ public class MainManager {
 					.size()]), inputData.seqs.seqNames.toArray(new String[inputData.seqs.seqNames
 					.size()]), inputData.model, inputData.model.attachedScoringScheme, new File(
 					fullPath).getName());
-			Mcmc mcmc = new Mcmc(tree, inputData.pars, postProcMan, noOfProcesses, rank, heat);
+			Mcmc mcmc = new Mcmc(tree, inputData.pars, postProcMan, modelExtMan, noOfProcesses, rank, heat);
 			mcmc.doMCMC();
 
 			// Sets up a barrier.
 			MPI.COMM_WORLD.Barrier();
 
 			// Retrieve the log-likelihood ratio from all of the workers
-			double[] logLikelihood = new double[] { tree.getLogLike() };
+			double[] logLikelihood = new double[] { modelExtMan.getTotalLogLike(tree) };
 			double[] maxLogLikelihood = new double[1];
 			MPI.COMM_WORLD.Reduce(logLikelihood, 0, maxLogLikelihood, 0, 1,
 					MPI.DOUBLE, MPI.MAX, 0);
@@ -190,6 +216,7 @@ public class MainManager {
 	public void finished() {
 		if (frame != null) {
 			SwingUtilities.invokeLater(new Runnable() {
+				@Override
 				public void run() {
 					frame.finished();
 				}

@@ -1,27 +1,23 @@
 package statalign.base;
 
-import java.awt.Cursor;
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Random;
-
-import com.ppfold.algo.AlignmentData;
-import com.ppfold.algo.FuzzyAlignment;
 
 import mpi.MPI;
 import statalign.MPIUtils;
 import statalign.base.thread.Stoppable;
 import statalign.base.thread.StoppedException;
-import statalign.distance.AlignmentSample;
 import statalign.distance.Distance;
+import statalign.model.ext.ModelExtInterface;
 import statalign.postprocess.PostprocessManager;
 import statalign.postprocess.plugins.contree.CNetwork;
-import statalign.postprocess.utils.RNAFoldingTools;
 import statalign.ui.ErrorMessage;
 import statalign.ui.MainFrame;
 import statalign.utils.SimpleStats;
+
+import com.ppfold.algo.AlignmentData;
+import com.ppfold.algo.FuzzyAlignment;
 
 /**
  * 
@@ -41,12 +37,14 @@ public class Mcmc extends Stoppable {
 	double[] weights; // for selecting internal tree node
 	final static double LEAFCOUNT_POWER = 1.0;
 	final static double SELTRLEVPROB[] = { 0.9, 0.6, 0.4, 0.2, 0 };
-	final static int FIVECHOOSE[] = { 35, 5, 15, 35, 10 }; // edge, topology,
-	// indel parameter,
-	// alignment,
-	// substitutionparameter
-	final static int FOURCHOOSE[] = { 35, 5, 25, 35 }; // edge, topology, indel
-	// parameter, alignment
+	/** Default proposal weights in this order: align, topology, edge, indel param, subst param, modelext param */
+	final static int DEF_PROP_WEIGHTS[] = { 35, 20, 15, 15, 10, 0 };
+	
+//	final static int FIVECHOOSE[] = { 35, 5, 15, 35, 10 }; // edge, topology,
+//	// indel parameter, alignment, substitutionparameter
+//	final static int FOURCHOOSE[] = { 35, 5, 25, 35 }; // edge, topology, indel
+//	// parameter, alignment
+	
 	private static final int SAMPLE_RATE_WHEN_DETERMINING_THE_SPACE = 100;
 	private static final int BURNIN_TO_CALCULATE_THE_SPACE = 25000;
 
@@ -75,22 +73,32 @@ public class Mcmc extends Stoppable {
 	/** Current tree in the MCMC chain. */
 	public Tree tree;
 
+	/** Total log-likelihood of the current state, cached for speed */
+	double totalLogLike;
+
 	/**
 	 * MCMC parameters including the number of burn-in steps, the total number
 	 * of steps in the MCMC and the sampling rate.
 	 */
 	public MCMCPars mcmcpars;
+	
+	/** Proposal weights: 0 align, 1 topology, 2 edge, 3 indel par, 4 subst par, 5 modelext par */
+	int[] proposalWeights;
 
 	public McmcStep mcmcStep = new McmcStep();
 
 	/** PostprocessManager that handles the postprocessing modules. */
 	public PostprocessManager postprocMan;
 
+	/** Manager that handles model extension plugins */
+	public ModelExtInterface modelExtMan;
+
 	/** True while the MCMC is in the burn-in phase. */
 	public boolean burnin;
 
-	public Mcmc(Tree tree, MCMCPars pars, PostprocessManager ppm) {
+	public Mcmc(Tree tree, MCMCPars pars, PostprocessManager ppm, ModelExtInterface modelExtMan) {
 		postprocMan = ppm;
+		this.modelExtMan = modelExtMan;
 		ppm.mcmc = this;
 		this.tree = tree;
 		weights = new double[tree.vertex.length];
@@ -98,9 +106,9 @@ public class Mcmc extends Stoppable {
 		this.tree.heat = 1.0d;
 	}
 
-	public Mcmc(Tree tree, MCMCPars pars, PostprocessManager ppm,
+	public Mcmc(Tree tree, MCMCPars pars, PostprocessManager ppm, ModelExtInterface modelExtMan,
 			int noOfProcesses, int rank, double heat) {
-		this(tree, pars, ppm);
+		this(tree, pars, ppm, modelExtMan);
 		this.noOfProcesses = noOfProcesses;
 		this.rank = rank;
 		this.tree.heat = heat;
@@ -119,6 +127,8 @@ public class Mcmc extends Stoppable {
 	private int indelAccepted = 0;
 	private int substSampled = 0;
 	private int substAccepted = 0;
+	private int modextSampled = 0;
+	private int modextAccepted = 0;
 
 	/**
 	 * In effect starts an MCMC run. It first performs a prescribed number of
@@ -142,13 +152,25 @@ public class Mcmc extends Stoppable {
 
 		MainFrame frame = postprocMan.mainManager.frame;
 		Utils.generator = new Random(mcmcpars.seed + rank);
-		long currentTime, start = System.currentTimeMillis();
+
+		// TODO add weights to MCMCPars and take from there
+		proposalWeights = DEF_PROP_WEIGHTS;
+		if(tree.substitutionModel.params == null || tree.substitutionModel.params.length == 0)
+			proposalWeights[4] = 0;
+		
+		// notifies model extension plugins of start of MCMC sampling
+		modelExtMan.beforeSampling(tree);
 
 		// Triggers a /before first sample/ of the plugins.
 		if ((isParallel && MPIUtils.isMaster(rank)) || !isParallel) {
 			postprocMan.beforeFirstSample();
 		}
 
+		long currentTime, start = System.currentTimeMillis();
+
+		// calculates initial log-likelihood
+		totalLogLike = modelExtMan.getTotalLogLike(tree);
+		
 		ArrayList<Double> logLikeList = new ArrayList<Double>();
 
 		try {
@@ -168,14 +190,14 @@ public class Mcmc extends Stoppable {
 
 			burnin = true;
 			for (int i = 0; i < burnIn; i++) {
-
+				
 				sample(0);
 
 				// Triggers a /new step/ and a /new peek/ (if appropriate) of
 				// the plugins.
 				if ((isParallel && MPIUtils.isMaster(rank)) || !isParallel) {
 					// TODO do above inside sample() and add more info
-					mcmcStep.newLogLike = tree.getLogLike();
+					mcmcStep.newLogLike = modelExtMan.getTotalLogLike(tree);
 					mcmcStep.burnIn = burnin;
 					postprocMan.newStep(mcmcStep);
 					if (i % mcmcpars.sampRate == 0) {
@@ -274,7 +296,7 @@ public class Mcmc extends Stoppable {
 					// Triggers a /new step/ and a /new peek/ (if appropriate)
 					// of the plugins.
 					if ((isParallel && MPIUtils.isMaster(rank)) || !isParallel) {
-						mcmcStep.newLogLike = tree.getLogLike();
+						mcmcStep.newLogLike = totalLogLike;
 						mcmcStep.burnIn = burnin;
 						postprocMan.newStep(mcmcStep);
 						if (burnIn + i * period + j % mcmcpars.sampRate == 0) {
@@ -339,6 +361,10 @@ public class Mcmc extends Stoppable {
 		if ((isParallel && MPIUtils.isMaster(rank)) || !isParallel) {
 			postprocMan.afterLastSample();
 		}
+		
+		// notifies model extension plugins of the end of sampling
+		modelExtMan.afterSampling();
+		
 		if (frame != null) {
 			frame.statusText.setText(MainFrame.IDLE_STATUS_MESSAGE);
 		}
@@ -359,8 +385,8 @@ public class Mcmc extends Stoppable {
 
 		if (rank == swapA || rank == swapB) {
 			double[] myStateInfo = new double[3];
-			myStateInfo[0] = tree.getLogLike();
-			myStateInfo[1] = tree.getLogPrior();
+			myStateInfo[0] = totalLogLike;
+			myStateInfo[1] = modelExtMan.getTotalLogPrior(tree);
 			myStateInfo[2] = tree.heat;
 
 			double[] partnerStateInfo = new double[3];
@@ -430,6 +456,7 @@ public class Mcmc extends Stoppable {
 	SimpleStats edge;
 	SimpleStats ind;
 	SimpleStats sub;
+	SimpleStats modext;
 
 	{
 		if(Utils.DEBUG) {
@@ -445,55 +472,63 @@ public class Mcmc extends Stoppable {
 		if (samplingMethod == 0) {
 			long timer;
 			stoppable();
-			switch (tree.substitutionModel.params != null
-					&& tree.substitutionModel.params.length > 0 ? Utils
-							.weightedChoose(FIVECHOOSE) : Utils
-							.weightedChoose(FOURCHOOSE)) {
-							case 0:
-								if(Utils.DEBUG)
-									timer = -System.currentTimeMillis();
-								sampleEdge();
-								if(Utils.DEBUG) {
-									timer += System.currentTimeMillis();
-									edge.addData(timer);
-								}
-								break;
-							case 1:
-								if(Utils.DEBUG)
-									timer = -System.currentTimeMillis();
-								sampleTopology();
-								if(Utils.DEBUG) {
-									timer += System.currentTimeMillis();
-									top.addData(timer);
-								}
-								break;
-							case 2:
-								if(Utils.DEBUG)
-									timer = -System.currentTimeMillis();
-								sampleIndelParameter();
-								if(Utils.DEBUG) {
-									timer += System.currentTimeMillis();
-									ind.addData(timer);
-								}
-								break;
-							case 3:
-								if(Utils.DEBUG)
-									timer = -System.currentTimeMillis();
-								sampleAlignment();
-								if(Utils.DEBUG) {
-									timer += System.currentTimeMillis();
-									ali.addData(timer);
-								}
-								break;
-							case 4:
-								if(Utils.DEBUG)
-									timer = -System.currentTimeMillis();
-								sampleSubstParameter();
-								if(Utils.DEBUG) {
-									timer += System.currentTimeMillis();
-									sub.addData(timer);
-								}
-								break;
+
+			proposalWeights[5] = modelExtMan.getParamChangeWeight();
+			switch (Utils.weightedChoose(proposalWeights)) {
+			case 0:
+				if(Utils.DEBUG)
+					timer = -System.currentTimeMillis();
+				sampleAlignment();
+				if(Utils.DEBUG) {
+					timer += System.currentTimeMillis();
+					ali.addData(timer);
+				}
+				break;
+			case 1:
+				if(Utils.DEBUG)
+					timer = -System.currentTimeMillis();
+				sampleTopology();
+				if(Utils.DEBUG) {
+					timer += System.currentTimeMillis();
+					top.addData(timer);
+				}
+				break;
+			case 2:
+				if(Utils.DEBUG)
+					timer = -System.currentTimeMillis();
+				sampleEdge();
+				if(Utils.DEBUG) {
+					timer += System.currentTimeMillis();
+					edge.addData(timer);
+				}
+				break;
+			case 3:
+				if(Utils.DEBUG)
+					timer = -System.currentTimeMillis();
+				sampleIndelParameter();
+				if(Utils.DEBUG) {
+					timer += System.currentTimeMillis();
+					ind.addData(timer);
+				}
+				break;
+			case 4:
+				if(Utils.DEBUG)
+					timer = -System.currentTimeMillis();
+				sampleSubstParameter();
+				if(Utils.DEBUG) {
+					timer += System.currentTimeMillis();
+					sub.addData(timer);
+				}
+				break;
+			case 5:
+				if(Utils.DEBUG)
+					timer = -System.currentTimeMillis();
+				sampleModelExtParam();
+				if(Utils.DEBUG) {
+					timer += System.currentTimeMillis();
+					modext.addData(timer);
+				}
+				break;
 			}
 		} else {
 			stoppable();
@@ -502,53 +537,79 @@ public class Mcmc extends Stoppable {
 			sampleIndelParameter();
 			sampleSubstParameter();
 			sampleAlignment();
+			sampleModelExtParam();
 		}
+		
+		// check log-likelihood consistency if debugging on
+		if(Utils.DEBUG) {
+			if(Math.abs(modelExtMan.getTotalLogLike(tree)-totalLogLike) > 1e-5)
+				throw new Error("Log-likelihood inconsistency in MCMC");
+		}
+
 	}
 
-	private void sampleEdge() {
-		edgeSampled++;
-		// System.out.print("Edge: ");
-		int i = Utils.generator.nextInt(tree.vertex.length - 1);
-		double oldEdge = tree.vertex[i].edgeLength;
-		double oldLogLikelihood = tree.getLogLike();
-		while ((tree.vertex[i].edgeLength = oldEdge
-				+ Utils.generator.nextDouble() * Utils.EDGE_SPAN
-				- (Utils.EDGE_SPAN / 2.0)) < 0.01)
-			;
-		tree.vertex[i].edgeChangeUpdate();
-		// Vertex actual = tree.vertex[i];
-		// while(actual != null){
-		// actual.calcFelsen();
-		// actual.calcOrphan();
-		// actual.calcIndelLogLike();
-		// actual = actual.parent;
-		// }
-		tree.vertex[i].calcAllUp();
-		double newLogLikelihood = tree.getLogLike();
-		if (Utils.generator.nextDouble() < (Math.exp((newLogLikelihood
-				- oldLogLikelihood - tree.vertex[i].edgeLength + oldEdge)
-				* tree.heat) * (Math.min(oldEdge - 0.01, Utils.EDGE_SPAN / 2.0) + Utils.EDGE_SPAN / 2.0))
-				/ (Math.min(tree.vertex[i].edgeLength - 0.01,
-						Utils.EDGE_SPAN / 2.0) + Utils.EDGE_SPAN / 2.0)) {
-			// acceptance, do nothing
-			// System.out.println("accepted (old: "+oldLogLikelihood+" new: "+newLogLikelihood+")");
-			edgeAccepted++;
-		} else {
-			// reject, restore
-			// System.out.print("Rejected! i: "+i+"\tOld likelihood: "+oldLogLikelihood+"\tNew likelihood: "+newLogLikelihood);
-			tree.vertex[i].edgeLength = oldEdge;
-			tree.vertex[i].edgeChangeUpdate();
-			// actual = tree.vertex[i];
-			// while(actual != null){
-			// actual.calcFelsen();
-			// actual.calcOrphan();
-			// actual.calcIndelLogLike();
-			// actual = actual.parent;
-			// }
-			tree.vertex[i].calcAllUp();
-			// System.out.println("rejected (old: "+oldLogLikelihood+" new: "+newLogLikelihood+")");
-
+	private void sampleAlignment() {
+		alignmentSampled++;
+		for (int i = 0; i < tree.vertex.length; i++) {
+			tree.vertex[i].selected = false;
 		}
+		// System.out.print("Alignment: ");
+		double oldLogLi = totalLogLike;
+		// System.out.println("fast indel before: "+tree.root.indelLogLike);
+		tree.countLeaves(); // calculates recursively how many leaves we have
+		// below this node
+		for (int i = 0; i < weights.length; i++) {
+			weights[i] = Math.pow(tree.vertex[i].leafCount, LEAFCOUNT_POWER);
+		}
+		int k = Utils.weightedChoose(weights, null);
+		Vertex selectRoot = tree.vertex[k];
+		// System.out.println("Sampling from the subtree: "+tree.vertex[k].print());
+		selectRoot.selectSubtree(SELTRLEVPROB, 0);
+		modelExtMan.beforeAlignChange(tree, selectRoot);
+		// TODO split selectAndResampleAlignment and call beforeAlignChange after window selection
+		double bpp = selectRoot.selectAndResampleAlignment();
+		double newLogLi = modelExtMan.getTotalLogLike(tree);
+	
+		// String[] printedAlignment = tree.printedAlignment("StatAlign");
+		// for(String i: printedAlignment)
+		// System.out.println(i);
+		//
+		// System.out.println("-----------------------------------------------------------------------------");
+		// double fastFels = tree.root.orphanLogLike;
+		// double fastIns = tree.root.indelLogLike;
+		// report();
+		// tree.root.first.seq[0] = 0.0;
+		// System.out.println("Old before: "+tree.root.old.indelLogLike);
+		// tree.root.calcFelsRecursivelyWithCheck();
+		// tree.root.calcIndelRecursivelyWithCheck();
+		// tree.root.calcIndelLikeRecursively();
+		// System.out.println("Old after: "+tree.root.old.indelLogLike);
+		// System.out.println("Check logli: "+tree.getLogLike()+" fastFels: "+fastFels+" slowFels: "+tree.root.orphanLogLike+
+		// " fastIns: "+fastIns+" slowIns: "+tree.root.indelLogLike);
+		// System.out.println("selected subtree: "+tree.vertex[k].print());
+		// System.out.println("bpp: "+bpp+"old: "+oldLogLi+"new: "+newLogLi +
+		// "heated diff: " + ((newLogLi - oldLogLi) * tree.heat));
+		if (Math.log(Utils.generator.nextDouble()) < bpp
+				+ (newLogLi - oldLogLi) * tree.heat) {
+			// accepted
+			// System.out.println("accepted (old: "+oldLogLi+" new: "+newLogLi+")");
+			totalLogLike = newLogLi;
+			alignmentAccepted++;
+			modelExtMan.afterAlignChange(tree, selectRoot, true);
+		} else {
+			// refused
+			// String[] s = tree.printedAlignment();
+			selectRoot.alignRestore();
+			// s = tree.printedAlignment();
+			// System.out.println("rejected (old: "+oldLogLi+" new: "+newLogLi+")");
+			// System.out.println("after reject fast: "+tree.root.indelLogLike);
+			// tree.root.calcIndelRecursivelyWithCheck();
+			// System.out.println(" slow: "+tree.root.indelLogLike);
+			modelExtMan.afterAlignChange(tree, selectRoot, false);
+	
+		}
+		// tree.root.calcFelsRecursivelyWithCheck();
+		// tree.root.calcIndelRecursivelyWithCheck();
 	}
 
 	// this is the old
@@ -590,21 +651,21 @@ public class Mcmc extends Stoppable {
 	 */
 	private void sampleTopology() {
 		int vnum = tree.vertex.length;
-
+	
 		if (vnum <= 3)
 			return;
-
+	
 		topologySampled++;
 		// System.out.println("\n\n\t***\t***\t***\n\n\n");
 		// System.out.print("Topology: ");
 		// tree.printAllPointers();
-		double oldLogLi = tree.getLogLike();
-
+		double oldLogLi = totalLogLike;
+	
 		int vertId, rnd = Utils.generator.nextInt(vnum - 3);
 		vertId = tree.getTopVertexId(rnd);
 		if (vertId != -1) {
 			int lastId[] = new int[3], num = 0, newId = vertId;
-
+	
 			for (int i = vnum - 3; i < vnum; i++) {
 				int id = tree.getTopVertexId(i);
 				if (id == -1)
@@ -616,7 +677,9 @@ public class Mcmc extends Stoppable {
 		}
 		Vertex nephew = tree.vertex[rnd];
 		Vertex uncle = nephew.parent.brother();
-
+		
+		modelExtMan.beforeTreeChange(tree, nephew);
+	
 		// for(vertId = 0; vertId < vnum; vertId++) {
 		// if(tree.getTopVertexId(vertId) == -1) { // vertex eligible
 		// if(rnd-- == 0)
@@ -624,7 +687,7 @@ public class Mcmc extends Stoppable {
 		// }
 		// }
 		// Vertex nephew = tree.vertex[vertId];
-
+	
 		// String[] s = tree.root.printedMultipleAlignment();
 		// System.out.println("Alignment before topology changing: ");
 		// for(int i = 0; i < s.length; i++){
@@ -637,17 +700,19 @@ public class Mcmc extends Stoppable {
 		// for(int i = 0; i < s.length; i++){
 		// System.out.println(s[i]);
 		// }
-
-		double newLogLi = tree.getLogLike();
-
+	
+		double newLogLi = modelExtMan.getTotalLogLike(tree);
+	
 		// tree.root.calcFelsRecursivelyWithCheck();
 		// tree.root.calcIndelRecursivelyWithCheck();
-
+	
 		if (Math.log(Utils.generator.nextDouble()) < bpp
 				+ (newLogLi - oldLogLi) * tree.heat) {
 			// accepted
 			// System.out.println("accepted (old: "+oldLogLi+" new: "+newLogLi+")");
 			topologyAccepted++;
+			totalLogLike = newLogLi;
+			modelExtMan.afterTreeChange(tree, uncle, true);
 		} else {
 			// rejected
 			// System.out.println("Checking pointer integrity before changing back topology: ");
@@ -676,10 +741,10 @@ public class Mcmc extends Stoppable {
 											+ tree.vertex[i] + " "
 											+ tree.vertex[i].print());
 					}
-
+	
 				}
 			}
-
+	
 			uncle.fastSwapBackUncle();
 			// System.out.println("Checking pointer integrity after changing back topology: ");
 			for (int i = 0; i < tree.vertex.length; i++) {
@@ -716,22 +781,85 @@ public class Mcmc extends Stoppable {
 			// System.out.println(s[i]);
 			// }
 			// System.out.println("rejected (old: "+oldLogLi+" new: "+newLogLi+")");
+			modelExtMan.afterTreeChange(tree, nephew, false);
 		}
-
+	
 		// tree.printAllPointers();
 		// System.out.println("\n\n\t***\t***\t***\n\n\n");
 		tree.root.calcFelsRecursivelyWithCheck();
 		tree.root.calcIndelRecursivelyWithCheck();
 	}
 
+	private void sampleEdge() {
+		edgeSampled++;
+		
+		// select edge
+		int i = Utils.generator.nextInt(tree.vertex.length - 1);
+		Vertex selectedNode = tree.vertex[i];
+		double oldEdge = selectedNode.edgeLength;
+		double oldLogLikelihood = totalLogLike;
+		
+		modelExtMan.beforeEdgeLenChange(tree, selectedNode);
+
+		// perform change
+		while ((selectedNode.edgeLength = oldEdge
+				+ Utils.generator.nextDouble() * Utils.EDGE_SPAN
+				- (Utils.EDGE_SPAN / 2.0)) < 0.01)
+			;
+		selectedNode.edgeChangeUpdate();
+		// Vertex actual = tree.vertex[i];
+		// while(actual != null){
+		// actual.calcFelsen();
+		// actual.calcOrphan();
+		// actual.calcIndelLogLike();
+		// actual = actual.parent;
+		// }
+		selectedNode.calcAllUp();
+		double newLogLikelihood = modelExtMan.getTotalLogLike(tree);
+		if (Utils.generator.nextDouble() < (Math.exp((newLogLikelihood
+				- oldLogLikelihood - selectedNode.edgeLength + oldEdge)
+				* tree.heat) * (Math.min(oldEdge - 0.01, Utils.EDGE_SPAN / 2.0) + Utils.EDGE_SPAN / 2.0))
+				/ (Math.min(selectedNode.edgeLength - 0.01,
+						Utils.EDGE_SPAN / 2.0) + Utils.EDGE_SPAN / 2.0)) {
+			// acceptance, do nothing
+			// System.out.println("accepted (old: "+oldLogLikelihood+" new: "+newLogLikelihood+")");
+			edgeAccepted++;
+			totalLogLike = newLogLikelihood;
+			modelExtMan.afterEdgeLenChange(tree, selectedNode, true);
+		} else {
+			// reject, restore
+			// System.out.print("Rejected! i: "+i+"\tOld likelihood: "+oldLogLikelihood+"\tNew likelihood: "+newLogLikelihood);
+			selectedNode.edgeLength = oldEdge;
+			selectedNode.edgeChangeUpdate();
+			// actual = tree.vertex[i];
+			// while(actual != null){
+			// actual.calcFelsen();
+			// actual.calcOrphan();
+			// actual.calcIndelLogLike();
+			// actual = actual.parent;
+			// }
+			selectedNode.calcAllUp();
+			// System.out.println("rejected (old: "+oldLogLikelihood+" new: "+newLogLikelihood+")");
+			modelExtMan.afterEdgeLenChange(tree, selectedNode, false);
+
+		}
+	}
+
 	private void sampleIndelParameter() {
 		indelSampled++;
-		switch (Utils.generator.nextInt(3)) {
+		
+		// select indel param
+		int ind = Utils.generator.nextInt(3);
+		boolean accepted = false;
+		
+		modelExtMan.beforeIndelParamChange(tree, tree.hmm2, ind);
+		
+		// perform change, then accept/reject
+		switch (ind) {
 		case 0:
 			// System.out.print("Indel param R: ");
 			double oldR = tree.hmm2.params[0];
-			double oldLogLikelihood = tree.root.orphanLogLike
-					+ tree.root.indelLogLike;
+			double oldLogLikelihood = totalLogLike;
 			while ((tree.hmm2.params[0] = oldR + Utils.generator.nextDouble()
 					* Utils.R_SPAN - Utils.R_SPAN / 2.0) <= 0.0
 					|| tree.hmm2.params[0] >= 1.0)
@@ -740,8 +868,7 @@ public class Mcmc extends Stoppable {
 				tree.vertex[i].updateHmmMatrices();
 			}
 			tree.root.calcIndelLikeRecursively();
-			double newLogLikelihood = tree.root.orphanLogLike
-					+ tree.root.indelLogLike;
+			double newLogLikelihood = modelExtMan.getTotalLogLike(tree);
 			if (Utils.generator.nextDouble() < Math
 					.exp((newLogLikelihood - oldLogLikelihood) * tree.heat)
 					* (Math.min(1.0 - oldR, Utils.R_SPAN / 2.0) + Math.min(
@@ -751,6 +878,8 @@ public class Mcmc extends Stoppable {
 				// accept, do nothing
 				// System.out.println("accepted (old: "+oldLogLikelihood+" new: "+newLogLikelihood+")");
 				indelAccepted++;
+				accepted = true;
+				totalLogLike = newLogLikelihood;
 			} else {
 				// restore
 				tree.hmm2.params[0] = oldR;
@@ -766,7 +895,7 @@ public class Mcmc extends Stoppable {
 			// ///////////////////////////////////////////////
 			// System.out.print("Indel param Lambda: ");
 			double oldLambda = tree.hmm2.params[1];
-			oldLogLikelihood = tree.root.orphanLogLike + tree.root.indelLogLike;
+			oldLogLikelihood = totalLogLike;
 			while ((tree.hmm2.params[1] = oldLambda
 					+ Utils.generator.nextDouble() * Utils.LAMBDA_SPAN
 					- Utils.LAMBDA_SPAN / 2.0) <= 0.0
@@ -776,7 +905,7 @@ public class Mcmc extends Stoppable {
 				tree.vertex[i].updateHmmMatrices();
 			}
 			tree.root.calcIndelLikeRecursively();
-			newLogLikelihood = tree.root.orphanLogLike + tree.root.indelLogLike;
+			newLogLikelihood = modelExtMan.getTotalLogLike(tree);
 			if (Utils.generator.nextDouble() < Math.exp((newLogLikelihood
 					- oldLogLikelihood - tree.hmm2.params[1] + oldLambda)
 					* tree.heat)
@@ -789,6 +918,8 @@ public class Mcmc extends Stoppable {
 				// accept, do nothing
 				// System.out.println("accepted (old: "+oldLogLikelihood+" new: "+newLogLikelihood+" oldLambda: "+oldLambda+" newLambda: "+tree.hmm2.params[1]+")");
 				indelAccepted++;
+				accepted = true;
+				totalLogLike = newLogLikelihood;
 			} else {
 				// restore
 				tree.hmm2.params[1] = oldLambda;
@@ -803,7 +934,7 @@ public class Mcmc extends Stoppable {
 			// ///////////////////////////////////////////////////////
 			// System.out.print("Indel param Mu: ");
 			double oldMu = tree.hmm2.params[2];
-			oldLogLikelihood = tree.getLogLike();
+			oldLogLikelihood = totalLogLike;
 			while ((tree.hmm2.params[2] = oldMu + Utils.generator.nextDouble()
 					* Utils.MU_SPAN - Utils.MU_SPAN / 2.0) <= tree.hmm2.params[1])
 				;
@@ -811,7 +942,7 @@ public class Mcmc extends Stoppable {
 				tree.vertex[i].updateHmmMatrices();
 			}
 			tree.root.calcIndelLikeRecursively();
-			newLogLikelihood = tree.getLogLike();
+			newLogLikelihood = modelExtMan.getTotalLogLike(tree);
 			if (Utils.generator.nextDouble() < Math.exp((newLogLikelihood
 					- oldLogLikelihood - tree.hmm2.params[2] + oldMu)
 					* tree.heat)
@@ -822,6 +953,8 @@ public class Mcmc extends Stoppable {
 				// accept, do nothing
 				// System.out.println("accepted (old: "+oldLogLikelihood+" new: "+newLogLikelihood+")");
 				indelAccepted++;
+				accepted = true;
+				totalLogLike = newLogLikelihood;
 			} else {
 				// restore
 				tree.hmm2.params[2] = oldMu;
@@ -833,92 +966,50 @@ public class Mcmc extends Stoppable {
 			}
 			break;
 		}
+		
+		modelExtMan.afterIndelParamChange(tree, tree.hmm2, ind, accepted);
 	}
 
 	private void sampleSubstParameter() {
 		substSampled++;
 		if (tree.substitutionModel.params.length == 0)
 			return;
-		else {
-			double mh = tree.substitutionModel.sampleParameter();
-			double oldlikelihood = tree.root.orphanLogLike;
+		
+		modelExtMan.beforeSubstParamChange(tree, tree.substitutionModel, -1);
+		
+		double mh = tree.substitutionModel.sampleParameter();
+		double oldlikelihood = totalLogLike;
+		for (int i = 0; i < tree.vertex.length; i++) {
+			tree.vertex[i].updateTransitionMatrix();
+		}
+		tree.root.calcFelsRecursively();
+		double newlikelihood = modelExtMan.getTotalLogLike(tree);
+		if (Utils.generator.nextDouble() < Math.exp(mh
+				+ (Math.log(tree.substitutionModel.getPrior())
+						+ newlikelihood - oldlikelihood))
+						* tree.heat) {
+			// System.out.println("Substitution parameter: accepted (old: "+oldlikelihood+" new: "+newlikelihood+")");
+			substAccepted++;
+			totalLogLike = newlikelihood;
+			modelExtMan.afterSubstParamChange(tree, tree.substitutionModel, -1, true);
+		} else {
+			tree.substitutionModel.restoreParameter();
 			for (int i = 0; i < tree.vertex.length; i++) {
 				tree.vertex[i].updateTransitionMatrix();
 			}
 			tree.root.calcFelsRecursively();
-			double newlikelihood = tree.root.orphanLogLike;
-			if (Utils.generator.nextDouble() < Math.exp(mh
-					+ (Math.log(tree.substitutionModel.getPrior())
-							+ newlikelihood - oldlikelihood))
-							* tree.heat) {
-				// System.out.println("Substitution parameter: accepted (old: "+oldlikelihood+" new: "+newlikelihood+")");
-				substAccepted++;
-			} else {
-				tree.substitutionModel.restoreParameter();
-				for (int i = 0; i < tree.vertex.length; i++) {
-					tree.vertex[i].updateTransitionMatrix();
-				}
-				tree.root.calcFelsRecursively();
-				// System.out.println("Substitution parameter: rejected (old: "+oldlikelihood+" new: "+newlikelihood+")");
-			}
+			// System.out.println("Substitution parameter: rejected (old: "+oldlikelihood+" new: "+newlikelihood+")");
+			modelExtMan.afterSubstParamChange(tree, tree.substitutionModel, -1, false);
 		}
 	}
 
-	private void sampleAlignment() {
-		alignmentSampled++;
-		for (int i = 0; i < tree.vertex.length; i++) {
-			tree.vertex[i].selected = false;
-		}
-		// System.out.print("Alignment: ");
-		double oldLogLi = tree.getLogLike();
-		// System.out.println("fast indel before: "+tree.root.indelLogLike);
-		tree.countLeaves(); // calculates recursively how many leaves we have
-		// below this node
-		for (int i = 0; i < weights.length; i++) {
-			weights[i] = Math.pow(tree.vertex[i].leafCount, LEAFCOUNT_POWER);
-		}
-		int k = Utils.weightedChoose(weights, null);
-		// System.out.println("Sampling from the subtree: "+tree.vertex[k].print());
-		tree.vertex[k].selectSubtree(SELTRLEVPROB, 0);
-		double bpp = tree.vertex[k].selectAndResampleAlignment();
-		double newLogLi = tree.getLogLike();
-
-		// String[] printedAlignment = tree.printedAlignment("StatAlign");
-		// for(String i: printedAlignment)
-		// System.out.println(i);
-		//
-		// System.out.println("-----------------------------------------------------------------------------");
-		// double fastFels = tree.root.orphanLogLike;
-		// double fastIns = tree.root.indelLogLike;
-		// report();
-		// tree.root.first.seq[0] = 0.0;
-		// System.out.println("Old before: "+tree.root.old.indelLogLike);
-		// tree.root.calcFelsRecursivelyWithCheck();
-		// tree.root.calcIndelRecursivelyWithCheck();
-		// tree.root.calcIndelLikeRecursively();
-		// System.out.println("Old after: "+tree.root.old.indelLogLike);
-		// System.out.println("Check logli: "+tree.getLogLike()+" fastFels: "+fastFels+" slowFels: "+tree.root.orphanLogLike+
-		// " fastIns: "+fastIns+" slowIns: "+tree.root.indelLogLike);
-		// System.out.println("selected subtree: "+tree.vertex[k].print());
-		// System.out.println("bpp: "+bpp+"old: "+oldLogLi+"new: "+newLogLi +
-		// "heated diff: " + ((newLogLi - oldLogLi) * tree.heat));
-		if (Math.log(Utils.generator.nextDouble()) < bpp
-				+ (newLogLi - oldLogLi) * tree.heat) {
-			// accepted
-			// System.out.println("accepted (old: "+oldLogLi+" new: "+newLogLi+")");
-			alignmentAccepted++;
-		} else {
-			// refused
-			// String[] s = tree.printedAlignment();
-			tree.vertex[k].alignRestore();
-			// s = tree.printedAlignment();
-			// System.out.println("rejected (old: "+oldLogLi+" new: "+newLogLi+")");
-			// System.out.println("after reject fast: "+tree.root.indelLogLike);
-			// tree.root.calcIndelRecursivelyWithCheck();
-			// System.out.println(" slow: "+tree.root.indelLogLike);
-		}
-		// tree.root.calcFelsRecursivelyWithCheck();
-		// tree.root.calcIndelRecursivelyWithCheck();
+	private void sampleModelExtParam() {
+		modextSampled++;
+		double logLikeChange = modelExtMan.proposeParamChange(tree);
+		totalLogLike += logLikeChange;
+		// check acceptance
+		if(logLikeChange != 0)
+			modextAccepted++;
 	}
 
 	/**
@@ -1119,7 +1210,7 @@ public class Mcmc extends Stoppable {
 			if ((isParallel && MPIUtils.isMaster(rank)) || !isParallel) {
 				postprocMan.logFile.write(getInfoString() + "\n");
 				postprocMan.logFile.write("Report\tLogLikelihood\t"
-						+ (tree.root.orphanLogLike + tree.root.indelLogLike)
+						+ (modelExtMan.getTotalLogLike(tree))
 						+ "\tR\t" + tree.hmm2.params[0] + "\tLamda\t"
 						+ tree.hmm2.params[1] + "\tMu\t" + tree.hmm2.params[2]
 								+ "\t" + tree.substitutionModel.print() + "\n");

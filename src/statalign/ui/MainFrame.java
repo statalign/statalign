@@ -9,7 +9,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -43,15 +42,13 @@ import statalign.StatAlign;
 import statalign.base.Input;
 import statalign.base.MainManager;
 import statalign.base.Utils;
-import statalign.exceptions.ExceptionNonFasta;
-import statalign.io.input.FileFormatReader;
-import statalign.io.input.plugins.FastaReader;
+import statalign.io.DataType;
+import statalign.io.RawSequences;
 import statalign.model.subst.RecognitionError;
 import statalign.model.subst.SubstitutionModel;
 import statalign.model.subst.plugins.Dayhoff;
 import statalign.model.subst.plugins.Kimura3;
 import statalign.postprocess.Postprocess;
-import statalign.postprocess.PostprocessManager;
 
 /**
  * The main frame of the program.
@@ -133,6 +130,7 @@ public class MainFrame extends JFrame implements ActionListener {
 
         substModels = (Class<? extends SubstitutionModel>[]) substModList.toArray(new Class<?>[substModList.size()]);
         manager = new MainManager(this);
+        manager.init(null);
         mcmcSettingsDlg = new McmcSettingsDlg(this);
 
         setMinimumSize(new Dimension(500, 250));
@@ -368,7 +366,8 @@ public class MainFrame extends JFrame implements ActionListener {
         }
 
         tab.addChangeListener(new ChangeListener() {
-            public void stateChanged(ChangeEvent changeEvent) {
+            @Override
+			public void stateChanged(ChangeEvent changeEvent) {
                 JTabbedPane pane = (JTabbedPane) changeEvent.getSource();
                 Integer i = pane.getSelectedIndex();
 
@@ -438,45 +437,57 @@ public class MainFrame extends JFrame implements ActionListener {
     }
 
     /** An ActioListener is implemented, so we have to implement this function. It handles actions on the menu bar. */
-    public void actionPerformed(ActionEvent ev) {
+    @Override
+	public void actionPerformed(ActionEvent ev) {
         if (ev.getActionCommand() == "Add sequence(s)...") {
             JFileChooser choose = new JFileChooser("Add sequence(s)...");
             choose.setCurrentDirectory(new File(System.getProperty("user.dir")));
             if (choose.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
                 inFile = choose.getSelectedFile();
-                FileFormatReader reader = new FastaReader();
-                try {
-                	manager.inputData.seqs.alphabet = "";
-                    manager.inputData.seqs.add(reader.read(inFile));
-                    manager.inputgui.updateSequences();
-                    manager.fullPath = inFile.getAbsolutePath();
-                    if (manager.inputData.model != null) {
-                        try {
-                            manager.inputData.model.acceptable(manager.inputData.seqs);
-                        } catch (RecognitionError e) {
-                            tryModels();
-                        }
-                    } else {
-                        tryModels();
-                    }
-                    if (manager.inputData.model != null) {
-                        runItem.setEnabled(true);
-                        runButton.setEnabled(true);
-                        
-                        if(!manager.inputData.seqs.isRNA()) {
-                        	rnaButton.setEnabled(false);
-                        }
-                        
-                        else { 
-                        	rnaButton.setEnabled(true);
-                        }
-                    }
-                } catch (IOException e) {
-                    JOptionPane.showMessageDialog(this, e.getLocalizedMessage(), "Error reading input file", JOptionPane.ERROR_MESSAGE);
-                } catch (ExceptionNonFasta e) {
-					// TODO Auto-generated catch block
-					ErrorMessage.showPane(this, e.getMessage(), true);
-				} 
+                DataType data = manager.dataMan.read(inFile);
+                if(data == null) {
+                	JOptionPane.showMessageDialog(this, "The file was not recognised to be in a known format.", "Error reading input file", JOptionPane.ERROR_MESSAGE);
+                	return;
+                }
+                if(data instanceof RawSequences) {
+                	manager.inputData.seqs.add((RawSequences)data);
+                } else {
+                	// TODO add Tree type as in console version
+                	manager.inputData.auxData.add(data);
+                }
+//                FileFormatReader reader = new FastaReader();
+//                try {
+//                	manager.inputData.seqs.alphabet = "";
+//                    manager.inputData.seqs.add(reader.read(inFile));
+//                    manager.inputgui.updateSequences();
+//                    manager.fullPath = inFile.getAbsolutePath();
+//                    if (manager.inputData.model != null) {
+//                        try {
+//                            manager.inputData.model.acceptable(manager.inputData.seqs);
+//                        } catch (RecognitionError e) {
+//                            tryModels();
+//                        }
+//                    } else {
+//                        tryModels();
+//                    }
+//                    if (manager.inputData.model != null) {
+//                        runItem.setEnabled(true);
+//                        runButton.setEnabled(true);
+//                        
+//                        if(!manager.inputData.seqs.isRNA()) {
+//                        	rnaButton.setEnabled(false);
+//                        }
+//                        
+//                        else { 
+//                        	rnaButton.setEnabled(true);
+//                        }
+//                    }
+//                } catch (IOException e) {
+//                    JOptionPane.showMessageDialog(this, e.getLocalizedMessage(), "Error reading input file", JOptionPane.ERROR_MESSAGE);
+//                } catch (ExceptionNonFasta e) {
+//					// TODO Auto-generated catch block
+//					ErrorMessage.showPane(this, e.getMessage(), true);
+//				} 
             }
             
         } else if (ev.getActionCommand() == "Exit") {

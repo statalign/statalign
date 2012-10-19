@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Random;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -446,6 +447,29 @@ public class Utils{
 		
 		return classNames.toArray(new String[classNames.size()]);
 	}
+	
+	/**
+	 * Locates all plugins that are descendants of the specified plugin superclass. The plugins are
+	 * expected to be in the package <code><i>root</i>.plugins</code> where <code><i>root</i></code> refers
+	 * to the package of the superclass.
+	 * @param superClass the ancestral plugin class
+	 * @return list of plugins found
+	 */
+	@SuppressWarnings("unchecked")
+	public static<T> List<T> findPlugins(Class<T> superClass) {
+		String[] pluginNames = Utils.classesInPackage(superClass.getPackage().getName()+".plugins");
+		List<T> pluginList = new ArrayList<T>();
+		for(int i = 0; i < pluginNames.length; i++) {
+			try {
+				Class<?> cl = Class.forName(pluginNames[i]);
+				if(!superClass.isAssignableFrom(cl))
+					continue;
+				pluginList.add((T)cl.newInstance());
+			} catch (Exception e) {
+			}
+		}
+		return pluginList;
+	}
 
 	/**
 	 * Transforms an alignment into the prescribed format
@@ -711,6 +735,13 @@ public class Utils{
 	public static int[] copyOf(int[] array) {
 		int len = array.length;
 		int[] copy = new int[len];
+		System.arraycopy(array, 0, copy, 0, len);
+		return copy;
+	}
+	
+	public static double[] copyOf(double[] array) {
+		int len = array.length;
+		double[] copy = new double[len];
 		System.arraycopy(array, 0, copy, 0, len);
 		return copy;
 	}

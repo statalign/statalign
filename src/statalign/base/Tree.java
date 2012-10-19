@@ -433,7 +433,7 @@ public class Tree extends Stoppable {
         }
         // the first n vertices will be the leaves
         for (int i = 0; i < seq.length; i++) {
-            vertex[i] = new Vertex(this, 0.0, seq[i], names[i], sequences[i]);
+            vertex[i] = new Vertex(this, i, 0.0, seq[i], names[i], sequences[i]);
         }
         // NJ main recursion
         int vnum = seq.length;

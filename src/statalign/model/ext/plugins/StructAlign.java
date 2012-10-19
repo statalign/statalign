@@ -1,12 +1,24 @@
 package statalign.model.ext.plugins;
 
+import java.util.HashMap;
+import java.util.List;
+
 import org.apache.commons.math3.distribution.MultivariateNormalDistribution;
 
+import statalign.base.InputData;
 import statalign.base.Tree;
+import statalign.base.Utils;
 import statalign.base.Vertex;
+import statalign.io.DataType;
+import statalign.io.ProteinSkeletons;
+import statalign.model.ext.ModelExtManager;
 import statalign.model.ext.ModelExtension;
+import statalign.postprocess.PluginParameters;
 
 public class StructAlign extends ModelExtension {
+	
+	/** the command line identifier of this plugin */
+	private static final String CMD_LINE_PLUGIN_ID = "structal";
 
 	/** alpha-C atomic coordinate for each sequence and each residue */
 	double[][][] coords;
@@ -27,6 +39,45 @@ public class StructAlign extends ModelExtension {
 	/** parameters of structural drift */
 	double theta;
 	double sigma2;
+	
+	@Override
+	public void init(ModelExtManager manager, PluginParameters params) {
+		String pars;
+		if(params != null && (pars = params.getParameter(CMD_LINE_PLUGIN_ID)) != null) {
+			// TODO parse plugin parameters
+			setActive(true);
+		}
+	}
+	
+	@Override
+	public void initRun(InputData inputData) throws IllegalArgumentException {
+		HashMap<String, Integer> seqMap = new HashMap<String, Integer>();
+		int i = 0;
+		for(String name : inputData.seqs.seqNames)
+			seqMap.put(name, i++);
+		coords = new double[inputData.seqs.seqNames.size()][][];
+		for(DataType data : inputData.auxData) {
+			if(!(data instanceof ProteinSkeletons))
+				continue;
+			ProteinSkeletons ps = (ProteinSkeletons) data;
+			for(i = 0; i < ps.names.size(); i++) {
+				String name = ps.names.get(i);
+				if(!seqMap.containsKey(name))
+					throw new IllegalArgumentException("structalign: missing sequence or duplicate structure for "+name);
+				int ind = seqMap.get(name);
+				int len = inputData.seqs.sequences.get(ind).replaceAll("-", "").length();
+				List<double[]> cl = ps.coords.get(i);
+				if(len != cl.size())
+					throw new IllegalArgumentException("structalign: sequence length mismatch with structure file for seq "+name);
+				coords[ind] = new double[len][];
+				for(int j = 0; j < len; j++)
+					coords[ind][j] = Utils.copyOf(cl.get(j));
+				seqMap.remove(name);
+			}
+		}
+		if(seqMap.size() > 0)
+			throw new IllegalArgumentException("structalign: missing structure for sequence "+seqMap.keySet().iterator().next());
+	}
 	
 	@Override
 	public double logLikeFactor(Tree tree) {
@@ -161,7 +212,6 @@ public class StructAlign extends ModelExtension {
 	}
 
 
-	
 	@Override
 	public int getParamChangeWeight() {
 		// TODO test converge and tune value
@@ -169,8 +219,8 @@ public class StructAlign extends ModelExtension {
 	}
 	
 	@Override
-	public boolean proposeParamChange(Tree tree, double loglike) {
-		return false;
+	public double proposeParamChange(Tree tree) {
+		return 0;
 	}
 
 	@Override
