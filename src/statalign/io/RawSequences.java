@@ -27,9 +27,6 @@ public class RawSequences implements DataType {
 	 */
 	public String alphabet;
 	
-	public boolean isRNA;
-	
-	
 	public RawSequences() {
 		sequences = new ArrayList<String>();
 		seqNames = new ArrayList<String>();

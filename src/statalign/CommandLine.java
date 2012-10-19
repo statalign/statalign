@@ -117,7 +117,7 @@ public class CommandLine {
 					manager.inputData.auxData.add(data);
 				}
 			}
-
+			
 			// TODO: Change? If dealing with merged datasets this does not make
 			// any sense.
 			manager.fullPath = set.getData().get(0);
@@ -254,6 +254,13 @@ public class CommandLine {
 				argsVector.add(plugins.getResultValue(i));
 			}
 			Postprocess.pluginParameters = new PluginParameters(argsVector);
+			
+			// TODO allow rnaMode to be switched off even for RNA sequences (plugin param)
+			// TODO move rnaMode to a "RNA container" plugin
+			if(manager.inputData.seqs.isRNA()) {
+				PostprocessManager.rnaMode = true;
+				System.out.println("RNA mode activated.");
+			}
 
 			AutomateParameters.setAutomateBurnIn(false);
 			AutomateParameters.setAutomateStepRate(false);
@@ -331,6 +338,17 @@ public class CommandLine {
 			sb.append("          Abbreviations k and m mean 1e3 and 1e6 factors.\n");
 			sb.append("        Default: 10k,100k,1k\n\n");
 		}
+		
+		sb.append("    -automate=burn,cycl,rate\n");
+		sb.append("        Automate MCMC parameters: burn-in, cycles after burn-in, sampling rate.\n");
+		sb.append("        Select which parameters to automate by listing one or more of: burn, cycl, rate\n\n");
+		
+		sb.append("    -plugins:ppfold,rnaalifold\n");
+		sb.append("        Specify which RNA plugins you want to run and the corresponding parameters for each.\n");
+		sb.append("        Each plugin should be specified seperately, e.g. -plugin:ppfold plugin:rnaalifold\n");
+		sb.append("        Currently only the RNAalifold plugin takes additional options.\n");
+		sb.append("        For RNAalifold you should specify the path of the RNAalifold executable followed by the  RNAalifold command-line options in inverted commas.\n");
+		sb.append("        e.g. -plugin:rnalifold=\"C:\\ViennaRNA\\RNAalifold.exe -T 37 -cv 1\"\n\n");
 
 		sb.append("    -seed=value\n");
 		sb.append("        Sets the random seed (same value will reproduce same results for\n");
@@ -349,7 +367,9 @@ public class CommandLine {
 		sb.append("        Lets you customise what is written into the log file (one entry\n");
 		sb.append("        for each sample).\n");
 		sb.append(buildPpListStr(man, "          "));
-		sb.append("        Default: " + buildDefPpList(man) + "\n");
+		sb.append("        Default: " + buildDefPpList(man) + "\n\n");
+		
+	
 
 		return sb.toString();
 	}

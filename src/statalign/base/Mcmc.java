@@ -1,6 +1,7 @@
 package statalign.base;
 
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Random;
 
@@ -129,6 +130,8 @@ public class Mcmc extends Stoppable {
 	private int substAccepted = 0;
 	private int modextSampled = 0;
 	private int modextAccepted = 0;
+	
+	private static final DecimalFormat df = new DecimalFormat("0.0000");
 
 	/**
 	 * In effect starts an MCMC run. It first performs a prescribed number of
@@ -223,9 +226,9 @@ public class Mcmc extends Stoppable {
 				if (frame != null) {
 					String text = "";
 					if((i > realBurnIn ) && AutomateParameters.shouldAutomateStepRate()){
-						text = "Burn In to get the space: " + (i-realBurnIn + 1) ;
+						text = "Burn-in to aid automation of MCMC parameters: " + (i-realBurnIn + 1) ;
 					}else{
-						text = "Burn In: " + (i + 1);
+						text = "Burn-in: " + (i + 1);
 					}
 					frame.statusText.setText(text);
 				} else if (i % 1000 == 999) {
@@ -314,7 +317,7 @@ public class Mcmc extends Stoppable {
 
 						text += "   The sampling rate: " + sampRate;
 						if(AutomateParameters.shouldAutomateNumberOfSamples()){
-							text +=  "  Similarity between the last two alignments: " + currScore;
+							text +=  ",  Similarity(alignment n-1, alignment n): " + df.format(currScore) + " < " + df.format(AutomateParameters.PERCENT_CONST);
 						}
 						frame.statusText.setText(text );
 					}

@@ -43,7 +43,7 @@ public class Structure extends statalign.postprocess.Postprocess {
 	public static String currentSequence;
 	public static String currentDotBracketStructure;
 	
-	public boolean probMode = false;
+	//public boolean probMode = true;
 
 	public Structure() {
 		sampling = true;
@@ -140,7 +140,9 @@ public class Structure extends statalign.postprocess.Postprocess {
 		toolbar.add(new JToolBar.Separator());
 		group = new ButtonGroup();
 		
-		JToggleButton normalButton = new JToggleButton(new ImageIcon("icons/normalRNA.png"));
+		
+		JToggleButton normalButton = new JToggleButton(new ImageIcon(ClassLoader.getSystemResource("icons/normalRNA.png")));
+		//JToggleButton normalButton = new JToggleButton(new ImageIcon(ClassLoader.getSystemResource("icons/phylogram.png")));
 		String text = "Normal mode";
 		normalButton.setToolTipText(text);
     	normalButton.setActionCommand(text);
@@ -150,13 +152,13 @@ public class Structure extends statalign.postprocess.Postprocess {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				RNA.probMode = false;
-				probMode = false;
+				//probMode = false;
 				gui.repaint();
 			}
     		
     	});
 		
-    	JToggleButton probButton = new JToggleButton(new ImageIcon("icons/probRNA.png"));
+    	JToggleButton probButton = new JToggleButton(new ImageIcon(ClassLoader.getSystemResource("icons/probRNA.png")));
     	String probText = "Probability mode";
     	probButton.setToolTipText(probText);
     	probButton.setActionCommand(probText);
@@ -165,7 +167,7 @@ public class Structure extends statalign.postprocess.Postprocess {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				RNA.probMode = true;
-				probMode = true;
+				//probMode = true;
 				gui.repaint();
 			}
     		
@@ -177,10 +179,7 @@ public class Structure extends statalign.postprocess.Postprocess {
     	toolbar.add(normalButton);
     	toolbar.add(probButton);
     	
-    	// The first (non-separator) is selected by default.
-        if (toolbar.size() > 1) {
-            ((JToggleButton) toolbar.get(1)).setSelected(true);
-        }
+    	probButton.setSelected(true);
 	}
 	
 	@Override
@@ -204,7 +203,10 @@ public class Structure extends statalign.postprocess.Postprocess {
 			JScrollPane scroll = new JScrollPane(gui);
 			pan.add(scroll, BorderLayout.CENTER);
 			System.out.println("Structure parent: " + pan.getParent());
-			pan.getParent().validate();
+			if(pan.getParent() != null)
+			{
+				pan.getParent().validate();
+			}
 			
 		}
 	}

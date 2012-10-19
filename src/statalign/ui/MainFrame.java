@@ -240,7 +240,7 @@ public class MainFrame extends JFrame implements ActionListener {
         toolBar.add(stopButton);
         
         String rnaText = "RNA mode";
-        rnaButton = createToggleButton(new ImageIcon("icons/rna1.png"), rnaText);
+        rnaButton = createToggleButton(new ImageIcon(ClassLoader.getSystemResource("icons/rna1.png")), rnaText);
         rnaButton.setEnabled(false);
         rnaButton.setSelected(false);
         toolBar.add(rnaButton);

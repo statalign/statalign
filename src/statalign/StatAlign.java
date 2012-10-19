@@ -15,7 +15,7 @@ import statalign.ui.MainFrame;
 
 /**
  * <p>The entry point of the application. If the program is called from command line and
- * arguments are given, it runs in terminal mode (experimental).
+ * arguments are given, it runs in terminal mode.
  * 
  * <p>If no arguments are given or launched from a jar file, it opens a main frame.
  *
@@ -29,7 +29,7 @@ public class StatAlign{
 	 */
 	public static final int majorVersion = 2;
 	public static final int minorVersion = 0;
-	public static final String version = "v2.0 beta";
+	public static final String version = "v2.0";
 	
 	public static final boolean allowVersionCheck = false;
 

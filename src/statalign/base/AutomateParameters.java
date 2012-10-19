@@ -32,7 +32,7 @@ public class AutomateParameters {
 	final static double errorForTheAVG = 0.99;
 	
 	//stopsampling
-	final static double PERCENT_CONST = 0.999;
+	public final static double PERCENT_CONST = 0.998;
 	
 	//burn-in
 	final static int DECLINE = 30;
@@ -116,6 +116,7 @@ public class AutomateParameters {
 			return false;
 		}
 		if(distances.get(distances.size()-1) > PERCENT_CONST){
+			System.out.println("CYCLES CONVERGENCE="+distances.get(distances.size()-1) + " < " + PERCENT_CONST);
 			return true;
 		}
 		return false;

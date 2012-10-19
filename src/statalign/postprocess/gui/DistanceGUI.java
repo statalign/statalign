@@ -28,7 +28,7 @@ public class DistanceGUI extends JPanel {
 	public String title;
 	private VisualDistance owner;
 	
-	int distance = -1;
+	int distance = 1;
 	
 	public static final int OFFSET_X = 50;
 	public static final int TITLE_X = 100;
@@ -77,7 +77,12 @@ public class DistanceGUI extends JPanel {
 		}*/
 		g2.setFont(new Font("SANS_SERIF", Font.BOLD, 16));
 		g2.rotate(Math.PI/2);
-		g2.drawString("AMA similarity score", maxHeight/2 - 60, -20);
+		//g2.rotate(-Math.PI*3/2);
+		g2.setFont(new Font("SANS_SERIF", Font.PLAIN, 14));
+		String yaxis = "Similarity (1st alignment, current)";
+		g2.drawString(yaxis, (this.getHeight()-g2.getFontMetrics().stringWidth(yaxis))/2+5, -31);
+		g2.setFont(new Font("SANS_SERIF", Font.BOLD, 16));
+		//g2.rotate(Math.PI*3/2);
 		g2.rotate(Math.PI*1.5);  
 		g2.drawString("Sample", 700, 15+maxHeight);
 		
@@ -97,7 +102,7 @@ public class DistanceGUI extends JPanel {
 		
 		g2.setColor(Color.BLUE);
 		double actual;
-		double next = 0;
+		double next = 1;
 		for (int i = 0; i < list.size() - 1; i++) {
 			actual = next;
 			next = list.get(i);

@@ -15,10 +15,14 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.prefs.BackingStoreException;
+import java.util.prefs.Preferences;
 
+import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
@@ -56,7 +60,8 @@ public class RNASettingsDlg extends JDialog implements ActionListener, ChangeLis
 	JPanel rnaalifoldOptions = new JPanel();
 	JCheckBox useSamplingAndAveragingButton = new JCheckBox("Perform sampling and averaging prediction (PPfold).");
 	JCheckBox useSamplingAndAveragingRNAalifoldButton = new JCheckBox("Perform sampling and averaging prediction (RNAalifold).");
-	JCheckBox fuzzyNucleotidePredictionAndEntropy = new JCheckBox("Perform fuzzy alignment prediction (PPfold).");	
+	JCheckBox fuzzyNucleotidePredictionAndEntropy = new JCheckBox("Perform fuzzy alignment prediction (PPfold).");
+	JCheckBox consensusEvolutionPrediction = new JCheckBox("Perform consensus alignment prediction (PPfold).");
 	
 	private JFileChooser fileChooser = new JFileChooser();
 	private JTextField executableField = new JTextField("");
@@ -74,72 +79,13 @@ public class RNASettingsDlg extends JDialog implements ActionListener, ChangeLis
 	private JSpinner nonCompatibleSpinner = new JSpinner(nonCompatibleModel);
 	private JFrame owner;
 	
-	public void saveOptions()
-	{
-		try
-		{
-			BufferedWriter buffer = new BufferedWriter(new FileWriter("rna.options"));
-			buffer.write(Boolean.toString(useSamplingAndAveragingButton.isSelected())+"\n");
-			buffer.write(Boolean.toString(useSamplingAndAveragingRNAalifoldButton.isSelected())+"\n");
-			buffer.write(Boolean.toString(fuzzyNucleotidePredictionAndEntropy.isSelected())+"\n");
-			buffer.write(executableField.getText()+"\n");
-			buffer.write(((Double)temperatureSpinner.getValue())+"\n");
-			buffer.write(linearButton.isSelected()+"\n");
-			buffer.write(((Double)covarianceSpinner.getValue())+"\n");
-			buffer.write(((Double)nonCompatibleSpinner.getValue())+"\n");
-			buffer.close();
-		}
-		catch(IOException ex)
-		{
-			ex.printStackTrace();
-		}
-	}
-	
-	public void loadOptions()
-	{
-		try
-		{
-			BufferedReader buffer = new BufferedReader(new FileReader("rna.options"));
-			useSamplingAndAveragingButton.setSelected(Boolean.parseBoolean(buffer.readLine()));
-			useSamplingAndAveragingRNAalifoldButton.setSelected(Boolean.parseBoolean(buffer.readLine()));
-			fuzzyNucleotidePredictionAndEntropy.setSelected(Boolean.parseBoolean(buffer.readLine()));
-			executableField.setText(buffer.readLine());
-			temperatureSpinner.setValue(Double.parseDouble(buffer.readLine()));
-			boolean linear = Boolean.parseBoolean(buffer.readLine());
-			linearButton.setSelected(linear);
-			circularButton.setSelected(!linear);
-			covarianceSpinner.setValue(Double.parseDouble(buffer.readLine()));
-			nonCompatibleSpinner.setValue(Double.parseDouble(buffer.readLine()));
-			buffer.close();
-		}
-		catch(IOException ex)
-		{
-
-		}	
-	}
-	
-	public void setEnabled(Container component, boolean enabled)
-	{
-		Component [] components = ((Container) component).getComponents();
-		//component.setEnabled(enabled);
-		for(int i = 0 ; i < components.length ;i++)
-		{
-			components[i].setEnabled(enabled);
-			/*if(components[i] instanceof JComponent)
-			{				
-				((JComponent)components[i]).setOpaque(false);
-			}*/
-			if(components[i] instanceof Container)
-			{				
-				setEnabled((Container)components[i], enabled);
-			}
-		}
-	}
-	
+	private Preferences prefs;
 	
 	RNASettingsDlg(JFrame owner) {
-		super(owner, "RNAalifold parameters", true);
+		super(owner, "RNA options", true);
 		this.owner = owner;
+		prefs = Preferences.userNodeForPackage(this.getClass());
+		
 		//pars = owner.manager.inputData.pars;
 		//Container cp = getContentPane();
 		setLayout(new BorderLayout());
@@ -157,13 +103,15 @@ public class RNASettingsDlg extends JDialog implements ActionListener, ChangeLis
 		//JCheckBox useSamplingAndAveragingRNAalifoldButton = new JCheckBox("Use sampling and averaging prediction (RNAalifold).");
 		//JCheckBox fuzzyNucleotidePredictionAndEntropy
 		useSamplingAndAveragingButton.setSelected(true);
-		fuzzyNucleotidePredictionAndEntropy.setSelected(true);
+		fuzzyNucleotidePredictionAndEntropy.setSelected(false);
 		useSamplingAndAveragingRNAalifoldButton.setSelected(false);
 		useSamplingAndAveragingRNAalifoldButton.addChangeListener(this);
 		rnaalifoldOptions.setEnabled(false);
+		rnaalifoldOptions.setBorder(BorderFactory.createTitledBorder("RNAalifold settings"));
 		optionsPanel.add(useSamplingAndAveragingButton, c);
-		optionsPanel.add(fuzzyNucleotidePredictionAndEntropy, c);
+		//optionsPanel.add(fuzzyNucleotidePredictionAndEntropy, c);
 		optionsPanel.add(useSamplingAndAveragingRNAalifoldButton, c);
+		//optionsPanel.add(consensusEvolutionPrediction, c);
 		//cp.setB
 
 		//c.gridx = 0;
@@ -241,13 +189,18 @@ public class RNASettingsDlg extends JDialog implements ActionListener, ChangeLis
 		
 //		pan.add(new JLabel("Output file:"));
 //		pan.add(outFile);
-		bigBox.add(rnaalifoldOptions);
+		bigBox.add(rnaalifoldOptions);		
 		Box box = Box.createHorizontalBox();
 		JButton butt;
+		JButton defaultsButton = new JButton("Use defaults");
+		defaultsButton.setActionCommand("DEFAULTS");
+		defaultsButton.addActionListener(this);
+		box.add(defaultsButton);
+		box.add(Box.createHorizontalGlue());
 		box.add(butt=new JButton("OK"));
 		butt.addActionListener(this);
 		getRootPane().setDefaultButton(butt);
-		box.add(Box.createHorizontalStrut(30));
+		box.add(Box.createHorizontalStrut(20));
 		box.add(butt=new JButton("Cancel"));
 		butt.addActionListener(this);
 		bigBox.add(box);
@@ -262,6 +215,120 @@ public class RNASettingsDlg extends JDialog implements ActionListener, ChangeLis
 		updateFoldingParametersAndTest();
 		setEnabled(rnaalifoldOptions, useSamplingAndAveragingRNAalifoldButton.isSelected());
 	}
+	
+	public void saveOptions()
+	{
+		if(prefs != null)
+		{
+			prefs.put("USE_SAMPLING_AND_AVERAGING_PPFOLD", Boolean.toString(useSamplingAndAveragingButton.isSelected()));
+			prefs.put("USE_SAMPLING_AND_AVERAGING_RNAALIFOLD", Boolean.toString(useSamplingAndAveragingRNAalifoldButton.isSelected()));
+			prefs.put("USE_FUZZY_NUCLEOTIDE", Boolean.toString(fuzzyNucleotidePredictionAndEntropy.isSelected()));
+			prefs.put("RNAALIFOLD_EXECUTABLE", executableField.getText());
+			prefs.put("RNAALIFOLD_TEMPERATURE", temperatureSpinner.getValue().toString());
+			prefs.put("IS_LINEAR", Boolean.toString(linearButton.isSelected()));
+			prefs.put("COVARIANCE_VALUE", covarianceSpinner.getValue().toString());
+			prefs.put("NON_COMPATABILITY_VALUE", nonCompatibleSpinner.getValue().toString());
+		}
+		/*try
+		{
+			BufferedWriter buffer = new BufferedWriter(new FileWriter("rna.options"));
+			buffer.write(Boolean.toString(useSamplingAndAveragingButton.isSelected())+"\n");
+			buffer.write(Boolean.toString(useSamplingAndAveragingRNAalifoldButton.isSelected())+"\n");
+			buffer.write(Boolean.toString(fuzzyNucleotidePredictionAndEntropy.isSelected())+"\n");
+			buffer.write(executableField.getText()+"\n");
+			buffer.write(((Double)temperatureSpinner.getValue())+"\n");
+			buffer.write(linearButton.isSelected()+"\n");
+			buffer.write(((Double)covarianceSpinner.getValue())+"\n");
+			buffer.write(((Double)nonCompatibleSpinner.getValue())+"\n");
+			buffer.close();
+		}
+		catch(IOException ex)
+		{
+			ex.printStackTrace();
+		}*/
+	}
+	
+	public void loadOptions()
+	{
+		if(prefs != null)
+		{			
+			useSamplingAndAveragingButton.setSelected(prefs.getBoolean("USE_SAMPLING_AND_AVERAGING_PPFOLD", true));
+			useSamplingAndAveragingRNAalifoldButton.setSelected(prefs.getBoolean("USE_SAMPLING_AND_AVERAGING_RNAALIFOLD", false));
+			fuzzyNucleotidePredictionAndEntropy.setSelected(prefs.getBoolean("USE_FUZZY_NUCLEOTIDE", false));
+			String defaultExec = "";
+			if(System.getProperty("os.name").toLowerCase().contains("windows"))
+			{
+				File execFile = new File("RNAalifold.exe");
+				if(execFile.exists())
+				{
+					defaultExec = execFile.getAbsolutePath();
+				}
+			}
+			executableField.setText(prefs.get("RNAALIFOLD_EXECUTABLE", defaultExec));
+			temperatureSpinner.setValue(prefs.getDouble("RNAALIFOLD_TEMPERATURE", 37.0));
+			boolean linear = prefs.getBoolean("IS_LINEAR", true);
+			linearButton.setSelected(linear);
+			circularButton.setSelected(!linear);
+			covarianceSpinner.setValue(prefs.getDouble("COVARIANCE_VALUE", 1.0));
+			nonCompatibleSpinner.setValue(prefs.getDouble("NON_COMPATABILITY_VALUE", 1.0));
+			//prefs.
+		}
+		
+		/*try
+		{
+			BufferedReader buffer = new BufferedReader(new FileReader("rna.options"));
+			useSamplingAndAveragingButton.setSelected(Boolean.parseBoolean(buffer.readLine()));
+			useSamplingAndAveragingRNAalifoldButton.setSelected(Boolean.parseBoolean(buffer.readLine()));
+			fuzzyNucleotidePredictionAndEntropy.setSelected(Boolean.parseBoolean(buffer.readLine()));
+			executableField.setText(buffer.readLine());
+			temperatureSpinner.setValue(Double.parseDouble(buffer.readLine()));
+			boolean linear = Boolean.parseBoolean(buffer.readLine());
+			linearButton.setSelected(linear);
+			circularButton.setSelected(!linear);
+			covarianceSpinner.setValue(Double.parseDouble(buffer.readLine()));
+			nonCompatibleSpinner.setValue(Double.parseDouble(buffer.readLine()));
+			buffer.close();
+		}
+		catch(IOException ex)
+		{
+
+		}*/	
+	}
+	
+	public void useDefaultOptions()
+	{
+		if(prefs != null)
+		{
+			try {
+				prefs.clear();
+			} catch (BackingStoreException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			loadOptions();
+		}
+	}
+	
+	public void setEnabled(Container component, boolean enabled)
+	{
+		Component [] components = ((Container) component).getComponents();
+		//component.setEnabled(enabled);
+		for(int i = 0 ; i < components.length ;i++)
+		{
+			components[i].setEnabled(enabled);
+			/*if(components[i] instanceof JComponent)
+			{				
+				((JComponent)components[i]).setOpaque(false);
+			}*/
+			if(components[i] instanceof Container)
+			{				
+				setEnabled((Container)components[i], enabled);
+			}
+		}
+	}
+	
+	
+	
 	
 	void display(Component c) {
 //		outFile.setText(sp.outFile);
@@ -280,12 +347,33 @@ public class RNASettingsDlg extends JDialog implements ActionListener, ChangeLis
 		try{
 			if(ev.getSource().equals(executableButton))
 			{
+				fileChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
 				int returnVal = fileChooser.showOpenDialog(this);
 				if(returnVal == JFileChooser.APPROVE_OPTION)
 				{
-					executableField.setText(fileChooser.getSelectedFile().getAbsolutePath());
+					File selectedFile = fileChooser.getSelectedFile();
+					if(selectedFile.isDirectory())
+					{
+						File [] files = selectedFile.listFiles();
+						for(int i = 0 ; i < files.length ; i++)
+						{
+							if(files[i].getName().toLowerCase().contains("rnaalifold"))
+							{
+								executableField.setText(files[i].getAbsolutePath());
+								break;
+							}
+						}
+					}
+					else
+					{
+						executableField.setText(selectedFile.getAbsolutePath());
+					}
 				}				
 			}			
+			if(ev.getActionCommand().equals("DEFAULTS"))
+			{
+				useDefaultOptions();
+			}
 			if(ev.getActionCommand() == "OK") {	
 
 				updateFoldingParametersAndTest();
@@ -367,7 +455,7 @@ public class RNASettingsDlg extends JDialog implements ActionListener, ChangeLis
 		if(useSamplingAndAveragingRNAalifoldButton.isSelected())
 		{
 			RNAalifold.executable = this.executableField.getText();
-			String rnaalifold = " -T " + temperatureSpinner.getValue() +" --cfactor " + covarianceSpinner.getValue() + " --nfactor " + nonCompatibleSpinner.getValue() + " ";
+			String rnaalifold = RNAalifold.executable + " -T " + temperatureSpinner.getValue() +" --cfactor " + covarianceSpinner.getValue() + " --nfactor " + nonCompatibleSpinner.getValue() + " ";
 			if(this.circularButton.isSelected())
 			{
 				rnaalifold += " -circ ";

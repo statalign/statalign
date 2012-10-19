@@ -1,6 +1,7 @@
 package statalign.postprocess.plugins;
 
 import java.awt.BorderLayout;
+import java.io.File;
 import java.util.ArrayList;
 
 import javax.swing.Icon;
@@ -15,6 +16,7 @@ import statalign.base.State;
 import statalign.postprocess.Postprocess;
 import statalign.postprocess.gui.DistanceGUI;
 import statalign.postprocess.gui.EntropyGUI;
+import statalign.postprocess.utils.RNAFoldingTools;
 
 public class VisualDistance extends statalign.postprocess.Postprocess {
 	
@@ -27,9 +29,10 @@ public class VisualDistance extends statalign.postprocess.Postprocess {
 	ArrayList<String> currentAlignment;
 	
 	public ArrayList<Double> distances;
-	double currentDistance = 0;
+	double currentDistance = 1;
 	
 	public VisualDistance() {
+		
 		sampling = true;
 		screenable = true;
 		outputable = true;
@@ -41,7 +44,7 @@ public class VisualDistance extends statalign.postprocess.Postprocess {
 	@Override
 	public String getTabName() {
 		// TODO Auto-generated method stub
-		return "Distance";
+		return "Similarity";
 	}
 
 	@Override
@@ -64,7 +67,7 @@ public class VisualDistance extends statalign.postprocess.Postprocess {
 	@Override
 	public String getTip() {
 		// TODO Auto-generated method stub
-		return "Plots distance between alignment samples.";
+		return "Plots similarity between the first alignment sample and consecutive alignment samples.";
 	}
 	
 	@Override
@@ -98,8 +101,11 @@ public class VisualDistance extends statalign.postprocess.Postprocess {
 			scroll.setViewportView(gui);
 			
 			pan.add(scroll);
-			System.out.println("Distance parent: " + pan.getParent());
-			pan.getParent().getParent().getParent().validate();
+			//System.out.println("Distance parent: " + pan.getParent());
+			if(pan.getParent() != null)
+			{
+				pan.getParent().getParent().getParent().validate();
+			}
 		}
 		
 		distances = new ArrayList<Double>();
@@ -115,13 +121,21 @@ public class VisualDistance extends statalign.postprocess.Postprocess {
 			
 			//System.out.println("INITIAL ALIGNMENT: " + ppFold.al.sequences);
 			//System.out.println("TEMP ALIGNMENT: " + ppFold.tempAlignment);
+			currentDistance = Distance.AMA(ppFold.al.sequences, ppFold.tempAlignment);
+			
 			if(no > 0)
 			{
-				currentDistance = Distance.AMA(ppFold.al.sequences, ppFold.tempAlignment);
+				System.out.println(currentDistance);
+				distances.add(currentDistance);
 			}
+			else
+			{
+				distances.add(new Double(1));
+			}
+			
 			//currentDistance = Distance.sequenceSimilarityScore(ppFold.al.sequences);
 			
-			distances.add(currentDistance);
+			
 			
 			
 			if(show) {gui.repaint();}

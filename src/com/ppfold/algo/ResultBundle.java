@@ -1,6 +1,8 @@
 package com.ppfold.algo;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Contains final results of inside-outside algorithm. Returned to by algorithm
@@ -25,6 +27,8 @@ public class ResultBundle implements Serializable {
 	public double entropyMax = 0;
 	public double reliabilityScore = 0;
 	public double pairsOnlyReliabilityScore = 0;
+	public double[][] phyloProbs;
+	public List<Integer> leftOutColumns;
 
 	public ResultBundle() {
 	}
@@ -108,6 +112,7 @@ public class ResultBundle implements Serializable {
 		smallBundle.entropyPercOfMax = this.entropyPercOfMax;
 		smallBundle.reliabilityScore = this.getPPfoldReliability();
 		smallBundle.pairsOnlyReliabilityScore = this.getPairsOnlyReliability();
+		//smallBundle.phyloProbs = this.phyloProbs;
 		return smallBundle;
 	}
 }
