@@ -42,11 +42,16 @@ public class StructAlign extends ModelExtension {
 	
 	@Override
 	public void init(ModelExtManager manager, PluginParameters params) {
-		String pars;
-		if(params != null && (pars = params.getParameter(CMD_LINE_PLUGIN_ID)) != null) {
+		if(params != null && params.getParameter(CMD_LINE_PLUGIN_ID) != null) {
 			// TODO parse plugin parameters
 			setActive(true);
 		}
+	}
+	
+	@Override
+	public void setActive(boolean active) {
+		super.setActive(active);
+		System.out.println("StructAlign plugin is now "+(active?"enabled":"disabled"));
 	}
 	
 	@Override

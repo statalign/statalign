@@ -442,73 +442,77 @@ public class MainFrame extends JFrame implements ActionListener {
         if (ev.getActionCommand() == "Add sequence(s)...") {
             JFileChooser choose = new JFileChooser("Add sequence(s)...");
             choose.setCurrentDirectory(new File(System.getProperty("user.dir")));
+            choose.setMultiSelectionEnabled(true);
             if (choose.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-                inFile = choose.getSelectedFile();
-                DataType data = manager.dataMan.read(inFile);
-                if(data == null) {
-                	JOptionPane.showMessageDialog(this, "The file was not recognised to be in a known format.", "Error reading input file", JOptionPane.ERROR_MESSAGE);
-                	return;
-                }
-                if(data instanceof RawSequences) {
-                	manager.inputData.seqs.add((RawSequences)data);
-                	manager.inputgui.updateSequences();
-                	manager.fullPath = inFile.getAbsolutePath();
-                	if (manager.inputData.model != null) {
-                		try {
-                			manager.inputData.model.acceptable(manager.inputData.seqs);
-                		} catch (RecognitionError e) {
-                			tryModels();
-                		}
-                	} else {
-                		tryModels();
-                	}
-                	if (manager.inputData.model != null) {
-                		runItem.setEnabled(true);
-                		runButton.setEnabled(true);
-                		
-                		if(!manager.inputData.seqs.isRNA()) {
-                			rnaButton.setEnabled(false);
-                		} else { 
-                			rnaButton.setEnabled(true);
-                		}
-                	}
-                } else {
-                	// TODO add Tree type as in console version
-                	manager.inputData.auxData.add(data);
-                }
-//                FileFormatReader reader = new FastaReader();
-//                try {
-//                	manager.inputData.seqs.alphabet = "";
-//                    manager.inputData.seqs.add(reader.read(inFile));
-//                    manager.inputgui.updateSequences();
-//                    manager.fullPath = inFile.getAbsolutePath();
-//                    if (manager.inputData.model != null) {
-//                        try {
-//                            manager.inputData.model.acceptable(manager.inputData.seqs);
-//                        } catch (RecognitionError e) {
-//                            tryModels();
-//                        }
-//                    } else {
-//                        tryModels();
-//                    }
-//                    if (manager.inputData.model != null) {
-//                        runItem.setEnabled(true);
-//                        runButton.setEnabled(true);
-//                        
-//                        if(!manager.inputData.seqs.isRNA()) {
-//                        	rnaButton.setEnabled(false);
-//                        }
-//                        
-//                        else { 
-//                        	rnaButton.setEnabled(true);
-//                        }
-//                    }
-//                } catch (IOException e) {
-//                    JOptionPane.showMessageDialog(this, e.getLocalizedMessage(), "Error reading input file", JOptionPane.ERROR_MESSAGE);
-//                } catch (ExceptionNonFasta e) {
-//					// TODO Auto-generated catch block
-//					ErrorMessage.showPane(this, e.getMessage(), true);
-//				} 
+            	for(File file : choose.getSelectedFiles()) {
+	            	if(inFile == null)
+	            		inFile = file; 
+	                DataType data = manager.dataMan.read(file);
+	                if(data == null) {
+	                	JOptionPane.showMessageDialog(this, "The following file was not recognised to be in a known format:\n"+file+"\n\n", "Error reading input file", JOptionPane.ERROR_MESSAGE);
+	                	continue;
+	                }
+	                if(data instanceof RawSequences) {
+	                	manager.inputData.seqs.add((RawSequences)data);
+	                	manager.inputgui.updateSequences();
+	                	manager.fullPath = inFile.getAbsolutePath();
+	                	if (manager.inputData.model != null) {
+	                		try {
+	                			manager.inputData.model.acceptable(manager.inputData.seqs);
+	                		} catch (RecognitionError e) {
+	                			tryModels();
+	                		}
+	                	} else {
+	                		tryModels();
+	                	}
+	                	if (manager.inputData.model != null) {
+	                		runItem.setEnabled(true);
+	                		runButton.setEnabled(true);
+	                		
+	                		if(!manager.inputData.seqs.isRNA()) {
+	                			rnaButton.setEnabled(false);
+	                		} else { 
+	                			rnaButton.setEnabled(true);
+	                		}
+	                	}
+	                } else {
+	                	// TODO add Tree type as in console version
+	                	manager.inputData.auxData.add(data);
+	                }
+//	                FileFormatReader reader = new FastaReader();
+//	                try {
+//	                	manager.inputData.seqs.alphabet = "";
+//	                	manager.inputData.seqs.add(reader.read(inFile));
+//	                	manager.inputgui.updateSequences();
+//	                	manager.fullPath = inFile.getAbsolutePath();
+//	                	if (manager.inputData.model != null) {
+//	                		try {
+//	                			manager.inputData.model.acceptable(manager.inputData.seqs);
+//	                		} catch (RecognitionError e) {
+//	                			tryModels();
+//	                		}
+//	                	} else {
+//	                		tryModels();
+//	                	}
+//	                	if (manager.inputData.model != null) {
+//	                		runItem.setEnabled(true);
+//	                		runButton.setEnabled(true);
+//
+//	                		if(!manager.inputData.seqs.isRNA()) {
+//	                			rnaButton.setEnabled(false);
+//	                		}
+//
+//	                		else { 
+//	                			rnaButton.setEnabled(true);
+//	                		}
+//	                	}
+//	                } catch (IOException e) {
+//	                	JOptionPane.showMessageDialog(this, e.getLocalizedMessage(), "Error reading input file", JOptionPane.ERROR_MESSAGE);
+//	                } catch (ExceptionNonFasta e) {
+//	                	// TODO Auto-generated catch block
+//	                	ErrorMessage.showPane(this, e.getMessage(), true);
+//	                }
+            	}
             }
             
         } else if (ev.getActionCommand() == "Exit") {

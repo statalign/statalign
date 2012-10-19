@@ -6,9 +6,9 @@ import java.io.Reader;
 import java.util.Arrays;
 import java.util.List;
 
-import statalign.exceptions.ExceptionNonFasta;
 import statalign.io.RawSequences;
 import statalign.io.input.DataReader;
+import statalign.io.input.IllegalFormatException;
 
 /**
  * 
@@ -18,14 +18,23 @@ import statalign.io.input.DataReader;
  *
  */
 public class FastaReader extends DataReader {
-
-	private int errors;
+	
+	private static boolean[] allowedChars;
+	
+	static {
+		allowedChars = new boolean[255];
+		for(int ch = 'a'; ch <= 'z'; ch++)
+			allowedChars[ch] = true;
+		for(int ch = 'A'; ch <= 'Z'; ch++)
+			allowedChars[ch] = true;
+		allowedChars['-'] = true;
+	}
 
 	@Override
 	public List<String> supportedExtensions() {
 		return Arrays.asList(new String[] { "fsa","fas","fasta" });
 	}
-
+	
 	/**
 	 * Reads the contents (aligned/non-aligned sequences) of the given data source in
 	 * Fasta format.
@@ -33,18 +42,16 @@ public class FastaReader extends DataReader {
 	 * @param reader Data source
 	 * @return RawSequences representation of the contents
 	 * @throws IOException if an I/O error occurs
-	 * @throws ExceptionNonFasta 
-	 * @throws ExceptionNonRNA 
 	 */
 	@Override
-	public RawSequences read(Reader reader) throws IOException, ExceptionNonFasta {
+	public RawSequences read(Reader reader) throws IOException {
 		RawSequences result = new RawSequences();
 		BufferedReader br = new BufferedReader(reader);
 
 		String line;
 		boolean inSeq = false;
 		StringBuilder actSeq = new StringBuilder();
-		int errors = 0;
+		boolean[] seen = new boolean['Z'-'A'+1];
 		while(true) {
 			line = br.readLine();
 			if(line != null && line.length() == 0)
@@ -52,8 +59,7 @@ public class FastaReader extends DataReader {
 			if(line == null || line.charAt(0) == '>') {
 				if(inSeq) {
 					if(actSeq.length() == 0) {
-						errors++;
-						result.seqNames.remove(result.seqNames.size()-1);
+						throw new IllegalFormatException("FastaReader: empty sequence "+result.seqNames.get(result.seqNames.size()-1));
 					} else {
 						result.sequences.add(actSeq.toString());
 					}
@@ -84,52 +90,29 @@ public class FastaReader extends DataReader {
 				char ch;
 				for(int i = 0; i < len; i++) {
 					if(!Character.isWhitespace(ch = line.charAt(i))) {
-						if(Character.isLetter(ch) || ch == '-') {
+						if(allowedChars[ch]) {
 							actSeq.append(ch);
-							if(ch != '-') {
-								result.alphabet += ch;
-							}
+							if(ch != '-')
+								seen[Character.toUpperCase(ch)-'A'] = true;
+						} else {
+							throw new IllegalFormatException("FastaReader: illegal character "+ch);
 						}
-							
-						else
-							throw new ExceptionNonFasta("Input valid sequences!");
 					}
 				}
 			} else {
-				errors++;
+				throw new IllegalFormatException("FastaReader: data without sequence name");
 			}
 		}
-
-//		for(int i = 0; i < result.sequences.size(); i++){
-//			System.out.println(">"+result.seqNames.get(i)+"\n"+result.sequences.get(i));
-//		}
-		if(errors > 0)
-			System.out.println("Errors: "+errors);
-//		else
-//			System.out.println("FastaReader: successfully read "+result.sequences.size()+" sequences.");
+		if(!inSeq)
+			throw new IllegalFormatException("FastaReader: empty file");
+		
+		StringBuilder alpha = new StringBuilder();
+		for(int ch = 0; ch <= 'Z'-'A'; ch++)
+			if(seen[ch])
+				alpha.append((char)(ch+'A'));
+		result.alphabet = alpha.toString();
 		
 		return result;
 	}
 	
-	/**
-	 * Return the error count of the last read operation.
-	 * 
-	 * @return number of errors
-	 */
-	public int getErrors() {
-		return errors;
-	}
-
-	/**
-	 * Only for testing/debugging purposes: reads the given Fasta file
-	 * 
-	 * @param args First element must be the name of the Fasta file to read
-	 * @throws IOException if an I/O error occurs
-	 * @throws ExceptionNonFasta 
-	 * @throws ExceptionNonRNA 
-	 */
-	public static void main(String[] args) throws IOException, ExceptionNonFasta {
-		FastaReader f = new FastaReader();
-		f.read(args[0]);
-	}
 }

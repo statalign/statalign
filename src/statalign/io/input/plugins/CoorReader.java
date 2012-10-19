@@ -9,6 +9,7 @@ import java.util.List;
 
 import statalign.io.ProteinSkeletons;
 import statalign.io.input.DataReader;
+import statalign.io.input.IllegalFormatException;
 
 public class CoorReader extends DataReader {
 
@@ -33,20 +34,25 @@ public class CoorReader extends DataReader {
 	public ProteinSkeletons read(Reader reader) throws IOException {
 		ProteinSkeletons data = new ProteinSkeletons();
 		BufferedReader br = new BufferedReader(reader);
-		String line;
+		String line = null;
 		int cur = -1;
 		try {
 			while((line = br.readLine()) != null) {
 				if(line.charAt(0) == '>') {		// new sequence
-					data.names.add(line.substring(1));
+					if(cur >= 0 && data.coords.get(cur).size() == 0)
+						throw new IllegalFormatException("CoorReader: sequence "+data.names.get(cur)+" is without a structure");
+					data.names.add(line.substring(1).trim());
 					data.coords.add(new ArrayList<double[]>());
 					cur++;
 				} else {
+					line = line.trim();
+					if(line.isEmpty())
+						continue;
 					if(cur < 0)
-						throw new WrongFormatException();
-					String[] tokens = line.trim().split("[:,; \t]+");
+						throw new IllegalFormatException("CoorReader: structure given without sequence name");
+					String[] tokens = line.split("[:,; \t]+");
 					if(tokens.length < allowDimMin || tokens.length > allowDimMax)
-						throw new WrongFormatException();
+						throw new IllegalFormatException("CoorReader: number of dimensions incorrect");
 					double[] vals = new double[tokens.length];
 					for(int i = 0; i < tokens.length; i++)
 						vals[i] = Double.parseDouble(tokens[i]);
@@ -54,9 +60,14 @@ public class CoorReader extends DataReader {
 				}
 			}
 		} catch (NumberFormatException e) {
-			throw new WrongFormatException();
+			throw new IllegalFormatException("CoorReader: number formatting error: "+e.getMessage());
 		}
-		return null;
+		if(cur < 0)
+			throw new IllegalFormatException("CoorReader: empty file");
+		if(data.coords.get(cur).size() == 0)
+			throw new IllegalFormatException("CoorReader: sequence "+data.names.get(cur)+" is without a structure");
+
+		return data;
 	}
 	
 	

@@ -17,30 +17,31 @@ public class DataManager {
 	
 	/**
 	 * Tries to read file using all available input plugins. First tries those that claim to
-	 * explicitly support the file extension, that failing tries all plugins. 
+	 * explicitly support the file extension, that failing tries all other plugins. 
 	 * @param file the input file to read
 	 * @return the data read or <code>null</code> if all plugins failed to read the file
 	 */
 	public DataType read(File file) {
 		String ext = getExtension(file);
-		System.out.println("extension: "+ext);
 		DataType data;
-		if(!ext.isEmpty()) {
-			for(DataReader reader : readers) {
-				if(reader.supportedExtensions().contains(ext)) {
-					try {
-						data = reader.read(file);
-						return data;
-					} catch (IOException e) {
-					}
+		for(DataReader reader : readers) {
+			if(reader.supportedExtensions().contains(ext)) {
+				try {
+					data = reader.read(file);
+					System.out.println("Successfully read "+file.getName()+" using "+reader.toString());
+					return data;
+				} catch (IOException e) {
 				}
 			}
 		}
 		for(DataReader reader : readers) {
-			try {
-				data = reader.read(file);
-				return data;
-			} catch (IOException e) {
+			if(!reader.supportedExtensions().contains(ext)) {
+				try {
+					data = reader.read(file);
+					System.out.println("Successfully read "+file.getName()+" using "+reader.toString());
+					return data;
+				} catch (IOException e) {
+				}
 			}
 		}
 		return null;

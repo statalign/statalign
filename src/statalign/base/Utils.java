@@ -29,7 +29,7 @@ public class Utils{
 	/**
 	 * Debugging mode (various consistency checks done if on)
 	 */
-	static final boolean DEBUG = false;// = true;
+	static final boolean DEBUG = true;
 	
 	/**
 	 * The random number generator used throughout the program.

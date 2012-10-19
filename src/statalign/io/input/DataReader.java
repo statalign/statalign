@@ -26,4 +26,9 @@ public abstract class DataReader {
 	
 	public abstract DataType read(Reader reader) throws IOException;
 	
+	@Override
+	public String toString() {
+		return getClass().getSimpleName();
+	}
+	
 }

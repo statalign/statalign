@@ -82,7 +82,7 @@ public class MainThread extends StoppableThread {
 		} catch (IllegalArgumentException e) {
 			String msg = e.getMessage();
 			if(msg != null)
-				System.out.println("Model extension plugin error: "+msg);
+				System.out.println("Plugin error: "+msg);
 		} catch(Exception e) {
 			owner.finished();
 			if(owner.frame != null) {
