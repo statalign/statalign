@@ -14,7 +14,7 @@ import statalign.ui.MainFrame;
 
 /**
  * <p>The entry point of the application. If the program is called from command line and
- * arguments are given, it runs in terminal mode (experimental).
+ * arguments are given, it runs in terminal mode.
  * 
  * <p>If no arguments are given or launched from a jar file, it opens a main frame.
  *

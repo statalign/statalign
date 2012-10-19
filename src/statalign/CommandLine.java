@@ -105,7 +105,7 @@ public class CommandLine {
 					return error("error reading input file " + inputFile);
 				}
 			}
-
+			
 			// TODO: Change? If dealing with merged datasets this does not make
 			// any sense.
 			manager.fullPath = set.getData().get(0);
@@ -242,6 +242,13 @@ public class CommandLine {
 				argsVector.add(plugins.getResultValue(i));
 			}
 			Postprocess.pluginParameters = new PluginParameters(argsVector);
+			
+			// TODO allow rnaMode to be switched off even for RNA sequences (plugin param)
+			// TODO move rnaMode to a "RNA container" plugin
+			if(manager.inputData.seqs.isRNA()) {
+				PostprocessManager.rnaMode = true;
+				System.out.println("RNA mode activated.");
+			}
 
 			AutomateParameters.setAutomateBurnIn(false);
 			AutomateParameters.setAutomateStepRate(false);

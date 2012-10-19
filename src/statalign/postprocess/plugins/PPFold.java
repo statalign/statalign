@@ -4,7 +4,6 @@ import java.awt.BorderLayout;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -28,9 +27,7 @@ import statalign.base.State;
 import statalign.base.Utils;
 import statalign.distance.Distance;
 import statalign.postprocess.Postprocess;
-import statalign.postprocess.PostprocessManager;
 import statalign.postprocess.gui.PPFoldGUI;
-import statalign.postprocess.plugins.Column;
 import statalign.postprocess.plugins.benchmarks.Benchmarks;
 import statalign.postprocess.plugins.benchmarks.Dataset;
 import statalign.postprocess.utils.Mapping;
@@ -161,13 +158,6 @@ public class PPFold extends statalign.postprocess.Postprocess {
 		postprocessable = true;
 		postprocessWrite = true;
 		rnaAssociated = true;
-	
-		
-		if(this.gui == null){
-			PostprocessManager.rnaMode = true;	
-		}
-		
-		
 		Entropy.allowed = true;
 	}
 
@@ -254,7 +244,6 @@ public class PPFold extends statalign.postprocess.Postprocess {
 		}
 		selectReferenceSequence(input);
 		
-		System.out.println("IS NULL = " +(pluginParameters == null));
 		if(pluginParameters != null)
 		{
 			System.out.println("Parameters");
@@ -288,7 +277,7 @@ public class PPFold extends statalign.postprocess.Postprocess {
 					}
 					else
 					{
-						this.samplingAndAveragingRNAalifold = false;
+						samplingAndAveragingRNAalifold = false;
 						System.err.println("Disabling RNAalifold. Could not launch the executable, check that you have specified it correctly and have the latest version.");						
 					}					
 				}
@@ -442,7 +431,7 @@ public class PPFold extends statalign.postprocess.Postprocess {
 			dataset.pairsOnlyReliabilityMPD = mpdResult.getPairsOnlyReliability();
 			dataset.pairsOnlyMPDPosteriorWeighted = RNAFoldingTools.calculatePairsOnlyReliabilityScore(mpdPairedSites, RNAFoldingTools.getDoubleMatrix(mpdResult.finalmatrix), dataset.posteriors);
 			
-			if(this.samplingAndAveragingRNAalifold)
+			if(samplingAndAveragingRNAalifold)
 			{
 				RNAalifoldResult rnaAlifoldMPDResult = RNAalifold.fold(mpdSequences, mpdNames, rnaAlifoldParameters);
 				dataset.rnaAlifoldMPD = rnaAlifoldMPDResult.getSmallResult();
@@ -1238,7 +1227,7 @@ public class PPFold extends statalign.postprocess.Postprocess {
 		{
 			File outFile = new File(title+".info");
 			BufferedWriter buffer = new BufferedWriter(new FileWriter(outFile));
-			if(this.samplingAndAveragingPPfold)
+			if(samplingAndAveragingPPfold)
 			{
 				buffer.write(">method=sampling_and_averaging_ppfold\ttitle="+title+"\tlength="+dataset.pairedSites.length+"\treliability_score="+df.format(dataset.pairsOnlyReliabilityScoreSamplingAndAveraging)+"\n");
 				buffer.write(refSeqGapped.replaceAll("-", "")+"\n");
@@ -1249,19 +1238,19 @@ public class PPFold extends statalign.postprocess.Postprocess {
 				buffer.write(refSeqGapped.replaceAll("-", "")+"\n");
 				buffer.write(RNAFoldingTools.getDotBracketStringFromPairedSites(dataset.pairedSitesMatrix)+"\n");
 			}
-			if(this.samplingAndAveragingRNAalifold)
+			if(samplingAndAveragingRNAalifold)
 			{
 				buffer.write(">method=sampling_and_averaging_rnaalifold\ttitle="+title+"\tlength="+dataset.pairedSitesRNAalifold.length+"\treliability_score="+df.format(dataset.pairsOnlyReliabilityScoreRNAalifold)+"\n");
 				buffer.write(refSeqGapped.replaceAll("-", "")+"\n");
 				buffer.write(RNAFoldingTools.getDotBracketStringFromPairedSites(dataset.pairedSitesRNAalifold)+"\n");
 			}
-			if(this.samplingAndAveragingPPfold && this.samplingAndAveragingRNAalifold)
+			if(samplingAndAveragingPPfold && samplingAndAveragingRNAalifold)
 			{
 				buffer.write(">method=sampling_and_averaging_rnaalifold_and_ppfold\ttitle="+title+"\tlength="+dataset.pairedSitesCombined.length+"\treliability_score="+df.format(dataset.pairsOnlyReliabilityScoreCombined)+"\n");
 				buffer.write(refSeqGapped.replaceAll("-", "")+"\n");
 				buffer.write(RNAFoldingTools.getDotBracketStringFromPairedSites(dataset.pairedSitesCombined)+"\n");
 			}
-			if(this.fuzzyFolding)
+			if(fuzzyFolding)
 			{
 				buffer.write(">method=fuzzy_alignment_ppfold\ttitle="+title+"\tlength="+dataset.pairedSitesEntropyObs.length+"\treliability_score="+df.format(dataset.pairsOnlyReliabilityEntropyObs)+"\tentropy="+dataset.fuzzyAlignmentObsEntropyVal+"\tperc_of_max_entropy="+dataset.fuzzyAlignmentObsEntropyPerc+"\t"+"\tmax_entropy="+dataset.fuzzyAlignmentObsEntropyMax+"\t"+"\n");
 				buffer.write(refSeqGapped.replaceAll("-", "")+"\n");
