@@ -46,9 +46,9 @@ public class Entropy extends statalign.postprocess.Postprocess{
 	public Entropy(){
 		screenable = true;
 		outputable = true;
-		postprocessable = true;
+//		postprocessable = true;
+//		postprocessWrite = true;
 		sampling = true;
-		postprocessWrite = true;
 		rnaAssociated = true;
 		
 	}

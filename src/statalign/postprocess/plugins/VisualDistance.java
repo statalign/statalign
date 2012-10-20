@@ -1,7 +1,6 @@
 package statalign.postprocess.plugins;
 
 import java.awt.BorderLayout;
-import java.io.File;
 import java.util.ArrayList;
 
 import javax.swing.Icon;
@@ -9,14 +8,11 @@ import javax.swing.ImageIcon;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
-import statalign.distance.Distance;
-
 import statalign.base.InputData;
 import statalign.base.State;
+import statalign.distance.Distance;
 import statalign.postprocess.Postprocess;
 import statalign.postprocess.gui.DistanceGUI;
-import statalign.postprocess.gui.EntropyGUI;
-import statalign.postprocess.utils.RNAFoldingTools;
 
 public class VisualDistance extends statalign.postprocess.Postprocess {
 	
@@ -36,8 +32,8 @@ public class VisualDistance extends statalign.postprocess.Postprocess {
 		sampling = true;
 		screenable = true;
 		outputable = true;
-		postprocessable = true;
-		postprocessWrite = true;
+//		postprocessable = true;
+//		postprocessWrite = true;
 		rnaAssociated = true;
 	}
 
