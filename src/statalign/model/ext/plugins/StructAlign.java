@@ -88,7 +88,7 @@ public class StructAlign extends ModelExtension {
 	public double logLikeFactor(Tree tree) {
 		// simplest (and slowest) approach: get alignment of all leaves and compute likelihood from there
 		String[] align = tree.getState().getLeafAlign();
-		
+		fullCovar = calcFullCovar(tree);
 		double logli = 0;
 		int[] inds = new int[align.length];		// current char indices
 		int[] col = new int[align.length];
@@ -108,9 +108,12 @@ public class StructAlign extends ModelExtension {
 	public double columnContrib(int[] col) {
 		// count the number of ungapped positions in the column
 		int numMatch = 0;
-		for(int i = 0; i < col.length; i++)
+		System.out.println("col");
+		for(int i = 0; i < col.length; i++){
+			System.out.println(col[i]);
 			if(col[i] != -1)
 				numMatch++;
+		}
 		// collect indices of ungapped positions
 		int[] notgap = new int[numMatch];
 		int j = 0;
@@ -120,12 +123,17 @@ public class StructAlign extends ModelExtension {
 		
 		// extract covariance corresponding to ungapped positions
 		double[][] subCovar = getSubMatrix(fullCovar, notgap, notgap);
-		
+		System.out.println("notgap");
+		for(int i = 0; i < notgap.length; i++)
+			System.out.println(notgap[i]);		
+		System.out.println(subCovar.length);
 		// create normal distribution with mean 0 and covariance subCovar
 		MultivariateNormalDistribution multiNorm = new MultivariateNormalDistribution(new double[numMatch], subCovar);
-	
+		
 		double li = 1;
 		double[] vals = new double[numMatch];
+		// FOR TESTING ONLY, REMOVE WHEN rotCoords PROPERLY FILLED
+		rotCoords = coords;
 		// loop over all 3 coordinates
 		for(j = 0; j < 3; j++){
 			for(int i = 0; i < numMatch; i++)
@@ -168,26 +176,33 @@ public class StructAlign extends ModelExtension {
 	 * recursive algorithm to traverse tree and calculate distance matrix between leaves 
 	 */		
 	public int[] calcDistanceMatrix(Vertex vertex, double[][] distMat){
-		int[] subTree = new int[distMat.length];
+		int[] subTree = new int[distMat.length + 1];
 		// either both left and right are null or neither is
 		if(vertex.left != null){
 			int[] subLeft  = calcDistanceMatrix(vertex.left, distMat);
 			int[] subRight = calcDistanceMatrix(vertex.right, distMat);
+			System.out.println("subLeft");
+			for(int i = 0; i < subTree.length; i++)
+				System.out.println(subLeft[i]);
+			System.out.println("subRight");
+			for(int i = 0; i < subTree.length; i++)
+				System.out.println(subRight[i]);
 			int i = 0;
 			while(subLeft[i] > -1){
 				subTree[i] = subLeft[i];
 				i++;
 			}
-			for(int j = 0; subRight[j] > -1; j++)
+			for(int j = 0; i+j < subTree.length; j++)
 				subTree[i+j] = subRight[j];
 		}
 		else{
 			subTree[0] = vertex.index;
-			for(int j = 0; j < distMat.length; j++)
+			for(int j = 1; j < subTree.length; j++)
 				subTree[j] = -1;
 		}
+		for(int i = 0; i < subTree.length; i++)
+			System.out.println(subTree[i]);	
 		addEdgeLength(distMat, subTree, vertex.edgeLength);
-			
 		return subTree;
 	}
 		
@@ -195,11 +210,15 @@ public class StructAlign extends ModelExtension {
 	// of a subtree to all other leaves
 	// 'rows' contains the indices of vertices in the subtree
 	public void addEdgeLength(double[][] distMat, int[] subTree, double edgeLength){
+		
+		//System.out.println(subTree.length);
+		//for(int i = 0; i < subTree.length; i++)
+		//	System.out.println(subTree[i]);
 		int i = 0;
 		while(subTree[i] > -1){
-			for(int j = 0; j < subTree.length; j++)  
+			for(int j = 0; j < distMat.length; j++)  
 				distMat[subTree[i]][j] = distMat[subTree[i]][j] + edgeLength;
-			i++;
+			i++;		
 		}
 			
 		// edge length should not be added to distance between vertices in the subtree
