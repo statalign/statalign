@@ -49,8 +49,8 @@ public class Structure extends statalign.postprocess.Postprocess {
 		sampling = true;
 		screenable = true;
 		outputable = true;
-		postprocessable = true;
-		postprocessWrite = true;
+//		postprocessable = true;
+//		postprocessWrite = true;
 		hasToolBar = true;
 		rnaAssociated = true;
 	}

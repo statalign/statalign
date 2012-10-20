@@ -155,8 +155,8 @@ public class PPFold extends statalign.postprocess.Postprocess {
 		
 		screenable = true;
 		outputable = true;
-		postprocessable = true;
-		postprocessWrite = true;
+//		postprocessable = true;
+//		postprocessWrite = true;
 		rnaAssociated = true;
 		Entropy.allowed = true;
 	}
@@ -246,8 +246,8 @@ public class PPFold extends statalign.postprocess.Postprocess {
 		
 		if(pluginParameters != null)
 		{
-			System.out.println("Parameters");
-			pluginParameters.print();
+//			System.out.println("Parameters");
+//			pluginParameters.print();
 			String ppfoldParameter = pluginParameters.getParameter("ppfold");
 			String rnaAlifoldParameter = pluginParameters.getParameter("rnaalifold");
 			String fuzzyParameter = pluginParameters.getParameter("fuzzy");
