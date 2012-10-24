@@ -44,6 +44,7 @@ import statalign.base.MainManager;
 import statalign.base.Utils;
 import statalign.io.DataType;
 import statalign.io.RawSequences;
+import statalign.model.ext.ModelExtension;
 import statalign.model.subst.RecognitionError;
 import statalign.model.subst.SubstitutionModel;
 import statalign.model.subst.plugins.Dayhoff;
@@ -159,6 +160,19 @@ public class MainFrame extends JFrame implements ActionListener {
         toolBar.add(openButton);
 
         toolBar.addSeparator();
+        
+        for(ModelExtension plugin : manager.modelExtMan.getPluginList()) {
+        	for(JComponent comp : plugin.getToolBarItems())
+        		toolBar.add(comp);
+        }
+        
+        String rnaText = "RNA mode";
+        rnaButton = createToggleButton(new ImageIcon(ClassLoader.getSystemResource("icons/rna1.png")), rnaText);
+        rnaButton.setEnabled(false);
+        rnaButton.setSelected(false);
+        toolBar.add(rnaButton);
+        
+        toolBar.addSeparator();
 
         JMenuItem ioPreferencesItem = createMenuItem("Preferences...", true);
         ioPreferencesItem.setAccelerator(KeyStroke.getKeyStroke("control 1"));
@@ -239,18 +253,12 @@ public class MainFrame extends JFrame implements ActionListener {
         stopButton.setEnabled(false);
         toolBar.add(stopButton);
         
-        String rnaText = "RNA mode";
-        rnaButton = createToggleButton(new ImageIcon(ClassLoader.getSystemResource("icons/rna1.png")), rnaText);
-        rnaButton.setEnabled(false);
-        rnaButton.setSelected(false);
-        toolBar.add(rnaButton);
-        
         String settingsText = "Settings";
         JButton settingsButton = createButton(new ImageIcon(ClassLoader.
         		getSystemResource("icons/settings.png")), settingsText);
         toolBar.add(settingsButton);
 
-        menu = new JMenu("Model");
+        menu = new JMenu("Substitution models");
         menu.setMnemonic(KeyEvent.VK_L);
 
         modelButtons = new JMenuItem[substModels.length];

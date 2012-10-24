@@ -1,7 +1,14 @@
 package statalign.model.ext.plugins;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+
+import javax.swing.ImageIcon;
+import javax.swing.JComponent;
+import javax.swing.JToggleButton;
 
 import org.apache.commons.math3.distribution.MultivariateNormalDistribution;
 
@@ -15,10 +22,12 @@ import statalign.model.ext.ModelExtManager;
 import statalign.model.ext.ModelExtension;
 import statalign.postprocess.PluginParameters;
 
-public class StructAlign extends ModelExtension {
+public class StructAlign extends ModelExtension implements ActionListener {
 	
 	/** the command line identifier of this plugin */
 	private static final String CMD_LINE_PLUGIN_ID = "structal";
+	
+	JToggleButton myButton;
 
 	/** alpha-C atomic coordinate for each sequence and each residue */
 	double[][][] coords;
@@ -41,17 +50,33 @@ public class StructAlign extends ModelExtension {
 	double sigma2;
 	
 	@Override
+	public List<JComponent> getToolBarItems() {
+		myButton = new JToggleButton(new ImageIcon(ClassLoader.getSystemResource("icons/protein.png")));
+    	myButton.setToolTipText("Structural alignment mode (for proteins only)");
+    	myButton.addActionListener(this);
+    	myButton.setEnabled(true);
+    	myButton.setSelected(false);
+    	return Arrays.asList((JComponent)myButton);
+
+	}
+	
+	@Override
+	public void actionPerformed(ActionEvent e) {
+		setActive(myButton.isSelected());
+	}
+
+	@Override
+	public void setActive(boolean active) {
+		super.setActive(active);
+		System.out.println("StructAlign plugin is now "+(active?"enabled":"disabled"));
+	}
+	
+	@Override
 	public void init(ModelExtManager manager, PluginParameters params) {
 		if(params != null && params.getParameter(CMD_LINE_PLUGIN_ID) != null) {
 			// TODO parse plugin parameters
 			setActive(true);
 		}
-	}
-	
-	@Override
-	public void setActive(boolean active) {
-		super.setActive(active);
-		System.out.println("StructAlign plugin is now "+(active?"enabled":"disabled"));
 	}
 	
 	@Override
@@ -241,4 +266,5 @@ public class StructAlign extends ModelExtension {
 			return;
 		// TODO recalculate
 	}
+
 }
