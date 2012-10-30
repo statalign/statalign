@@ -453,14 +453,14 @@ public class MainFrame extends JFrame implements ActionListener {
             choose.setMultiSelectionEnabled(true);
             if (choose.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
             	for(File file : choose.getSelectedFiles()) {
-	            	if(inFile == null)
-	            		inFile = file; 
 	                DataType data = manager.dataMan.read(file);
 	                if(data == null) {
 	                	JOptionPane.showMessageDialog(this, "The following file was not recognised to be in a known format:\n"+file+"\n\n", "Error reading input file", JOptionPane.ERROR_MESSAGE);
 	                	continue;
 	                }
 	                if(data instanceof RawSequences) {
+	                	if(inFile == null)
+	                		inFile = file;
 	                	manager.inputData.seqs.add((RawSequences)data);
 	                	manager.inputgui.updateSequences();
 	                	manager.fullPath = inFile.getAbsolutePath();

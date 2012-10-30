@@ -111,6 +111,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	
 	@Override
 	public double logLikeFactor(Tree tree) {
+//		return 0;
 		// simplest (and slowest) approach: get alignment of all leaves and compute likelihood from there
 		String[] align = tree.getState().getLeafAlign();
 		fullCovar = calcFullCovar(tree);
