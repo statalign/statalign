@@ -139,7 +139,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				numMatch++;
 		}
 		if(numMatch == 0)  // CHRIS: this shouldn't happen, but some columns are all gaps
-			return 0;
+			return 1;
 		// collect indices of ungapped positions
 		int[] notgap = new int[numMatch];
 		int j = 0;
