@@ -46,8 +46,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	double[][] fullCovar;
 	
 	/** parameters of structural drift */
-	double theta;
-	double sigma2;
+	double theta = .1; // CONSTANT VALUE FOR NOW
+	double sigma2 = 1; // SHOULD BE UPDATED WITH MCMC
 	
 	@Override
 	public List<JComponent> getToolBarItems() {
@@ -116,10 +116,10 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		fullCovar = calcFullCovar(tree);
 		double logli = 0;
 		int[] inds = new int[align.length];		// current char indices
-		int[] col = new int[align.length];
+		int[] col = new int[align.length];  // SOMETHING IS WRONG WITH THE WAY INDICES ARE HANDLED HERE
 		for(int i = 0; i < align[0].length(); i++) {
 			for(int j = 0; j < align.length; j++)
-				col[i] = align[j].charAt(i) == '-' ? -1 : inds[j]++;
+				col[j] = align[j].charAt(i) == '-' ? -1 : inds[j]++;
 			logli += Math.log(columnContrib(col));
 		}
 		return logli;
@@ -133,12 +133,12 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	public double columnContrib(int[] col) {
 		// count the number of ungapped positions in the column
 		int numMatch = 0;
-		System.out.println("col");
 		for(int i = 0; i < col.length; i++){
-			System.out.println(col[i]);
 			if(col[i] != -1)
 				numMatch++;
 		}
+		if(numMatch == 0)  // CHRIS: this shouldn't happen, but some columns are all gaps
+			return 0;
 		// collect indices of ungapped positions
 		int[] notgap = new int[numMatch];
 		int j = 0;
@@ -148,16 +148,12 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		
 		// extract covariance corresponding to ungapped positions
 		double[][] subCovar = getSubMatrix(fullCovar, notgap, notgap);
-		System.out.println("notgap");
-		for(int i = 0; i < notgap.length; i++)
-			System.out.println(notgap[i]);		
-		System.out.println(subCovar.length);
 		// create normal distribution with mean 0 and covariance subCovar
 		MultivariateNormalDistribution multiNorm = new MultivariateNormalDistribution(new double[numMatch], subCovar);
 		
 		double li = 1;
 		double[] vals = new double[numMatch];
-		// FOR TESTING ONLY, REMOVE WHEN rotCoords PROPERLY FILLED
+		// CHRIS: FOR TESTING ONLY, REMOVE WHEN rotCoords PROPERLY FILLED
 		rotCoords = coords;
 		// loop over all 3 coordinates
 		for(j = 0; j < 3; j++){
@@ -190,7 +186,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		calcDistanceMatrix(tree.root, distMat);
 		for(int i = 0; i < tree.names.length; i++)
 			for(int j = i; j < tree.names.length; j++)
-				distMat[i][j] = sigma2 / (2 * theta ) * (1 - Math.exp(2 * theta * distMat[i][j]));
+				distMat[i][j] = sigma2 / (2 * theta ) * Math.exp(-theta * distMat[i][j]);
 		for(int i = 0; i < tree.names.length; i++)
 			for(int j = i + 1; j < tree.names.length; j++)
 				distMat[j][i] = distMat[i][j];
@@ -206,12 +202,6 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		if(vertex.left != null){
 			int[] subLeft  = calcDistanceMatrix(vertex.left, distMat);
 			int[] subRight = calcDistanceMatrix(vertex.right, distMat);
-			System.out.println("subLeft");
-			for(int i = 0; i < subTree.length; i++)
-				System.out.println(subLeft[i]);
-			System.out.println("subRight");
-			for(int i = 0; i < subTree.length; i++)
-				System.out.println(subRight[i]);
 			int i = 0;
 			while(subLeft[i] > -1){
 				subTree[i] = subLeft[i];
@@ -225,8 +215,6 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			for(int j = 1; j < subTree.length; j++)
 				subTree[j] = -1;
 		}
-		for(int i = 0; i < subTree.length; i++)
-			System.out.println(subTree[i]);	
 		addEdgeLength(distMat, subTree, vertex.edgeLength);
 		return subTree;
 	}
@@ -236,9 +224,6 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	// 'rows' contains the indices of vertices in the subtree
 	public void addEdgeLength(double[][] distMat, int[] subTree, double edgeLength){
 		
-		//System.out.println(subTree.length);
-		//for(int i = 0; i < subTree.length; i++)
-		//	System.out.println(subTree[i]);
 		int i = 0;
 		while(subTree[i] > -1){
 			for(int j = 0; j < distMat.length; j++)  
