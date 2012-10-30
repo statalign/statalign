@@ -468,6 +468,7 @@ public class Mcmc extends Stoppable {
 			edge = new SimpleStats("Edge len");
 			ind = new SimpleStats("Indel param");
 			sub = new SimpleStats("Subst param");
+			modext = new SimpleStats("Extension");  // CHRIS: initialize modext
 		}
 	}
 
