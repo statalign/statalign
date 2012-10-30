@@ -36,7 +36,16 @@ public abstract class ModelExtension {
 	public void setActive(boolean active) {
 		this.active = active;
 	}
+
+	/**
+	 * Override this to return the list of toolbar items to be added. By default returns <code>null</code>.
+	 */
+	public List<JComponent> getToolBarItems() {
+		return null;
+	}
 	
+	public void dataAdded(File file, DataType data) {}
+
 	/**
 	 * Called during StatAlign startup, after all ModelExtension plugins have been loaded and command line
 	 * has been processed (if present).
@@ -57,12 +66,6 @@ public abstract class ModelExtension {
 	 */
 	public void initRun(InputData inputData) throws IllegalArgumentException {}
 	
-	public List<JComponent> getToolBarItems() {
-		return null;
-	}
-	
-	public void dataAdded(File file, DataType data) {}
-
 	/**
 	 * Called before the start of MCMC sampling, but after the initial tree, alignment etc. have been
 	 * generated. Can be used to initialise data structures etc.
