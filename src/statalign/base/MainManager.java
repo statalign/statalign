@@ -185,7 +185,7 @@ public class MainManager {
 			MPI.COMM_WORLD.Barrier();
 
 			// Retrieve the log-likelihood ratio from all of the workers
-			double[] logLikelihood = new double[] { modelExtMan.getTotalLogLike(tree) };
+			double[] logLikelihood = new double[] { modelExtMan.totalLogLike(tree) };
 			double[] maxLogLikelihood = new double[1];
 			MPI.COMM_WORLD.Reduce(logLikelihood, 0, maxLogLikelihood, 0, 1,
 					MPI.DOUBLE, MPI.MAX, 0);

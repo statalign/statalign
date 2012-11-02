@@ -24,30 +24,33 @@ import statalign.postprocess.PluginParameters;
 
 public class StructAlign extends ModelExtension implements ActionListener {
 	
-	/** the command line identifier of this plugin */
+	/** The command line identifier of this plugin */
 	private static final String CMD_LINE_PLUGIN_ID = "structal";
 	
 	JToggleButton myButton;
 
-	/** alpha-C atomic coordinate for each sequence and each residue */
+	/** Alpha-C atomic coordinate for each sequence and each residue */
 	double[][][] coords;
 	
-	/** alpha-C atomic coordinates under the current set of rotations/translations */
+	/** Alpha-C atomic coordinates under the current set of rotations/translations */
 	double[][][] rotCoords;
 	
-	/** axis of rotation for each sequence */
+	/** Axis of rotation for each sequence */
 	double[][] axes;
-	/** rotation angle for each protein along the rotation axis */
+	/** Rotation angle for each protein along the rotation axis */
 	double[] rots;
-	/** translation vector for each protein */
+	/** Translation vector for each protein */
 	double[][] xlats;
 	
-	/** covariance matrix implied by current tree topology */
+	/** Covariance matrix implied by current tree topology */
 	double[][] fullCovar;
 	
-	/** parameters of structural drift */
+	/** Parameters of structural drift */
 	double theta = .1; // CONSTANT VALUE FOR NOW
 	double sigma2 = 1; // SHOULD BE UPDATED WITH MCMC
+	
+	double logLike;
+	double savedLogLike;
 	
 	@Override
 	public List<JComponent> getToolBarItems() {
@@ -57,7 +60,6 @@ public class StructAlign extends ModelExtension implements ActionListener {
     	myButton.setEnabled(true);
     	myButton.setSelected(false);
     	return Arrays.asList((JComponent)myButton);
-
 	}
 	
 	@Override
@@ -115,6 +117,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		// simplest (and slowest) approach: get alignment of all leaves and compute likelihood from there
 		String[] align = tree.getState().getLeafAlign();
 		fullCovar = calcFullCovar(tree);
+		calcAllRotations();
 		double logli = 0;
 		int[] inds = new int[align.length];		// current char indices
 		int[] col = new int[align.length];  // SOMETHING IS WRONG WITH THE WAY INDICES ARE HANDLED HERE
@@ -154,8 +157,6 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		
 		double li = 1;
 		double[] vals = new double[numMatch];
-		// CHRIS: FOR TESTING ONLY, REMOVE WHEN rotCoords PROPERLY FILLED
-		rotCoords = coords;
 		// loop over all 3 coordinates
 		for(j = 0; j < 3; j++){
 			for(int i = 0; i < numMatch; i++)
@@ -178,6 +179,11 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		return submat;
 	}
 	
+	private void calcAllRotations() {
+		// CHRIS: FOR TESTING ONLY, REMOVE WHEN rotCoords PROPERLY FILLED
+		rotCoords = coords;
+	}
+
 	/**
 	 * return the full covariance matrix for the tree topology and branch lengths
 	 */	
@@ -187,10 +193,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		calcDistanceMatrix(tree.root, distMat);
 		for(int i = 0; i < tree.names.length; i++)
 			for(int j = i; j < tree.names.length; j++)
-				distMat[i][j] = sigma2 / (2 * theta ) * Math.exp(-theta * distMat[i][j]);
-		for(int i = 0; i < tree.names.length; i++)
-			for(int j = i + 1; j < tree.names.length; j++)
-				distMat[j][i] = distMat[i][j];
+				distMat[j][i] = distMat[i][j] = sigma2 / (2 * theta ) * Math.exp(-theta * distMat[i][j]);
 		return distMat;
 	}
 	
@@ -253,23 +256,54 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		return 25;
 	}
 	
-	@Override
-	public double proposeParamChange(Tree tree) {
-		return 0;
-	}
+	/** Weights for rotation/translation, theta, sigma, etc. (TODO add all) */
+	int[] paramPropWeights = { 10, 3, 3 };
 
 	@Override
+	public double proposeParamChange(Tree tree) {
+		int param = Utils.weightedChoose(paramPropWeights);
+		switch(param) {
+		case 0:
+			// proposing new rotation/translation
+			break;
+		case 1:
+			// proposing new theta
+			break;
+		case 2:
+			// proposing new sigma
+			break;
+		}
+		return 0;
+	}
+	
+	@Override
+	public double logLikeModExtParamChange(Tree tree, ModelExtension ext) {
+		return super.logLikeModExtParamChange(tree, ext);
+//		if(ext != this)		// other model extensions active, they don't change the likelihood
+//			return 0;
+//		return 0;
+	}
+	
+	@Override
+	public void afterModExtParamChange(Tree tree, ModelExtension ext,
+			boolean accepted) {
+//		if(ext != this)
+//			return;
+//		if(accepted)
+//			curLogLike = propLogLike;
+	}
+	
+	@Override
+	public double logLikeTreeChange(Tree tree, Vertex nephew) {
+		// TODO only update what's changed and calc likelihood
+		return super.logLikeTreeChange(tree, nephew);
+	}
+	
+	@Override
 	public void afterTreeChange(Tree tree, Vertex nephew, boolean accepted) {
-		if(!accepted)
-			return;
-		// TODO recalculate things
 	}
 	
 	@Override
 	public void afterEdgeLenChange(Tree tree, Vertex vertex, boolean accepted) {
-		if(!accepted)
-			return;
-		// TODO recalculate
 	}
-
 }

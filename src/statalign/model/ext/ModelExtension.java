@@ -77,8 +77,9 @@ public abstract class ModelExtension {
 	
 	/**
 	 * This should return the log of the model's contribution to the likelihood, it will be added on to
-	 * the log-likelihood of the current point in the MCMC state space. Normally will be called in each
-	 * MCMC step, when proposing any change.
+	 * the log-likelihood of the current point in the MCMC state space. Normally it will be called once at the
+	 * initialisation of the MCMC process and from then on once in each MCMC step, when proposing any change.
+	 * In debug mode, will be called more often (including after proposed changes) to ensure consistency.
 	 * @param tree current tree
 	 * @return log of model extension likelihood, conditional on current tree, alignment and params
 	 */
@@ -101,9 +102,25 @@ public abstract class ModelExtension {
 	}
 	
 	/**
+	 * Called when a model extension plugin is to propose a parameter change. Plugins must check whether
+	 * they are selected for the parameter change and propose a change if necessary. Will be called
+	 * for the selected plugin first. {@link #logLikeFactor(Tree)} will be called afterwards to get
+	 * the likelihood contribution after the change, and the move will be accepted or rejected by the
+	 * framework. All plugins will be notified about its outcome by
+	 * {@link #afterModExtParamChange(Tree, ModelExtension, boolean)}.
+	 * @param tree the current tree
+	 * @param ext the model extension plugin that is selected to propose a parameter change
+	 */
+	public void beforeModExtParamChange(Tree tree, ModelExtension ext) {}
+	
+	/**
 	 * Called when this plugin was selected to attempt a model parameter change. The return value
-	 * must be the difference between {@link #logLikeFactor(Tree)} after and before
-	 * the change.
+	 * must be the log of P(x|x')/P(x'|x) * Pr(x')/Pr(x) where x is the old value model parameter,
+	 * x' is new value, P(x'|x) is the probability of the proposed change (proposal), Pr(x') is
+	 * the prior probability of the new parameter value. The remaining factor Pi(new state)/Pi(old state)
+	 * of the Metropolis-Hastings ratio will be calculated by calls to
+	 * {@link #logLikeModExtParamChange(Tree, ModelExtension)}. The plugin will be notified about
+	 * the acceptance/rejection of the change through {@link #afterModExtParamChange(Tree, ModelExtension, boolean)}.
 	 * 
 	 * @param tree the current tree
 	 * @return the (signed) change in model log-likelihood as a result of the parameter change
@@ -111,14 +128,36 @@ public abstract class ModelExtension {
 	public double proposeParamChange(Tree tree) {
 		return 0;
 	}
-
+	
+	public double logLikeModExtParamChange(Tree tree, ModelExtension ext) {
+		return logLikeFactor(tree);
+	}
+	
+	/**
+	 * Called after a proposed model extension parameter change (accepted or rejected).
+	 * @param tree the current tree
+	 * @param ext the model extension plugin that was selected to propose a parameter change
+	 * @param accepted <code>true</code> if the change was accepted
+	 */
+	public void afterModExtParamChange(Tree tree, ModelExtension ext, boolean accepted) {}
+	
 	/**
 	 * Called before an alignment change is proposed, but after the affected subtree has been selected.
-	 * May later change to be called after subalignment (window) has also been selected.
+	 * May change later to be called after subalignment (window) has also been selected.
 	 * @param tree the current tree
 	 * @param selectRoot root of the selected subtree
 	 */
 	public void beforeAlignChange(Tree tree, Vertex selectRoot) {}
+	
+	/**
+	 * 
+	 * @param tree
+	 * @param selectRoot
+	 * @return
+	 */
+	public double logLikeAlignChange(Tree tree, Vertex selectRoot) {
+		return logLikeFactor(tree);
+	}
 	
 	/**
 	 * Called after an alignment change proposal (accepted or rejected).
@@ -136,6 +175,10 @@ public abstract class ModelExtension {
 	 */
 	public void beforeTreeChange(Tree tree, Vertex nephew) {}
 	
+	public double logLikeTreeChange(Tree tree, Vertex nephew) {
+		return logLikeFactor(tree);
+	}
+	
 	/**
 	 * Called after a proposed topology change (accepted or rejected).
 	 * @param tree the tree after the change
@@ -150,6 +193,10 @@ public abstract class ModelExtension {
 	 * @param vertex the node whose edge to its parent is selected to be changed
 	 */
 	public void beforeEdgeLenChange(Tree tree, Vertex vertex) {}
+	
+	public double logLikeEdgeLenChange(Tree tree, Vertex vertex) {
+		return logLikeFactor(tree);
+	}
 	
 	/**
 	 * Called after a proposed edge length change (accepted or rejected).
@@ -167,6 +214,10 @@ public abstract class ModelExtension {
 	 */
 	public void beforeIndelParamChange(Tree tree, Hmm hmm, int ind) {}
 	
+	public double logLikeIndelParamChange(Tree tree, Hmm hmm, int ind) {
+		return logLikeFactor(tree);
+	}
+	
 	/**
 	 * Called after a proposed indel parameter change (accepted or rejected).
 	 * @param tree the current tree
@@ -183,6 +234,10 @@ public abstract class ModelExtension {
 	 * @param ind the index of the substitution parameter selected to be changed or -1 if unknown 
 	 */
 	public void beforeSubstParamChange(Tree tree, SubstitutionModel model, int ind) {}
+	
+	public double logLikeSubstParamChange(Tree tree, SubstitutionModel model, int ind) {
+		return logLikeFactor(tree);
+	}
 	
 	/**
 	 * Called after a proposed indel parameter change (accepted or rejected).
