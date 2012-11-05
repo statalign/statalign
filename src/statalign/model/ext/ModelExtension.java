@@ -20,7 +20,14 @@ import statalign.postprocess.PluginParameters;
  */
 public abstract class ModelExtension {
 	
-	boolean active;
+	/** Private access to model extension manager */
+	private ModelExtInterface manager;
+	
+	protected boolean active;
+	
+	public void setManager(ModelExtInterface manager) {
+		this.manager = manager;
+	}
 
 	/**
 	 * @return <code>true</code> if this plugin is active
@@ -35,6 +42,13 @@ public abstract class ModelExtension {
 	 */
 	public void setActive(boolean active) {
 		this.active = active;
+	}
+	
+	/**
+	 * Returns the (unmodifiable) list of recognised {@link ModelExtension} plugins.
+	 */
+	public final List<ModelExtension> getPluginList() {
+		return manager.getPluginList();
 	}
 
 	/**
@@ -53,13 +67,12 @@ public abstract class ModelExtension {
 	 * <p>It is the plugin's responsibility to activate itself using {@link #setActive(boolean)}
 	 * when the appropriate command line arguments have been specified.
 	 * 
-	 * @param manager reference to manager, save for future use
 	 * @param params reference to plugin command line parameters or null when StatAlign was run with a GUI
 	 */
-	public void init(ModelExtManager manager, PluginParameters params) {}
+	public void init(PluginParameters params) {}
 	
 	/**
-	 * Called during the initialisation of a run if plugin is active. Can be used to process input data.
+	 * Called during the initialisation of a run if plugin is active. Override to process input data.
 	 * 
 	 * @param input the input data
 	 * @exception IllegalArgumentException if the run should be terminated as input data is illegal
@@ -68,7 +81,7 @@ public abstract class ModelExtension {
 	
 	/**
 	 * Called before the start of MCMC sampling, but after the initial tree, alignment etc. have been
-	 * generated. Can be used to initialise data structures etc.
+	 * generated. Override to initialise data structures etc.
 	 * @param tree the starting tree
 	 */
 	public void beforeSampling(Tree tree) {}
@@ -114,21 +127,40 @@ public abstract class ModelExtension {
 	public void beforeModExtParamChange(Tree tree, ModelExtension ext) {}
 	
 	/**
-	 * Called when this plugin was selected to attempt a model parameter change. The return value
-	 * must be the log of P(x|x')/P(x'|x) * Pr(x')/Pr(x) where x is the old value model parameter,
-	 * x' is new value, P(x'|x) is the probability of the proposed change (proposal), Pr(x') is
-	 * the prior probability of the new parameter value. The remaining factor Pi(new state)/Pi(old state)
-	 * of the Metropolis-Hastings ratio will be calculated by calls to
-	 * {@link #logLikeModExtParamChange(Tree, ModelExtension)}. The plugin will be notified about
-	 * the acceptance/rejection of the change through {@link #afterModExtParamChange(Tree, ModelExtension, boolean)}.
+	 * Called when this plugin was selected to attempt a model parameter change. Plugin should call
+	 * {@link #isParamChangeAccepted(double)} with the log of a Metropolis-Hastings-like ratio (see the
+	 * method for details) to find out whether the change was accepted and then act
+	 * accordingly, ie. keep or restore the state.
+	 * 
+	 * <p>The call to the above method will result in a call to {@link #logLikeModExtParamChange(Tree, ModelExtension)}
+	 * with ModelExtension set to <code>this</code> and the plugin should return the log-likelihood factor
+	 * calculated after the proposed change. 
+	 * 
+	 * <p>All plugins will later be notified about the acceptance/rejection of the change through
+	 * {@link #afterModExtParamChange(Tree, ModelExtension, boolean)}.
 	 * 
 	 * @param tree the current tree
-	 * @return the (signed) change in model log-likelihood as a result of the parameter change
 	 */
-	public double proposeParamChange(Tree tree) {
-		return 0;
-	}
+	public void proposeParamChange(Tree tree) {}
 	
+	/**
+	 * Should be called from {@link #proposeParamChange(Tree)} to find out whether a proposed parameter
+	 * change was accepted.
+	 * 
+	 * <p>Parameter <code>logProbRatio</code> must be the log of P(x|x')/P(x'|x) * Pr(x')/Pr(x) where x is the
+	 * old value of the model parameter, x' is new value, P(x'|x) is the probability of the proposed change
+	 * (proposal probability), P(x|x') is the backproposal probability, Pr(x') is the prior probability
+	 * of the new parameter value (new prior), Pr(x) is the old prior. The remaining factor
+	 * Pi(new state)/Pi(old state) of the Metropolis-Hastings ratio will be calculated by calls to
+	 * {@link #logLikeModExtParamChange(Tree, ModelExtension)}.
+	 * 
+	 * @param logProbRatio MH-like ratio as explained above
+	 * @return <code>true</code> if the change was accepted
+	 */
+	public final boolean isParamChangeAccepted(double logProbRatio) {
+		return manager.modExtParamChangeCallback(logProbRatio);
+	}
+
 	public double logLikeModExtParamChange(Tree tree, ModelExtension ext) {
 		return logLikeFactor(tree);
 	}

@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.List;
 
 import statalign.base.InputData;
+import statalign.base.Mcmc;
 import statalign.base.Tree;
 import statalign.base.Utils;
 import statalign.base.Vertex;
@@ -21,7 +22,7 @@ import statalign.postprocess.PluginParameters;
 public class ModelExtInterface {
 	
 //	private MainManager mainMan;
-	public ModelExtManager modelMan;
+	public Mcmc mcmc;
 	
 	private List<ModelExtension> pluginList;
 	private List<ModelExtension> activeList;
@@ -33,7 +34,6 @@ public class ModelExtInterface {
 
 	public ModelExtInterface() {//MainManager mainMan) {
 //		this.mainMan = mainMan;
-		modelMan = new ModelExtManager(this);
 	}
 	
 	/**
@@ -41,8 +41,10 @@ public class ModelExtInterface {
 	 */
 	public void init(PluginParameters params) {
 		pluginList = Utils.findPlugins(ModelExtension.class);
-		for(ModelExtension plugin : pluginList)
-			plugin.init(modelMan, params);
+		for(ModelExtension plugin : pluginList) {
+			plugin.setManager(this);
+			plugin.init(params);
+		}
 	}
 	
 	/**
@@ -115,8 +117,13 @@ public class ModelExtInterface {
 				plugin.beforeModExtParamChange(tree, selectedPlugin);
 	}
 	
-	public double proposeParamChange(Tree tree) {
-		return selectedPlugin.proposeParamChange(tree);
+	public void proposeParamChange(Tree tree, Mcmc mcmc) {
+		this.mcmc = mcmc;
+		selectedPlugin.proposeParamChange(tree);
+	}
+	
+	public boolean modExtParamChangeCallback(double logLikeRatio) {
+		return mcmc.modExtParamChangeCallback(logLikeRatio);
 	}
 	
 //	/**

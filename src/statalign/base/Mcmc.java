@@ -1009,21 +1009,27 @@ public class Mcmc extends Stoppable {
 
 	private void sampleModelExtParam() {
 		modextSampled++;
-		
 		modelExtMan.beforeModExtParamChange(tree);
-		
-		double mh = modelExtMan.proposeParamChange(tree);
+		modExtParamChangeAccepted = false;
+		modelExtMan.proposeParamChange(tree, this);
+		if(modExtParamChangeAccepted)
+			modextAccepted++;
+		modelExtMan.afterModExtParamChange(tree, modExtParamChangeAccepted);
+	}
+	
+	private boolean modExtParamChangeAccepted;
+	
+	public boolean modExtParamChangeCallback(double logLikeRatio) {
 		double oldLogLikelihood = totalLogLike;
 		double newLogLikelihood = modelExtMan.logLikeModExtParamChange(tree);
-		if (Utils.generator.nextDouble() < Math.exp(mh + newLogLikelihood - oldLogLikelihood)) {
+		if (Utils.generator.nextDouble() < Math.exp(logLikeRatio + newLogLikelihood - oldLogLikelihood)) {
 			// accepted
-			modextAccepted++;
+			modExtParamChangeAccepted = true;
 			totalLogLike = newLogLikelihood;
-			modelExtMan.afterModExtParamChange(tree, true);
-		} else {
-			// rejected, restore (responsibility of the plugin)
-			modelExtMan.afterModExtParamChange(tree, false);
+			return true;
 		}
+		// rejected, restore (responsibility of the plugin)
+		return false;
 	}
 
 	/**

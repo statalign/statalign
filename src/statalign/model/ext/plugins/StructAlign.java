@@ -32,7 +32,6 @@ import statalign.base.Utils;
 import statalign.base.Vertex;
 import statalign.io.DataType;
 import statalign.io.ProteinSkeletons;
-import statalign.model.ext.ModelExtManager;
 import statalign.model.ext.ModelExtension;
 import statalign.postprocess.PluginParameters;
 
@@ -66,8 +65,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	double theta = .1; // CONSTANT VALUE FOR NOW
 	double sigma2 = 1; // SHOULD BE UPDATED WITH MCMC
 	
-	double logLike;
-	double savedLogLike;
+	double curLogLike;
 	
 	@Override
 	public List<JComponent> getToolBarItems() {
@@ -83,7 +81,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	public void actionPerformed(ActionEvent e) {
 		setActive(myButton.isSelected());
 	}
-
+	
 	@Override
 	public void setActive(boolean active) {
 		super.setActive(active);
@@ -91,7 +89,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	}
 	
 	@Override
-	public void init(ModelExtManager manager, PluginParameters params) {
+	public void init(PluginParameters params) {
 		if(params != null && params.getParameter(CMD_LINE_PLUGIN_ID) != null) {
 			// TODO parse plugin parameters
 			setActive(true);
@@ -127,6 +125,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		if(seqMap.size() > 0)
 			throw new IllegalArgumentException("structalign: missing structure for sequence "+seqMap.keySet().iterator().next());
 		rotProp = new RotationProposal();
+		rotCoords = new double[coords.length][][];
 	}
 	
 	@Override
@@ -199,7 +198,12 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	
 	private void calcAllRotations() {
 		// CHRIS: FOR TESTING ONLY, REMOVE WHEN rotCoords PROPERLY FILLED
-		rotCoords = coords;
+		for(int i = 0; i < coords.length; i++)
+			calcRotation(i);
+	}
+	
+	private void calcRotation(int i) {
+		rotCoords[i] = coords[i];
 	}
 
 	/**
@@ -278,7 +282,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	int[] paramPropWeights = { 10, 3, 3 };
 
 	@Override
-	public double proposeParamChange(Tree tree) {
+	public void proposeParamChange(Tree tree) {
 		int param = Utils.weightedChoose(paramPropWeights);
 		switch(param) {
 		case 0:
@@ -291,7 +295,6 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			// proposing new sigma
 			break;
 		}
-		return 0;
 	}
 	
 	@Override
@@ -300,15 +303,6 @@ public class StructAlign extends ModelExtension implements ActionListener {
 //		if(ext != this)		// other model extensions active, they don't change the likelihood
 //			return 0;
 //		return 0;
-	}
-	
-	@Override
-	public void afterModExtParamChange(Tree tree, ModelExtension ext,
-			boolean accepted) {
-//		if(ext != this)
-//			return;
-//		if(accepted)
-//			curLogLike = propLogLike;
 	}
 	
 	@Override
