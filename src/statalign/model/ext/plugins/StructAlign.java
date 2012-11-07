@@ -12,6 +12,8 @@ import javax.swing.JToggleButton;
 
 import org.apache.commons.math3.distribution.BetaDistribution;
 import org.apache.commons.math3.exception.DimensionMismatchException;
+import org.apache.commons.math3.geometry.euclidean.threed.Rotation;
+import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.CholeskyDecomposition;
@@ -51,7 +53,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	/** Axis of rotation for each sequence */
 	double[][] axes;
 	/** Rotation angle for each protein along the rotation axis */
-	double[] rots;
+	double[] angles;
 	/** Translation vector for each protein */
 	double[][] xlats;
 	
@@ -180,6 +182,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				vals[i] = rotCoords[notgap[i]][col[notgap[i]]][j];
 			logli += multiNorm.density(vals);
 		}
+		curLogLike = logli;
 		return logli;
 	}
 
@@ -197,13 +200,17 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	}
 	
 	private void calcAllRotations() {
-		// CHRIS: FOR TESTING ONLY, REMOVE WHEN rotCoords PROPERLY FILLED
 		for(int i = 0; i < coords.length; i++)
 			calcRotation(i);
 	}
 	
-	private void calcRotation(int i) {
-		rotCoords[i] = coords[i];
+	private void calcRotation(int ind) {
+		double[][] rci = rotCoords[ind], ci = coords[ind];
+		rci = new double[ci.length][];
+		Rotation rot = new Rotation(new Vector3D(axes[ind]), angles[ind]);
+		for(int i = 0; i < ci.length; i++) {
+			rci[i] = rot.applyTo(new Vector3D(ci[i])).add(new Vector3D(xlats[ind])).toArray();
+		}
 	}
 
 	/**
