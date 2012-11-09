@@ -29,8 +29,6 @@ import org.apache.commons.math3.stat.descriptive.rank.Percentile;
 import org.apache.commons.math3.util.FastMath;
 import org.apache.commons.math3.util.MathArrays;
 
-import cern.jet.math.Bessel;
-
 import statalign.base.InputData;
 import statalign.base.Tree;
 import statalign.base.Utils;
@@ -39,6 +37,7 @@ import statalign.io.DataType;
 import statalign.io.ProteinSkeletons;
 import statalign.model.ext.ModelExtension;
 import statalign.postprocess.PluginParameters;
+import cern.jet.math.Bessel;
 
 public class StructAlign extends ModelExtension implements ActionListener {
 	
@@ -66,6 +65,10 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	private String[] curAlign;
 	/** Current log-likelihood contribution */
 	double curLogLike;
+	
+	private double[][] oldCovar;
+	private String oldAlign;
+	private double oldLogLi;
 	
 	/** independence rotation proposal distribution */
 	RotationProposal rotProp;
@@ -137,17 +140,26 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	
 	@Override
 	public double logLikeFactor(Tree tree) {
-//		return 0;
-		// simplest (and slowest) approach: get alignment of all leaves and compute likelihood from there
 		String[] align = tree.getState().getLeafAlign();
-		if(Utils.DEBUG && curAlign != null)
-			checkConsAlign(align);
+		checkConsAlign(align);
 		curAlign = align;
+		
 		double[][] covar = calcFullCovar(tree);
-		if(Utils.DEBUG && fullCovar != null)
-			checkConsCover(covar);
+		checkConsCover(covar);
 		fullCovar = covar;
-		calcAllRotations();
+		
+		if(!checkConsRots())
+			calcAllRotations();
+		
+		double logli = calcAllColumnContrib();
+		checkConsLogLike(logli);
+		curLogLike = logli;
+		
+		return curLogLike;
+	}
+	
+	private double calcAllColumnContrib() {
+		String[] align = curAlign;
 		double logli = 0;
 		int[] inds = new int[align.length];		// current char indices
 		int[] col = new int[align.length];  
@@ -158,16 +170,21 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		}
 		return logli;
 	}
-	
-	private void checkConsAlign(String[] align) {
+
+	private boolean checkConsAlign(String[] align) {
+		if(!Utils.DEBUG || curAlign == null)
+			return false;
 		if(align.length != curAlign.length)
 			throw new Error("Inconsistency in StructAlign, alignment length: "+align.length+", "+curAlign.length);
 		for(int i = 0; i < align.length; i++)
 			if(!align[i].equals(curAlign[i]))
 				throw new Error("Inconsistency in StructAlign, alignment: "+align.length+", "+curAlign.length);
+		return true;
 	}
 
-	private void checkConsCover(double[][] covar) {
+	private boolean checkConsCover(double[][] covar) {
+		if(!Utils.DEBUG || fullCovar == null)
+			return false;
 		if(covar.length != fullCovar.length)
 			throw new Error("Inconsistency in StructAlign, covar matrix length: "+covar.length+", "+fullCovar.length);
 		for(int i = 0; i < covar.length; i++) {
@@ -177,8 +194,35 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				if(Math.abs(covar[i][j]-fullCovar[i][j]) > 1e-5)
 					throw new Error("Inconsistency in StructAlign, covar matrix "+i+","+j+" value: "+covar[i][j]+", "+fullCovar[i][j]);
 		}
+		return true;
 	}
 	
+	private boolean checkConsRots() {
+		if(!Utils.DEBUG || rotCoords[0] == null)
+			return false;
+		double[][][] rots = new double[rotCoords.length][][];
+		for(int i = 0; i < rots.length; i++) {
+			rots[i] = new double[rotCoords[i].length][];
+			for(int j = 0; j < rots[i].length; j++)
+				rots[i][j] = MathArrays.copyOf(rotCoords[i][j]);
+		}
+		calcAllRotations();
+		for(int i = 0; i < rots.length; i++)
+			for(int j = 0; j < rots[i].length; j++)
+				for(int k = 0; k < rots[i][j].length; k++)
+					if(Math.abs(rots[i][j][k]-rotCoords[i][j][k]) > 1e-5)
+						throw new Error("Inconsistency in StructAlign, rotation "+i+","+j+","+k+": "+rots[i][j][k]+" vs "+rotCoords[i][j][k]);
+		return true;
+	}
+
+	private boolean checkConsLogLike(double logli) {
+		if(!Utils.DEBUG || curLogLike == 0)
+			return false;
+		if(Math.abs(logli-curLogLike) > 1e-5)
+			throw new Error("Inconsistency in StructAlign, log-likelihood "+logli+" vs "+curLogLike);
+		return true;
+	}
+
 	/**
 	 * Calculates the structural likelihood contribution of a single alignment column
 	 * @param col the column, id of the residue for each sequence (or -1 if gapped in column)
@@ -324,49 +368,87 @@ public class StructAlign extends ModelExtension implements ActionListener {
 
 	@Override
 	public void proposeParamChange(Tree tree) {
-		switch(Utils.weightedChoose(paramPropWeights)) {
-		case 0:
-			// proposing new rotation/translation
+		int param = Utils.weightedChoose(paramPropWeights);
+		if(param == 0) {
+			// proposing rotation/translation of a single sequence
 			int rotxlat = Utils.weightedChoose(rotXlatWeights);
 			// choose sequence to rotate/translate (never rotate 1st one)
 			int omit = (rotxlat == 0 ? 1 : 0);
 			int ind = Utils.generator.nextInt(coords.length - omit) + omit;
-			if(rotxlat == 0) {
-				// new rotation
-				double[] oldax = MathArrays.copyOf(axes[ind]);
-				double oldang = angles[ind];
-				double oldll = curLogLike;
-				
-				double llratio = 0;
-				
+			
+			double[] oldax = MathArrays.copyOf(axes[ind]);
+			double oldang = angles[ind];
+			double[] oldxlat = MathArrays.copyOf(xlats[ind]);
+			double[][] oldrots = rotCoords[ind];
+			rotCoords[ind] = null;	// so that calcRotation creates new array
+			double oldll = curLogLike;
+
+			double llratio = 0;
+
+			switch(rotxlat) {
+			case 0:
+				// rotation of a single sequence
 				// TODO where are tuning parameters initialized?
 				double k1 = 500, k2 = 500;
 				
-				// TODO modify axes[ind] and angles[ind], calc llratio (see isParamChangeAccepted for what this is)
 				axes[ind] = vonMisesFisher.simulate(k1, new ArrayRealVector(axes[ind])).toArray();
 				angles[ind] = vonMises.simulate(k2, angles[ind]);
 				
-				calcRotation(ind);
-				//curLogLike
-				if(isParamChangeAccepted(llratio)) {
-					// a
-				} else {
-					// restore
-					axes[ind] = oldax;
-					angles[ind] = oldang;
-					curLogLike = oldll;
-				}
+				// TODO lratio?
 				
-			} else if(rotxlat == 1) {
-				// new translation
+				break;
+			case 1:
+				// translation of a single sequence
+				
+				// TODO add 
+				
+				break;
+			case 2:
+				// library proposal of a single sequence
+				
+				// TODO add
+				
+				break;
 			}
-			break;
-		case 1:
-			// proposing new theta
-			break;
-		case 2:
-			// proposing new sigma
-			break;
+
+			calcRotation(ind);
+			curLogLike = calcAllColumnContrib();
+			if(isParamChangeAccepted(llratio)) {
+				// accepted, nothing to do
+			} else {
+				// rejected, restore
+				axes[ind] = oldax;
+				angles[ind] = oldang;
+				xlats[ind] = oldxlat;
+				rotCoords[ind] = oldrots;
+				curLogLike = oldll;
+			}
+				
+		} else {
+			
+			// proposing new sigma/theta
+			double oldpar = param==1 ? theta : sigma2;
+			double[][] oldcovar = fullCovar;
+			double oldll = curLogLike;
+			
+			double llratio = 0;
+			
+			// TODO resample theta/sigma2
+			
+			// TODO do not recalculate distances, only the covariance matrix
+			fullCovar = calcFullCovar(tree);
+			curLogLike = calcAllColumnContrib();
+			if(isParamChangeAccepted(llratio)) {
+				// accepted, nothing to do
+			} else {
+				// rejected, restore
+				if(param == 1)
+					theta = oldpar;
+				else
+					sigma2 = oldpar;
+				fullCovar = oldcovar;
+				curLogLike = oldll;
+			}
 		}
 	}
 	
@@ -378,12 +460,17 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	
 	@Override
 	public double logLikeTreeChange(Tree tree, Vertex nephew) {
-		// TODO only update what's changed and calc likelihood
-		return super.logLikeTreeChange(tree, nephew);
+		oldCovar = fullCovar;
+		oldLogLi = curLogLike;
+		fullCovar = calcFullCovar(tree);
+		curLogLike = calcAllColumnContrib();
+		return curLogLike;
 	}
 	
 	@Override
 	public void afterTreeChange(Tree tree, Vertex nephew, boolean accepted) {
+		if(accepted)
+			return;
 	}
 	
 	@Override
