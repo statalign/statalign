@@ -941,7 +941,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				unitSphere.setEntry(i, Utils.generator.nextGaussian());
 			unitSphere = unitSphere.unitVector();
 			sample = unitSphere.mapMultiply(Math.pow(1-Math.pow(w,2), .5));
-			sample.append(w);
+			sample = sample.append(w);
 					  
 			// calculate axis and angle to rotate (0,0,1) to mean
 			// axis is cross product of mean and (0,0,1)
