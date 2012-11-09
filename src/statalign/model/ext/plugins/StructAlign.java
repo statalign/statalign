@@ -59,6 +59,10 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	
 	/** Covariance matrix implied by current tree topology */
 	double[][] fullCovar;
+	/** Current alignment between all leaf sequences */
+	private String[] curAlign;
+	/** Current log-likelihood contribution */
+	double curLogLike;
 	
 	/** independence rotation proposal distribution */
 	RotationProposal rotProp;
@@ -67,7 +71,6 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	double theta = .1; // CONSTANT VALUE FOR NOW
 	double sigma2 = 1; // SHOULD BE UPDATED WITH MCMC
 	
-	double curLogLike;
 	
 	@Override
 	public List<JComponent> getToolBarItems() {
@@ -135,7 +138,13 @@ public class StructAlign extends ModelExtension implements ActionListener {
 //		return 0;
 		// simplest (and slowest) approach: get alignment of all leaves and compute likelihood from there
 		String[] align = tree.getState().getLeafAlign();
-		fullCovar = calcFullCovar(tree);
+		if(Utils.DEBUG && curAlign != null)
+			checkConsAlign(align);
+		curAlign = align;
+		double[][] covar = calcFullCovar(tree);
+		if(Utils.DEBUG && fullCovar != null)
+			checkConsCover(covar);
+		fullCovar = covar;
 		calcAllRotations();
 		double logli = 0;
 		int[] inds = new int[align.length];		// current char indices
@@ -146,6 +155,26 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			logli += columnContrib(col);
 		}
 		return logli;
+	}
+	
+	private void checkConsAlign(String[] align) {
+		if(align.length != curAlign.length)
+			throw new Error("Inconsistency in StructAlign, alignment length: "+align.length+", "+curAlign.length);
+		for(int i = 0; i < align.length; i++)
+			if(!align[i].equals(curAlign[i]))
+				throw new Error("Inconsistency in StructAlign, alignment: "+align.length+", "+curAlign.length);
+	}
+
+	private void checkConsCover(double[][] covar) {
+		if(covar.length != fullCovar.length)
+			throw new Error("Inconsistency in StructAlign, covar matrix length: "+covar.length+", "+fullCovar.length);
+		for(int i = 0; i < covar.length; i++) {
+			if(covar[i].length != fullCovar[i].length)
+				throw new Error("Inconsistency in StructAlign, covar matrix "+i+" length: "+covar[i].length+", "+fullCovar[i].length);
+			for(int j = 0; j < covar[i].length; j++)
+				if(Math.abs(covar[i][j]-fullCovar[i][j]) > 1e-5)
+					throw new Error("Inconsistency in StructAlign, covar matrix "+i+","+j+" value: "+covar[i][j]+", "+fullCovar[i][j]);
+		}
 	}
 	
 	/**
@@ -205,8 +234,9 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	}
 	
 	private void calcRotation(int ind) {
-		double[][] rci = rotCoords[ind], ci = coords[ind];
-		rci = new double[ci.length][];
+		double[][] ci = coords[ind], rci = rotCoords[ind];
+		if(rci == null)
+			rci = rotCoords[ind] = new double[ci.length][];
 		Rotation rot = new Rotation(new Vector3D(axes[ind]), angles[ind]);
 		for(int i = 0; i < ci.length; i++) {
 			rci[i] = rot.applyTo(new Vector3D(ci[i])).add(new Vector3D(xlats[ind])).toArray();
@@ -287,13 +317,42 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	
 	/** Weights for rotation/translation, theta, sigma, etc. (TODO add all) */
 	int[] paramPropWeights = { 10, 3, 3 };
+	/** Weights for proposing rotation vs translation vs library */
+	int[] rotXlatWeights= { 25, 25, 1 };
 
 	@Override
 	public void proposeParamChange(Tree tree) {
-		int param = Utils.weightedChoose(paramPropWeights);
-		switch(param) {
+		switch(Utils.weightedChoose(paramPropWeights)) {
 		case 0:
 			// proposing new rotation/translation
+			int rotxlat = Utils.weightedChoose(rotXlatWeights);
+			// choose sequence to rotate/translate (never rotate 1st one)
+			int omit = (rotxlat == 0 ? 1 : 0);
+			int ind = Utils.generator.nextInt(coords.length - omit) + omit;
+			if(rotxlat == 0) {
+				// new rotation
+				double[] oldax = MathArrays.copyOf(axes[ind]);
+				double oldang = angles[ind];
+				double oldll = curLogLike;
+				
+				double llratio = 0;
+				
+				// TODO modify axes[ind] and angles[ind], calc llratio (see isParamChangeAccepted for what this is)
+				
+				calcRotation(ind);
+				//curLogLike
+				if(isParamChangeAccepted(llratio)) {
+					// a
+				} else {
+					// restore
+					axes[ind] = oldax;
+					angles[ind] = oldang;
+					curLogLike = oldll;
+				}
+				
+			} else if(rotxlat == 1) {
+				// new translation
+			}
 			break;
 		case 1:
 			// proposing new theta
@@ -306,10 +365,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	
 	@Override
 	public double logLikeModExtParamChange(Tree tree, ModelExtension ext) {
-		return super.logLikeModExtParamChange(tree, ext);
-//		if(ext != this)		// other model extensions active, they don't change the likelihood
-//			return 0;
-//		return 0;
+		// current log-likelihood always precomputed (regardless of whether ext == this)
+		return curLogLike;
 	}
 	
 	@Override
@@ -397,6 +454,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		 * @return the mean vector.
 		 */
 		public double[] getMeans() {
+			// ADAM: why is this function needed? can't we use means directly instead?
 			return MathArrays.copyOf(means);
 		}
 
@@ -406,6 +464,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		 * @return the covariance matrix.
 		 */
 		public RealMatrix getCovariances() {
+			// ADAM: same here, but this one is not even used
 			return covarianceMatrix.copy();
 		}
 
