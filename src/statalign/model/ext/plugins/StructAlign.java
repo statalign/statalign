@@ -158,6 +158,14 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			throw new IllegalArgumentException("structalign: missing structure for sequence "+seqMap.keySet().iterator().next());
 		rotProp = new RotationProposal();
 		rotCoords = new double[coords.length][][];
+		axes = new double[coords.length][];
+		angles = new double[coords.length];
+		xlats = new double[coords.length][];
+		for(i = 0; i < axes.length; i++) {
+			axes[i] = new double[] { 1, 0, 0 };
+			angles[i] = 0;
+			xlats[i] = new double[] { 0, 0, 0 };
+		}
 	}
 	
 	@Override
@@ -386,7 +394,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	/** Weights for rotation/translation, theta, sigma, etc. (TODO add all) */
 	int[] paramPropWeights = { 10, 3, 3 };
 	/** Weights for proposing rotation vs translation vs library */
-	int[] rotXlatWeights= { 25, 25, 1 };
+//	int[] rotXlatWeights= { 25, 25, 1 };
+	int[] rotXlatWeights= { 25, 25, 0 };	// library off
 
 	@Override
 	public void proposeParamChange(Tree tree) {

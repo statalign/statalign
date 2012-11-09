@@ -80,6 +80,7 @@ public class MainThread extends StoppableThread {
 			}
 			System.out.println("Stopped.");
 		} catch (IllegalArgumentException e) {
+			e.printStackTrace();
 			String msg = e.getMessage();
 			if(msg != null)
 				System.out.println("Plugin error: "+msg);
