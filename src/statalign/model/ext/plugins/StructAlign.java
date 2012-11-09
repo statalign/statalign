@@ -77,15 +77,10 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	RotationProposal rotProp;
 	
 	/** Priors */
-	// theta - gamma prior
-	// private static final double thetaA = 1;
-	// private static final double thetaB = .01;
-	// uses shape/scale parameterization
+	// theta - gamma prior, uses shape/scale parameterization
 	GammaDistribution thetaPrior = new GammaDistribution(1, 100);
 	
 	// sigma2 - gamma prior
-	// private static final double sigma2A = 1;
-	// private static final double sigma2B = .01;
 	GammaDistribution sigma2Prior = new GammaDistribution(1, 100);
 	
 	// priors for rotation and translation are uniform
@@ -97,7 +92,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	private static final double sigma2P = 10;
 	private static final double axisP = 10;
 	private static final double angleP = 10;
-	
+	// higher values lead to bigger step sizes
+	private static final double xlatP = .01;
 	
 	/** Parameters of structural drift */
 	double theta = .1; // TODO CONSTANT VALUE FOR NOW
@@ -418,13 +414,15 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				axes[ind] = vonMisesFisher.simulate(axisP, new ArrayRealVector(axes[ind])).toArray();
 				angles[ind] = vonMises.simulate(angleP, angles[ind]);
 				
-				// TODO lratio?
+				// llratio is 0 because prior is uniform and proposal is symmetric
 				
 				break;
 			case 1:
 				// translation of a single sequence
+				for(int i = 0; i < 3; i++)
+					xlats[ind][i] = Utils.generator.nextGaussian() * xlatP + xlats[ind][i];  
 				
-				// TODO add 
+				// llratio is 0 because prior is uniform and proposal is symmetric
 				
 				break;
 			case 2:
@@ -462,11 +460,11 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			
 			if(param == 1){
 				// creates a gamma distribution with mean theta & variance controlled by thetaP
-				proposal = new GammaDistribution(thetaP, theta / thetaP);
+				proposal = new GammaDistribution(thetaP, oldpar / thetaP);
 				theta = proposal.sample();
 				reverse = new GammaDistribution(thetaP, theta / thetaP);
 			} else{
-				proposal = new GammaDistribution(sigma2P, sigma2 / sigma2P);
+				proposal = new GammaDistribution(sigma2P, oldpar / sigma2P);
 				sigma2 = proposal.sample();
 				reverse = new GammaDistribution(sigma2P, sigma2 / sigma2P);
 			}
@@ -476,11 +474,11 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			curLogLike = calcAllColumnContrib();
 			
 			if(param == 1)
-				llratio = curLogLike + Math.log(thetaPrior.density(theta)) + Math.log(reverse.density(oldpar)) 
-							- oldll - Math.log(thetaPrior.density(oldpar)) - Math.log(proposal.density(theta));
+				llratio = Math.log(thetaPrior.density(theta)) + Math.log(reverse.density(oldpar)) 
+						  - Math.log(thetaPrior.density(oldpar)) - Math.log(proposal.density(theta));
 			else
-				llratio = curLogLike + Math.log(sigma2Prior.density(sigma2)) + Math.log(reverse.density(oldpar)) 
-				- oldll - Math.log(sigma2Prior.density(oldpar)) - Math.log(proposal.density(sigma2));
+				llratio = Math.log(sigma2Prior.density(sigma2)) + Math.log(reverse.density(oldpar)) 
+				          - Math.log(sigma2Prior.density(oldpar)) - Math.log(proposal.density(sigma2));
 			
 			if(isParamChangeAccepted(llratio)) {
 				// accepted, nothing to do
