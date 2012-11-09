@@ -11,6 +11,7 @@ import javax.swing.JComponent;
 import javax.swing.JToggleButton;
 
 import org.apache.commons.math3.distribution.BetaDistribution;
+import org.apache.commons.math3.distribution.GammaDistribution;
 import org.apache.commons.math3.distribution.NormalDistribution;
 import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.geometry.euclidean.threed.Rotation;
@@ -72,6 +73,29 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	
 	/** independence rotation proposal distribution */
 	RotationProposal rotProp;
+	
+	/** Priors */
+	// theta - gamma prior
+	// private static final double thetaA = 1;
+	// private static final double thetaB = .01;
+	// uses shape/scale parameterization
+	GammaDistribution thetaPrior = new GammaDistribution(1, 100);
+	
+	// sigma2 - gamma prior
+	// private static final double sigma2A = 1;
+	// private static final double sigma2B = .01;
+	GammaDistribution sigma2Prior = new GammaDistribution(1, 100);
+	
+	// priors for rotation and translation are uniform
+	// so do not need to be included in M-H ratio
+	
+	/** Proposal tuning parameters */
+	// higher values lead to smaller step sizes
+	private static final double thetaP = 10;
+	private static final double sigma2P = 10;
+	private static final double axisP = 10;
+	private static final double angleP = 10;
+	
 	
 	/** Parameters of structural drift */
 	double theta = .1; // TODO CONSTANT VALUE FOR NOW
@@ -388,11 +412,9 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			switch(rotxlat) {
 			case 0:
 				// rotation of a single sequence
-				// TODO where are tuning parameters initialized?
-				double k1 = 500, k2 = 500;
 				
-				axes[ind] = vonMisesFisher.simulate(k1, new ArrayRealVector(axes[ind])).toArray();
-				angles[ind] = vonMises.simulate(k2, angles[ind]);
+				axes[ind] = vonMisesFisher.simulate(axisP, new ArrayRealVector(axes[ind])).toArray();
+				angles[ind] = vonMises.simulate(angleP, angles[ind]);
 				
 				// TODO lratio?
 				
@@ -433,11 +455,31 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			
 			double llratio = 0;
 			
-			// TODO resample theta/sigma2
+			GammaDistribution proposal;
+			GammaDistribution reverse;
+			
+			if(param == 1){
+				// creates a gamma distribution with mean theta & variance controlled by thetaP
+				proposal = new GammaDistribution(thetaP, theta / thetaP);
+				theta = proposal.sample();
+				reverse = new GammaDistribution(thetaP, theta / thetaP);
+			} else{
+				proposal = new GammaDistribution(sigma2P, sigma2 / sigma2P);
+				sigma2 = proposal.sample();
+				reverse = new GammaDistribution(sigma2P, sigma2 / sigma2P);
+			}
 			
 			// TODO do not recalculate distances, only the covariance matrix
 			fullCovar = calcFullCovar(tree);
 			curLogLike = calcAllColumnContrib();
+			
+			if(param == 1)
+				llratio = curLogLike + Math.log(thetaPrior.density(theta)) + Math.log(reverse.density(oldpar)) 
+							- oldll - Math.log(thetaPrior.density(oldpar)) - Math.log(proposal.density(theta));
+			else
+				llratio = curLogLike + Math.log(sigma2Prior.density(sigma2)) + Math.log(reverse.density(oldpar)) 
+				- oldll - Math.log(sigma2Prior.density(oldpar)) - Math.log(proposal.density(sigma2));
+			
 			if(isParamChangeAccepted(llratio)) {
 				// accepted, nothing to do
 			} else {
