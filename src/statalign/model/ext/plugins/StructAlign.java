@@ -436,8 +436,13 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				break;
 			case 2:
 				// library proposal of a single sequence
+				Transformation prop = rotProp.propose(ind);
+				axes[ind] = prop.axis.toArray();
+				angles[ind] = prop.rot;
+				xlats[ind] = prop.xlat.toArray();
 				
-				// TODO add
+				llratio = rotProp.libraryLogDensity(ind, new Transformation(axes[ind], angles[ind], xlats[ind])) - 
+						  rotProp.libraryLogDensity(ind, prop);
 				
 				break;
 			}
@@ -816,7 +821,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		}
 	
 		/** propose from a library mixture distribution */
-		public Transformation propose(Transformation[] library){
+		public Transformation propose(int index){
+			Transformation[] library = libraries[index];
 			int n = library.length;
 			int k = Utils.generator.nextInt(n);
 			Transformation trans = new Transformation();
@@ -833,7 +839,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		 * @param candidate - a candidate Transformation whose density is to be evaluated
 		 * @return the log density of @candidate according to the library mixture distribution
 		 */
-		public double libraryLogDensity(Transformation[] library, Transformation candidate){			
+		public double libraryLogDensity(int index, Transformation candidate){
+			Transformation[] library = libraries[index];
 			double density = 0;
 			for(int i = 0; i < library.length; i++)
 				density += library[i].density(candidate, kvM, kvMF, sd);
@@ -978,6 +985,12 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		Transformation(RealVector axis, double rot){
 			this.axis = axis;
 			this.rot = rot;
+		}
+		
+		Transformation(double[] axis, double rot, double[] xlat){
+			this.axis = new ArrayRealVector(axis);
+			this.rot = rot;
+			this.xlat = new ArrayRealVector(xlat);
 		}
 		
 		/**
