@@ -71,7 +71,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	RotationProposal rotProp;
 	
 	/** Parameters of structural drift */
-	double theta = .1; // CONSTANT VALUE FOR NOW
+	double theta = .1; // TODO CONSTANT VALUE FOR NOW
 	double sigma2 = 1; // SHOULD BE UPDATED WITH MCMC
 	
 	@Override
@@ -339,7 +339,12 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				
 				double llratio = 0;
 				
+				// TODO where are tuning parameters initialized?
+				double k1 = 500, k2 = 500;
+				
 				// TODO modify axes[ind] and angles[ind], calc llratio (see isParamChangeAccepted for what this is)
+				axes[ind] = vonMisesFisher.simulate(k1, new ArrayRealVector(axes[ind])).toArray();
+				angles[ind] = vonMises.simulate(k2, angles[ind]);
 				
 				calcRotation(ind);
 				//curLogLike
