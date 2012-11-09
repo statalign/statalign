@@ -33,9 +33,11 @@ import statalign.base.InputData;
 import statalign.base.Tree;
 import statalign.base.Utils;
 import statalign.base.Vertex;
+import statalign.base.hmm.Hmm;
 import statalign.io.DataType;
 import statalign.io.ProteinSkeletons;
 import statalign.model.ext.ModelExtension;
+import statalign.model.subst.SubstitutionModel;
 import statalign.postprocess.PluginParameters;
 import cern.jet.math.Bessel;
 
@@ -67,7 +69,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	double curLogLike;
 	
 	private double[][] oldCovar;
-	private String oldAlign;
+	private String[] oldAlign;
 	private double oldLogLi;
 	
 	/** independence rotation proposal distribution */
@@ -459,6 +461,24 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	}
 	
 	@Override
+	public double logLikeAlignChange(Tree tree, Vertex selectRoot) {
+		oldAlign = curAlign;
+		oldLogLi = curLogLike;
+		curAlign = tree.getState().getLeafAlign();
+		curLogLike = calcAllColumnContrib();
+		return curLogLike;
+	}
+	
+	@Override
+	public void afterAlignChange(Tree tree, Vertex selectRoot, boolean accepted) {
+		if(accepted)	// accepted, do nothing
+			return;
+		// rejected, restore
+		curAlign = oldAlign;
+		curLogLike = oldLogLi;
+	}
+	
+	@Override
 	public double logLikeTreeChange(Tree tree, Vertex nephew) {
 		oldCovar = fullCovar;
 		oldLogLi = curLogLike;
@@ -469,12 +489,36 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	
 	@Override
 	public void afterTreeChange(Tree tree, Vertex nephew, boolean accepted) {
-		if(accepted)
+		if(accepted)	// accepted, do nothing
 			return;
+		// rejected, restore
+		fullCovar = oldCovar;
+		curLogLike = oldLogLi;
+	}
+	
+	@Override
+	public double logLikeEdgeLenChange(Tree tree, Vertex vertex) {
+		// do exactly the same as for topology change
+		return logLikeTreeChange(tree, vertex);
 	}
 	
 	@Override
 	public void afterEdgeLenChange(Tree tree, Vertex vertex, boolean accepted) {
+		// do exactly the same as for topology change
+		afterTreeChange(tree, vertex, accepted);
+	}
+	
+	@Override
+	public double logLikeIndelParamChange(Tree tree, Hmm hmm, int ind) {
+		// does not affect log-likelihood
+		return curLogLike;
+	}
+	
+	@Override
+	public double logLikeSubstParamChange(Tree tree, SubstitutionModel model,
+			int ind) {
+		// does not affect log-likelihood
+		return curLogLike;
 	}
 
 	/** Adapted from org.apache.commons.math3.distribution.MultivariateNormalDistribution
