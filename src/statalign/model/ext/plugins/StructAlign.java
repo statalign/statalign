@@ -29,6 +29,8 @@ import org.apache.commons.math3.stat.descriptive.rank.Percentile;
 import org.apache.commons.math3.util.FastMath;
 import org.apache.commons.math3.util.MathArrays;
 
+import cern.jet.math.Bessel;
+
 import statalign.base.InputData;
 import statalign.base.Tree;
 import statalign.base.Utils;
