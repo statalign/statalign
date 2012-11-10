@@ -67,7 +67,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	/** Current alignment between all leaf sequences */
 	private String[] curAlign;
 	/** Current log-likelihood contribution */
-	double curLogLike;
+	double curLogLike = 0;
 	
 	private double[][] oldCovar;
 	private String[] oldAlign;
@@ -287,7 +287,6 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				vals[i] = rotCoords[notgap[i]][col[notgap[i]]][j];
 			logli += multiNorm.logDensity(vals);
 		}
-		curLogLike = logli;
 		return logli;
 	}
 
@@ -391,7 +390,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		return 25;
 	}
 	
-	/** Weights for rotation/translation, theta, sigma, etc. (TODO add all) */
+	/** Weights for rotation/translation, theta, sigma2, etc. (TODO add all) */
 	int[] paramPropWeights = { 10, 3, 3 };
 	/** Weights for proposing rotation vs translation vs library */
 //	int[] rotXlatWeights= { 25, 25, 1 };
@@ -451,8 +450,12 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			curLogLike = calcAllColumnContrib();
 			if(isParamChangeAccepted(llratio)) {
 				// accepted, nothing to do
+				if(Utils.DEBUG)
+					System.out.println(new String[] { "rot", "xlat", "library" }[rotxlat]+" accepted");
 			} else {
 				// rejected, restore
+				if(Utils.DEBUG)
+					System.out.println(new String[] { "rot", "xlat", "library" }[rotxlat]+" rejected");
 				axes[ind] = oldax;
 				angles[ind] = oldang;
 				xlats[ind] = oldxlat;
@@ -496,8 +499,12 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			
 			if(isParamChangeAccepted(llratio)) {
 				// accepted, nothing to do
+				if(Utils.DEBUG)
+					System.out.println(new String[] { "theta", "sigma2" }[param-1]+" accepted");
 			} else {
 				// rejected, restore
+				if(Utils.DEBUG)
+					System.out.println(new String[] { "theta", "sigma2" }[param-1]+" rejected");
 				if(param == 1)
 					theta = oldpar;
 				else
@@ -668,9 +675,11 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				throw new DimensionMismatchException(vals.length, dim);
 			}
 
-			return -dim / 2 * FastMath.log(2 * FastMath.PI) + 
-					-0.5 * FastMath.log(covarianceMatrixDeterminant) +
+			double x = -dim / 2 * FastMath.log(2 * FastMath.PI) + 
+//					-0.5 * FastMath.log(covarianceMatrixDeterminant) +
+					-0.5 * covarianceMatrixDeterminant +
 					getExponentTerm(vals);
+			return x;
 		}
 
 		/**

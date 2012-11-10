@@ -480,8 +480,10 @@ public class Mcmc extends Stoppable {
 			proposalWeights[5] = modelExtMan.getParamChangeWeight();
 			switch (Utils.weightedChoose(proposalWeights)) {
 			case 0:
-				if(Utils.DEBUG)
+				if(Utils.DEBUG) {
+//					System.out.println("Alignment");
 					timer = -System.currentTimeMillis();
+				}
 				sampleAlignment();
 				if(Utils.DEBUG) {
 					timer += System.currentTimeMillis();
@@ -489,8 +491,10 @@ public class Mcmc extends Stoppable {
 				}
 				break;
 			case 1:
-				if(Utils.DEBUG)
+				if(Utils.DEBUG) {
+//					System.out.println("Topology");
 					timer = -System.currentTimeMillis();
+				}
 				sampleTopology();
 				if(Utils.DEBUG) {
 					timer += System.currentTimeMillis();
@@ -498,8 +502,10 @@ public class Mcmc extends Stoppable {
 				}
 				break;
 			case 2:
-				if(Utils.DEBUG)
+				if(Utils.DEBUG) {
+//					System.out.println("Edge");
 					timer = -System.currentTimeMillis();
+				}
 				sampleEdge();
 				if(Utils.DEBUG) {
 					timer += System.currentTimeMillis();
@@ -507,8 +513,10 @@ public class Mcmc extends Stoppable {
 				}
 				break;
 			case 3:
-				if(Utils.DEBUG)
+				if(Utils.DEBUG) {
+//					System.out.println("IndelParam");
 					timer = -System.currentTimeMillis();
+				}
 				sampleIndelParameter();
 				if(Utils.DEBUG) {
 					timer += System.currentTimeMillis();
@@ -516,8 +524,10 @@ public class Mcmc extends Stoppable {
 				}
 				break;
 			case 4:
-				if(Utils.DEBUG)
+				if(Utils.DEBUG) {
+//					System.out.println("SubstParam");
 					timer = -System.currentTimeMillis();
+				}
 				sampleSubstParameter();
 				if(Utils.DEBUG) {
 					timer += System.currentTimeMillis();
@@ -525,8 +535,10 @@ public class Mcmc extends Stoppable {
 				}
 				break;
 			case 5:
-				if(Utils.DEBUG)
+				if(Utils.DEBUG) {
+//					System.out.println("ModelExtParam");
 					timer = -System.currentTimeMillis();
+				}
 				sampleModelExtParam();
 				if(Utils.DEBUG) {
 					timer += System.currentTimeMillis();
@@ -1038,16 +1050,11 @@ public class Mcmc extends Stoppable {
 	 */
 	public String getInfoString() {
 		return String.format("Acceptances: [Alignment: %f, Edge: %f, Topology: %f, Indel: %f, Substitution: %f]",
-				(alignmentSampled == 0 ? 0 : (double) alignmentAccepted
-						/ (double) alignmentSampled),
-						(edgeSampled == 0 ? 0 : (double) edgeAccepted
-								/ (double) edgeSampled),
-								(topologySampled == 0 ? 0 : (double) topologyAccepted
-										/ (double) topologySampled),
-										(indelSampled == 0 ? 0 : (double) indelAccepted
-												/ (double) indelSampled),
-												(substSampled == 0 ? 0 : (double) substAccepted
-														/ (double) substSampled));
+				(alignmentSampled == 0 ? 0 : (double) alignmentAccepted / (double) alignmentSampled),
+				(edgeSampled == 0 ? 0 : (double) edgeAccepted / (double) edgeSampled),
+				(topologySampled == 0 ? 0 : (double) topologyAccepted / (double) topologySampled),
+				(indelSampled == 0 ? 0 : (double) indelAccepted / (double) indelSampled),
+				(substSampled == 0 ? 0 : (double) substAccepted / (double) substSampled));
 	}
 
 	/**
