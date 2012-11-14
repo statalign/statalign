@@ -74,7 +74,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	private double oldLogLi;
 	
 	/** independence rotation proposal distribution */
-	RotationProposal rotProp;
+	RotationProposal rotProp = new RotationProposal();
 	
 	/** Priors */
 	// theta - gamma prior, uses shape/scale parameterization
@@ -90,8 +90,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	// higher values lead to smaller step sizes
 	private static final double thetaP = 10;
 	private static final double sigma2P = 10;
-	private static final double axisP = 10;
-	private static final double angleP = 10;
+	private static final double axisP = 100;
+	private static final double angleP = 100;
 	// higher values lead to bigger step sizes
 	private static final double xlatP = .01;
 	
@@ -393,8 +393,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	/** Weights for rotation/translation, theta, sigma2, etc. (TODO add all) */
 	int[] paramPropWeights = { 10, 3, 3 };
 	/** Weights for proposing rotation vs translation vs library */
-//	int[] rotXlatWeights= { 25, 25, 1 };
-	int[] rotXlatWeights= { 25, 25, 0 };	// library off
+	int[] rotXlatWeights= { 25, 25, 1 };
+//	int[] rotXlatWeights= { 25, 25, 0 };	// library off
 
 	@Override
 	public void proposeParamChange(Tree tree) {
@@ -435,14 +435,22 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				break;
 			case 2:
 				// library proposal of a single sequence
+				Transformation old = new Transformation(axes[ind], angles[ind], xlats[ind]);
+				// transformation should be relative to reference protein
+				old.xlat = old.xlat.subtract(new ArrayRealVector(xlats[0]));
 				Transformation prop = rotProp.propose(ind);
 				axes[ind] = prop.axis.toArray();
 				angles[ind] = prop.rot;
 				xlats[ind] = prop.xlat.toArray();
-				
-				llratio = rotProp.libraryLogDensity(ind, new Transformation(axes[ind], angles[ind], xlats[ind])) - 
+
+				// library density 
+				llratio = rotProp.libraryLogDensity(ind, old) - 
 						  rotProp.libraryLogDensity(ind, prop);
 				
+				// proposed translation is relative to reference protein
+				for(int i = 0; i < 3; i++)
+					xlats[ind][i] += xlats[0][i];
+							
 				break;
 			}
 
@@ -844,7 +852,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		
 		/**
 		 * 
-		 * @param library - a set of Transformations on which mixture components are centered
+		 * @param index - index indicating the set of Transformations on which mixture components are centered
 		 * @param candidate - a candidate Transformation whose density is to be evaluated
 		 * @return the log density of @candidate according to the library mixture distribution
 		 */
@@ -924,8 +932,6 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		 * @return log density of distribution at @param v
 		 */
 		static double logDensity(double kappa, RealVector mean, RealVector v){
-			// TODO should we replace sinh to avoid exponentiation followed by log?  would need a function for computing log(a+b)
-			// from log(a) and log(b)
 			return Math.log(kappa) - Math.log(4 * Math.PI * Math.sinh(kappa)) + kappa * mean.dotProduct(v);
 		}	
 		
