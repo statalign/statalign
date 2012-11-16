@@ -85,7 +85,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	int libAccept = 0;
 	
 	/** independence rotation proposal distribution */
-	RotationProposal rotProp = new RotationProposal();
+	RotationProposal rotProp;
 	
 	/** Priors */
 	// theta - gamma prior, uses shape/scale parameterization
@@ -761,11 +761,16 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		// TODO All of the values above this point should probably be chosen elsewhere
 		
 		RotationProposal(){
+			try {
 			// calculate all rotations relative to fixed protein
 			libraries = new Transformation[coords.length][];
 			for(int i = 0; i < coords.length; i++)
 				if(i != fixed)
 					libraries[i] = selectBest(calculateAllOptimal(fixed, i, window), percent);
+			} catch (Exception e) {
+				e.printStackTrace();
+				throw new Error();
+			}
 		}
 		
 		public Transformation[] calculateAllOptimal(int a, int b, int window){
