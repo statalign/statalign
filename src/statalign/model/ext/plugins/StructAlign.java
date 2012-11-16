@@ -414,7 +414,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			// proposing rotation/translation of a single sequence
 			int rotxlat = Utils.weightedChoose(rotXlatWeights);
 			// choose sequence to rotate/translate (never rotate 1st one)
-			int omit = (rotxlat == 0 ? 1 : 0);
+			int omit = (rotxlat != 1 ? 1 : 0);
 			int ind = Utils.generator.nextInt(coords.length - omit) + omit;
 			
 			double[] oldax = MathArrays.copyOf(axes[ind]);

@@ -62,7 +62,6 @@ public class PostprocessManager {
 					continue;
 				plugins[i] = (Postprocess)cl.newInstance();
 				plugins[i].selected = plugins[i].active = true;
-				System.out.println(plugins[i].getTabName());
 			} catch (Exception e) {
 				e.printStackTrace();
 			}

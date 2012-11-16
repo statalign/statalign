@@ -48,7 +48,7 @@ public class StructTrace extends Postprocess {
 	
 	@Override
 	public String getFileExtension() {
-		return ".struct";
+		return "struct";
 	}
 
 	@Override
