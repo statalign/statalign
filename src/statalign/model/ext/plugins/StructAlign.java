@@ -96,8 +96,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	private static final double xlatP = .01;
 	
 	/** Parameters of structural drift */
-	double theta = .1; // TODO CONSTANT VALUE FOR NOW
-	double sigma2 = 1; // SHOULD BE UPDATED WITH MCMC
+	public double theta = .1; // TODO CONSTANT VALUE FOR NOW
+	public double sigma2 = 1; // SHOULD BE UPDATED WITH MCMC
 	
 	@Override
 	public List<JComponent> getToolBarItems() {

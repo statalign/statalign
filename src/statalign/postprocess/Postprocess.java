@@ -2,6 +2,7 @@ package statalign.postprocess;
 
 import java.io.FileWriter;
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.Icon;
 import javax.swing.JComponent;
@@ -11,6 +12,7 @@ import statalign.base.InputData;
 import statalign.base.Mcmc;
 import statalign.base.McmcStep;
 import statalign.base.State;
+import statalign.model.ext.ModelExtension;
 
 /**
  * Common ancestor for post-processing plugin classes.
@@ -252,6 +254,10 @@ public abstract class Postprocess {
      */
     public ArrayList<JComponent> getToolBarItems() {
         return null;
+    }
+    
+    public List<ModelExtension> getModExtPlugins() {
+    	return mcmc.modelExtMan.getPluginList();
     }
 
 }
