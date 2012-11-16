@@ -876,7 +876,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			trans.axis = vonMisesFisher.simulate(kvMF, library[k].axis);
 			trans.rot = vonMises.simulate(kvM, library[k].rot);
 			for(int i = 0; i < 3; i++)
-				trans.xlat.setEntry(i, Utils.generator.nextGaussian() * sd + trans.xlat.getEntry(i));			
+				trans.xlat.setEntry(i, Utils.generator.nextGaussian() * sd + library[k].xlat.getEntry(i));			
 			return trans.fillRotationMatrix();
 		}
 		
