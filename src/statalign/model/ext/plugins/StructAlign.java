@@ -847,7 +847,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			int j = 0;
 			for(int i = 0; i < library.length; i++)
 				if(library[i].ss < cutoff)
-					best[j++] = library[i];
+					best[j++] = library[i].fillAxisAngle();
 			return best;
 		}
 		
