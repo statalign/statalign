@@ -56,11 +56,11 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	double[][][] rotCoords;
 	
 	/** Axis of rotation for each sequence */
-	double[][] axes;
+	public double[][] axes;
 	/** Rotation angle for each protein along the rotation axis */
-	double[] angles;
+	public double[] angles;
 	/** Translation vector for each protein */
-	double[][] xlats;
+	public double[][] xlats;
 	
 	/** Covariance matrix implied by current tree topology */
 	double[][] fullCovar;
