@@ -73,8 +73,19 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	private String[] oldAlign;
 	private double oldLogLi;
 	
+	int sigProposed = 0;
+	int sigAccept = 0;
+	int thetaProposed = 0;
+	int thetaAccept = 0;
+	int rotProposed = 0;
+	int rotAccept = 0;
+	int xlatProposed = 0;
+	int xlatAccept = 0;
+	int libProposed = 0;
+	int libAccept = 0;
+	
 	/** independence rotation proposal distribution */
-	RotationProposal rotProp;
+	RotationProposal rotProp = new RotationProposal();
 	
 	/** Priors */
 	// theta - gamma prior, uses shape/scale parameterization
@@ -90,8 +101,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	// higher values lead to smaller step sizes
 	private static final double thetaP = 10;
 	private static final double sigma2P = 10;
-	private static final double axisP = 10;
-	private static final double angleP = 10;
+	private static final double axisP = 100;
+	private static final double angleP = 100;
 	// higher values lead to bigger step sizes
 	private static final double xlatP = .01;
 	
@@ -393,8 +404,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	/** Weights for rotation/translation, theta, sigma2, etc. (TODO add all) */
 	int[] paramPropWeights = { 10, 3, 3 };
 	/** Weights for proposing rotation vs translation vs library */
-//	int[] rotXlatWeights= { 25, 25, 1 };
-	int[] rotXlatWeights= { 25, 25, 0 };	// library off
+	int[] rotXlatWeights= { 25, 25, 1 };
+//	int[] rotXlatWeights= { 25, 25, 0 };	// library off
 
 	@Override
 	public void proposeParamChange(Tree tree) {
@@ -418,7 +429,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			switch(rotxlat) {
 			case 0:
 				// rotation of a single sequence
-				
+				rotProposed++;
 				axes[ind] = vonMisesFisher.simulate(axisP, new ArrayRealVector(axes[ind])).toArray();
 				angles[ind] = vonMises.simulate(angleP, angles[ind]);
 				
@@ -427,6 +438,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				break;
 			case 1:
 				// translation of a single sequence
+				xlatProposed++;
 				for(int i = 0; i < 3; i++)
 					xlats[ind][i] = Utils.generator.nextGaussian() * xlatP + xlats[ind][i];  
 				
@@ -435,14 +447,23 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				break;
 			case 2:
 				// library proposal of a single sequence
+				libProposed++;
+				Transformation old = new Transformation(axes[ind], angles[ind], xlats[ind]);
+				// transformation should be relative to reference protein
+				old.xlat = old.xlat.subtract(new ArrayRealVector(xlats[0]));
 				Transformation prop = rotProp.propose(ind);
 				axes[ind] = prop.axis.toArray();
 				angles[ind] = prop.rot;
 				xlats[ind] = prop.xlat.toArray();
-				
-				llratio = rotProp.libraryLogDensity(ind, new Transformation(axes[ind], angles[ind], xlats[ind])) - 
+
+				// library density 
+				llratio = rotProp.libraryLogDensity(ind, old) - 
 						  rotProp.libraryLogDensity(ind, prop);
 				
+				// proposed translation is relative to reference protein
+				for(int i = 0; i < 3; i++)
+					xlats[ind][i] += xlats[0][i];
+							
 				break;
 			}
 
@@ -450,6 +471,16 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			curLogLike = calcAllColumnContrib();
 			if(isParamChangeAccepted(llratio)) {
 				// accepted, nothing to do
+				switch(rotxlat) {
+				case 0:
+					rotAccept++;
+					break;
+				case 1:
+					xlatAccept++;
+					break;
+				case 2:
+					libAccept++;					
+				}
 				if(Utils.DEBUG)
 					System.out.println(new String[] { "rot", "xlat", "library" }[rotxlat]+" accepted");
 			} else {
@@ -476,11 +507,13 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			GammaDistribution reverse;
 			
 			if(param == 1){
+				thetaProposed++;
 				// creates a gamma distribution with mean theta & variance controlled by thetaP
 				proposal = new GammaDistribution(thetaP, oldpar / thetaP);
 				theta = proposal.sample();
 				reverse = new GammaDistribution(thetaP, theta / thetaP);
 			} else{
+				sigProposed++;
 				proposal = new GammaDistribution(sigma2P, oldpar / sigma2P);
 				sigma2 = proposal.sample();
 				reverse = new GammaDistribution(sigma2P, sigma2 / sigma2P);
@@ -498,6 +531,10 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				          - Math.log(sigma2Prior.density(oldpar)) - Math.log(proposal.density(sigma2));
 			
 			if(isParamChangeAccepted(llratio)) {
+				if(param == 1)
+					thetaAccept++;
+				else
+					sigAccept++;
 				// accepted, nothing to do
 				if(Utils.DEBUG)
 					System.out.println(new String[] { "theta", "sigma2" }[param-1]+" accepted");
@@ -844,7 +881,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		
 		/**
 		 * 
-		 * @param library - a set of Transformations on which mixture components are centered
+		 * @param index - index indicating the set of Transformations on which mixture components are centered
 		 * @param candidate - a candidate Transformation whose density is to be evaluated
 		 * @return the log density of @candidate according to the library mixture distribution
 		 */
@@ -924,8 +961,6 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		 * @return log density of distribution at @param v
 		 */
 		static double logDensity(double kappa, RealVector mean, RealVector v){
-			// TODO should we replace sinh to avoid exponentiation followed by log?  would need a function for computing log(a+b)
-			// from log(a) and log(b)
 			return Math.log(kappa) - Math.log(4 * Math.PI * Math.sinh(kappa)) + kappa * mean.dotProduct(v);
 		}	
 		
