@@ -1178,8 +1178,9 @@ public class RNAFoldingTools {
 				}
 			}			
 		}
-		
-		double ratio = countRNA / countNonRNA;		
-		return ratio > 0.5;
+		System.out.println(sequences);
+		double ratio = countRNA / (countRNA + countNonRNA);
+		System.out.println(ratio);
+		return ratio > 0.4;
 	}
 }
