@@ -172,11 +172,23 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		axes = new double[coords.length][];
 		angles = new double[coords.length];
 		xlats = new double[coords.length][];
-		for(i = 0; i < axes.length; i++) {
+
+		axes[0] = new double[] { 1, 0, 0 };
+		angles[0] = 0;
+		xlats[0] = new double[] { 0, 0, 0 };
+				
+		for(i = 1; i < axes.length; i++) {
+			Transformation initial = rotProp.propose(i);
+			axes[i] = initial.axis.toArray();
+			angles[i] = initial.rot;
+			xlats[i] = initial.xlat.toArray();
+		}
+		
+		/*for(i = 0; i < axes.length; i++) {
 			axes[i] = new double[] { 1, 0, 0 };
 			angles[i] = 0;
 			xlats[i] = new double[] { 0, 0, 0 };
-		}
+		}*/
 	}
 	
 	@Override
