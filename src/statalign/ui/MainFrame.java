@@ -97,10 +97,12 @@ public class MainFrame extends JFrame implements ActionListener {
     public MainManager manager;
 
     private McmcSettingsDlg mcmcSettingsDlg;
+    
     private File inFile;
     private Class<? extends SubstitutionModel>[] substModels;
 
     // Functions
+    OutputPreferences op;
     RNASettingsDlg dlg = new RNASettingsDlg(this);
     
     /** The only constructor of the class. It launches the main window. */
@@ -134,7 +136,7 @@ public class MainFrame extends JFrame implements ActionListener {
         substModels = (Class<? extends SubstitutionModel>[]) substModList.toArray(new Class<?>[substModList.size()]);
         manager = new MainManager(this);
         mcmcSettingsDlg = new McmcSettingsDlg(this);
-
+        
         setMinimumSize(new Dimension(500, 250));
 
         ///
@@ -444,6 +446,14 @@ public class MainFrame extends JFrame implements ActionListener {
             choose.setCurrentDirectory(new File(System.getProperty("user.dir")));
             if (choose.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
                 inFile = choose.getSelectedFile();
+                //System.out.println(inFile.toString().substring(inFile.toString().length()-3,inFile.toString().length()));
+                
+                
+                if(!(inFile.toString().endsWith(".fasta") || inFile.toString().endsWith(".fas"))) {
+                	ErrorMessage.showPane(this, "Can only input Fasta files!", true);
+                	return;
+                }
+                
                 FileFormatReader reader = new FastaReader();
                 try {
                 	manager.inputData.seqs.alphabet = "";
@@ -469,13 +479,14 @@ public class MainFrame extends JFrame implements ActionListener {
                         
                         else { 
                         	rnaButton.setEnabled(true);
+                        	RNAPopup.showPane(this);	
                         }
                     }
                 } catch (IOException e) {
                     JOptionPane.showMessageDialog(this, e.getLocalizedMessage(), "Error reading input file", JOptionPane.ERROR_MESSAGE);
                 } catch (ExceptionNonFasta e) {
 					// TODO Auto-generated catch block
-					ErrorMessage.showPane(this, e.getMessage(), true);
+					ErrorMessage.showPane(this, "Input sequences are not valid!", true);
 				} 
             }
             
@@ -483,32 +494,20 @@ public class MainFrame extends JFrame implements ActionListener {
             System.exit(0);
         } else if (ev.getActionCommand() == "Preferences...") {
             //System.out.println("here!!!");
-            new OutputPreferences(this);
+            op = new OutputPreferences(this);
         } else if (ev.getActionCommand() == "Settings") {
             mcmcSettingsDlg.display(this);
         } else if (ev.getActionCommand() == "Run") {
-            if (manager.inputData.seqs.sequences.size() < 2) {
+        	if (manager.inputData.seqs.sequences.size() < 2) {
                 JOptionPane.showMessageDialog(this, "At least two sequences are needed!!!",
                         "Not enough sequences", JOptionPane.ERROR_MESSAGE);
-//				manager.finished();
+//    			manager.finished();
                 return;
             }
-            openItem.setEnabled(false);
-            openButton.setEnabled(false);
-            runItem.setEnabled(false);
-            runButton.setEnabled(false);
-
-            pauseItem.setEnabled(true);
-            pauseButton.setEnabled(true);
-
-            resumeItem.setEnabled(false);
-
-            stopItem.setEnabled(true);
-            stopButton.setEnabled(true);
+        	disableAllButtons();
+        	start();
             
-            rnaButton.setEnabled(false);
             
-            manager.start();
         } else if (ev.getActionCommand() == "Pause") {
             pauseItem.setEnabled(false);
             pauseButton.setEnabled(false);
@@ -689,6 +688,9 @@ public class MainFrame extends JFrame implements ActionListener {
         resumeButton.setEnabled(false);
         stopItem.setEnabled(false);
         stopButton.setEnabled(false);
+        
+        //SavedFilesPopup.showPane(this);
+		
     }
     
     public void deactivateRNA() {
@@ -710,6 +712,28 @@ public class MainFrame extends JFrame implements ActionListener {
     	manager.postProcMan.rnaMode = false;
     	rnaButton.setSelected(false);
     	rnaButton.setEnabled(false);
+    }
+    
+    public void disableAllButtons() {
+    	openItem.setEnabled(false);
+        openButton.setEnabled(false);
+        runItem.setEnabled(false);
+        runButton.setEnabled(false);
+
+        pauseItem.setEnabled(true);
+        pauseButton.setEnabled(true);
+
+        resumeItem.setEnabled(false);
+
+        stopItem.setEnabled(true);
+        stopButton.setEnabled(true);
+        
+        rnaButton.setEnabled(false);
+    }
+    
+    public void start() {
+        //runSettings.display(this);
+        manager.start();
     }
     
 

@@ -142,7 +142,7 @@ public class PPFold extends statalign.postprocess.Postprocess {
 	RNAFoldingTools rnaTools = new RNAFoldingTools();
 	ArrayList<Double> distanceList;
 
-	String outDir = "output/";
+	public static String outDir = "output/";
 	
 	String rnaAlifoldParameters = "";
 	boolean samplingAndAveragingPPfold = false;
