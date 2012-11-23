@@ -43,6 +43,8 @@ public class StructureGUI extends VARNAPanel{
 	
 	
 	public String title;
+	public boolean probMode = true;
+	
 	private double _scaleFactor = 1.0;
 	
 	private float[][] probs;
@@ -89,6 +91,12 @@ public class StructureGUI extends VARNAPanel{
 		g2.setPaint(Color.BLACK);
 		g2.setFont(new Font("SANS_SERIF", Font.BOLD, 16));
 		g2.drawString(title, 10, 20);
+		
+		g2.setFont(new Font("SANS_SERIF", Font.BOLD, 12));
+		
+		if(!probMode) g2.drawString("Normal Mode", 10, 40);
+		else g2.drawString("Probability Mode", 10, 40);
+		
 		g2.setFont(new Font("MONOSPACED", Font.PLAIN, 12));
 		
 	}

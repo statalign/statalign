@@ -21,7 +21,7 @@ public class ExceptionNonFasta extends Exception {
 	}
 	
 	public String getMessage() {
-		return "Can only input .fasta files!";
+		return "Can only input .fas files!";
 	}
 	
 }
