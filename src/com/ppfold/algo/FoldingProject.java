@@ -1,14 +1,9 @@
 package com.ppfold.algo;
 
-import java.io.File;
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import statalign.postprocess.utils.RNAFoldingTools;
 
 import com.ppfold.algo.extradata.ExtraData;
 import com.ppfold.algo.extradata.ForcedConstraints;
@@ -730,12 +725,15 @@ public class FoldingProject {
 					.getChildProgress((float) job.columns.size()
 							/ (float) colcnt);
 			executor.startExecution(job, new JobListener() {
+				@Override
 				public void jobFinished(JobResults result) {
 				} // doesn't happen here
 
+				@Override
 				public void jobFinished(List<ResultBundle> result) {
 				} // doesn't happen here
 
+				@Override
 				public void jobFinished(double[][] result) {
 					for (int col = 0; col < result.length; col++) {
 						probmatrix[col + startcol][col + startcol] = result[col][0];
@@ -763,12 +761,15 @@ public class FoldingProject {
 							/ (float) length);
 			if (job.columns2.size() != 0) {
 				executor.startExecution(job, new JobListener() {
+					@Override
 					public void jobFinished(JobResults result) {
 					} // doesn't happen here
 
+					@Override
 					public void jobFinished(List<ResultBundle> result) {
 					} // doesn't happen here
 
+					@Override
 					public void jobFinished(double[][] result) {
 						for (int col1 = startcol; col1 < endcol + 1; col1++) {
 							for (int col2 = col1 + 1; col2 < length; col2++) {
@@ -986,6 +987,7 @@ public class FoldingProject {
 			// (System.nanoTime()-starttime));
 			final int sectorNumber = cYKJob.getSectorid();
 			executor.startExecution(cYKJob, new JobListener() {
+				@Override
 				public void jobFinished(JobResults result) {
 					master.setInsideResult(sectorNumber, result);
 					jobAct.setProgress(1.0);
@@ -994,9 +996,11 @@ public class FoldingProject {
 					finishedinsidejobscount.incrementAndGet();
 				}
 
+				@Override
 				public void jobFinished(double[][] result) {
 				}// doesn't happen here
 
+				@Override
 				public void jobFinished(List<ResultBundle> result) {
 				} // doesn't happen here
 			});
@@ -1099,9 +1103,11 @@ public class FoldingProject {
 			executor.startExecution(cYKJob, new JobListener() {
 				// System.out.println(sectorNumber + " " + " 2 " +
 				// (System.nanoTime()-starttime));
+				@Override
 				public void jobFinished(List<ResultBundle> result) {
 				} // doesn't happen here
 
+				@Override
 				public void jobFinished(JobResults result) {
 					master.setOutsideResult(sectorNumber, result);
 					jobAct.setProgress(1.0);
@@ -1110,6 +1116,7 @@ public class FoldingProject {
 					finishedoutsidejobscount.incrementAndGet();
 				}
 
+				@Override
 				public void jobFinished(double[][] result) {
 				}// doesn't happen here
 			});
@@ -1469,19 +1476,12 @@ public class FoldingProject {
 		entropy.add(entropyLikelihood);
 		
 		System.out.println("ENTROPY: " + entropy + " = " + entropy.toDouble());
-		
-		
-		DecimalFormat df2 = new DecimalFormat( "#########0.00" );
-		double maxentropy_nr = 0.142- 1.5*Math.log(length)/Math.log(2) + 1.388*length;
-		double maxentropy = new Double(df2.format(maxentropy_nr)).doubleValue();
-		double percent_nr = (entropy.toDouble()/maxentropy_nr)*100;
-		double percent = new Double(df2.format(percent_nr)).doubleValue();
-		
-		entropyVal = entropy.toDouble();
-		entropyPercOfMax = percent;
-		entropyMax = maxentropy;
-		
-		System.out.println("(which is " + percent + "% of the maximum entropy, " + maxentropy + ")");
+
+	    double maxentropy_nr = 0.142- 1.5*Math.log(length)/Math.log(2) + 1.388*length;
+
+	    double percent_nr = (entropy.toDouble()/maxentropy_nr)*100;
+	   
+	    System.out.format("(which is %2.3f%s of the maximum entropy, %2.2f) \n", percent_nr, "%", maxentropy_nr);
 		
 		}
 		
@@ -1534,6 +1534,7 @@ public class FoldingProject {
 			// (System.nanoTime()-starttime));
 			final int sectorNumber = cYKJob.getSectorid();
 			executor.startExecution(cYKJob, new JobListener() {
+				@Override
 				public void jobFinished(JobResults result) {
 					master.setExpectationResult(sectorNumber, result);
 					jobAct.setProgress(1.0);
@@ -1542,9 +1543,11 @@ public class FoldingProject {
 					finishedexpectationjobscount.incrementAndGet();
 				}
 
+				@Override
 				public void jobFinished(double[][] result) {
 				}// doesn't happen here
 
+				@Override
 				public void jobFinished(List<ResultBundle> result) {
 				} // doesn't happen here
 			});
@@ -2001,12 +2004,15 @@ public class FoldingProject {
 					.getChildProgress((float) job.columns.size()
 							/ (float) colcnt);
 			executor.startExecution(job, new JobListener() {
+				@Override
 				public void jobFinished(JobResults result) {
 				} // doesn't happen here
 
+				@Override
 				public void jobFinished(List<ResultBundle> result) {
 				} // doesn't happen here
 
+				@Override
 				public void jobFinished(double[][] result) {
 					for (int col = 0; col < result.length; col++) {
 						probmatrix[col + startcol][col + startcol] = result[col][0];
@@ -2034,12 +2040,15 @@ public class FoldingProject {
 							/ (float) length);
 			if (job.columns2.size() != 0) {
 				executor.startExecution(job, new JobListener() {
+					@Override
 					public void jobFinished(JobResults result) {
 					} // doesn't happen here
 
+					@Override
 					public void jobFinished(List<ResultBundle> result) {
 					} // doesn't happen here
 
+					@Override
 					public void jobFinished(double[][] result) {
 						for (int col1 = startcol; col1 < endcol + 1; col1++) {
 							for (int col2 = col1 + 1; col2 < length; col2++) {
