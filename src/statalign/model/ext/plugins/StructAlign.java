@@ -482,12 +482,12 @@ public class StructAlign extends ModelExtension implements ActionListener {
 					libAccept++;
 					break;
 				}
-				if(Utils.DEBUG)
-					System.out.println(new String[] { "rot", "xlat", "library" }[rotxlat]+" accepted");
+//				if(Utils.DEBUG)
+//					System.out.println(new String[] { "rot", "xlat", "library" }[rotxlat]+" accepted");
 			} else {
 				// rejected, restore
-				if(Utils.DEBUG)
-					System.out.println(new String[] { "rot", "xlat", "library" }[rotxlat]+" rejected");
+//				if(Utils.DEBUG)
+//					System.out.println(new String[] { "rot", "xlat", "library" }[rotxlat]+" rejected");
 				axes[ind] = oldax;
 				angles[ind] = oldang;
 				xlats[ind] = oldxlat;
@@ -537,12 +537,12 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				else
 					sigAccept++;
 				// accepted, nothing to do
-				if(Utils.DEBUG)
-					System.out.println(new String[] { "theta", "sigma2" }[param-1]+" accepted");
+//				if(Utils.DEBUG)
+//					System.out.println(new String[] { "theta", "sigma2" }[param-1]+" accepted");
 			} else {
 				// rejected, restore
-				if(Utils.DEBUG)
-					System.out.println(new String[] { "theta", "sigma2" }[param-1]+" rejected");
+//				if(Utils.DEBUG)
+//					System.out.println(new String[] { "theta", "sigma2" }[param-1]+" rejected");
 				if(param == 1)
 					theta = oldpar;
 				else
