@@ -14,6 +14,7 @@
 <a name="contents">
 <h1>Contents</h1>
 	[<a href="#introduction">Introduction</a>]<br>
+	[<a href="#getstarted">Getting started</a>]<br>
 	[<a href="#model">Adding substitution models</a>]<br>
 	[<a href="#postprocess">Developing additional postprocessing panels</a>]<br>
 	
@@ -23,13 +24,31 @@
 
 	<p align="justify">
 	This help page is for developers, and describes how to implement 
-	additional substitution models and postprocessing panels.
-	You do not have to understand this help file if you only would like
+	extensions to the StatAlign package, such as new substitution models or postprocessing plugins.<br>
+	You do not have to understand this help file if you only would like to
 	use <i>StatAlign</i>. The help page for users can be found 
 	<a href="../help/index.html">
 	here
 	</a>.</p>
-	
+
+<!--------------------------------------------------------------------------------------------------->
+<a name="getstarted">
+<h1>Getting started</h1>
+
+	<p align="justify">
+	StatAlign is an extendable Java program that implements Markov chain Monte Carlo (MCMC) sampling of evolutionary trees, sequence alignments and model parameters from a statistical sequence evolution model. Sequence insertions and deletions are described by the TKF92 (Thorne et al., 1992) indel model and substitutions are assumed to follow a continuous-time Markov process. The latter can be parameterised to varying degrees, thus giving rise to different substitution models, of which new ones can also be defined.
+	</p>
+	<p align="justify">
+	Additionally, StatAlign allows the alignment, tree and parameter samples to be processed in innovative ways and to this end provides an easy-to-use interface for postprocessing plugins. The possibilities range from visualising different dimensions of the state of the Markov chain to summarising alignment or tree samples into one consensus entity to running external applications such as RNA folding on the samples with the aim of incorporating alignment uncertainty into the analyses.
+	</p>
+	<p align="justify">
+	In StatAlign, adding functionality that falls into the above categories boils down to creating a single class in a specific plugins package, which extends the abstract superclass corresponding to the plugin type, and making the compiled class available in the classpath together with the StatAlign core package when running. StatAlign's auto-discovery mechanism ensures that the classpath is traversed to locate all available plugins of each type.
+	</p>
+	<p align="justify">
+	Below we describe in detail how to implement new plugins of different types.
+	</p>
+
+
 <!--------------------------------------------------------------------------------------------------->
 <a name="model">
 <h1>Adding substitution models</h1>
@@ -244,7 +263,7 @@ throw new RecognizingError(getMenuName()+" cannot accept the sequences because i
 	 	<br><br>
 
 	<a name="methods_postprocess">
-	<h2>Description of the methodss in <tt>Postprocess</tt></h2>
+	<h2>Description of the methods in <tt>Postprocess</tt></h2>
 
 		<p align="justify">
 		<u><b><tt>String</tt> getTabName()</b></u><br>
