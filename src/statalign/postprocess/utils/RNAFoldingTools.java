@@ -967,6 +967,11 @@ public class RNAFoldingTools {
     
     public static double [][] getDoubleMatrix(float [][] matrix)
     {
+    	if(matrix == null)
+    	{
+    		return null;
+    	}
+    		
     	double [][] doubleMatrix = new double[matrix.length][matrix[0].length];
     	for(int i = 0 ; i < matrix.length ; i++)
     	{

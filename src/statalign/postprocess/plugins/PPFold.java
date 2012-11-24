@@ -962,18 +962,21 @@ public class PPFold extends statalign.postprocess.Postprocess {
 		}
 		alignments.add(al);
 		
-		// write sample file
-		try
+		if(experimental)
 		{
-			boolean append = true;
-			BufferedWriter buffer = new BufferedWriter(new FileWriter(new File(outDir+"/"+title+".samples"), append));
-			buffer.write("%"+no+"\n");
-			buffer.write(al.toString());
-			buffer.close();
-		}
-		catch(IOException ex)
-		{
-			ex.printStackTrace();
+			// write sample file
+			try
+			{
+				boolean append = true;
+				BufferedWriter buffer = new BufferedWriter(new FileWriter(new File(outDir+"/"+title+".samples"), append));
+				buffer.write("%"+no+"\n");
+				buffer.write(al.toString());
+				buffer.close();
+			}
+			catch(IOException ex)
+			{
+				ex.printStackTrace();
+			}
 		}
 		
 		if(fuzzyFolding)
