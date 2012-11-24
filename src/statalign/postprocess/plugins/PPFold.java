@@ -566,10 +566,10 @@ public class PPFold extends statalign.postprocess.Postprocess {
 
 	@Override	
 	public void newSample(State state, int no, int total) {
-//		for (int i = 0; i < t.length; i++) {
-//			t[i] = curAlig.leafAlignment[i].split("\t");
-//		}
-		//Arrays.sort(t, compStringArr);	
+		for (int i = 0; i < t.length; i++) {
+			t[i] = curAlig.leafAlignment[i].split("\t");
+		}
+		Arrays.sort(t, compStringArr);	
 		
 		if(experimental)
 		{
@@ -585,12 +585,12 @@ public class PPFold extends statalign.postprocess.Postprocess {
 		
 		if (sequences == null) {
 			sequences = new String[sizeOfAlignments];		
-			int len = curAlig.leafAlignment[0].length();
+			int len = t[0][1].length();
 			for (int i = 0; i < sizeOfAlignments; i++) {
 				sequences[i] = "";
 				for (int j = 0; j < len; j++) {
-					if (curAlig.leafAlignment[i].charAt(j) != '-') {
-						sequences[i] += curAlig.leafAlignment[i].charAt(j);
+					if (t[i][1].charAt(j) != '-') {
+						sequences[i] += t[i][1].charAt(j);
 					}
 				}
 			}
@@ -962,18 +962,21 @@ public class PPFold extends statalign.postprocess.Postprocess {
 		}
 		alignments.add(al);
 		
-		// write sample file
-		try
+		if(experimental)
 		{
-			boolean append = true;
-			BufferedWriter buffer = new BufferedWriter(new FileWriter(new File(outDir+"/"+title+".samples"), append));
-			buffer.write("%"+no+"\n");
-			buffer.write(al.toString());
-			buffer.close();
-		}
-		catch(IOException ex)
-		{
-			ex.printStackTrace();
+			// write sample file
+			try
+			{
+				boolean append = true;
+				BufferedWriter buffer = new BufferedWriter(new FileWriter(new File(outDir+"/"+title+".samples"), append));
+				buffer.write("%"+no+"\n");
+				buffer.write(al.toString());
+				buffer.close();
+			}
+			catch(IOException ex)
+			{
+				ex.printStackTrace();
+			}
 		}
 		
 		if(fuzzyFolding)

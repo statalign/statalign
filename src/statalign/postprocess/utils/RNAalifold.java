@@ -176,7 +176,7 @@ public class RNAalifold {
 		}
 		catch(Exception ex)
 		{			
-			ex.printStackTrace();
+			//ex.printStackTrace();
 		}
 		tempClustalFile.delete();
 		return null;
