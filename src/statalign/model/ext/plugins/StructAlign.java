@@ -73,16 +73,16 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	private String[] oldAlign;
 	private double oldLogLi;
 	
-	int sigProposed = 0;
-	int sigAccept = 0;
-	int thetaProposed = 0;
-	int thetaAccept = 0;
-	int rotProposed = 0;
-	int rotAccept = 0;
-	int xlatProposed = 0;
-	int xlatAccept = 0;
-	int libProposed = 0;
-	int libAccept = 0;
+	public int sigProposed = 0;
+	public int sigAccept = 0;
+	public int thetaProposed = 0;
+	public int thetaAccept = 0;
+	public int rotProposed = 0;
+	public int rotAccept = 0;
+	public int xlatProposed = 0;
+	public int xlatAccept = 0;
+	public int libProposed = 0;
+	public int libAccept = 0;
 	
 	/** independence rotation proposal distribution */
 	RotationProposal rotProp;
@@ -101,14 +101,14 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	// higher values lead to smaller step sizes
 	private static final double thetaP = 10;
 	private static final double sigma2P = 10;
-	private static final double axisP = 100;
-	private static final double angleP = 100;
+	// private static final double axisP = 100;
+	private static final double angleP = 1000;
 	// higher values lead to bigger step sizes
-	private static final double xlatP = .01;
+	private static final double xlatP = .1;
 	
 	/** Parameters of structural drift */
-	public double theta = .1; // TODO CONSTANT VALUE FOR NOW
-	public double sigma2 = 1; // SHOULD BE UPDATED WITH MCMC
+	public double theta = .1; 
+	public double sigma2 = 1; 
 	
 	@Override
 	public List<JComponent> getToolBarItems() {
@@ -183,7 +183,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			angles[i] = initial.rot;
 			xlats[i] = initial.xlat.toArray();
 		}
-		
+		// alternative initialization
 		/*for(i = 0; i < axes.length; i++) {
 			axes[i] = new double[] { 1, 0, 0 };
 			angles[i] = 0;
@@ -442,8 +442,24 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			case 0:
 				// rotation of a single sequence
 				rotProposed++;
-				axes[ind] = vonMisesFisher.simulate(axisP, new ArrayRealVector(axes[ind])).toArray();
-				angles[ind] = vonMises.simulate(angleP, angles[ind]);
+				// axes[ind] = vonMisesFisher.simulate(axisP, new ArrayRealVector(axes[ind])).toArray();
+				double smallAngle = vonMises.simulate(angleP, 0);
+				
+				RealVector randomAxis = new ArrayRealVector(3);
+				for(int i = 0; i < 3; i++)
+					randomAxis.setEntry(i, Utils.generator.nextGaussian());
+				randomAxis.unitize();
+				
+				RealMatrix Q = Funcs.calcRotationMatrix(randomAxis, smallAngle);
+				RealMatrix R = Funcs.calcRotationMatrix(new ArrayRealVector(axes[ind]), angles[ind]);
+				
+				R = R.multiply(Q);
+				
+				Transformation temp = new Transformation();
+				temp.rotMatrix = R;
+				temp = temp.fillAxisAngle();
+				axes[ind] = temp.axis.toArray();
+				angles[ind] = temp.rot;
 				
 				// llratio is 0 because prior is uniform and proposal is symmetric
 				
@@ -762,12 +778,12 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		
 		/* libraries of axes, angles, and translation vectors for each protein */
 		Transformation[][] libraries;
-		int window = 10;
+		int window = 25;
 		int fixed = 0;
-		double percent = .01;
+		double percent = 1;  // (value between 0 and 100
 		
 		/* concentration parameters of proposal distribution */
-		double kvMF = 500;
+		double kvMF = 100;
 		double kvM = 100;
 		double sd = .1;
 		
@@ -837,7 +853,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 					allOptimal[k].xlat = xlat;
 					k++;
 				}
-			}				
+			}	
 			return allOptimal;
 		}
 		
@@ -988,6 +1004,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		 * @param v - mean vector
 		 * @return - vector simulated from von Mises-Fisher distribution with given parameters
 		 */
+		// TODO replace with exact simulation method for S2
 		static RealVector simulate(double kappa, RealVector mean){
 			double b, x0, c, z, u, w;
 			int dim = mean.getDimension();
@@ -1075,7 +1092,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			
 			RealVector rotv = rotMatrix.preMultiply(v);
 			
-			rot = Math.acos(v.dotProduct(rotv));
+			rot = Math.acos(v.dotProduct(rotv) / (v.getNorm() * rotv.getNorm()) );
+			// check axis
 			axis = axis.mapMultiply(Math.signum(axis.dotProduct(Funcs.crossProduct(v, rotv))));
 			return this;
 		}
@@ -1093,9 +1111,9 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			// use transpose of cross product matrix (as given on wikipedia) because
 			// we post-mulitply by rotation matrix (other components of final step are symmetric)
 			RealMatrix crossTranspose = new Array2DRowRealMatrix(new double[][] { 
-					{0, axis.getEntry(2), -axis.getEntry(1)},
-					{-axis.getEntry(2), 0, axis.getEntry(0)},
-					{axis.getEntry(1), -axis.getEntry(0), 0} 
+					{0, -axis.getEntry(2), axis.getEntry(1)},
+					{axis.getEntry(2), 0, -axis.getEntry(0)},
+					{-axis.getEntry(1), axis.getEntry(0), 0} 
 			});
 			RealMatrix Icos = new Array2DRowRealMatrix(new double[3][3]);
 			for(int i = 0; i < 3; i++)
@@ -1133,8 +1151,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		 */
 		static RealVector crossProduct(RealVector a, RealVector b){
 			RealMatrix skew = new Array2DRowRealMatrix(
-					new double[][] {{0,a.getEntry(2),-a.getEntry(1)},{-a.getEntry(2),0,a.getEntry(0)},
-							{a.getEntry(1),-a.getEntry(0),0}});
+					new double[][] {{0, -a.getEntry(2), a.getEntry(1)}, {a.getEntry(2), 0, -a.getEntry(0)},
+							{-a.getEntry(1), a.getEntry(0), 0}});
 			return skew.operate(b);
 		}		
 
