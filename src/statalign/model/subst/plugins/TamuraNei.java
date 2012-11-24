@@ -1,9 +1,8 @@
 package statalign.model.subst.plugins;
 
 import java.io.IOException;
-import statalign.model.subst.plugins.NucleotideModel;
-import statalign.model.subst.plugins.NucleotideModelUtils;
-import statalign.base.*;
+
+import statalign.base.Utils;
 
 /**
  * This class implements the Tamura-Nei parameter model.
@@ -37,6 +36,7 @@ public class TamuraNei extends NucleotideModel{
 		setDiagonal();
 	}
 
+	@Override
 	void setDiagonal(){
 		/* Set equilibrium frequencies */
 		e[alphabet.length - 1] = 1.0;
@@ -74,6 +74,7 @@ public class TamuraNei extends NucleotideModel{
 	/**
 	 * Prints the parameters of the model
 	 */
+	@Override
 	public String print(){
 		String s = "";
 		for(int i = 3; i < params.length; i++){
@@ -111,10 +112,10 @@ public class TamuraNei extends NucleotideModel{
 			for (int i = 0; i < 2; i++)
 				r[i] = params[params.length - 2 + i];
 			x = NucleotideModelUtils.sampleRates(r, span / 2.0);
-			for (int i = 0; i < 2; i++){
-				oldparams[params.length - 2 + i] = params[params.length - 2 + i];
+			for (int i = 0; i < params.length; i++)
+				oldparams[i] = params[i];
+			for (int i = 0; i < 2; i++)
 				params[params.length - 2 + i] = r[i];
-			}
 		}
 		setDiagonal();
 		return x;
