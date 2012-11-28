@@ -96,7 +96,8 @@ public class MainFrame extends JFrame implements ActionListener {
     /** The main manager that handles the MCMC run. */
     public MainManager manager;
 
-    private McmcSettingsDlg mcmcSettingsDlg;
+    McmcSettingsDlg mcmcSettingsDlg;
+    McmcSettingsOnRun mcmcSettingsRun;
     
     private File inFile;
     private Class<? extends SubstitutionModel>[] substModels;
@@ -136,6 +137,7 @@ public class MainFrame extends JFrame implements ActionListener {
         substModels = (Class<? extends SubstitutionModel>[]) substModList.toArray(new Class<?>[substModList.size()]);
         manager = new MainManager(this);
         mcmcSettingsDlg = new McmcSettingsDlg(this);
+        mcmcSettingsRun = new McmcSettingsOnRun(this);
         
         setMinimumSize(new Dimension(500, 250));
 
@@ -504,8 +506,9 @@ public class MainFrame extends JFrame implements ActionListener {
 //    			manager.finished();
                 return;
             }
-        	disableAllButtons();
-        	start();
+        	//disableAllButtons();
+        	mcmcSettingsRun.display(this);
+        	//start();
             
             
         } else if (ev.getActionCommand() == "Pause") {

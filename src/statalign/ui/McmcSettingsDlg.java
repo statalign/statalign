@@ -35,13 +35,13 @@ public class McmcSettingsDlg extends JDialog implements ActionListener, KeyListe
 	private MCMCPars pars;
 //	boolean toRun = false;
 	
-	private JTextField burnIn = new JTextField(10);
-	private JTextField cycles = new JTextField(10);
-	private JTextField sampRate = new JTextField(10);
-	private JTextField seed = new JTextField(10);
-	private JCheckBox automateStepRate = new JCheckBox("Automate (Slow)",true);
-	private JCheckBox automateNumberOfSamples = new JCheckBox("Automate (RNA only)",false);
-	private JCheckBox automateBurnIn = new JCheckBox("Automate",true);
+	JTextField burnIn = new JTextField(10);
+	JTextField cycles = new JTextField(10);
+	JTextField sampRate = new JTextField(10);
+	JTextField seed = new JTextField(10);
+	JCheckBox automateStepRate = new JCheckBox("Automate (Slow)",true);
+	JCheckBox automateNumberOfSamples = new JCheckBox("Automate (RNA only)",false);
+	JCheckBox automateBurnIn = new JCheckBox("Automate",true);
 //	private JTextField outFile = new JTextField(15)
 	private MainFrame owner;
 	
@@ -63,7 +63,7 @@ public class McmcSettingsDlg extends JDialog implements ActionListener, KeyListe
 		pan.add(burnIn);
 		burnIn.setEnabled(false);
 		
-		//pan.add(new JLabel("Autometic"));
+		//pan.add(new JLabel("Automatic"));
 		automateBurnIn.setActionCommand("burnin");
 		automateBurnIn.addKeyListener(this);
 		automateBurnIn.addActionListener(this);
@@ -142,25 +142,43 @@ public class McmcSettingsDlg extends JDialog implements ActionListener, KeyListe
 		if(ev.getActionCommand() == "numsam"){
 			if(automateNumberOfSamples.isSelected()){
 				cycles.setEnabled(false);
+				
+				owner.mcmcSettingsRun.automateNumberOfSamples.setSelected(true);
+				owner.mcmcSettingsRun.cycles.setEnabled(false);
 			}
 			else{
 				cycles.setEnabled(true);
+				
+				owner.mcmcSettingsRun.automateNumberOfSamples.setSelected(false);
+				owner.mcmcSettingsRun.cycles.setEnabled(true);
 			}
 		}
 		if(ev.getActionCommand() == "steprate"){
 			if(automateStepRate.isSelected()){
 				sampRate.setEnabled(false);
+				
+				owner.mcmcSettingsRun.automateStepRate.setSelected(true);
+				owner.mcmcSettingsRun.sampRate.setEnabled(false);
 			}
 			else{
 				sampRate.setEnabled(true);
+				
+				owner.mcmcSettingsRun.automateStepRate.setSelected(false);
+				owner.mcmcSettingsRun.sampRate.setEnabled(true);
 			}
 		}
 		if(ev.getActionCommand() == "burnin"){
 			if(automateBurnIn.isSelected()){
 				burnIn.setEnabled(false);
+				
+				owner.mcmcSettingsRun.automateBurnIn.setSelected(true);
+				owner.mcmcSettingsRun.burnIn.setEnabled(false);
 			}
 			else{
 				burnIn.setEnabled(true);
+				
+				owner.mcmcSettingsRun.automateBurnIn.setSelected(false);
+				owner.mcmcSettingsRun.burnIn.setEnabled(true);
 			}
 		}
 		
