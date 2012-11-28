@@ -155,8 +155,8 @@ public class PPFold extends statalign.postprocess.Postprocess {
 		
 		screenable = true;
 		outputable = true;
-//		postprocessable = true;
-//		postprocessWrite = true;
+		postprocessable = true; // TODO might need to change to false
+		postprocessWrite = true;; // TODO might need to change to false
 		rnaAssociated = true;
 		Entropy.allowed = true;
 	}
@@ -269,17 +269,6 @@ public class PPFold extends statalign.postprocess.Postprocess {
 					{
 						rnaAlifoldParameters = split[1];
 					}
-					
-					if(RNAalifold.checkRNAalifold())
-					{
-						//System.out.println(split[0]);
-						//System.out.println(split[1]);
-					}
-					else
-					{
-						samplingAndAveragingRNAalifold = false;
-						System.err.println("Disabling RNAalifold. Could not launch the executable, check that you have specified it correctly and have the latest version.");						
-					}					
 				}
 			}
 			
@@ -287,10 +276,21 @@ public class PPFold extends statalign.postprocess.Postprocess {
 			{
 				new File(outDir).mkdirs();
 				samplingAndAveragingPPfold = true;
-				samplingAndAveragingRNAalifold = true;
+				samplingAndAveragingRNAalifold = true; // TODO SHOULD CHANGE BACK TO TRUE
 				fuzzyFolding = true;
 				experimental = true;
 			}
+			
+			if(RNAalifold.checkRNAalifold())
+			{
+				//System.out.println(split[0]);
+				//System.out.println(split[1]);
+			}
+			else
+			{
+				samplingAndAveragingRNAalifold = false;
+				System.err.println("Disabling RNAalifold. Could not launch the executable, check that you have specified it correctly and have the latest version.");						
+			}					
 
 		}
 		
@@ -367,6 +367,23 @@ public class PPFold extends statalign.postprocess.Postprocess {
 			dataset.inputAlignment.names.add(inputAlignment[i][0]);
 			dataset.inputAlignment.sequences.add(inputAlignment[i][1]);
 		}		
+		
+		// write sample file
+		try
+		{
+			boolean append = false;
+			BufferedWriter buffer = new BufferedWriter(new FileWriter(new File(outDir+"/"+title+".samples"), append));
+			AlignmentData referenceAlignment = new AlignmentData();
+			referenceAlignment.sequences = dataset.inputAlignment.sequences;
+			referenceAlignment.names = dataset.inputAlignment.names;
+			buffer.write("%reference\n");
+			buffer.write(referenceAlignment.toString());
+			buffer.close();
+		}
+		catch(IOException ex)
+		{
+			ex.printStackTrace();
+		}
 
 
 		if(experimental)
@@ -411,6 +428,23 @@ public class PPFold extends statalign.postprocess.Postprocess {
 					refSeqName = seqNames.get(i);
 					refSeqGapped = sequences.get(i);
 				}
+			}
+			
+			// write sample file
+			try
+			{
+				boolean append = true;
+				BufferedWriter buffer = new BufferedWriter(new FileWriter(new File(outDir+"/"+title+".samples"), append));
+				AlignmentData referenceAlignment = new AlignmentData();
+				referenceAlignment.sequences = mpdSequences;
+				referenceAlignment.names = mpdNames;
+				buffer.write("%mpd\n");
+				buffer.write(referenceAlignment.toString());
+				buffer.close();
+			}
+			catch(IOException ex)
+			{
+				ex.printStackTrace();
 			}
 			
 
@@ -928,6 +962,23 @@ public class PPFold extends statalign.postprocess.Postprocess {
 		}
 		alignments.add(al);
 		
+		if(experimental)
+		{
+			// write sample file
+			try
+			{
+				boolean append = true;
+				BufferedWriter buffer = new BufferedWriter(new FileWriter(new File(outDir+"/"+title+".samples"), append));
+				buffer.write("%"+no+"\n");
+				buffer.write(al.toString());
+				buffer.close();
+			}
+			catch(IOException ex)
+			{
+				ex.printStackTrace();
+			}
+		}
+		
 		if(fuzzyFolding)
 		{
 
@@ -953,7 +1004,7 @@ public class PPFold extends statalign.postprocess.Postprocess {
 			if(experimental)
 			{
 				double dist = Distance.AMA(tempAlignment, al.sequences);
-				RNAFoldingTools.writeToFile(new File(outDir +title+"_Distance.txt"),new Double(dist).toString(), true);
+				//RNAFoldingTools.writeToFile(new File(outDir +title+"_Distance.txt"),new Double(dist).toString(), true);
 				
 				FuzzyAlignment fuzzyAlignment = FuzzyAlignment.getFuzzyAlignmentAndProject(alignments, refSeqName);
 				

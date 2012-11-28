@@ -7,9 +7,7 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 
-public 
-
-class AlignmentSample implements Serializable {
+public class AlignmentSample implements Serializable {
 	
 	/**
 	 * 

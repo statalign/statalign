@@ -967,6 +967,11 @@ public class RNAFoldingTools {
     
     public static double [][] getDoubleMatrix(float [][] matrix)
     {
+    	if(matrix == null)
+    	{
+    		return null;
+    	}
+    		
     	double [][] doubleMatrix = new double[matrix.length][matrix[0].length];
     	for(int i = 0 ; i < matrix.length ; i++)
     	{
@@ -1178,8 +1183,9 @@ public class RNAFoldingTools {
 				}
 			}			
 		}
-		
-		double ratio = countRNA / countNonRNA;		
-		return ratio > 0.5;
+		System.out.println(sequences);
+		double ratio = countRNA / (countRNA + countNonRNA);
+		System.out.println(ratio);
+		return ratio > 0.4;
 	}
 }

@@ -1,5 +1,7 @@
 package statalign.postprocess.utils;
 
+
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -12,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import statalign.postprocess.plugins.RNAalifoldResult;
+
 
 /**
  * Given an alignment of sequence this class shells to the RNAalifold
@@ -44,7 +47,7 @@ public class RNAalifold {
 			}
 			catch(Exception ex)
 			{
-				//System.err.println("The following error occured with RNAalifold: " + ex.getMessage());
+				System.err.println("The following error occured with RNAalifold: " + ex.getMessage());
 			}
 			//System.out.println("HERE " + res);
 			if(res != null)
@@ -61,7 +64,7 @@ public class RNAalifold {
 		}
 		catch(Exception ex)
 		{
-		//	System.err.println("The following error occured with RNAalifold: " + ex.getMessage());
+		System.err.println("The following error occured with RNAalifold: " + ex.getMessage());
 		}
 
 		useOldParams = false;
@@ -69,6 +72,7 @@ public class RNAalifold {
 		return false;
 	}
 	
+
 	public static RNAalifoldResult fold(List<String> sequences, List<String> sequenceNames, String arguments)  throws Exception
 	{
 		return fold(sequences, sequenceNames, arguments, true, false);
@@ -90,13 +94,15 @@ public class RNAalifold {
 			//System.out.println("D"+arguments);
 		}
 		
+		String tempPath = System.getProperty("java.io.tmpdir")+"/";		
+		File tempClustalFile = new File(tempPath+"temp.clustalw");
+		saveClustalW(sequences,sequenceNames,tempClustalFile);
 		try
-		{
-			String tempPath = System.getProperty("java.io.tmpdir")+"/";			
+		{	
 			
 			System.out.println(arguments);
-			File tempClustalFile = new File(tempPath+"temp.clustalw");
-			saveClustalW(sequences, sequenceNames, tempClustalFile);
+			
+			System.out.println(tempClustalFile);
 			String args = executable + " " + "-p "+arguments;
 			String file = tempClustalFile.getAbsolutePath();
 			if(useOldParams)
@@ -126,6 +132,8 @@ public class RNAalifold {
 			String errorString = "";
 			boolean first = true;
 			while ((textline = buffer.readLine()) != null) {
+
+				System.out.println(textline);
 				if(first)
 				{
 					first = false;
@@ -137,6 +145,7 @@ public class RNAalifold {
 				errorString += textline;
 			}
 			buffer.close();
+			//System.out.println("A");
 			int exitCode = p.waitFor();
 			//System.out.println(exitCode);
 			if(exitCode != 0)
@@ -151,19 +160,25 @@ public class RNAalifold {
 				//System.out.println("The following error occured:");
 				//System.err.print(errorString);
 			}
-
+			//System.out.println("B");
 			RNAalifoldResult result = new RNAalifoldResult();
 			if(useMatrix)
 			{
-				result.matrix = loadBasePairProbMatrix(new File(tempPath+"alidot.ps"), sequences.get(0).length());
+				File matrixFile = new File(tempPath+"alidot.ps");
+				result.matrix = loadBasePairProbMatrix(matrixFile, sequences.get(0).length());
+				matrixFile.delete();
 			}
-			result.pairedSites = RNAFoldingTools.getPairedSitesFromDotBracketString(loadDotBracketStructure(new File(tempPath+"alifold.out")));
+			File outFile = new File(tempPath+"alifold.out");
+			result.pairedSites = RNAFoldingTools.getPairedSitesFromDotBracketString(loadDotBracketStructure(outFile));
+			outFile.delete();
+			tempClustalFile.delete();
 			return result;
 		}
 		catch(Exception ex)
-		{
-			ex.printStackTrace();
+		{			
+			//ex.printStackTrace();
 		}
+		tempClustalFile.delete();
 		return null;
 	}
 	

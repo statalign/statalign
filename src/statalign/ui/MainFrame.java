@@ -452,8 +452,8 @@ public class MainFrame extends JFrame implements ActionListener {
                 
                 
                 if(!(inFile.toString().endsWith(".fasta") || inFile.toString().endsWith(".fas"))) {
-                	ErrorMessage.showPane(this, "Can only input Fasta files!", true);
-                	return;
+                	//ErrorMessage.showPane(this, "File is not a valid Fasta file.", true);
+                	//return;
                 }
                 
                 FileFormatReader reader = new FastaReader();
