@@ -184,11 +184,12 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			xlats[i] = initial.xlat.toArray();
 		}
 		// alternative initialization
-		/*for(i = 0; i < axes.length; i++) {
+		/*
+		for(i = 0; i < axes.length; i++) {
 			axes[i] = new double[] { 1, 0, 0 };
 			angles[i] = 0;
 			xlats[i] = new double[] { 0, 0, 0 };
-		}*/
+		} */
 	}
 	
 	@Override
@@ -204,9 +205,35 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		if(!checkConsRots())
 			calcAllRotations();
 		
+		/** TESTING
+		
+		System.out.println();
+		System.out.println("Parameters for structural log likelihood:");		
+		System.out.println("Sigma2: " + sigma2);
+		System.out.println("Theta: " + theta);
+		System.out.println("Branch length: " + (tree.root.left.edgeLength + tree.root.right.edgeLength));
+		
+		System.out.println("Rotation matrices:");
+		for(int i = 1; i < xlats.length; i++) {
+			Rotation rot = new Rotation(new Vector3D(axes[i]), angles[i]);
+			double[][] m = rot.getMatrix();
+			for(int j = 0; j < m.length; j++)
+				System.out.println(Arrays.toString(m[j]));
+		}
+		
+		System.out.println("Translations:");
+		for(int i = 0; i < xlats.length; i++)
+			System.out.println(Arrays.toString(xlats[i]));
+		
+		/** END TESTING */
+		
+		
 		double logli = calcAllColumnContrib();
 		checkConsLogLike(logli);
 		curLogLike = logli;
+		
+		// testing
+		//System.out.println("Total log likelihood " + curLogLike);
 		
 		return curLogLike;
 	}
@@ -219,7 +246,9 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		for(int i = 0; i < align[0].length(); i++) {
 			for(int j = 0; j < align.length; j++)
 				col[j] = align[j].charAt(i) == '-' ? -1 : inds[j]++;
-			logli += columnContrib(col);
+			double ll = columnContrib(col); 
+			logli += ll;
+			//System.out.println("Column: " + Arrays.toString(col) + "  ll: " + ll);
 		}
 		return logli;
 	}
@@ -305,10 +334,16 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		double logli = 0;
 		double[] vals = new double[numMatch];
 		// loop over all 3 coordinates
+		
+		/*System.out.println("Calculating log likelihood: ");
+		System.out.println("Mean: " + Arrays.toString(multiNorm.getMeans()));
+		System.out.println("Variance: " + Arrays.toString(subCovar[0]));*/
 		for(j = 0; j < 3; j++){
 			for(int i = 0; i < numMatch; i++)
 				vals[i] = rotCoords[notgap[i]][col[notgap[i]]][j];
+			//System.out.println("Values: " + Arrays.toString(vals));
 			logli += multiNorm.logDensity(vals);
+			//System.out.println("LL: " + multiNorm.logDensity(vals));
 		}
 		return logli;
 	}
@@ -348,6 +383,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		// I'm assuming that tree.names.length is equal to the number of vertices here
 		double[][] distMat = new double[tree.names.length][tree.names.length];
 		calcDistanceMatrix(tree.root, distMat);
+		//System.out.print("Distance: " + distMat[0][1]);
 		for(int i = 0; i < tree.names.length; i++)
 			for(int j = i; j < tree.names.length; j++)
 				distMat[j][i] = distMat[i][j] = sigma2 / (2 * theta ) * Math.exp(-theta * distMat[i][j]);
@@ -359,6 +395,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	 */		
 	public int[] calcDistanceMatrix(Vertex vertex, double[][] distMat){
 		int[] subTree = new int[distMat.length + 1];
+		
 		// either both left and right are null or neither is
 		if(vertex.left != null){
 			int[] subLeft  = calcDistanceMatrix(vertex.left, distMat);
@@ -377,6 +414,11 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				subTree[j] = -1;
 		}
 		addEdgeLength(distMat, subTree, vertex.edgeLength);
+		/*System.out.println();
+		System.out.println("Distmat:");
+		for(int i = 0; i < distMat.length; i++)
+			for(int j = 0; j < distMat[0].length; j++)
+				System.out.println(distMat[i][j]);*/
 		return subTree;
 	}
 		
@@ -387,8 +429,10 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		
 		int i = 0;
 		while(subTree[i] > -1){
-			for(int j = 0; j < distMat.length; j++)  
-				distMat[subTree[i]][j] = distMat[subTree[i]][j] + edgeLength;
+			for(int j = 0; j < distMat.length; j++){  
+				distMat[subTree[i]][j] += edgeLength;
+				distMat[j][subTree[i]] += edgeLength;
+			}
 			i++;		
 		}
 			
@@ -398,8 +442,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		while(subTree[i] > -1){
 			int j = 0;
 			while(subTree[j] > -1){
-				distMat[subTree[i]][subTree[j]] = 
-						distMat[subTree[i]][subTree[j]] - edgeLength;
+				distMat[subTree[i]][subTree[j]] -= edgeLength;
+				distMat[subTree[j]][subTree[i]] -= edgeLength;
 				j++;
 			}
 			i++;
@@ -741,10 +785,16 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				throw new DimensionMismatchException(vals.length, dim);
 			}
 
-			double x = -dim / 2 * FastMath.log(2 * FastMath.PI) + 
-//					-0.5 * FastMath.log(covarianceMatrixDeterminant) +
+			double x = (double)-dim / 2 * FastMath.log(2 * FastMath.PI) + 
+					// -0.5 * FastMath.log(covarianceMatrixDeterminant) +
 					-0.5 * covarianceMatrixDeterminant +
 					getExponentTerm(vals);
+			
+			/*System.out.println(dim);
+			System.out.println((double)-dim / 2 * FastMath.log(2 * FastMath.PI));
+			System.out.println(-0.5 * covarianceMatrixDeterminant);
+			System.out.println(getExponentTerm(vals));*/
+			
 			return x;
 		}
 
