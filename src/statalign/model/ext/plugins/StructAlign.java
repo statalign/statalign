@@ -199,7 +199,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		curAlign = align;
 		
 		double[][] covar = calcFullCovar(tree);
-		checkConsCover(covar);
+		checkConsCovar(covar);
 		fullCovar = covar;
 		
 		if(!checkConsRots())
@@ -264,7 +264,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		return true;
 	}
 
-	private boolean checkConsCover(double[][] covar) {
+	private boolean checkConsCovar(double[][] covar) {
 		if(!Utils.DEBUG || fullCovar == null)
 			return false;
 		if(covar.length != fullCovar.length)
@@ -652,8 +652,10 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	@Override
 	public double logLikeTreeChange(Tree tree, Vertex nephew) {
 		oldCovar = fullCovar;
+		oldAlign = curAlign;
 		oldLogLi = curLogLike;
 		fullCovar = calcFullCovar(tree);
+		curAlign = tree.getState().getLeafAlign();
 		curLogLike = calcAllColumnContrib();
 		return curLogLike;
 	}
@@ -664,6 +666,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			return;
 		// rejected, restore
 		fullCovar = oldCovar;
+		curAlign = oldAlign;
 		curLogLike = oldLogLi;
 	}
 	
