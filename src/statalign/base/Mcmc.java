@@ -124,12 +124,14 @@ public class Mcmc extends Stoppable {
 	private int edgeAccepted = 0;
 	private int topologySampled = 0;
 	private int topologyAccepted = 0;
-	private int indelSampled = 0;
-	private int indelAccepted = 0;
+	private int RSampled = 0;
+	private int RAccepted = 0;
+	private int lambdaSampled = 0;
+	private int lambdaAccepted = 0;
+	private int muSampled = 0;
+	private int muAccepted = 0;
 	private int substSampled = 0;
 	private int substAccepted = 0;
-	private int modextSampled = 0;
-	private int modextAccepted = 0;
 	
 	private static final DecimalFormat df = new DecimalFormat("0.0000");
 
@@ -241,7 +243,7 @@ public class Mcmc extends Stoppable {
 					alignmentsFromSamples.add(align);
 				}	
 				
-				if (i % mcmcpars.sampRate == 0) {
+				if (AutomateParameters.shouldAutomateProposalVariances() && i % mcmcpars.sampRate == 0) {
 					double edgeAccRate = (edgeSampled == 0 ? 0 : (double) edgeAccepted / (double) edgeSampled);
 					if (edgeAccRate > 0.4) {
 						Utils.EDGE_SPAN /= Utils.SPAN_MULTIPLIER;
@@ -255,11 +257,68 @@ public class Mcmc extends Stoppable {
 						edgeSampled = 0;
 						edgeAccepted = 0;
 					}
+					
+					double RAccRate = (RSampled == 0 ? 0 : (double) RAccepted / (double) RSampled);
+					if (RAccRate > 0.4) {
+						Utils.R_SPAN /= Utils.SPAN_MULTIPLIER;
+						System.out.println("R_SPAN = "+Utils.R_SPAN);
+						RSampled = 0;
+						RAccepted = 0;
+					}
+					else if (RAccRate < 0.1) {
+						Utils.R_SPAN *= Utils.SPAN_MULTIPLIER;
+						System.out.println("R_SPAN = "+Utils.R_SPAN);
+						RSampled = 0;
+						RAccepted = 0;
+					}
+					
+					double lambdaAccRate = (lambdaSampled == 0 ? 0 : (double) lambdaAccepted / (double) lambdaSampled);
+					if (lambdaAccRate > 0.4) {
+						Utils.LAMBDA_SPAN /= Utils.SPAN_MULTIPLIER;
+						System.out.println("LAMBDA_SPAN = "+Utils.LAMBDA_SPAN);
+						lambdaSampled = 0;
+						lambdaAccepted = 0;
+					}
+					else if (lambdaAccRate < 0.1) {
+						Utils.LAMBDA_SPAN *= Utils.SPAN_MULTIPLIER;
+						System.out.println("LAMBDA_SPAN = "+Utils.LAMBDA_SPAN);
+						lambdaSampled = 0;
+						lambdaAccepted = 0;
+					}
+					
+					double muAccRate = (muSampled == 0 ? 0 : (double) muAccepted / (double) muSampled);
+					if (muAccRate > 0.4) {
+						Utils.MU_SPAN /= Utils.SPAN_MULTIPLIER;
+						System.out.println("MU_SPAN = "+Utils.MU_SPAN);
+						muSampled = 0;
+						muAccepted = 0;
+					}
+					else if (muAccRate < 0.1) {
+						Utils.MU_SPAN *= Utils.SPAN_MULTIPLIER;
+						System.out.println("MU_SPAN = "+Utils.MU_SPAN);
+						muSampled = 0;
+						muAccepted = 0;
+					}
 				}
 			}
 			
 			//both real burn-in and the one to determine the sampling rate have now been completed.
 			burnin = false;
+			
+			alignmentSampled = 0;
+			alignmentAccepted = 0;
+			edgeSampled = 0;
+			edgeAccepted = 0;
+			topologySampled = 0;
+			topologyAccepted = 0;
+			RSampled = 0;
+			RAccepted = 0;
+			lambdaSampled = 0;
+			lambdaAccepted = 0;
+			muSampled = 0;
+			muAccepted = 0;
+			substSampled = 0;
+			substAccepted = 0;
 
 			int period;
 			if(AutomateParameters.shouldAutomateNumberOfSamples()){
@@ -877,9 +936,7 @@ public class Mcmc extends Stoppable {
 		}
 	}
 
-	private void sampleIndelParameter() {
-		indelSampled++;
-		
+	private void sampleIndelParameter() {		
 		// select indel param
 		int ind = Utils.generator.nextInt(3);
 		boolean accepted = false;
@@ -889,6 +946,7 @@ public class Mcmc extends Stoppable {
 		// perform change, then accept/reject
 		switch (ind) {
 		case 0:
+			RSampled++;
 			// System.out.print("Indel param R: ");
 			double oldR = tree.hmm2.params[0];
 			double oldLogLikelihood = totalLogLike;
@@ -909,7 +967,7 @@ public class Mcmc extends Stoppable {
 									.min(tree.hmm2.params[0], Utils.R_SPAN / 2.0))) {
 				// accept, do nothing
 				// System.out.println("accepted (old: "+oldLogLikelihood+" new: "+newLogLikelihood+")");
-				indelAccepted++;
+				RAccepted++;
 				accepted = true;
 				totalLogLike = newLogLikelihood;
 			} else {
@@ -924,6 +982,7 @@ public class Mcmc extends Stoppable {
 
 			break;
 		case 1:
+			lambdaSampled++;
 			// ///////////////////////////////////////////////
 			// System.out.print("Indel param Lambda: ");
 			double oldLambda = tree.hmm2.params[1];
@@ -949,7 +1008,7 @@ public class Mcmc extends Stoppable {
 													tree.hmm2.params[1], Utils.LAMBDA_SPAN / 2.0))) {
 				// accept, do nothing
 				// System.out.println("accepted (old: "+oldLogLikelihood+" new: "+newLogLikelihood+" oldLambda: "+oldLambda+" newLambda: "+tree.hmm2.params[1]+")");
-				indelAccepted++;
+				lambdaAccepted++;
 				accepted = true;
 				totalLogLike = newLogLikelihood;
 			} else {
@@ -963,6 +1022,7 @@ public class Mcmc extends Stoppable {
 			}
 			break;
 		case 2:
+			muSampled++;
 			// ///////////////////////////////////////////////////////
 			// System.out.print("Indel param Mu: ");
 			double oldMu = tree.hmm2.params[2];
@@ -984,7 +1044,7 @@ public class Mcmc extends Stoppable {
 									- tree.hmm2.params[1], Utils.MU_SPAN / 2.0))) {
 				// accept, do nothing
 				// System.out.println("accepted (old: "+oldLogLikelihood+" new: "+newLogLikelihood+")");
-				indelAccepted++;
+				muAccepted++;
 				accepted = true;
 				totalLogLike = newLogLikelihood;
 			} else {
@@ -1036,12 +1096,12 @@ public class Mcmc extends Stoppable {
 	}
 
 	private void sampleModelExtParam() {
-		modextSampled++;
+//		modextSampled++;
 		modelExtMan.beforeModExtParamChange(tree);
 		modExtParamChangeAccepted = false;
 		modelExtMan.proposeParamChange(tree, this);
-		if(modExtParamChangeAccepted)
-			modextAccepted++;
+//		if(modExtParamChangeAccepted)
+//			modextAccepted++;
 		modelExtMan.afterModExtParamChange(tree, modExtParamChangeAccepted);
 	}
 	
@@ -1065,11 +1125,13 @@ public class Mcmc extends Stoppable {
 	 * @return a string describing the acceptance ratios.
 	 */
 	public String getInfoString() {
-		return String.format("Acceptances: [Alignment: %f, Edge: %f, Topology: %f, Indel: %f, Substitution: %f]",
+		return String.format("Acceptances: [Alignment: %f, Edge: %f, Topology: %f, R: %f, lambda: %f, mu: %f, Substitution: %f]",
 				(alignmentSampled == 0 ? 0 : (double) alignmentAccepted / (double) alignmentSampled),
 				(edgeSampled == 0 ? 0 : (double) edgeAccepted / (double) edgeSampled),
 				(topologySampled == 0 ? 0 : (double) topologyAccepted / (double) topologySampled),
-				(indelSampled == 0 ? 0 : (double) indelAccepted / (double) indelSampled),
+				(RSampled == 0 ? 0 : (double) RAccepted / (double) RSampled),
+				(lambdaSampled == 0 ? 0 : (double) lambdaAccepted / (double) lambdaSampled),
+				(muSampled == 0 ? 0 : (double) muAccepted / (double) muSampled),
 				(substSampled == 0 ? 0 : (double) substAccepted / (double) substSampled));
 	}
 

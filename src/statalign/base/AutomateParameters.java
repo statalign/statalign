@@ -26,6 +26,10 @@ public class AutomateParameters {
 	//private static boolean automateBurnIn = true;
 	private static boolean automateBurnIn = false;
 	
+	private static boolean automateProposalVariances = true;
+	// Currently the above variable is hardcoded here, and can't be adjusted
+	// via the command line or the GUI.
+	
 	//steprate
 	final static double decline = 0.0001;
 	final static int right = 10;
@@ -53,9 +57,16 @@ public class AutomateParameters {
 	public static boolean shouldAutomateStepRate() {
 		return automateSamplingRate;
 	}
-
+	
 	public static void setAutomateStepRate(boolean set) {
 		automateSamplingRate = set;
+	}
+	
+	public static boolean shouldAutomateProposalVariances() {
+		return automateProposalVariances;
+	}
+	public static void setAutomateProposalVariances(boolean set) {
+		automateProposalVariances = set;
 	}
 	
 	public static boolean shouldAutomateNumberOfSamples() {

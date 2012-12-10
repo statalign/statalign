@@ -56,17 +56,17 @@ public class Utils{
 	 * When a new R of the TKF92 model is proposed in MCMC, it is drawn uniformly from the
 	 * a neighborhood of the current value. The neighborhood size has this span.
 	 */
-	public static final double R_SPAN = 0.05;
+	public static double R_SPAN = 0.05;
 	/**
 	 * When a new lambda of the TKF92 model is proposed in MCMC, it is drawn uniformly from the
 	 * a neighborhood of the current value. The neighborhood size has this span.
 	 */
-	public static final double LAMBDA_SPAN = 0.01;
+	public static double LAMBDA_SPAN = 0.01;
 	/**
 	 * When a new mu of the TKF92 model is proposed in MCMC, it is drawn uniformly from the
 	 * a neighborhood of the current value. The neighborhood size has this span.
 	 */
-	public static final double MU_SPAN = 0.01;
+	public static double MU_SPAN = 0.01;
 	/**
 	 * log(0) is set to Double.NEGATIVE_INFINITY. This is used in logarithmic adding.
 	 * The logarithm of an empty sum is set to this value.
