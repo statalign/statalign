@@ -20,9 +20,11 @@ public class AutomateParameters {
 
 
 
-	private static boolean automateSamplingRate = true;
+	//private static boolean automateSamplingRate = true;
+	private static boolean automateSamplingRate = false;
 	private static boolean automateNumberOfSamplesToTake = false;
-	private static boolean automateBurnIn = true;
+	//private static boolean automateBurnIn = true;
+	private static boolean automateBurnIn = false;
 	
 	//steprate
 	final static double decline = 0.0001;

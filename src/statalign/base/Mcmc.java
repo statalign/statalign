@@ -240,6 +240,22 @@ public class Mcmc extends Stoppable {
 					String[] align = getState().getLeafAlign();
 					alignmentsFromSamples.add(align);
 				}	
+				
+				if (i % mcmcpars.sampRate == 0) {
+					double edgeAccRate = (edgeSampled == 0 ? 0 : (double) edgeAccepted / (double) edgeSampled);
+					if (edgeAccRate > 0.4) {
+						Utils.EDGE_SPAN /= Utils.SPAN_MULTIPLIER;
+						System.out.println("EDGE_SPAN = "+Utils.EDGE_SPAN);
+						edgeSampled = 0;
+						edgeAccepted = 0;
+					}
+					else if (edgeAccRate < 0.1) {
+						Utils.EDGE_SPAN *= Utils.SPAN_MULTIPLIER;
+						System.out.println("EDGE_SPAN = "+Utils.EDGE_SPAN);
+						edgeSampled = 0;
+						edgeAccepted = 0;
+					}
+				}
 			}
 			
 			//both real burn-in and the one to determine the sampling rate have now been completed.

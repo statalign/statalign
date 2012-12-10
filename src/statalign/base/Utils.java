@@ -37,11 +37,21 @@ public class Utils{
 	 * corresponding MCMCPars object.
 	 */
 	public static Random generator = new Random(1);
+	
+	/**
+	 * During the burnin, the SPAN variables for all continuous parameters
+	 * are adjusted in order to ensure that the average acceptance rate is between 
+	 * 0.1 and 0.4 where possible. This is done by repeatedly multiplying the SPAN
+	 * by SPAN_MULTIPLIER until the acceptance falls within the desired range.
+	 */
+	public static final double SPAN_MULTIPLIER = 0.7;
+	
 	/**
 	 * When a new edge length is proposed in MCMC, it is drawn uniformly from the
 	 * neighborhood of the current value. The neighborhood size has this span.
+	 * The span size is adjusted during the burnin to 
 	 */
-	public static final double EDGE_SPAN = 0.1;
+	public static double EDGE_SPAN = 0.1;
 	/**
 	 * When a new R of the TKF92 model is proposed in MCMC, it is drawn uniformly from the
 	 * a neighborhood of the current value. The neighborhood size has this span.
