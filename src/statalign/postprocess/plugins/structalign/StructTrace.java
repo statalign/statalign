@@ -1,6 +1,5 @@
 package statalign.postprocess.plugins.structalign;
 
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Arrays;
 
@@ -13,6 +12,7 @@ import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
 import statalign.base.InputData;
 import statalign.base.McmcStep;
 import statalign.base.State;
+import statalign.base.Utils;
 import statalign.model.ext.ModelExtension;
 import statalign.model.ext.plugins.StructAlign;
 import statalign.postprocess.Postprocess;
@@ -59,8 +59,6 @@ public class StructTrace extends Postprocess {
 	public void setSampling(boolean enabled) {
 	}
 	
-	FileWriter sigmaWrite;
-	FileWriter thetaWrite;
 	
 	@Override
 	public void beforeFirstSample(InputData inputData) {
@@ -70,48 +68,69 @@ public class StructTrace extends Postprocess {
 			}
 		}
 		try {
-			sigmaWrite = new FileWriter("sigma2");
-			thetaWrite = new FileWriter("theta");
+			outputFile.write("sigma2\ttheta\tsigma2_proposed\ttheta_proposed\n");
 		} catch (IOException e) {
-			e.printStackTrace();
 		}
 	}
 	
+	int lastSigmaProp;
+	int lastThetaProp;
+	
 	@Override
 	public void newSample(State state, int no, int total) {
-		try {
-			sigmaWrite.write(structAlign.sigma2+"\n");
-			thetaWrite.write(structAlign.theta+"\n");
-		} catch (IOException e) {
-			e.printStackTrace();
+		if(postprocessWrite) {
+			try {
+				outputFile.write(structAlign.sigma2+"\t"+structAlign.theta+"\t");
+				int newSigmaProp = structAlign.sigProposed;
+				outputFile.write(lastSigmaProp != newSigmaProp? ""+structAlign.sigma2 : "");
+				outputFile.write("\t");
+				lastSigmaProp = newSigmaProp;
+				int newThetaProp = structAlign.thetaProposed;
+				outputFile.write(lastThetaProp != newThetaProp ? ""+structAlign.theta : "");
+				outputFile.write("\n");
+				lastThetaProp = newThetaProp;
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
+//		if(sampling) {
+//			try {
+//				file.write("Sample "+no+"\tStructure:\t");
+//			} catch (IOException e) {
+//			}
+//		}
 	}
 	
 	@Override
 	public void afterLastSample() {
 		try {
 			outputFile.close();
-			sigmaWrite.close();
-			thetaWrite.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		System.out.println("final rotation matrices:");
-		for(int i = 1; i < structAlign.xlats.length; i++) {
-			Rotation rot = new Rotation(new Vector3D(structAlign.axes[i]), structAlign.angles[i]);
-			printMatrix(rot.getMatrix());
+		if(Utils.DEBUG) {
+			System.out.println("final rotation matrices:");
+			for(int i = 1; i < structAlign.xlats.length; i++) {
+				Rotation rot = new Rotation(new Vector3D(structAlign.axes[i]), structAlign.angles[i]);
+				printMatrix(rot.getMatrix());
+			}
+			System.out.println("final translations:");
+			for(int i = 0; i < structAlign.xlats.length; i++) {
+				System.out.println(Arrays.toString(structAlign.xlats[i]));
+			}
+			System.out.println();
+			System.out.println("Acceptance rates:");
+			System.out.println("Theta: " + structAlign.thetaProposed + " " + structAlign.thetaAccept);
+			System.out.println("Sigma2: " + structAlign.sigProposed + " " + structAlign.sigAccept);
+			System.out.println("Rotation: " + structAlign.rotProposed + " " + structAlign.rotAccept);
+			System.out.println("Xlat: " + structAlign.xlatProposed + " " + structAlign.xlatAccept);
+			System.out.println("Library: " + structAlign.libProposed + " " + structAlign.libAccept);
 		}
+		
 		System.out.println("final translations:");
 		for(int i = 0; i < structAlign.xlats.length; i++) {
 			System.out.println(Arrays.toString(structAlign.xlats[i]));
 		}
-		
-		System.out.println("final coordinates:");
-		for(int i = 0; i < structAlign.rotCoords.length; i++) {
-			for(int j = 0; j < 6; j++)
-				System.out.println(Arrays.toString(structAlign.rotCoords[i][j]));
-			System.out.println();
-		}		
 		
 		System.out.println();
 		System.out.println("Acceptance rates:");
