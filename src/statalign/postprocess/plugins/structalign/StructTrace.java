@@ -105,6 +105,14 @@ public class StructTrace extends Postprocess {
 		for(int i = 0; i < structAlign.xlats.length; i++) {
 			System.out.println(Arrays.toString(structAlign.xlats[i]));
 		}
+		
+		System.out.println("final coordinates:");
+		for(int i = 0; i < structAlign.rotCoords.length; i++) {
+			for(int j = 0; j < 6; j++)
+				System.out.println(Arrays.toString(structAlign.rotCoords[i][j]));
+			System.out.println();
+		}		
+		
 		System.out.println();
 		System.out.println("Acceptance rates:");
 		System.out.println("Theta: " + structAlign.thetaProposed + " " + structAlign.thetaAccept);
@@ -117,6 +125,7 @@ public class StructTrace extends Postprocess {
 	public static void printMatrix(double[][] m) {
 		for(int i = 0; i < m.length; i++)
 			System.out.println(Arrays.toString(m[i]));
+		System.out.println();
 	}
 	
 	@Override
