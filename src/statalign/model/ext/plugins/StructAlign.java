@@ -53,7 +53,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	double[][][] coords;
 	
 	/** Alpha-C atomic coordinates under the current set of rotations/translations */
-	double[][][] rotCoords;
+	public double[][][] rotCoords;
 	
 	/** Axis of rotation for each sequence */
 	public double[][] axes;
@@ -72,6 +72,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	private double[][] oldCovar;
 	private String[] oldAlign;
 	private double oldLogLi;
+	
+	double structTemp = 1;
 	
 	public int sigProposed = 0;
 	public int sigAccept = 0;
@@ -161,7 +163,11 @@ public class StructAlign extends ModelExtension implements ActionListener {
 					throw new IllegalArgumentException("structalign: sequence length mismatch with structure file for seq "+name);
 				coords[ind] = new double[len][];
 				for(int j = 0; j < len; j++)
-					coords[ind][j] = Utils.copyOf(cl.get(j));
+					 coords[ind][j] = Utils.copyOf(cl.get(j));
+				RealMatrix temp = new Array2DRowRealMatrix(coords[ind]);
+				RealVector mean = Funcs.meanVector(temp);
+				for(int j = 0; j < len; j++)
+					 coords[ind][j]= temp.getRowVector(j).subtract(mean).toArray();
 				seqMap.remove(name);
 			}
 		}
@@ -250,7 +256,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			logli += ll;
 			//System.out.println("Column: " + Arrays.toString(col) + "  ll: " + ll);
 		}
-		return logli;
+		return structTemp * logli;
 	}
 
 	private boolean checkConsAlign(String[] align) {
@@ -384,11 +390,25 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		double[][] distMat = new double[tree.names.length][tree.names.length];
 		calcDistanceMatrix(tree.root, distMat);
 		//System.out.print("Distance: " + distMat[0][1]);
+		
+		//System.out.println("Current tree:");
+		//printTree(tree.root, "o");
+		
 		for(int i = 0; i < tree.names.length; i++)
 			for(int j = i; j < tree.names.length; j++)
-				distMat[j][i] = distMat[i][j] = sigma2 / (2 * theta ) * Math.exp(-theta * distMat[i][j]);
+				distMat[j][i] = distMat[i][j] = sigma2 / (2 * theta ) * Math.exp(-theta * distMat[i][j]);	
 		return distMat;
 	}
+	
+
+	public void printTree(Vertex v, String vname){
+		System.out.println(vname +"-" + v.name + ": " + v.edgeLength);
+		if(v.left!=null){
+			printTree(v.left, vname + "l");
+			printTree(v.right, vname + "r");
+		}
+	}
+	
 	
 	/**
 	 * recursive algorithm to traverse tree and calculate distance matrix between leaves 
@@ -889,7 +909,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 					RealMatrix R = svd.getU().multiply(S).multiply(svd.getVT());
 					
 					// translation = mean(a) - mean(b) R
-					RealVector xlat = meanVector(subA).subtract(R.preMultiply(meanVector(subB)));
+					RealVector xlat = Funcs.meanVector(subA).subtract(R.preMultiply(Funcs.meanVector(subB)));
 					
 					// calculate the resulting sum of squares
 					double ss = 0;
@@ -932,21 +952,6 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			return best;
 		}
 		
-		/**
-		 * For an n X 3 coordinate matrix, calculate the 1 X 3 mean vector
-		 * @param A - coordinate matrix
-		 * @return mean vector
-		 */
-		
-		public RealVector meanVector(RealMatrix A){
-			RealVector mean = new ArrayRealVector(new double[3]);
-			for(int i = 0; i < 3; i ++){
-				for(int j = 0; j < A.getColumn(0).length; j++)
-					mean.addToEntry(i, A.getEntry(j, i));
-				mean.setEntry(i, mean.getEntry(i) / A.getColumn(0).length);
-			}
-			return mean;
-		}
 	
 		/** propose from a library mixture distribution */
 		public Transformation propose(int index){
@@ -1232,6 +1237,22 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			crossTranspose = crossTranspose.scalarMultiply(Math.sin(rot));
 			outer = outer.scalarMultiply(1 - Math.cos(rot));
 			return Icos.add(crossTranspose).add(outer);
+		}
+
+		/**
+		 * For an n X 3 coordinate matrix, calculate the 1 X 3 mean vector
+		 * @param A - coordinate matrix
+		 * @return mean vector
+		 */
+		
+		static RealVector meanVector(RealMatrix A){
+			RealVector mean = new ArrayRealVector(new double[3]);
+			for(int i = 0; i < 3; i ++){
+				for(int j = 0; j < A.getColumn(0).length; j++)
+					mean.addToEntry(i, A.getEntry(j, i));
+				mean.setEntry(i, mean.getEntry(i) / A.getColumn(0).length);
+			}
+			return mean;
 		}
 	}
 

@@ -126,11 +126,25 @@ public class StructTrace extends Postprocess {
 			System.out.println("Xlat: " + structAlign.xlatProposed + " " + structAlign.xlatAccept);
 			System.out.println("Library: " + structAlign.libProposed + " " + structAlign.libAccept);
 		}
+		
+		System.out.println("final translations:");
+		for(int i = 0; i < structAlign.xlats.length; i++) {
+			System.out.println(Arrays.toString(structAlign.xlats[i]));
+		}
+		
+		System.out.println();
+		System.out.println("Acceptance rates:");
+		System.out.println("Theta: " + structAlign.thetaProposed + " " + structAlign.thetaAccept);
+		System.out.println("Sigma2: " + structAlign.sigProposed + " " + structAlign.sigAccept);
+		System.out.println("Rotation: " + structAlign.rotProposed + " " + structAlign.rotAccept);
+		System.out.println("Xlat: " + structAlign.xlatProposed + " " + structAlign.xlatAccept);
+		System.out.println("Library: " + structAlign.libProposed + " " + structAlign.libAccept);
 	}
 	
 	public static void printMatrix(double[][] m) {
 		for(int i = 0; i < m.length; i++)
 			System.out.println(Arrays.toString(m[i]));
+		System.out.println();
 	}
 	
 	@Override
