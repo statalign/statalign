@@ -27,7 +27,7 @@ import com.ppfold.algo.FuzzyAlignment;
  * The class extends <tt>Stoppable</tt>, it may be terminated/suspended in
  * graphical mode.
  * 
- * @author miklos, novak
+ * @author miklos, novak, herman
  * 
  */
 public class Mcmc extends Stoppable {
@@ -244,58 +244,78 @@ public class Mcmc extends Stoppable {
 				}	
 				
 				if (AutomateParameters.shouldAutomateProposalVariances() && i % mcmcpars.sampRate == 0) {
+					double alignmentAccRate = (alignmentSampled == 0 ? 0 : (double) alignmentAccepted / (double) alignmentSampled);
+					if (alignmentAccRate > Utils.MAX_ACCEPTANCE && 
+							Utils.WINDOW_MULTIPLIER < Utils.MAX_WINDOW_MULTIPLIER &&
+							Utils.WINDOW_MULTIPLIER > Utils.MIN_WINDOW_MULTIPLIER ) {
+						Utils.WINDOW_MULTIPLIER = Math.min(Utils.MAX_WINDOW_MULTIPLIER,
+								Utils.WINDOW_MULTIPLIER / Utils.WINDOW_CHANGE_FACTOR);
+						//System.out.println("WINDOW_MULTIPLIER = "+Utils.WINDOW_MULTIPLIER);
+						alignmentSampled = 0;
+						alignmentAccepted = 0;
+					}
+					else if (alignmentAccRate < Utils.MIN_ACCEPTANCE && 
+							Utils.WINDOW_MULTIPLIER < Utils.MAX_WINDOW_MULTIPLIER &&
+							Utils.WINDOW_MULTIPLIER > Utils.MIN_WINDOW_MULTIPLIER ) {
+						Utils.WINDOW_MULTIPLIER = Math.max(Utils.MIN_WINDOW_MULTIPLIER,
+								Utils.WINDOW_MULTIPLIER * Utils.WINDOW_CHANGE_FACTOR);
+						//System.out.println("WINDOW_MULTIPLIER = "+Utils.WINDOW_MULTIPLIER);
+						alignmentSampled = 0;
+						alignmentAccepted = 0;
+					}
+					
 					double edgeAccRate = (edgeSampled == 0 ? 0 : (double) edgeAccepted / (double) edgeSampled);
-					if (edgeAccRate > 0.4) {
+					if (edgeAccRate > Utils.MAX_ACCEPTANCE) {
 						Utils.EDGE_SPAN /= Utils.SPAN_MULTIPLIER;
-						System.out.println("EDGE_SPAN = "+Utils.EDGE_SPAN);
+						//System.out.println("EDGE_SPAN = "+Utils.EDGE_SPAN);
 						edgeSampled = 0;
 						edgeAccepted = 0;
 					}
-					else if (edgeAccRate < 0.1) {
+					else if (edgeAccRate < Utils.MIN_ACCEPTANCE) {
 						Utils.EDGE_SPAN *= Utils.SPAN_MULTIPLIER;
-						System.out.println("EDGE_SPAN = "+Utils.EDGE_SPAN);
+						//System.out.println("EDGE_SPAN = "+Utils.EDGE_SPAN);
 						edgeSampled = 0;
 						edgeAccepted = 0;
 					}
 					
 					double RAccRate = (RSampled == 0 ? 0 : (double) RAccepted / (double) RSampled);
-					if (RAccRate > 0.4) {
+					if (RAccRate > Utils.MAX_ACCEPTANCE) {
 						Utils.R_SPAN /= Utils.SPAN_MULTIPLIER;
-						System.out.println("R_SPAN = "+Utils.R_SPAN);
+						//System.out.println("R_SPAN = "+Utils.R_SPAN);
 						RSampled = 0;
 						RAccepted = 0;
 					}
-					else if (RAccRate < 0.1) {
+					else if (RAccRate < Utils.MIN_ACCEPTANCE) {
 						Utils.R_SPAN *= Utils.SPAN_MULTIPLIER;
-						System.out.println("R_SPAN = "+Utils.R_SPAN);
+						//System.out.println("R_SPAN = "+Utils.R_SPAN);
 						RSampled = 0;
 						RAccepted = 0;
 					}
 					
 					double lambdaAccRate = (lambdaSampled == 0 ? 0 : (double) lambdaAccepted / (double) lambdaSampled);
-					if (lambdaAccRate > 0.4) {
+					if (lambdaAccRate > Utils.MAX_ACCEPTANCE) {
 						Utils.LAMBDA_SPAN /= Utils.SPAN_MULTIPLIER;
-						System.out.println("LAMBDA_SPAN = "+Utils.LAMBDA_SPAN);
+						//System.out.println("LAMBDA_SPAN = "+Utils.LAMBDA_SPAN);
 						lambdaSampled = 0;
 						lambdaAccepted = 0;
 					}
-					else if (lambdaAccRate < 0.1) {
+					else if (lambdaAccRate < Utils.MIN_ACCEPTANCE) {
 						Utils.LAMBDA_SPAN *= Utils.SPAN_MULTIPLIER;
-						System.out.println("LAMBDA_SPAN = "+Utils.LAMBDA_SPAN);
+						//System.out.println("LAMBDA_SPAN = "+Utils.LAMBDA_SPAN);
 						lambdaSampled = 0;
 						lambdaAccepted = 0;
 					}
 					
 					double muAccRate = (muSampled == 0 ? 0 : (double) muAccepted / (double) muSampled);
-					if (muAccRate > 0.4) {
+					if (muAccRate > Utils.MAX_ACCEPTANCE) {
 						Utils.MU_SPAN /= Utils.SPAN_MULTIPLIER;
-						System.out.println("MU_SPAN = "+Utils.MU_SPAN);
+						//System.out.println("MU_SPAN = "+Utils.MU_SPAN);
 						muSampled = 0;
 						muAccepted = 0;
 					}
-					else if (muAccRate < 0.1) {
+					else if (muAccRate < Utils.MIN_ACCEPTANCE) {
 						Utils.MU_SPAN *= Utils.SPAN_MULTIPLIER;
-						System.out.println("MU_SPAN = "+Utils.MU_SPAN);
+						//System.out.println("MU_SPAN = "+Utils.MU_SPAN);
 						muSampled = 0;
 						muAccepted = 0;
 					}

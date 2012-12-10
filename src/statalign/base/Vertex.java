@@ -1383,7 +1383,7 @@ public class Vertex {
 
         // select the beginning and end of the window
         MuDouble p = new MuDouble(1.0);
-        winLength = Utils.linearizerWeight(length, p);
+        winLength = Utils.linearizerWeight(length, p, Utils.WINDOW_MULTIPLIER*Math.sqrt(length));
         int b = (length - winLength == 0 ? 0 : Utils.generator.nextInt(length - winLength));
         AlignColumn actualAC = first;
         for (int i = 0; i < b; i++) {
@@ -1435,7 +1435,8 @@ public class Vertex {
         //}
 
         // backproposal probability for cutting out the window
-        bpp += Math.log(Utils.linearizerWeightProb(length, winLength) * (length - winLength));
+        bpp += Math.log(Utils.linearizerWeightProb(length, winLength, Utils.WINDOW_MULTIPLIER*Math.sqrt(length)) 
+        		* (length - winLength));
 
         // 	System.out.print(" Prop: "+bppProp+" it's doublecheck: "+bppBack+" bpp: "+bpp+" ");
 

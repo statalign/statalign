@@ -17,7 +17,7 @@ import statalign.ui.ErrorMessage;
  * 
  * This class contains multi-purpose static functions.
  * 
- * @author miklos, novak
+ * @author miklos, novak, herman
  *
  */
 public class Utils{
@@ -42,14 +42,21 @@ public class Utils{
 	 * During the burnin, the SPAN variables for all continuous parameters
 	 * are adjusted in order to ensure that the average acceptance rate is between 
 	 * 0.1 and 0.4 where possible. This is done by repeatedly multiplying the SPAN
-	 * by SPAN_MULTIPLIER until the acceptance falls within the desired range.
+	 * by SPAN_MULTIPLIER until the acceptance falls within the desired range,
+	 * specified by [MIN_ACCEPTANCE,MAX_ACCEPTANCE].
 	 */
 	public static final double SPAN_MULTIPLIER = 0.7;
+	public static final double MIN_ACCEPTANCE = 0.15;
+	public static final double MAX_ACCEPTANCE = 0.4;
 	
+	public static final double WINDOW_CHANGE_FACTOR = 0.8;
+	public static final double MIN_WINDOW_MULTIPLIER = 0.1;
+	public static final double MAX_WINDOW_MULTIPLIER = 2;
+	public static double WINDOW_MULTIPLIER = 1.0;
+
 	/**
 	 * When a new edge length is proposed in MCMC, it is drawn uniformly from the
 	 * neighborhood of the current value. The neighborhood size has this span.
-	 * The span size is adjusted during the burnin to 
 	 */
 	public static double EDGE_SPAN = 0.1;
 	/**
@@ -87,13 +94,12 @@ public class Utils{
 	 * @param selectLike A mutable double object to return the selection probability
 	 * @return A random integer as described above
 	 */
-	public static int linearizerWeight(int length, MuDouble selectLike){
+	public static int linearizerWeight(int length, MuDouble selectLike, double expectedLength){
 		if(tempDoubleArray == null || tempDoubleArray.length < length){
 			tempDoubleArray = new double[length];
 		}
-		double root = Math.sqrt(length);
-		double p = 1.0 - 1.0/root;
-		tempDoubleArray[0] = 1.0/root;
+		double p = 1.0 - 1.0/expectedLength;
+		tempDoubleArray[0] = 1.0/expectedLength;
 		double sum = tempDoubleArray[0];
 		for(int i = 1; i < length; i++){
 			tempDoubleArray[i] = tempDoubleArray[i-1] * p;
@@ -108,7 +114,7 @@ public class Utils{
 		}
 
 		//	System.out.println((tempDoubleArray[k]/sum));
-		selectLike.value = (tempDoubleArray[k]/sum);
+		selectLike.value = (tempDoubleArray[k]/sum); 
 
 		return k;
 	}
@@ -122,13 +128,12 @@ public class Utils{
 	 * @param index Selected index
 	 * @return Probability of the selection
 	 */
-	public static double linearizerWeightProb(int length, int index){
+	public static double linearizerWeightProb(int length, int index, double expectedLength){
 		if(tempDoubleArray == null || tempDoubleArray.length < length){
 			tempDoubleArray = new double[length];
 		}
-		double root = Math.sqrt(length);
-		double p = 1.0 - 1.0/root;
-		tempDoubleArray[0] = 1.0/root;
+		double p = 1.0 - 1.0/expectedLength;
+		tempDoubleArray[0] = 1.0/expectedLength;
 		double sum = tempDoubleArray[0];
 		for(int i = 1; i < length; i++){
 			tempDoubleArray[i] = tempDoubleArray[i-1] * p;
