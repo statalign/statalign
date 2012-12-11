@@ -105,7 +105,7 @@ public class Utils{
 		tempDoubleArray[0] = 1.0/expectedLength;
 		double sum = tempDoubleArray[0];
 		for(int i = 1; i < length; i++){
-			tempDoubleArray[i] = tempDoubleArray[i-1] * p;
+			tempDoubleArray[i] = tempDoubleArray[i-1] * q;
 			sum += tempDoubleArray[i];
 		}
 		double w = generator.nextDouble() * sum;
