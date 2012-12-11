@@ -216,10 +216,11 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			xlats[i] = new double[] { 0, 0, 0 };
 		} */
 		
-		// number of vertices in the tree is 2*leaves - 2
-		sigma2 = new double[2*coords.length - 2];
-		sigProposed = new int[2*coords.length - 2];
-		sigAccept = new int[2*coords.length - 2];
+
+		// number of branches in the tree is 2*leaves - 1
+		sigma2 = new double[2*coords.length - 1];
+		sigProposed = new int[2*coords.length - 1];
+		sigAccept = new int[2*coords.length - 1];
 		for(i = 0; i < sigma2.length; i++)
 			sigma2[i] = 1;
 		
@@ -430,6 +431,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	public double[][] calcFullCovar(Tree tree) {
 		// I'm assuming that tree.names.length is equal to the number of vertices here
 		double[][] distMat = new double[tree.names.length][tree.names.length];
+		System.out.println("About to calculate distance matrix");
 		calcDistanceMatrix(tree.root, distMat);
 		//System.out.print("Distance: " + distMat[0][1]);
 		
@@ -475,6 +477,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			for(int j = 1; j < subTree.length; j++)
 				subTree[j] = -1;
 		}
+		System.out.println("Vertex edge length: " + vertex.edgeLength);
+		System.out.println("Sigma2 of edge: " + sigma2[vertex.index]);
 		addEdgeLength(distMat, subTree, vertex.edgeLength * sigma2[vertex.index] / tau);
 		/*System.out.println();
 		System.out.println("Distmat:");
@@ -636,8 +640,11 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		} else if(param == 1 || param == 2){
 			
 			int sigmaInd = 0;
-			if(param == 1 && !globalSigma)	// select sigma to propose if not global
-				sigmaInd = Utils.generator.nextInt(coords.length);
+			if(param == 1 && !globalSigma) {	// select sigma to propose if not global
+				sigmaInd = Utils.generator.nextInt(2*coords.length-2);
+				if(sigmaInd >= tree.root.index)
+					sigmaInd++;
+			}
 			
 			// proposing new sigma/theta
 			double oldpar = param == 1 ? sigma2[sigmaInd] : tau;
