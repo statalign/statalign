@@ -216,10 +216,10 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			xlats[i] = new double[] { 0, 0, 0 };
 		} */
 		
-		// number of branches in the tree is 2*leaves - 3
-		sigma2 = new double[2*coords.length - 3];
-		sigProposed = new int[2*coords.length - 3];
-		sigAccept = new int[2*coords.length - 3];
+		// number of vertices in the tree is 2*leaves - 2
+		sigma2 = new double[2*coords.length - 2];
+		sigProposed = new int[2*coords.length - 2];
+		sigAccept = new int[2*coords.length - 2];
 		for(i = 0; i < sigma2.length; i++)
 			sigma2[i] = 1;
 		
@@ -697,7 +697,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			double oldpar = param == 3 ? sigma2Hier : nu;
 			double oldsigll = 0;
 			for(int i = 0; i < tree.vertex.length-1; i++)
-				oldsigll += Math.log(sigma2HierDist.density(sigma2[i]));
+				if(i != tree.root.index)
+					oldsigll += Math.log(sigma2HierDist.density(sigma2[i]));
 			
 			double llratio = 0;
 			
@@ -721,7 +722,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			
 			double newsigll = 0;
 			for(int i = 0; i < tree.vertex.length-1; i++)
-				newsigll += Math.log(sigma2HierDist.density(sigma2[i]));
+				if(i != tree.root.index)
+					newsigll += Math.log(sigma2HierDist.density(sigma2[i]));
 			
 			
 			if(param == 3)
