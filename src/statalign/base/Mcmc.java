@@ -10,7 +10,7 @@ import statalign.MPIUtils;
 import statalign.base.thread.Stoppable;
 import statalign.base.thread.StoppedException;
 import statalign.distance.Distance;
-import statalign.model.ext.ModelExtInterface;
+import statalign.model.ext.ModelExtManager;
 import statalign.postprocess.PostprocessManager;
 import statalign.postprocess.plugins.contree.CNetwork;
 import statalign.ui.ErrorMessage;
@@ -92,12 +92,12 @@ public class Mcmc extends Stoppable {
 	public PostprocessManager postprocMan;
 
 	/** Manager that handles model extension plugins */
-	public ModelExtInterface modelExtMan;
+	public ModelExtManager modelExtMan;
 
 	/** True while the MCMC is in the burn-in phase. */
 	public boolean burnin;
 
-	public Mcmc(Tree tree, MCMCPars pars, PostprocessManager ppm, ModelExtInterface modelExtMan) {
+	public Mcmc(Tree tree, MCMCPars pars, PostprocessManager ppm, ModelExtManager modelExtMan) {
 		postprocMan = ppm;
 		this.modelExtMan = modelExtMan;
 		ppm.mcmc = this;
@@ -107,7 +107,7 @@ public class Mcmc extends Stoppable {
 		this.tree.heat = 1.0d;
 	}
 
-	public Mcmc(Tree tree, MCMCPars pars, PostprocessManager ppm, ModelExtInterface modelExtMan,
+	public Mcmc(Tree tree, MCMCPars pars, PostprocessManager ppm, ModelExtManager modelExtMan,
 			int noOfProcesses, int rank, double heat) {
 		this(tree, pars, ppm, modelExtMan);
 		this.noOfProcesses = noOfProcesses;

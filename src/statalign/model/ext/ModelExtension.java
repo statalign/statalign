@@ -21,11 +21,11 @@ import statalign.postprocess.PluginParameters;
 public abstract class ModelExtension {
 	
 	/** Private access to model extension manager */
-	private ModelExtInterface manager;
+	private ModelExtManager manager;
 	
 	protected boolean active;
 	
-	public void setManager(ModelExtInterface manager) {
+	public void setManager(ModelExtManager manager) {
 		this.manager = manager;
 	}
 

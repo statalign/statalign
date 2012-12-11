@@ -11,7 +11,7 @@ import statalign.MPIUtils;
 import statalign.base.thread.MainThread;
 import statalign.base.thread.StoppedException;
 import statalign.io.DataManager;
-import statalign.model.ext.ModelExtInterface;
+import statalign.model.ext.ModelExtManager;
 import statalign.model.subst.SubstitutionModel;
 import statalign.postprocess.PluginParameters;
 import statalign.postprocess.Postprocess;
@@ -49,7 +49,7 @@ public class MainManager {
 	/**
 	 * Manager for model extension plugins
 	 */
-	public ModelExtInterface modelExtMan;
+	public ModelExtManager modelExtMan;
 
 	/**
 	 * Array of substitution model classes that can be selected for an analysis.
@@ -100,7 +100,7 @@ public class MainManager {
 		postProcMan = new PostprocessManager(this);
 		dataMan = new DataManager();
 		dataMan.init();
-		modelExtMan = new ModelExtInterface();
+		modelExtMan = new ModelExtManager();
 	}
 	
 	/**

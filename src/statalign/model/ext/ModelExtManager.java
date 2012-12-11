@@ -15,11 +15,11 @@ import statalign.postprocess.PluginParameters;
 
 /**
  * Interface between StatAlign core and the {@link ModelExtension} plugins.
- * Not visible to plugins, utility methods are in {@link ModelExtManager}.
+ * Not visible to plugins.
  * 
  * @author novak
  */
-public class ModelExtInterface {
+public class ModelExtManager {
 	
 //	private MainManager mainMan;
 	public Mcmc mcmc;
@@ -32,7 +32,7 @@ public class ModelExtInterface {
 	ModelExtension selectedPlugin;
 	
 
-	public ModelExtInterface() {//MainManager mainMan) {
+	public ModelExtManager() {//MainManager mainMan) {
 //		this.mainMan = mainMan;
 	}
 	
