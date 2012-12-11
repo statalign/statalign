@@ -917,10 +917,11 @@ public class Mcmc extends Stoppable {
 		
 		modelExtMan.beforeEdgeLenChange(tree, selectedNode);
 
+		double minEdgeLength = 0.01;
 		// perform change
 		while ((selectedNode.edgeLength = oldEdge
 				+ Utils.generator.nextDouble() * Utils.EDGE_SPAN
-				- (Utils.EDGE_SPAN / 2.0)) < 0.01)
+				- (Utils.EDGE_SPAN / 2.0)) < minEdgeLength)
 			;
 		selectedNode.edgeChangeUpdate();
 		// Vertex actual = tree.vertex[i];
@@ -932,10 +933,11 @@ public class Mcmc extends Stoppable {
 		// }
 		selectedNode.calcAllUp();
 		double newLogLikelihood = modelExtMan.logLikeEdgeLenChange(tree, selectedNode);
-		if (Utils.generator.nextDouble() < (Math.exp((newLogLikelihood
-				- oldLogLikelihood - selectedNode.edgeLength + oldEdge)
-				* tree.heat) * (Math.min(oldEdge - 0.01, Utils.EDGE_SPAN / 2.0) + Utils.EDGE_SPAN / 2.0))
-				/ (Math.min(selectedNode.edgeLength - 0.01,
+		if (Utils.generator.nextDouble() < 
+				( Math.exp((newLogLikelihood - oldLogLikelihood - selectedNode.edgeLength + oldEdge)* tree.heat) 
+				* (Math.min(oldEdge - minEdgeLength, Utils.EDGE_SPAN / 2.0) + Utils.EDGE_SPAN / 2.0) 
+				) /
+				(Math.min(selectedNode.edgeLength - minEdgeLength,
 						Utils.EDGE_SPAN / 2.0) + Utils.EDGE_SPAN / 2.0)) {
 			// acceptance, do nothing
 			// System.out.println("accepted (old: "+oldLogLikelihood+" new: "+newLogLikelihood+")");

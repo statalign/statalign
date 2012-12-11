@@ -100,7 +100,8 @@ public class Utils{
 		if(tempDoubleArray == null || tempDoubleArray.length < length){
 			tempDoubleArray = new double[length];
 		}
-		double p = 1.0 - 1.0/expectedLength;
+		double p = 1.0/expectedLength;
+		double q = 1.0 - p;
 		tempDoubleArray[0] = 1.0/expectedLength;
 		double sum = tempDoubleArray[0];
 		for(int i = 1; i < length; i++){
