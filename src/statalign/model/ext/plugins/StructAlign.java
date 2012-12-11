@@ -61,6 +61,12 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	public double[] angles;
 	/** Translation vector for each protein */
 	public double[][] xlats;
+
+	/** Parameters of structural drift */
+	public double[] sigma2;
+	public double tau = 5;
+	public boolean globalSigma = false;
+	double structTemp = 1;
 	
 	/** Covariance matrix implied by current tree topology */
 	double[][] fullCovar;
@@ -73,18 +79,18 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	private String[] oldAlign;
 	private double oldLogLi;
 	
-	double structTemp = 1;
-	
-	public int sigProposed = 0;
-	public int sigAccept = 0;
-	public int thetaProposed = 0;
-	public int thetaAccept = 0;
-	public int rotProposed = 0;
-	public int rotAccept = 0;
-	public int xlatProposed = 0;
-	public int xlatAccept = 0;
-	public int libProposed = 0;
-	public int libAccept = 0;
+	public int[] sigProposed;
+	public int[] sigAccept;
+//	public int thetaProposed = 0;
+//	public int thetaAccept = 0;
+	public int tauProposed;
+	public int tauAccept;
+	public int rotProposed;
+	public int rotAccept;
+	public int xlatProposed;
+	public int xlatAccept;
+	public int libProposed;
+	public int libAccept;
 	
 	/** independence rotation proposal distribution */
 	RotationProposal rotProp;
@@ -107,10 +113,6 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	private static final double angleP = 1000;
 	// higher values lead to bigger step sizes
 	private static final double xlatP = .1;
-	
-	/** Parameters of structural drift */
-	public double theta = .1; 
-	public double sigma2 = 1; 
 	
 	@Override
 	public List<JComponent> getToolBarItems() {
@@ -173,6 +175,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		}
 		if(seqMap.size() > 0)
 			throw new IllegalArgumentException("structalign: missing structure for sequence "+seqMap.keySet().iterator().next());
+		
 		rotProp = new RotationProposal();
 		rotCoords = new double[coords.length][][];
 		axes = new double[coords.length][];
@@ -196,6 +199,28 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			angles[i] = 0;
 			xlats[i] = new double[] { 0, 0, 0 };
 		} */
+		
+		sigma2 = new double[coords.length];
+		for(i = 0; i < coords.length; i++) {
+			sigma2[i] = 1;
+			sigProposed[i] = 0;
+			sigAccept[i] = 0;
+		}
+		tau = 5;
+		
+		tauProposed = 0;
+		tauAccept = 0;
+		rotProposed = 0;
+		rotAccept = 0;
+		xlatProposed = 0;
+		xlatAccept = 0;
+		libProposed = 0;
+		libAccept = 0;
+		
+		paramPropWeights = Utils.copyOf(paramPropWConst);
+		for(i = 0; i < paramPropWeights.length; i++)
+			paramPropWeights[i] += paramPropWPerSeq[i]*coords.length;
+
 	}
 	
 	@Override
@@ -396,7 +421,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		
 		for(int i = 0; i < tree.names.length; i++)
 			for(int j = i; j < tree.names.length; j++)
-				distMat[j][i] = distMat[i][j] = sigma2 / (2 * theta ) * Math.exp(-theta * distMat[i][j]);	
+				distMat[j][i] = distMat[i][j] = sigma2 / (2 * theta ) * Math.exp(-theta * distMat[i][j]);
 		return distMat;
 	}
 	
@@ -477,8 +502,12 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		return 25;
 	}
 	
-	/** Weights for rotation/translation, theta, sigma2, etc. (TODO add all) */
-	int[] paramPropWeights = { 10, 3, 3 };
+	/** Constant weights for rotation/translation, sigma2 and theta */
+	int[] paramPropWConst = { 0, 0, 3 };
+	/** Weights per sequence for rotation/translation, sigma2 and theta */
+	int[] paramPropWPerSeq = { 5, 3, 0 };
+	/** Total weight for rot/xlat, sigma2 and theta calculated as const+perseq*nseq */
+	int[] paramPropWeights;
 	/** Weights for proposing rotation vs translation vs library */
 	int[] rotXlatWeights= { 25, 25, 1 };
 //	int[] rotXlatWeights= { 25, 25, 0 };	// library off
@@ -589,8 +618,12 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				
 		} else {
 			
+			int sigmaInd = 0;
+			if(param == 1 && !globalSigma)	// select sigma to propose if not global
+				sigmaInd = Utils.generator.nextInt(coords.length);
+			
 			// proposing new sigma/theta
-			double oldpar = param==1 ? theta : sigma2;
+			double oldpar = param==1 ? sigma2[sigmaInd] : tau;
 			double[][] oldcovar = fullCovar;
 			double oldll = curLogLike;
 			
@@ -599,17 +632,17 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			GammaDistribution proposal;
 			GammaDistribution reverse;
 			
-			if(param == 1){
+			if(param == 2){
+				sigProposed[sigmaInd]++;
+				proposal = new GammaDistribution(sigma2P, oldpar / sigma2P);
+				sigma2[sigmaInd] = proposal.sample();
+				reverse = new GammaDistribution(sigma2P, sigma2[sigmaInd] / sigma2P);
+			} else{
 				thetaProposed++;
 				// creates a gamma distribution with mean theta & variance controlled by thetaP
 				proposal = new GammaDistribution(thetaP, oldpar / thetaP);
 				theta = proposal.sample();
 				reverse = new GammaDistribution(thetaP, theta / thetaP);
-			} else{
-				sigProposed++;
-				proposal = new GammaDistribution(sigma2P, oldpar / sigma2P);
-				sigma2 = proposal.sample();
-				reverse = new GammaDistribution(sigma2P, sigma2 / sigma2P);
 			}
 			
 			// TODO do not recalculate distances, only the covariance matrix
@@ -617,17 +650,17 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			curLogLike = calcAllColumnContrib();
 			
 			if(param == 1)
-				llratio = Math.log(thetaPrior.density(theta)) + Math.log(reverse.density(oldpar)) 
-						  - Math.log(thetaPrior.density(oldpar)) - Math.log(proposal.density(theta));
+				llratio = Math.log(sigma2Prior.density(sigma2[sigmaInd])) + Math.log(reverse.density(oldpar)) 
+				- Math.log(sigma2Prior.density(oldpar)) - Math.log(proposal.density(sigma2[sigmaInd]));
 			else
-				llratio = Math.log(sigma2Prior.density(sigma2)) + Math.log(reverse.density(oldpar)) 
-				          - Math.log(sigma2Prior.density(oldpar)) - Math.log(proposal.density(sigma2));
+				llratio = Math.log(thetaPrior.density(theta)) + Math.log(reverse.density(oldpar)) 
+				- Math.log(thetaPrior.density(oldpar)) - Math.log(proposal.density(theta));
 			
 			if(isParamChangeAccepted(llratio)) {
 				if(param == 1)
-					thetaAccept++;
+					sigAccept[sigmaInd]++;
 				else
-					sigAccept++;
+					tauAccept++;
 				// accepted, nothing to do
 //				if(Utils.DEBUG)
 //					System.out.println(new String[] { "theta", "sigma2" }[param-1]+" accepted");
@@ -636,9 +669,9 @@ public class StructAlign extends ModelExtension implements ActionListener {
 //				if(Utils.DEBUG)
 //					System.out.println(new String[] { "theta", "sigma2" }[param-1]+" rejected");
 				if(param == 1)
-					theta = oldpar;
+					sigma2[sigmaInd] = oldpar;
 				else
-					sigma2 = oldpar;
+					tau = oldpar;
 				fullCovar = oldcovar;
 				curLogLike = oldll;
 			}
