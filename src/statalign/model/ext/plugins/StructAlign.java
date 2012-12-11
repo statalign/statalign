@@ -216,10 +216,10 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			xlats[i] = new double[] { 0, 0, 0 };
 		} */
 		
-		// number of branches in the tree is 2*leaves - 3
-		sigma2 = new double[2*coords.length - 3];
-		sigProposed = new int[2*coords.length - 3];
-		sigAccept = new int[2*coords.length - 3];
+		// number of branches in the tree is 2*leaves - 1
+		sigma2 = new double[2*coords.length - 1];
+		sigProposed = new int[2*coords.length - 1];
+		sigAccept = new int[2*coords.length - 1];
 		for(i = 0; i < sigma2.length; i++)
 			sigma2[i] = 1;
 		
@@ -636,8 +636,11 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		} else if(param == 1 || param == 2){
 			
 			int sigmaInd = 0;
-			if(param == 1 && !globalSigma)	// select sigma to propose if not global
-				sigmaInd = Utils.generator.nextInt(coords.length);
+			if(param == 1 && !globalSigma) {	// select sigma to propose if not global
+				sigmaInd = Utils.generator.nextInt(2*coords.length-2);
+				if(sigmaInd >= tree.root.index)
+					sigmaInd++;
+			}
 			
 			// proposing new sigma/theta
 			double oldpar = param == 1 ? sigma2[sigmaInd] : tau;
@@ -697,7 +700,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			double oldpar = param == 3 ? sigma2Hier : nu;
 			double oldsigll = 0;
 			for(int i = 0; i < tree.vertex.length-1; i++)
-				oldsigll += Math.log(sigma2HierDist.density(sigma2[i]));
+				if(i != tree.root.index)
+					oldsigll += Math.log(sigma2HierDist.density(sigma2[i]));
 			
 			double llratio = 0;
 			
@@ -721,7 +725,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			
 			double newsigll = 0;
 			for(int i = 0; i < tree.vertex.length-1; i++)
-				newsigll += Math.log(sigma2HierDist.density(sigma2[i]));
+				if(i != tree.root.index)
+					newsigll += Math.log(sigma2HierDist.density(sigma2[i]));
 			
 			
 			if(param == 3)
