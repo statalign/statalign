@@ -79,7 +79,8 @@ public class StructTrace extends Postprocess {
 	@Override
 	public void newSample(State state, int no, int total) {
 		if(postprocessWrite) {
-			try {
+			// TODO decide if this is still needed for new parameterization
+			/** try {
 				outputFile.write(structAlign.sigma2+"\t"+structAlign.theta+"\t");
 				int newSigmaProp = structAlign.sigProposed;
 				outputFile.write(lastSigmaProp != newSigmaProp? ""+structAlign.sigma2 : "");
@@ -88,10 +89,10 @@ public class StructTrace extends Postprocess {
 				int newThetaProp = structAlign.thetaProposed;
 				outputFile.write(lastThetaProp != newThetaProp ? ""+structAlign.theta : "");
 				outputFile.write("\n");
-				lastThetaProp = newThetaProp;
+				lastThetaProp = newThetaProp; 
 			} catch (IOException e) {
-				e.printStackTrace();
-			}
+				e.printStackTrace(); 
+			} **/
 		}
 //		if(sampling) {
 //			try {
@@ -120,7 +121,6 @@ public class StructTrace extends Postprocess {
 			}
 			System.out.println();
 			System.out.println("Acceptance rates:");
-			System.out.println("Theta: " + structAlign.thetaProposed + " " + structAlign.thetaAccept);
 			System.out.println("Sigma2: " + structAlign.sigProposed + " " + structAlign.sigAccept);
 			System.out.println("Rotation: " + structAlign.rotProposed + " " + structAlign.rotAccept);
 			System.out.println("Xlat: " + structAlign.xlatProposed + " " + structAlign.xlatAccept);
@@ -134,7 +134,6 @@ public class StructTrace extends Postprocess {
 		
 		System.out.println();
 		System.out.println("Acceptance rates:");
-		System.out.println("Theta: " + structAlign.thetaProposed + " " + structAlign.thetaAccept);
 		System.out.println("Sigma2: " + structAlign.sigProposed + " " + structAlign.sigAccept);
 		System.out.println("Rotation: " + structAlign.rotProposed + " " + structAlign.rotAccept);
 		System.out.println("Xlat: " + structAlign.xlatProposed + " " + structAlign.xlatAccept);

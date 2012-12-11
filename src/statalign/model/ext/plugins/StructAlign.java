@@ -64,9 +64,13 @@ public class StructAlign extends ModelExtension implements ActionListener {
 
 	/** Parameters of structural drift */
 	public double[] sigma2;
+	public double sigma2Hier = 1;
+	public double nu = 1;
 	public double tau = 5;
 	public boolean globalSigma = false;
 	double structTemp = 1;
+	
+	
 	
 	/** Covariance matrix implied by current tree topology */
 	double[][] fullCovar;
@@ -83,6 +87,10 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	public int[] sigAccept;
 //	public int thetaProposed = 0;
 //	public int thetaAccept = 0;
+	public int sigHProposed;
+	public int sigHAccept;
+	public int nuProposed;
+	public int nuAccept;
 	public int tauProposed;
 	public int tauAccept;
 	public int rotProposed;
@@ -96,19 +104,27 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	RotationProposal rotProp;
 	
 	/** Priors */
-	// theta - gamma prior, uses shape/scale parameterization
-	GammaDistribution thetaPrior = new GammaDistribution(1, 100);
+	// tau - gamma prior, uses shape/scale parameterization
+	GammaDistribution tauPrior = new GammaDistribution(1, 100);
 	
-	// sigma2 - gamma prior
-	GammaDistribution sigma2Prior = new GammaDistribution(1, 100);
+	// sigma2Hier - gamma prior
+	GammaDistribution sigma2HPrior = new GammaDistribution(1, 100);
 	
+	// nu - gamma prior
+	GammaDistribution nuPrior = new GammaDistribution(1, 100);
+	
+	// initialize hierarchical distribution for sigma2
+	GammaDistribution sigma2HierDist = new GammaDistribution(nu, sigma2Hier / nu);
+
 	// priors for rotation and translation are uniform
 	// so do not need to be included in M-H ratio
 	
 	/** Proposal tuning parameters */
 	// higher values lead to smaller step sizes
-	private static final double thetaP = 10;
+	private static final double tauP = 10;
 	private static final double sigma2P = 10;
+	private static final double sigma2HP = 10;
+	private static final double nuP = 10;
 	// private static final double axisP = 100;
 	private static final double angleP = 1000;
 	// higher values lead to bigger step sizes
@@ -421,7 +437,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		
 		for(int i = 0; i < tree.names.length; i++)
 			for(int j = i; j < tree.names.length; j++)
-				distMat[j][i] = distMat[i][j] = sigma2 / (2 * theta ) * Math.exp(-theta * distMat[i][j]);
+				distMat[j][i] = distMat[i][j] = tau * Math.exp(-distMat[i][j]);
 		return distMat;
 	}
 	
@@ -458,7 +474,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			for(int j = 1; j < subTree.length; j++)
 				subTree[j] = -1;
 		}
-		addEdgeLength(distMat, subTree, vertex.edgeLength);
+		addEdgeLength(distMat, subTree, vertex.edgeLength * sigma2[vertex.index] / tau);
 		/*System.out.println();
 		System.out.println("Distmat:");
 		for(int i = 0; i < distMat.length; i++)
@@ -502,11 +518,11 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		return 25;
 	}
 	
-	/** Constant weights for rotation/translation, sigma2 and theta */
-	int[] paramPropWConst = { 0, 0, 3 };
-	/** Weights per sequence for rotation/translation, sigma2 and theta */
-	int[] paramPropWPerSeq = { 5, 3, 0 };
-	/** Total weight for rot/xlat, sigma2 and theta calculated as const+perseq*nseq */
+	/** Constant weights for rotation/translation, sigma2, tau, sigma2Hier, and nu */
+	int[] paramPropWConst = { 0, 0, 3, 3, 3};
+	/** Weights per sequence for rotation/translation, sigma2, tau, sigma2Hier, and nu */
+	int[] paramPropWPerSeq = { 5, 3, 0, 0, 0 };
+	/** Total weights calculated as const+perseq*nseq */
 	int[] paramPropWeights;
 	/** Weights for proposing rotation vs translation vs library */
 	int[] rotXlatWeights= { 25, 25, 1 };
@@ -616,7 +632,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				curLogLike = oldll;
 			}
 				
-		} else {
+		} else if(param == 1 || param == 2){
 			
 			int sigmaInd = 0;
 			if(param == 1 && !globalSigma)	// select sigma to propose if not global
@@ -638,11 +654,11 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				sigma2[sigmaInd] = proposal.sample();
 				reverse = new GammaDistribution(sigma2P, sigma2[sigmaInd] / sigma2P);
 			} else{
-				thetaProposed++;
+				tauProposed++;
 				// creates a gamma distribution with mean theta & variance controlled by thetaP
-				proposal = new GammaDistribution(thetaP, oldpar / thetaP);
-				theta = proposal.sample();
-				reverse = new GammaDistribution(thetaP, theta / thetaP);
+				proposal = new GammaDistribution(tauP, oldpar / tauP);
+				tau = proposal.sample();
+				reverse = new GammaDistribution(tauP, tau / tauP);
 			}
 			
 			// TODO do not recalculate distances, only the covariance matrix
@@ -650,11 +666,11 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			curLogLike = calcAllColumnContrib();
 			
 			if(param == 1)
-				llratio = Math.log(sigma2Prior.density(sigma2[sigmaInd])) + Math.log(reverse.density(oldpar)) 
-				- Math.log(sigma2Prior.density(oldpar)) - Math.log(proposal.density(sigma2[sigmaInd]));
+				llratio = Math.log(sigma2HierDist.density(sigma2[sigmaInd])) + Math.log(reverse.density(oldpar)) 
+				- Math.log(sigma2HierDist.density(oldpar)) - Math.log(proposal.density(sigma2[sigmaInd]));
 			else
-				llratio = Math.log(thetaPrior.density(theta)) + Math.log(reverse.density(oldpar)) 
-				- Math.log(thetaPrior.density(oldpar)) - Math.log(proposal.density(theta));
+				llratio = Math.log(tauPrior.density(tau)) + Math.log(reverse.density(oldpar)) 
+				- Math.log(tauPrior.density(oldpar)) - Math.log(proposal.density(tau));
 			
 			if(isParamChangeAccepted(llratio)) {
 				if(param == 1)
@@ -674,6 +690,63 @@ public class StructAlign extends ModelExtension implements ActionListener {
 					tau = oldpar;
 				fullCovar = oldcovar;
 				curLogLike = oldll;
+			}
+		} else {
+
+			// proposing new sigma2Hier/nu
+			double oldpar = param == 3 ? sigma2Hier : nu;
+			double oldsigll = 0;
+			for(int i = 0; i < tree.vertex.length; i++)
+				oldsigll += Math.log(sigma2HierDist.density(sigma2[i]));
+			
+			double llratio = 0;
+			
+			GammaDistribution proposal;
+			GammaDistribution reverse;
+			
+			if(param == 3){
+				sigHProposed++;
+				proposal = new GammaDistribution(sigma2HP, oldpar / sigma2HP);
+				sigma2Hier = proposal.sample();
+				reverse = new GammaDistribution(sigma2HP, sigma2Hier / sigma2HP);
+			} else{
+				nuProposed++;
+				// creates a gamma distribution with mean nu & variance controlled by nuP
+				proposal = new GammaDistribution(nuP, oldpar / nuP);
+				nu = proposal.sample();
+				reverse = new GammaDistribution(nuP, nu / nuP);
+			}
+			
+			sigma2HierDist = new GammaDistribution(nu, sigma2Hier / nu);
+			
+			double newsigll = 0;
+			for(int i = 0; i < tree.vertex.length; i++)
+				newsigll += Math.log(sigma2HierDist.density(sigma2[i]));
+			
+			
+			if(param == 3)
+				llratio = newsigll + Math.log(sigma2HPrior.density(sigma2Hier)) + Math.log(reverse.density(oldpar)) 
+				- oldsigll - Math.log(sigma2HPrior.density(oldpar)) - Math.log(proposal.density(sigma2Hier));
+			else
+				llratio = newsigll + Math.log(nuPrior.density(nu)) + Math.log(reverse.density(oldpar)) 
+				- oldsigll - Math.log(nuPrior.density(oldpar)) - Math.log(proposal.density(nu));
+			
+			if(isParamChangeAccepted(llratio)) {
+				if(param == 3)
+					sigHAccept++;
+				else
+					nuAccept++;
+				// accepted, nothing to do
+//				if(Utils.DEBUG)
+//					System.out.println(new String[] { "theta", "sigma2" }[param-1]+" accepted");
+			} else {
+				// rejected, restore
+//				if(Utils.DEBUG)
+//					System.out.println(new String[] { "theta", "sigma2" }[param-1]+" rejected");
+				if(param == 3)
+					sigma2Hier = oldpar;
+				else
+					nu = oldpar;
 			}
 		}
 	}
