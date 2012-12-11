@@ -455,6 +455,7 @@ public class Tree extends Stoppable {
             }
             newVert = new Vertex(this, 0.0);    /* new vertex */
             vertex[vnum] = newVert;
+            vertex[vnum].index = vnum;
             newVert.left = vertex[where[i]];
             newVert.right = vertex[where[j]];
             //System.out.println("Joining vertices "+where[i]+" and "+where[j]);
