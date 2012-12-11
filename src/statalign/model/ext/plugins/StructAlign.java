@@ -216,12 +216,13 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			xlats[i] = new double[] { 0, 0, 0 };
 		} */
 		
-		sigma2 = new double[coords.length];
-		for(i = 0; i < coords.length; i++) {
+		// number of branches in the tree is 2*leaves - 3
+		sigma2 = new double[2*coords.length - 3];
+		sigProposed = new int[2*coords.length - 3];
+		sigAccept = new int[2*coords.length - 3];
+		for(i = 0; i < coords.length; i++)
 			sigma2[i] = 1;
-			sigProposed[i] = 0;
-			sigAccept[i] = 0;
-		}
+		
 		tau = 5;
 		
 		tauProposed = 0;
@@ -321,7 +322,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				throw new Error("Inconsistency in StructAlign, covar matrix "+i+" length: "+covar[i].length+", "+fullCovar[i].length);
 			for(int j = 0; j < covar[i].length; j++)
 				if(Math.abs(covar[i][j]-fullCovar[i][j]) > 1e-5)
-					throw new Error("Inconsistency in StructAlign, covar matrix "+i+","+j+" value: "+covar[i][j]+", "+fullCovar[i][j]);
+					throw new Error("Inconsistency in StructAlign, covar matrix "+i+","+j+" value: "+covar[i][j]+", "+fullCovar[i][j]+", "+tau);
 		}
 		return true;
 	}
@@ -639,7 +640,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				sigmaInd = Utils.generator.nextInt(coords.length);
 			
 			// proposing new sigma/theta
-			double oldpar = param==1 ? sigma2[sigmaInd] : tau;
+			double oldpar = param == 1 ? sigma2[sigmaInd] : tau;
 			double[][] oldcovar = fullCovar;
 			double oldll = curLogLike;
 			
@@ -648,7 +649,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			GammaDistribution proposal;
 			GammaDistribution reverse;
 			
-			if(param == 2){
+			if(param == 1){
 				sigProposed[sigmaInd]++;
 				proposal = new GammaDistribution(sigma2P, oldpar / sigma2P);
 				sigma2[sigmaInd] = proposal.sample();
@@ -660,7 +661,6 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				tau = proposal.sample();
 				reverse = new GammaDistribution(tauP, tau / tauP);
 			}
-			
 			// TODO do not recalculate distances, only the covariance matrix
 			fullCovar = calcFullCovar(tree);
 			curLogLike = calcAllColumnContrib();
@@ -696,7 +696,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			// proposing new sigma2Hier/nu
 			double oldpar = param == 3 ? sigma2Hier : nu;
 			double oldsigll = 0;
-			for(int i = 0; i < tree.vertex.length; i++)
+			for(int i = 0; i < tree.vertex.length - 1; i++)
 				oldsigll += Math.log(sigma2HierDist.density(sigma2[i]));
 			
 			double llratio = 0;
