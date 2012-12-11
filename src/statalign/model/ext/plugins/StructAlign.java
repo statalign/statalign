@@ -220,7 +220,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		sigma2 = new double[2*coords.length - 3];
 		sigProposed = new int[2*coords.length - 3];
 		sigAccept = new int[2*coords.length - 3];
-		for(i = 0; i < coords.length; i++)
+		for(i = 0; i < sigma2.length; i++)
 			sigma2[i] = 1;
 		
 		tau = 5;
@@ -696,7 +696,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			// proposing new sigma2Hier/nu
 			double oldpar = param == 3 ? sigma2Hier : nu;
 			double oldsigll = 0;
-			for(int i = 0; i < tree.vertex.length - 1; i++)
+			for(int i = 0; i < tree.vertex.length-1; i++)
 				oldsigll += Math.log(sigma2HierDist.density(sigma2[i]));
 			
 			double llratio = 0;
@@ -720,7 +720,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			sigma2HierDist = new GammaDistribution(nu, sigma2Hier / nu);
 			
 			double newsigll = 0;
-			for(int i = 0; i < tree.vertex.length; i++)
+			for(int i = 0; i < tree.vertex.length-1; i++)
 				newsigll += Math.log(sigma2HierDist.density(sigma2[i]));
 			
 			
