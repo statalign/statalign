@@ -10,7 +10,7 @@ import statalign.MPIUtils;
 import statalign.base.thread.Stoppable;
 import statalign.base.thread.StoppedException;
 import statalign.distance.Distance;
-import statalign.model.ext.ModelExtInterface;
+import statalign.model.ext.ModelExtManager;
 import statalign.postprocess.PostprocessManager;
 import statalign.postprocess.plugins.contree.CNetwork;
 import statalign.ui.ErrorMessage;
@@ -92,12 +92,12 @@ public class Mcmc extends Stoppable {
 	public PostprocessManager postprocMan;
 
 	/** Manager that handles model extension plugins */
-	public ModelExtInterface modelExtMan;
+	public ModelExtManager modelExtMan;
 
 	/** True while the MCMC is in the burn-in phase. */
 	public boolean burnin;
 
-	public Mcmc(Tree tree, MCMCPars pars, PostprocessManager ppm, ModelExtInterface modelExtMan) {
+	public Mcmc(Tree tree, MCMCPars pars, PostprocessManager ppm, ModelExtManager modelExtMan) {
 		postprocMan = ppm;
 		this.modelExtMan = modelExtMan;
 		ppm.mcmc = this;
@@ -107,7 +107,7 @@ public class Mcmc extends Stoppable {
 		this.tree.heat = 1.0d;
 	}
 
-	public Mcmc(Tree tree, MCMCPars pars, PostprocessManager ppm, ModelExtInterface modelExtMan,
+	public Mcmc(Tree tree, MCMCPars pars, PostprocessManager ppm, ModelExtManager modelExtMan,
 			int noOfProcesses, int rank, double heat) {
 		this(tree, pars, ppm, modelExtMan);
 		this.noOfProcesses = noOfProcesses;
@@ -310,19 +310,20 @@ public class Mcmc extends Stoppable {
 							lambdaAccepted = 0;
 						}
 					}
-					
-					double muAccRate = (muSampled == 0 ? 0 : (double) muAccepted / (double) muSampled);
-					if (muAccRate > Utils.MAX_ACCEPTANCE) {
-						Utils.MU_SPAN /= Utils.SPAN_MULTIPLIER;
-						//System.out.println("MU_SPAN = "+Utils.MU_SPAN);
-						muSampled = 0;
-						muAccepted = 0;
-					}
-					else if (muAccRate < Utils.MIN_ACCEPTANCE) {
-						Utils.MU_SPAN *= Utils.SPAN_MULTIPLIER;
-						//System.out.println("MU_SPAN = "+Utils.MU_SPAN);
-						muSampled = 0;
-						muAccepted = 0;
+					if (muSampled > Utils.MIN_SAMPLES_FOR_ACC_ESTIMATE) {
+						double muAccRate = (muSampled == 0 ? 0 : (double) muAccepted / (double) muSampled);
+						if (muAccRate > Utils.MAX_ACCEPTANCE) {
+							Utils.MU_SPAN /= Utils.SPAN_MULTIPLIER;
+							//System.out.println("MU_SPAN = "+Utils.MU_SPAN);
+							muSampled = 0;
+							muAccepted = 0;
+						}
+						else if (muAccRate < Utils.MIN_ACCEPTANCE) {
+							Utils.MU_SPAN *= Utils.SPAN_MULTIPLIER;
+							//System.out.println("MU_SPAN = "+Utils.MU_SPAN);
+							muSampled = 0;
+							muAccepted = 0;
+						}
 					}
 				}
 			}
@@ -917,10 +918,11 @@ public class Mcmc extends Stoppable {
 		
 		modelExtMan.beforeEdgeLenChange(tree, selectedNode);
 
+		double minEdgeLength = 0.01;
 		// perform change
 		while ((selectedNode.edgeLength = oldEdge
 				+ Utils.generator.nextDouble() * Utils.EDGE_SPAN
-				- (Utils.EDGE_SPAN / 2.0)) < 0.01)
+				- (Utils.EDGE_SPAN / 2.0)) < minEdgeLength)
 			;
 		selectedNode.edgeChangeUpdate();
 		// Vertex actual = tree.vertex[i];
@@ -932,10 +934,11 @@ public class Mcmc extends Stoppable {
 		// }
 		selectedNode.calcAllUp();
 		double newLogLikelihood = modelExtMan.logLikeEdgeLenChange(tree, selectedNode);
-		if (Utils.generator.nextDouble() < (Math.exp((newLogLikelihood
-				- oldLogLikelihood - selectedNode.edgeLength + oldEdge)
-				* tree.heat) * (Math.min(oldEdge - 0.01, Utils.EDGE_SPAN / 2.0) + Utils.EDGE_SPAN / 2.0))
-				/ (Math.min(selectedNode.edgeLength - 0.01,
+		if (Utils.generator.nextDouble() < 
+				( Math.exp((newLogLikelihood - oldLogLikelihood - selectedNode.edgeLength + oldEdge)* tree.heat) 
+				* (Math.min(oldEdge - minEdgeLength, Utils.EDGE_SPAN / 2.0) + Utils.EDGE_SPAN / 2.0) 
+				) /
+				(Math.min(selectedNode.edgeLength - minEdgeLength,
 						Utils.EDGE_SPAN / 2.0) + Utils.EDGE_SPAN / 2.0)) {
 			// acceptance, do nothing
 			// System.out.println("accepted (old: "+oldLogLikelihood+" new: "+newLogLikelihood+")");

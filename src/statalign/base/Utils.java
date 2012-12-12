@@ -51,7 +51,7 @@ public class Utils{
 	
 	public static final double WINDOW_CHANGE_FACTOR = 0.8;
 	public static final double MIN_WINDOW_MULTIPLIER = 0.1;
-	public static final double MAX_WINDOW_MULTIPLIER = 2;
+	public static final double MAX_WINDOW_MULTIPLIER = 1.5;
 	public static double WINDOW_MULTIPLIER = 1.0;
 
 	public static final double MIN_SAMPLES_FOR_ACC_ESTIMATE = 10;
@@ -100,15 +100,16 @@ public class Utils{
 		if(tempDoubleArray == null || tempDoubleArray.length < length){
 			tempDoubleArray = new double[length];
 		}
-		double p = 1.0 - 1.0/expectedLength;
-		tempDoubleArray[0] = 1.0/expectedLength;
-		double sum = tempDoubleArray[0];
-		for(int i = 1; i < length; i++){
-			tempDoubleArray[i] = tempDoubleArray[i-1] * p;
+		double p = 1.0/(1+expectedLength);
+		double q = 1.0 - p;
+		tempDoubleArray[1] = p;
+		double sum = tempDoubleArray[1];
+		for(int i = 2; i < length; i++){
+			tempDoubleArray[i] = tempDoubleArray[i-1] * q;
 			sum += tempDoubleArray[i];
 		}
 		double w = generator.nextDouble() * sum;
-		int k = 0;
+		int k = 1;
 		double x = tempDoubleArray[0];
 		while(x < w && k < length - 1){
 			k++;
@@ -134,11 +135,12 @@ public class Utils{
 		if(tempDoubleArray == null || tempDoubleArray.length < length){
 			tempDoubleArray = new double[length];
 		}
-		double p = 1.0 - 1.0/expectedLength;
-		tempDoubleArray[0] = 1.0/expectedLength;
-		double sum = tempDoubleArray[0];
-		for(int i = 1; i < length; i++){
-			tempDoubleArray[i] = tempDoubleArray[i-1] * p;
+		double p = 1.0/(1+expectedLength);
+		double q = 1.0 - p;
+		tempDoubleArray[1] = p;
+		double sum = tempDoubleArray[1];
+		for(int i = 2; i < length; i++){
+			tempDoubleArray[i] = tempDoubleArray[i-1] * q;
 			sum += tempDoubleArray[i];
 		}
 
