@@ -25,6 +25,10 @@ public abstract class ModelExtension {
 	
 	protected boolean active;
 	
+	public int[] proposalCounts;
+	public int[] acceptanceCounts;
+	public double[] proposalWidthControlVariables;
+	
 	public void setManager(ModelExtManager manager) {
 		this.manager = manager;
 	}
@@ -160,7 +164,6 @@ public abstract class ModelExtension {
 	public final boolean isParamChangeAccepted(double logProbRatio) {
 		return manager.modExtParamChangeCallback(logProbRatio);
 	}
-
 	public double logLikeModExtParamChange(Tree tree, ModelExtension ext) {
 		return logLikeFactor(tree);
 	}

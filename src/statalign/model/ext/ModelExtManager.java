@@ -126,6 +126,37 @@ public class ModelExtManager {
 		return mcmc.modExtParamChangeCallback(logLikeRatio);
 	}
 	
+	public void modifyProposalWidths() {
+		System.out.println(activeList.size());
+		System.out.println(selectedPlugin.proposalCounts.length);
+		System.out.println(selectedPlugin.proposalCounts[0]);
+		System.out.println(selectedPlugin.acceptanceCounts.length);
+		System.out.println(selectedPlugin.acceptanceCounts[0]);
+		modExtParamModifyProposalWidths(selectedPlugin.proposalCounts,selectedPlugin.acceptanceCounts,
+				selectedPlugin.proposalWidthControlVariables);
+	}
+	
+	public void modExtParamModifyProposalWidths(
+			int[] proposalCounts, int[] acceptanceCounts,
+			double[] proposalWidthControlVariables) {
+		
+		for (int i=0; i<proposalCounts.length; i++) {
+			if (proposalCounts[i] > Utils.MIN_SAMPLES_FOR_ACC_ESTIMATE) {
+				double accRate = (proposalCounts[i] == 0) ? 0 : (double)proposalCounts[i]/(double)acceptanceCounts[i];  
+				if (accRate < Utils.MIN_ACCEPTANCE) {
+					proposalWidthControlVariables[i] *= Utils.SPAN_MULTIPLIER;
+					proposalCounts[i] = 0;
+					acceptanceCounts[i] = 0;
+				}
+				else if (accRate > Utils.MAX_ACCEPTANCE) {
+					proposalWidthControlVariables[i] /= Utils.SPAN_MULTIPLIER;
+					proposalCounts[i] = 0;
+					acceptanceCounts[i] = 0;
+				}
+			}
+		}
+	}
+	
 //	/**
 //	 * Calculates the total log-likelihood of the state by adding the log-likelihood factor
 //	 * contributions from all model extension plugins to the log-likelihood of the tree.

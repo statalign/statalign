@@ -51,7 +51,7 @@ public class Utils{
 	
 	public static final double WINDOW_CHANGE_FACTOR = 0.8;
 	public static final double MIN_WINDOW_MULTIPLIER = 0.1;
-	public static final double MAX_WINDOW_MULTIPLIER = 2;
+	public static final double MAX_WINDOW_MULTIPLIER = 1.5;
 	public static double WINDOW_MULTIPLIER = 1.0;
 
 	public static final double MIN_SAMPLES_FOR_ACC_ESTIMATE = 10;
@@ -86,7 +86,7 @@ public class Utils{
 	private static double[] tempDoubleArray;
 
 	/**
-	 * This function selects a random integer such that the expected squared value will be O(length)
+	 * This function selects a random integer with expected value given by expectedLength.
 	 * The probability of the selection of that particular index is returned in selectLike.
 	 * 
 	 * (MuDouble is used to allow for another return value, in C++ a double pointer/reference
@@ -94,6 +94,7 @@ public class Utils{
 	 * 
 	 * @param length The length of the array we need.
 	 * @param selectLike A mutable double object to return the selection probability
+	 * @param expectedLength The expected window length. 
 	 * @return A random integer as described above
 	 */
 	public static int linearizerWeight(int length, MuDouble selectLike, double expectedLength){

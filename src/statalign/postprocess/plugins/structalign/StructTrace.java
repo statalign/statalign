@@ -121,7 +121,15 @@ public class StructTrace extends Postprocess {
 			}
 			System.out.println();
 			System.out.println("Acceptance rates:");
-			System.out.println("Sigma2: " + structAlign.sigProposed + " " + structAlign.sigAccept);
+			System.out.print("Sigma2 (prop): ");
+			for (int i=0; i<structAlign.proposalCounts.length; i++) {
+				System.out.print(structAlign.proposalCounts[i]+" ");
+			}
+			System.out.println("");
+			System.out.print("Sigma2 (acce): ");
+			for (int i=0; i<structAlign.acceptanceCounts.length; i++) {
+				System.out.print(structAlign.acceptanceCounts[i]+" ");
+			}
 			System.out.println("Rotation: " + structAlign.rotProposed + " " + structAlign.rotAccept);
 			System.out.println("Xlat: " + structAlign.xlatProposed + " " + structAlign.xlatAccept);
 			System.out.println("Library: " + structAlign.libProposed + " " + structAlign.libAccept);
@@ -134,7 +142,7 @@ public class StructTrace extends Postprocess {
 		
 		System.out.println();
 		System.out.println("Acceptance rates:");
-		System.out.println("Sigma2: " + structAlign.sigProposed + " " + structAlign.sigAccept);
+		//System.out.println("Sigma2: " + structAlign.sigProposed + " " + structAlign.sigAccept);
 		System.out.println("Rotation: " + structAlign.rotProposed + " " + structAlign.rotAccept);
 		System.out.println("Xlat: " + structAlign.xlatProposed + " " + structAlign.xlatAccept);
 		System.out.println("Library: " + structAlign.libProposed + " " + structAlign.libAccept);

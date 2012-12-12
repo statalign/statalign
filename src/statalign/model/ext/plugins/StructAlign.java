@@ -83,8 +83,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	private String[] oldAlign;
 	private double oldLogLi;
 	
-	public int[] sigProposed;
-	public int[] sigAccept;
+//	public int[] sigProposed;
+//	public int[] sigAccept;
 //	public int thetaProposed = 0;
 //	public int thetaAccept = 0;
 	public int sigHProposed;
@@ -121,8 +121,12 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	
 	/** Proposal tuning parameters */
 	// higher values lead to smaller step sizes
+	//proposalCounts = new int[6];
+	//proposalCounts = new int[6];
+	//proposalCounts = new int[6];
+	
 	private static final double tauP = 10;
-	private static final double sigma2P = 10;
+	//private static final double sigma2P = 10;
 	private static final double sigma2HP = 10;
 	private static final double nuP = 10;
 	// private static final double axisP = 100;
@@ -218,8 +222,19 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		
 		// number of branches in the tree is 2*leaves - 1
 		sigma2 = new double[2*coords.length - 1];
-		sigProposed = new int[2*coords.length - 1];
-		sigAccept = new int[2*coords.length - 1];
+		//sigProposed = new int[2*coords.length - 1];
+		proposalCounts = new int[2*coords.length - 1];
+		//sigAccept = new int[2*coords.length - 1];
+		acceptanceCounts = new int[2*coords.length - 1];
+		proposalWidthControlVariables = new double[2*coords.length - 1];
+		for (int ii=0; ii<2*coords.length-1; ii++) {
+			proposalCounts[ii] = 0;
+			acceptanceCounts[ii] = 0;
+			proposalWidthControlVariables[ii] = 0.1; 
+			// This needs to be a variable that, when bigger, increases the 
+			// width of the proposal.
+		}
+		
 		for(i = 0; i < sigma2.length; i++)
 			sigma2[i] = 1;
 		
@@ -653,8 +668,11 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			GammaDistribution reverse;
 			
 			if(param == 1){
-				sigProposed[sigmaInd]++;
-				proposal = new GammaDistribution(sigma2P, oldpar / sigma2P);
+				//sigProposed[sigmaInd]++;
+				proposalCounts[sigmaInd]++;
+				double sigma2P = proposalWidthControlVariables[sigmaInd];
+				//proposal = new GammaDistribution(sigma2P, oldpar / sigma2P);
+				proposal = new GammaDistribution(oldpar/sigma2P, sigma2P);
 				sigma2[sigmaInd] = proposal.sample();
 				reverse = new GammaDistribution(sigma2P, sigma2[sigmaInd] / sigma2P);
 			} else{
@@ -677,7 +695,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			
 			if(isParamChangeAccepted(llratio)) {
 				if(param == 1)
-					sigAccept[sigmaInd]++;
+					//sigAccept[sigmaInd]++;
+					acceptanceCounts[sigmaInd]++;
 				else
 					tauAccept++;
 				// accepted, nothing to do
