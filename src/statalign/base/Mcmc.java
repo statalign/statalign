@@ -310,19 +310,20 @@ public class Mcmc extends Stoppable {
 							lambdaAccepted = 0;
 						}
 					}
-					
-					double muAccRate = (muSampled == 0 ? 0 : (double) muAccepted / (double) muSampled);
-					if (muAccRate > Utils.MAX_ACCEPTANCE) {
-						Utils.MU_SPAN /= Utils.SPAN_MULTIPLIER;
-						//System.out.println("MU_SPAN = "+Utils.MU_SPAN);
-						muSampled = 0;
-						muAccepted = 0;
-					}
-					else if (muAccRate < Utils.MIN_ACCEPTANCE) {
-						Utils.MU_SPAN *= Utils.SPAN_MULTIPLIER;
-						//System.out.println("MU_SPAN = "+Utils.MU_SPAN);
-						muSampled = 0;
-						muAccepted = 0;
+					if (muSampled > Utils.MIN_SAMPLES_FOR_ACC_ESTIMATE) {
+						double muAccRate = (muSampled == 0 ? 0 : (double) muAccepted / (double) muSampled);
+						if (muAccRate > Utils.MAX_ACCEPTANCE) {
+							Utils.MU_SPAN /= Utils.SPAN_MULTIPLIER;
+							//System.out.println("MU_SPAN = "+Utils.MU_SPAN);
+							muSampled = 0;
+							muAccepted = 0;
+						}
+						else if (muAccRate < Utils.MIN_ACCEPTANCE) {
+							Utils.MU_SPAN *= Utils.SPAN_MULTIPLIER;
+							//System.out.println("MU_SPAN = "+Utils.MU_SPAN);
+							muSampled = 0;
+							muAccepted = 0;
+						}
 					}
 				}
 			}
