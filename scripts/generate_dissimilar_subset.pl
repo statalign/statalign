@@ -160,8 +160,8 @@ sub print_alignment {
 
 	my $pdb_id = substr($id_list->[$i],0,4);
 	`wget http://www.rcsb.org/pdb/files/$pdb_id.pdb 2> /dev/null`;
-	if ($chain{$id_list->[$i]} && $chain{$id_list->[$i]} ne " ") {
-	    `$structalign_dir/scripts/selecta.pl miss[]b[A]c[$chain{$id_list->[$i]}]]coor[]r[$start{$id_list->[$i]}-$end{$id_list->[$i]}]o[$coorfile] $pdb_id.pdb`;
+	if ($chain && $chain ne " ") {
+	    `$structalign_dir/scripts/selecta.pl miss[]b[A]c[$chain]coor[]r[$start{$id_list->[$i]}-$end{$id_list->[$i]}]o[$coorfile] $pdb_id.pdb`;
 	}
 	else {
 	    `$structalign_dir/scripts/selecta.pl miss[]b[A]coor[]r[$start{$id_list->[$i]}-$end{$id_list->[$i]}]o[$coorfile] $pdb_id.pdb`;
