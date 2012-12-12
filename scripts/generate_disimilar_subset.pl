@@ -1,21 +1,50 @@
 #!/usr/bin/perl -w
 my $MAX_SET_SIZE = 10;
-my $MAX_ID = 0.35;
+
+my $pir = shift;
+my $MAX_PERCENT_ID = 25;
+if (@ARGV) {
+    $MAX_PERCENT_ID = shift;
+}
+my $MAX_ID = $MAX_PERCENT_ID/100;
+my $structalign_dir = "~/workspace/structalign/";
 
 my $nseqs = 0;
+my $n;
 my @ids;
 my $id;
-while(<>) {
+my (@pdb,@start,@end,%chain,@code,%seq);
 
-    if (/>(\w+)/) {
-	$id = $1;
-	push(@ids,$id);
+my $aliname = $pir; 
+$aliname =~ s/\.pir//;
+open(PIR, "< $pir");
+while(<PIR>) {
+
+    $n = $nseqs - 1;
+    if (/structureX:(\w{4}):\s+(\d+)\s*:([A-Z\s]):\s*(\d+)\s*:/) {
+	
+	$pdb[$n] = $1;
+	$chain[$n] = $3;
+	my $lower_chain = $chain[$n];
+	$lower_chain =~ tr/[A-Z]/[a-z]/;
+	$code[$n] = $pdb[$n];
+	if ($lower_chain && $lower_chain ne " ") {
+	    $code[$n] .= $lower_chain;
+	}
+	$start{$code[$n]} = $2;
+	$end{$code[$n]} = $4;
+	push(@ids,$code[$n]);
+	next;
+    }
+    elsif (/>P1;(\w+)/) {
 	$nseqs++;
 	next;
     }
     chomp;
-    $seq{$id} .= $_; 
+    s/\*//;
+    $seq{$code[$n]} .= $_; 
 }
+close PIR;
 
 my @average_ids = compute_average_identity(\@ids);
 
@@ -114,8 +143,38 @@ sub print_alignment {
 
     my $id_list = $_[0];
     my $n = @{$id_list};
+    my $filename = "$aliname"."_$MAX_PERCENT_ID";
+    open(FASTA, "> $filename.fasta");
+    open(COOR, "> $filename.coor");
     for (my $i=0; $i<$n; $i++) {
-	print ">$id_list->[$i]\n";
-	print $seq{$id_list->[$i]}."\n";
+	my $chain = "";
+	if (length($id_list->[$i]) == 5) {
+	    $chain = substr($id_list->[$i],4,1);
+	    $chain =~ tr/[a-z]/[A-Z]/;
+	}
+	print FASTA ">$id_list->[$i]\n";	
+	print COOR ">$id_list->[$i]\n";	
+	print FASTA $seq{$id_list->[$i]}."\n";
+
+	my $coorfile = $id_list->[$i].".coor";
+
+	my $pdb_id = substr($id_list->[$i],0,4);
+	`wget http://www.rcsb.org/pdb/files/$pdb_id.pdb 2> /dev/null`;
+	if ($chain{$id_list->[$i]} && $chain{$id_list->[$i]} ne " ") {
+	    `$structalign_dir/scripts/selecta.pl miss[]b[A]c[$chain{$id_list->[$i]}]]coor[]r[$start{$id_list->[$i]}-$end{$id_list->[$i]}]o[$coorfile] $pdb_id.pdb`;
+	}
+	else {
+	    `$structalign_dir/scripts/selecta.pl miss[]b[A]coor[]r[$start{$id_list->[$i]}-$end{$id_list->[$i]}]o[$coorfile] $pdb_id.pdb`;
+	}
+	`rm $pdb_id.pdb`;
+
+	open(THIS_COOR, "< $coorfile");
+	my $this_coor = "";
+	while(<THIS_COOR>) {
+	    $this_coor .= $_;
+	}
+	close THIS_COOR;
+	`rm $coorfile`;
+	print COOR $this_coor;
     }
 }
