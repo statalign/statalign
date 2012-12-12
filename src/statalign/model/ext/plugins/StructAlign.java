@@ -168,14 +168,14 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		HashMap<String, Integer> seqMap = new HashMap<String, Integer>();
 		int i = 0;
 		for(String name : inputData.seqs.seqNames)
-			seqMap.put(name, i++);
+			seqMap.put(name.toUpperCase(), i++);
 		coords = new double[inputData.seqs.seqNames.size()][][];
 		for(DataType data : inputData.auxData) {
 			if(!(data instanceof ProteinSkeletons))
 				continue;
 			ProteinSkeletons ps = (ProteinSkeletons) data;
 			for(i = 0; i < ps.names.size(); i++) {
-				String name = ps.names.get(i);
+				String name = ps.names.get(i).toUpperCase();
 				if(!seqMap.containsKey(name))
 					throw new IllegalArgumentException("structalign: missing sequence or duplicate structure for "+name);
 				int ind = seqMap.get(name);

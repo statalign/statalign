@@ -68,31 +68,44 @@ public class StructTrace extends Postprocess {
 			}
 		}
 		try {
-			outputFile.write("sigma2\ttheta\tsigma2_proposed\ttheta_proposed\n");
+			outputFile.write("tau");
+			int sigLen = structAlign.globalSigma ? 1 : 2*inputData.seqs.sequences.size()-1;
+			for(int i = 0; i < sigLen; i++)
+				outputFile.write("\tsigma2_"+(i+1));
+			outputFile.write("tau_proposed");
+			for(int i = 0; i < sigLen; i++)
+				outputFile.write("\tsigma2_"+(i+1)+"_proposed");
+			outputFile.write("\n");
 		} catch (IOException e) {
 		}
+		lastSigmaProp = null;
+		lastTauProp = 0;
 	}
 	
-	int lastSigmaProp;
-	int lastThetaProp;
+	int[] lastSigmaProp;
+	int lastTauProp;
 	
 	@Override
 	public void newSample(State state, int no, int total) {
 		if(postprocessWrite) {
-			// TODO decide if this is still needed for new parameterization
-			/** try {
-				outputFile.write(structAlign.sigma2+"\t"+structAlign.theta+"\t");
-				int newSigmaProp = structAlign.sigProposed;
-				outputFile.write(lastSigmaProp != newSigmaProp? ""+structAlign.sigma2 : "");
-				outputFile.write("\t");
-				lastSigmaProp = newSigmaProp;
-				int newThetaProp = structAlign.thetaProposed;
-				outputFile.write(lastThetaProp != newThetaProp ? ""+structAlign.theta : "");
+			try {
+				int siglen = structAlign.globalSigma ? 1 : structAlign.sigma2.length;
+				outputFile.write(structAlign.tau+"\t");
+				for(int i = 0; i < siglen; i++)
+					outputFile.write(structAlign.sigma2[i]+"\t");
+				
+				if(lastSigmaProp == null || lastSigmaProp.length != structAlign.sigProposed.length)
+					lastSigmaProp = new int[structAlign.sigProposed.length];
+				outputFile.write(lastTauProp != structAlign.tauProposed ? ""+structAlign.tau : "");
+				lastTauProp = structAlign.tauProposed;
+				for(int i = 0; i < siglen; i++) {
+					outputFile.write(lastSigmaProp[i] != structAlign.sigProposed[i] ? "\t"+structAlign.sigma2[i] : "\t");
+					lastSigmaProp[i] = structAlign.sigProposed[i];
+				}
 				outputFile.write("\n");
-				lastThetaProp = newThetaProp; 
 			} catch (IOException e) {
 				e.printStackTrace(); 
-			} **/
+			}
 		}
 //		if(sampling) {
 //			try {
