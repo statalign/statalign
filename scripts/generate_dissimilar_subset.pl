@@ -31,6 +31,9 @@ while(<PIR>) {
 	if ($lower_chain && $lower_chain ne " ") {
 	    $code[$n] .= $lower_chain;
 	}
+	if (exists $start{$code[$n]}) {
+	    $code[$n] .= "x";
+	}
 	$start{$code[$n]} = $2;
 	$end{$code[$n]} = $4;
 	push(@ids,$code[$n]);
@@ -80,7 +83,7 @@ sub seq_id {
     my $seq2 = $_[1];
 
     if (length($seq1) != length($seq2)) {
-	die "Cannot compute sequence identity between two sequences of different length.\n";
+	die "Cannot compute sequence identity between two sequences of different length.\n length(seq1) = ".length($seq1).", length(seq2) = ".length($seq2)."\n";
     }
     my $identity = 0;
     for (my $i=0; $i<length($seq1); $i++) {
@@ -119,7 +122,7 @@ sub compute_average_identity {
 	$average_id[$i] = 0;
 	for (my $j=0; $j<$n; $j++) {
 	    next if ($i==$j);
-	    $average_id[$i] += seq_id($seq{$id_list->[$i]},$seq{$id_list->[$j]})/$n;
+	    $average_id[$i] += seq_id($seq{$id_list->[$i]},$seq{$id_list->[$j]})/$n
 	}
     }
     return @average_id;
