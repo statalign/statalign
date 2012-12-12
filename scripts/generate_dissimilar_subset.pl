@@ -13,7 +13,7 @@ my $nseqs = 0;
 my $n;
 my @ids;
 my $id;
-my (@pdb,@start,@end,%chain,@code,%seq);
+my (@pdb,%start,%end,%chain,@code,%seq);
 
 my $aliname = $pir; 
 $aliname =~ s/\.pir//;
