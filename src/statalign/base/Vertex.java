@@ -1397,7 +1397,7 @@ public class Vertex {
         winLast = actualAC;
 
         //double bpp = -Math.log(p.value * (length - winLength == 0 ? 1 : length - winLength));
-        double bpp = -Math.log(p.value / (length - winLength == 0 ? 1 : length - winLength));
+        double bpp = -Math.log(p.value / (length - winLength + 1));
 
         //	System.out.println("\nbpp after window select: "+bpp);
 
@@ -1440,7 +1440,7 @@ public class Vertex {
         //bpp += Math.log(Utils.linearizerWeightProb(length, winLength, Utils.WINDOW_MULTIPLIER*Math.sqrt(length)) 
         //		* (length - winLength));
         bpp += Math.log(Utils.linearizerWeightProb(length, winLength, Utils.WINDOW_MULTIPLIER*Math.sqrt(length)) 
-               		/ (length - winLength));
+               		/ (length - winLength + 1));
 
         // 	System.out.print(" Prop: "+bppProp+" it's doublecheck: "+bppBack+" bpp: "+bpp+" ");
 

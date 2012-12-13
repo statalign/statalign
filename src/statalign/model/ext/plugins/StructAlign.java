@@ -70,6 +70,10 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	public boolean globalSigma = false;
 	double structTemp = 1;
 	
+	private int tauInd;
+	private int sigma2HInd;
+	private int nuInd;
+	
 	
 	
 	/** Covariance matrix implied by current tree topology */
@@ -83,8 +87,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	private String[] oldAlign;
 	private double oldLogLi;
 	
-	public int[] sigProposed;
-	public int[] sigAccept;
+//	public int[] sigProposed;
+//	public int[] sigAccept;
 //	public int thetaProposed = 0;
 //	public int thetaAccept = 0;
 	public int sigHProposed;
@@ -121,11 +125,15 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	
 	/** Proposal tuning parameters */
 	// higher values lead to smaller step sizes
-	private static final double tauP = 10;
-	private static final double sigma2P = 10;
-	private static final double sigma2HP = 10;
-	private static final double nuP = 10;
-	// private static final double axisP = 100;
+	//proposalCounts = new int[6];
+	//proposalCounts = new int[6];
+	//proposalCounts = new int[6];
+	
+	//private static final double tauP = 10;
+	//private static final double sigma2P = 10;
+	//private static final double sigma2HP = 10;
+	//private static final double nuP = 10;
+	//private static final double axisP = 100;
 	private static final double angleP = 1000;
 	// higher values lead to bigger step sizes
 	private static final double xlatP = .1;
@@ -164,14 +172,14 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		HashMap<String, Integer> seqMap = new HashMap<String, Integer>();
 		int i = 0;
 		for(String name : inputData.seqs.seqNames)
-			seqMap.put(name, i++);
+			seqMap.put(name.toUpperCase(), i++);
 		coords = new double[inputData.seqs.seqNames.size()][][];
 		for(DataType data : inputData.auxData) {
 			if(!(data instanceof ProteinSkeletons))
 				continue;
 			ProteinSkeletons ps = (ProteinSkeletons) data;
 			for(i = 0; i < ps.names.size(); i++) {
-				String name = ps.names.get(i);
+				String name = ps.names.get(i).toUpperCase();
 				if(!seqMap.containsKey(name))
 					throw new IllegalArgumentException("structalign: missing sequence or duplicate structure for "+name);
 				int ind = seqMap.get(name);
@@ -219,13 +227,26 @@ public class StructAlign extends ModelExtension implements ActionListener {
 
 		// number of branches in the tree is 2*leaves - 1
 		sigma2 = new double[2*coords.length - 1];
-		sigProposed = new int[2*coords.length - 1];
-		sigAccept = new int[2*coords.length - 1];
+		proposalCounts = new int[sigma2.length+3]; // Includes tau, sigma2Hier and nu
+		acceptanceCounts = new int[sigma2.length+3];
+		proposalWidthControlVariables = new double[sigma2.length+3];
+		for (int ii=0; ii<proposalCounts.length; ii++) {
+			proposalCounts[ii] = 0;
+			acceptanceCounts[ii] = 0;
+			proposalWidthControlVariables[ii] = 0.1; 
+			// This needs to be a variable that, when bigger, increases the 
+			// width of the proposal.
+		}
+		
 		for(i = 0; i < sigma2.length; i++)
 			sigma2[i] = 1;
 		
-		tau = 5;
+		// Indices of the variables in the arrays of proposal counts and acceptance counts.
+		tauInd = sigma2.length;
+		sigma2HInd = sigma2.length+1;
+		nuInd = sigma2.length+2;
 		
+		tau = 5;
 		tauProposed = 0;
 		tauAccept = 0;
 		rotProposed = 0;
@@ -655,16 +676,25 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			GammaDistribution reverse;
 			
 			if(param == 1){
-				sigProposed[sigmaInd]++;
-				proposal = new GammaDistribution(sigma2P, oldpar / sigma2P);
+				//System.out.println("sigma2["+sigmaInd+"] = "+sigma2[sigmaInd]);
+				//sigProposed[sigmaInd]++;
+				proposalCounts[sigmaInd]++;
+				double sigma2P = proposalWidthControlVariables[sigmaInd];
+				//proposal = new GammaDistribution(sigma2P, oldpar / sigma2P);
+				proposal = new GammaDistribution((0.001+oldpar)/sigma2P, sigma2P);
 				sigma2[sigmaInd] = proposal.sample();
-				reverse = new GammaDistribution(sigma2P, sigma2[sigmaInd] / sigma2P);
+				//reverse = new GammaDistribution(sigma2P, sigma2[sigmaInd] / sigma2P);
+				reverse = new GammaDistribution((0.001+sigma2[sigmaInd])/sigma2P, sigma2P);				
 			} else{
-				tauProposed++;
+				//tauProposed++;
+				proposalCounts[tauInd]++;
 				// creates a gamma distribution with mean theta & variance controlled by thetaP
-				proposal = new GammaDistribution(tauP, oldpar / tauP);
+				double tauP = proposalWidthControlVariables[tauInd];
+				//proposal = new GammaDistribution(tauP, oldpar / tauP);
+				proposal = new GammaDistribution((0.001+oldpar)/tauP, tauP);
 				tau = proposal.sample();
-				reverse = new GammaDistribution(tauP, tau / tauP);
+				//reverse = new GammaDistribution(tauP, tau / tauP);
+				reverse = new GammaDistribution((0.001+tau)/tauP, tauP);
 			}
 			// TODO do not recalculate distances, only the covariance matrix
 			fullCovar = calcFullCovar(tree);
@@ -679,9 +709,11 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			
 			if(isParamChangeAccepted(llratio)) {
 				if(param == 1)
-					sigAccept[sigmaInd]++;
+					//sigAccept[sigmaInd]++;
+					acceptanceCounts[sigmaInd]++;
 				else
-					tauAccept++;
+					//tauAccept++;
+					acceptanceCounts[tauInd]++;
 				// accepted, nothing to do
 //				if(Utils.DEBUG)
 //					System.out.println(new String[] { "theta", "sigma2" }[param-1]+" accepted");
@@ -711,16 +743,24 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			GammaDistribution reverse;
 			
 			if(param == 3){
-				sigHProposed++;
-				proposal = new GammaDistribution(sigma2HP, oldpar / sigma2HP);
+				//sigHProposed++;
+				proposalCounts[sigma2HInd]++;
+				double sigma2HP = proposalWidthControlVariables[sigma2HInd];
+				//proposal = new GammaDistribution(sigma2HP, oldpar / sigma2HP);
+				proposal = new GammaDistribution((0.001+oldpar)/sigma2HP, sigma2HP);
 				sigma2Hier = proposal.sample();
-				reverse = new GammaDistribution(sigma2HP, sigma2Hier / sigma2HP);
+				//reverse = new GammaDistribution(sigma2HP, sigma2Hier / sigma2HP);
+				reverse = new GammaDistribution((0.001+sigma2Hier)/sigma2HP, sigma2HP);
 			} else{
-				nuProposed++;
+				//nuProposed++;
+				proposalCounts[nuInd]++;
+				double nuP = proposalWidthControlVariables[nuInd];
 				// creates a gamma distribution with mean nu & variance controlled by nuP
-				proposal = new GammaDistribution(nuP, oldpar / nuP);
+				//proposal = new GammaDistribution(nuP, oldpar / nuP);
+				proposal = new GammaDistribution((0.001+oldpar)/nuP, nuP);
 				nu = proposal.sample();
-				reverse = new GammaDistribution(nuP, nu / nuP);
+				//reverse = new GammaDistribution(nuP, nu / nuP);
+				reverse = new GammaDistribution((0.001+nu)/nuP, nuP);
 			}
 			
 			sigma2HierDist = new GammaDistribution(nu, sigma2Hier / nu);
@@ -741,8 +781,10 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			if(isParamChangeAccepted(llratio)) {
 				if(param == 3)
 					sigHAccept++;
+					//acceptanceCounts[sigHInd]++;
 				else
 					nuAccept++;
+					//acceptanceCounts[nuInd]++;
 				// accepted, nothing to do
 //				if(Utils.DEBUG)
 //					System.out.println(new String[] { "theta", "sigma2" }[param-1]+" accepted");

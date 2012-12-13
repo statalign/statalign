@@ -68,31 +68,54 @@ public class StructTrace extends Postprocess {
 			}
 		}
 		try {
-			outputFile.write("sigma2\ttheta\tsigma2_proposed\ttheta_proposed\n");
+			outputFile.write("tau");
+			int sigLen = structAlign.globalSigma ? 1 : 2*inputData.seqs.sequences.size()-1;
+			for(int i = 0; i < sigLen; i++)
+				outputFile.write("\tsigma2_"+(i+1));
+			outputFile.write("\ttau_proposed");
+			for(int i = 0; i < sigLen; i++)
+				outputFile.write("\tsigma2_"+(i+1)+"_proposed");
+			outputFile.write("\n");
 		} catch (IOException e) {
 		}
+		lastSigmaProp = null;
+		lastTauProp = 0;
 	}
 	
-	int lastSigmaProp;
-	int lastThetaProp;
+	int[] lastSigmaProp;
+	int lastTauProp;
+	int lastSigma2HProp;
+	int lastNuProp;
 	
 	@Override
 	public void newSample(State state, int no, int total) {
 		if(postprocessWrite) {
-			// TODO decide if this is still needed for new parameterization
-			/* try {
-				outputFile.write(structAlign.sigma2+"\t"+structAlign.theta+"\t");
-				int newSigmaProp = structAlign.sigProposed;
-				outputFile.write(lastSigmaProp != newSigmaProp? ""+structAlign.sigma2 : "");
-				outputFile.write("\t");
-				lastSigmaProp = newSigmaProp;
-				int newThetaProp = structAlign.thetaProposed;
-				outputFile.write(lastThetaProp != newThetaProp ? ""+structAlign.theta : "");
+			try {
+				int sigLen = structAlign.globalSigma ? 1 : structAlign.sigma2.length;
+				outputFile.write(structAlign.tau+"\t");
+				for(int i = 0; i < sigLen; i++)
+					outputFile.write(structAlign.sigma2[i]+"\t");
+				
+				if(lastSigmaProp == null || lastSigmaProp.length != sigLen)
+					lastSigmaProp = new int[sigLen];
+				int i=0;
+				for(i = 0; i < sigLen; i++) {
+					outputFile.write(lastSigmaProp[i] != structAlign.proposalCounts[i] ? "\t"+structAlign.sigma2[i] : "\t"+-1);
+					lastSigmaProp[i] = structAlign.proposalCounts[i];
+				}
+				outputFile.write(lastTauProp != structAlign.proposalCounts[i] ? ""+structAlign.tau : "");
+				lastTauProp = structAlign.proposalCounts[i];
+				++i;
+				outputFile.write(lastSigma2HProp != structAlign.proposalCounts[i] ? ""+structAlign.sigma2Hier : "");
+				lastSigma2HProp = structAlign.proposalCounts[i];
+				++i;
+				outputFile.write(lastNuProp != structAlign.proposalCounts[i] ? ""+structAlign.nu : "");
+				lastNuProp = structAlign.proposalCounts[i];
+
 				outputFile.write("\n");
-				lastThetaProp = newThetaProp; 
 			} catch (IOException e) {
 				e.printStackTrace(); 
-			} */
+			}
 		}
 //		if(sampling) {
 //			try {
@@ -121,15 +144,32 @@ public class StructTrace extends Postprocess {
 			}
 			System.out.println();
 			System.out.println("Acceptance rates:");
-			System.out.println("Sigma2H: " + structAlign.sigHProposed + " " + structAlign.sigHAccept);
-			System.out.println("Tau: " + structAlign.tauProposed + " " + structAlign.tauAccept);
-			System.out.println("Nu: " + structAlign.nuProposed + " " + structAlign.nuAccept);
+
+			System.out.print("Sigma2 (prop): ");
+			for (int i=0; i<structAlign.proposalCounts.length; i++) {
+				System.out.print(structAlign.proposalCounts[i]+" ");
+			}
+			System.out.println("");
+			System.out.print("Sigma2 (acce): ");
+			for (int i=0; i<structAlign.acceptanceCounts.length; i++) {
+				System.out.print(structAlign.acceptanceCounts[i]+" ");
+			}
 			System.out.println("Rotation: " + structAlign.rotProposed + " " + structAlign.rotAccept);
 			System.out.println("Xlat: " + structAlign.xlatProposed + " " + structAlign.xlatAccept);
 			System.out.println("Library: " + structAlign.libProposed + " " + structAlign.libAccept);
-			for(int i = 0; i < structAlign.sigma2.length; i++)
-				System.out.println("Sigma2 " + i + ": " + structAlign.sigProposed[i] + " " + structAlign.sigAccept[i]);
 		}
+		
+		System.out.println("final translations:");
+		for(int i = 0; i < structAlign.xlats.length; i++) {
+			System.out.println(Arrays.toString(structAlign.xlats[i]));
+		}
+		
+		System.out.println();
+		System.out.println("Acceptance rates:");
+		//System.out.println("Sigma2: " + structAlign.sigProposed + " " + structAlign.sigAccept);
+		System.out.println("Rotation: " + structAlign.rotProposed + " " + structAlign.rotAccept);
+		System.out.println("Xlat: " + structAlign.xlatProposed + " " + structAlign.xlatAccept);
+		System.out.println("Library: " + structAlign.libProposed + " " + structAlign.libAccept);
 	}
 	
 	public static void printMatrix(double[][] m) {

@@ -51,7 +51,6 @@ public class RawSequences implements DataType {
 		int len1 = alphabet.length(), len2 = alpha2.length();
 		if(len1 == 0) {
 			alphabet = alpha2;
-			adjustNameLengths();
 			return;
 		}
 		if(len2 == 0)
@@ -71,24 +70,23 @@ public class RawSequences implements DataType {
 			}
 		}
 		alphabet = merged.toString();
-		adjustNameLengths();
 	}
 
-	public void adjustNameLengths(){
-		int maxLength = 0;
-		for(int i = 0; i < seqNames.size(); i++){
-			maxLength = Math.max(maxLength, seqNames.get(i).length());
-		}
-		ArrayList<String> newNames = new ArrayList<String>();
-		for(int i = 0; i < seqNames.size(); i++){
-			String temp = seqNames.get(i);
-			while(temp.length() < maxLength){
-				temp += " ";
-			}
-			newNames.add(temp);
-		}
-		seqNames = newNames;	
-	}
+//	public void adjustNameLengths(){
+//		int maxLength = 0;
+//		for(int i = 0; i < seqNames.size(); i++){
+//			maxLength = Math.max(maxLength, seqNames.get(i).length());
+//		}
+//		ArrayList<String> newNames = new ArrayList<String>();
+//		for(int i = 0; i < seqNames.size(); i++){
+//			String temp = seqNames.get(i);
+//			while(temp.length() < maxLength){
+//				temp += " ";
+//			}
+//			newNames.add(temp);
+//		}
+//		seqNames = newNames;	
+//	}
 	
 	/**
 	 * Returns the number of sequences.
