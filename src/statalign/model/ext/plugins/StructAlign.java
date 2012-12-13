@@ -674,7 +674,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				//proposal = new GammaDistribution(sigma2P, oldpar / sigma2P);
 				proposal = new GammaDistribution(oldpar/sigma2P, sigma2P);
 				sigma2[sigmaInd] = proposal.sample();
-				reverse = new GammaDistribution(sigma2P, sigma2[sigmaInd] / sigma2P);
+				reverse = new GammaDistribution(sigma2[sigmaInd]/sigma2P, sigma2P);
 			} else{
 				tauProposed++;
 				// creates a gamma distribution with mean theta & variance controlled by thetaP
