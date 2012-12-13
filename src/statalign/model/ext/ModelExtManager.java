@@ -127,13 +127,9 @@ public class ModelExtManager {
 	}
 	
 	public void modifyProposalWidths() {
-		System.out.println(activeList.size());
-		System.out.println(selectedPlugin.proposalCounts.length);
-		System.out.println(selectedPlugin.proposalCounts[0]);
-		System.out.println(selectedPlugin.acceptanceCounts.length);
-		System.out.println(selectedPlugin.acceptanceCounts[0]);
-		modExtParamModifyProposalWidths(selectedPlugin.proposalCounts,selectedPlugin.acceptanceCounts,
-				selectedPlugin.proposalWidthControlVariables);
+		for(ModelExtension modExt : activeList)
+			modExtParamModifyProposalWidths(modExt.proposalCounts, modExt.acceptanceCounts,
+					modExt.proposalWidthControlVariables);
 	}
 	
 	public void modExtParamModifyProposalWidths(
