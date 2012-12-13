@@ -679,22 +679,22 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				//System.out.println("sigma2["+sigmaInd+"] = "+sigma2[sigmaInd]);
 				//sigProposed[sigmaInd]++;
 				proposalCounts[sigmaInd]++;
-				double sigma2P = proposalWidthControlVariables[sigmaInd];
-				//proposal = new GammaDistribution(sigma2P, oldpar / sigma2P);
-				proposal = new GammaDistribution((0.001+oldpar)/sigma2P, sigma2P);
+				double sigma2P = 1.0d/proposalWidthControlVariables[sigmaInd];
+				proposal = new GammaDistribution(sigma2P, oldpar / sigma2P);
+				//proposal = new GammaDistribution((0.001+oldpar)/sigma2P, sigma2P);
 				sigma2[sigmaInd] = proposal.sample();
-				//reverse = new GammaDistribution(sigma2P, sigma2[sigmaInd] / sigma2P);
-				reverse = new GammaDistribution((0.001+sigma2[sigmaInd])/sigma2P, sigma2P);				
+				reverse = new GammaDistribution(sigma2P, sigma2[sigmaInd] / sigma2P);
+				//reverse = new GammaDistribution((0.001+sigma2[sigmaInd])/sigma2P, sigma2P);				
 			} else{
 				//tauProposed++;
 				proposalCounts[tauInd]++;
 				// creates a gamma distribution with mean theta & variance controlled by thetaP
-				double tauP = proposalWidthControlVariables[tauInd];
-				//proposal = new GammaDistribution(tauP, oldpar / tauP);
-				proposal = new GammaDistribution((0.001+oldpar)/tauP, tauP);
+				double tauP = 1.0d/proposalWidthControlVariables[tauInd];
+				proposal = new GammaDistribution(tauP, oldpar / tauP);
+				//proposal = new GammaDistribution((0.001+oldpar)/tauP, tauP);
 				tau = proposal.sample();
-				//reverse = new GammaDistribution(tauP, tau / tauP);
-				reverse = new GammaDistribution((0.001+tau)/tauP, tauP);
+				reverse = new GammaDistribution(tauP, tau / tauP);
+				//reverse = new GammaDistribution((0.001+tau)/tauP, tauP);
 			}
 			// TODO do not recalculate distances, only the covariance matrix
 			fullCovar = calcFullCovar(tree);
@@ -745,22 +745,22 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			if(param == 3){
 				//sigHProposed++;
 				proposalCounts[sigma2HInd]++;
-				double sigma2HP = proposalWidthControlVariables[sigma2HInd];
-				//proposal = new GammaDistribution(sigma2HP, oldpar / sigma2HP);
-				proposal = new GammaDistribution((0.001+oldpar)/sigma2HP, sigma2HP);
+				double sigma2HP = 1.0d/proposalWidthControlVariables[sigma2HInd];
+				proposal = new GammaDistribution(sigma2HP, oldpar / sigma2HP);
+				//proposal = new GammaDistribution((0.001+oldpar)/sigma2HP, sigma2HP);
 				sigma2Hier = proposal.sample();
-				//reverse = new GammaDistribution(sigma2HP, sigma2Hier / sigma2HP);
-				reverse = new GammaDistribution((0.001+sigma2Hier)/sigma2HP, sigma2HP);
+				reverse = new GammaDistribution(sigma2HP, sigma2Hier / sigma2HP);
+				//reverse = new GammaDistribution((0.001+sigma2Hier)/sigma2HP, sigma2HP);
 			} else{
 				//nuProposed++;
 				proposalCounts[nuInd]++;
-				double nuP = proposalWidthControlVariables[nuInd];
+				double nuP = 1.0d/proposalWidthControlVariables[nuInd];
 				// creates a gamma distribution with mean nu & variance controlled by nuP
-				//proposal = new GammaDistribution(nuP, oldpar / nuP);
-				proposal = new GammaDistribution((0.001+oldpar)/nuP, nuP);
+				proposal = new GammaDistribution(nuP, oldpar / nuP);
+				//proposal = new GammaDistribution((0.001+oldpar)/nuP, nuP);
 				nu = proposal.sample();
-				//reverse = new GammaDistribution(nuP, nu / nuP);
-				reverse = new GammaDistribution((0.001+nu)/nuP, nuP);
+				reverse = new GammaDistribution(nuP, nu / nuP);
+				//reverse = new GammaDistribution((0.001+nu)/nuP, nuP);
 			}
 			
 			sigma2HierDist = new GammaDistribution(nu, sigma2Hier / nu);

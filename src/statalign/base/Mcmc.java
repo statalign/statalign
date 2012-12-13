@@ -711,7 +711,7 @@ public class Mcmc extends Stoppable {
 		if (Math.log(Utils.generator.nextDouble()) < bpp
 				+ (newLogLi - oldLogLi) * tree.heat) {
 			// accepted
-			// System.out.println("accepted (old: "+oldLogLi+" new: "+newLogLi+")");
+			System.out.println("accepted (old: "+oldLogLi+" new: "+newLogLi+")");
 			totalLogLike = newLogLi;
 			alignmentAccepted++;
 			modelExtMan.afterAlignChange(tree, selectRoot, true);
@@ -720,7 +720,7 @@ public class Mcmc extends Stoppable {
 			// String[] s = tree.printedAlignment();
 			selectRoot.alignRestore();
 			// s = tree.printedAlignment();
-			// System.out.println("rejected (old: "+oldLogLi+" new: "+newLogLi+")");
+			System.out.println("rejected (old: "+oldLogLi+" new: "+newLogLi+")");
 			// System.out.println("after reject fast: "+tree.root.indelLogLike);
 			// tree.root.calcIndelRecursivelyWithCheck();
 			// System.out.println(" slow: "+tree.root.indelLogLike);
