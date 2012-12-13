@@ -72,7 +72,7 @@ public class StructTrace extends Postprocess {
 			int sigLen = structAlign.globalSigma ? 1 : 2*inputData.seqs.sequences.size()-1;
 			for(int i = 0; i < sigLen; i++)
 				outputFile.write("\tsigma2_"+(i+1));
-			outputFile.write("tau_proposed");
+			outputFile.write("\ttau_proposed");
 			for(int i = 0; i < sigLen; i++)
 				outputFile.write("\tsigma2_"+(i+1)+"_proposed");
 			outputFile.write("\n");
@@ -89,16 +89,16 @@ public class StructTrace extends Postprocess {
 	public void newSample(State state, int no, int total) {
 		if(postprocessWrite) {
 			try {
-				int siglen = structAlign.globalSigma ? 1 : structAlign.sigma2.length;
+				int sigLen = structAlign.globalSigma ? 1 : structAlign.sigma2.length;
 				outputFile.write(structAlign.tau+"\t");
-				for(int i = 0; i < siglen; i++)
+				for(int i = 0; i < sigLen; i++)
 					outputFile.write(structAlign.sigma2[i]+"\t");
 				
-				if(lastSigmaProp == null || lastSigmaProp.length != siglen)
-					lastSigmaProp = new int[siglen];
+				if(lastSigmaProp == null || lastSigmaProp.length != sigLen)
+					lastSigmaProp = new int[sigLen];
 				outputFile.write(lastTauProp != structAlign.tauProposed ? ""+structAlign.tau : "");
 				lastTauProp = structAlign.tauProposed;
-				for(int i = 0; i < siglen; i++) {
+				for(int i = 0; i < sigLen; i++) {
 					outputFile.write(lastSigmaProp[i] != structAlign.proposalCounts[i] ? "\t"+structAlign.sigma2[i] : "\t");
 					lastSigmaProp[i] = structAlign.proposalCounts[i];
 				}
