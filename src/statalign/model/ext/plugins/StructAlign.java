@@ -769,8 +769,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			for(int i = 0; i < tree.vertex.length-1; i++)
 				if(i != tree.root.index)
 					newsigll += Math.log(sigma2HierDist.density(sigma2[i]));
-			
-			
+					
 			if(param == 3)
 				llratio = newsigll + Math.log(sigma2HPrior.density(sigma2Hier)) + Math.log(reverse.density(oldpar)) 
 				- oldsigll - Math.log(sigma2HPrior.density(oldpar)) - Math.log(proposal.density(sigma2Hier));

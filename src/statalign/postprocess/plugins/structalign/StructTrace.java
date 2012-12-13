@@ -68,13 +68,18 @@ public class StructTrace extends Postprocess {
 			}
 		}
 		try {
-			outputFile.write("tau");
 			int sigLen = structAlign.globalSigma ? 1 : 2*inputData.seqs.sequences.size()-1;
-			for(int i = 0; i < sigLen; i++)
+			outputFile.write("sigma2_1");
+			for(int i = 1; i < sigLen; i++)
 				outputFile.write("\tsigma2_"+(i+1));
-			outputFile.write("\ttau_proposed");
+			outputFile.write("\ttau");
+			outputFile.write("\tsigma2H");
+			outputFile.write("\tnu");
 			for(int i = 0; i < sigLen; i++)
 				outputFile.write("\tsigma2_"+(i+1)+"_proposed");
+			outputFile.write("\ttau_proposed");
+			outputFile.write("\tsigma2H_proposed");
+			outputFile.write("\tnu_proposed");
 			outputFile.write("\n");
 		} catch (IOException e) {
 		}
@@ -92,24 +97,26 @@ public class StructTrace extends Postprocess {
 		if(postprocessWrite) {
 			try {
 				int sigLen = structAlign.globalSigma ? 1 : structAlign.sigma2.length;
-				outputFile.write(structAlign.tau+"\t");
 				for(int i = 0; i < sigLen; i++)
 					outputFile.write(structAlign.sigma2[i]+"\t");
+				outputFile.write(structAlign.tau+"\t");
+				outputFile.write(structAlign.sigma2Hier+"\t");
+				outputFile.write(structAlign.nu+"\t");
 				
 				if(lastSigmaProp == null || lastSigmaProp.length != sigLen)
 					lastSigmaProp = new int[sigLen];
 				int i=0;
 				for(i = 0; i < sigLen; i++) {
-					outputFile.write(lastSigmaProp[i] != structAlign.proposalCounts[i] ? "\t"+structAlign.sigma2[i] : "\t"+-1);
+					outputFile.write(lastSigmaProp[i] != structAlign.proposalCounts[i] ? structAlign.sigma2[i]+"\t" : -1+"\t");
 					lastSigmaProp[i] = structAlign.proposalCounts[i];
 				}
-				outputFile.write(lastTauProp != structAlign.proposalCounts[i] ? ""+structAlign.tau : "");
+				outputFile.write(lastTauProp != structAlign.proposalCounts[i] ? structAlign.tau+"\t" : -1+"\t");
 				lastTauProp = structAlign.proposalCounts[i];
 				++i;
-				outputFile.write(lastSigma2HProp != structAlign.proposalCounts[i] ? ""+structAlign.sigma2Hier : "");
+				outputFile.write(lastSigma2HProp != structAlign.proposalCounts[i] ? structAlign.sigma2Hier+"\t" : -1+"\t");
 				lastSigma2HProp = structAlign.proposalCounts[i];
 				++i;
-				outputFile.write(lastNuProp != structAlign.proposalCounts[i] ? ""+structAlign.nu : "");
+				outputFile.write(lastNuProp != structAlign.proposalCounts[i] ? structAlign.nu+"\t" : -1+"\t");
 				lastNuProp = structAlign.proposalCounts[i];
 
 				outputFile.write("\n");
