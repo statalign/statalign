@@ -67,7 +67,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	public double sigma2Hier = 1;
 	public double nu = 1;
 	public double tau = 5;
-	public boolean globalSigma = false;
+	public boolean globalSigma = true;
 	double structTemp = 1;
 	
 	private int tauInd;
@@ -122,6 +122,16 @@ public class StructAlign extends ModelExtension implements ActionListener {
 
 	// priors for rotation and translation are uniform
 	// so do not need to be included in M-H ratio
+	
+	/** Constant weights for rotation/translation, sigma2, tau, sigma2Hier, and nu */
+	int[] paramPropWConst = { 0, 0, 3, 3, 3};
+	/** Weights per sequence for rotation/translation, sigma2, tau, sigma2Hier, and nu */
+	int[] paramPropWPerSeq = { 5, 3, 0, 0, 0 };
+	/** Total weights calculated as const+perseq*nseq */
+	int[] paramPropWeights;
+	/** Weights for proposing rotation vs translation vs library */
+	int[] rotXlatWeights= { 25, 25, 10 };
+//	int[] rotXlatWeights= { 25, 25, 0 };	// library off
 	
 	/** Proposal tuning parameters */
 	// higher values lead to smaller step sizes
@@ -228,13 +238,23 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		// number of branches in the tree is 2*leaves - 1
 		if (globalSigma) {
 			sigma2 = new double[1];
+			paramPropWConst[3] = 0;
+			paramPropWConst[4] = 0;
 		}
 		else {
 			sigma2 = new double[2*coords.length - 1];
 		}
-		proposalCounts = new int[sigma2.length+3]; // Includes tau, sigma2Hier and nu
-		acceptanceCounts = new int[sigma2.length+3];
-		proposalWidthControlVariables = new double[sigma2.length+3];
+		
+		if (globalSigma) {
+			proposalCounts = new int[2]; // Includes tau
+			acceptanceCounts = new int[2];
+			proposalWidthControlVariables = new double[2];
+		}
+		else {
+			proposalCounts = new int[sigma2.length+3]; // Includes tau, sigma2Hier and nu
+			acceptanceCounts = new int[sigma2.length+3];
+			proposalWidthControlVariables = new double[sigma2.length+3];			
+		}
 		for (int ii=0; ii<proposalCounts.length; ii++) {
 			proposalCounts[ii] = 0;
 			acceptanceCounts[ii] = 0;
@@ -551,16 +571,6 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		// TODO test converge and tune value
 		return 25;
 	}
-	
-	/** Constant weights for rotation/translation, sigma2, tau, sigma2Hier, and nu */
-	int[] paramPropWConst = { 0, 0, 3, 3, 3};
-	/** Weights per sequence for rotation/translation, sigma2, tau, sigma2Hier, and nu */
-	int[] paramPropWPerSeq = { 5, 3, 0, 0, 0 };
-	/** Total weights calculated as const+perseq*nseq */
-	int[] paramPropWeights;
-	/** Weights for proposing rotation vs translation vs library */
-	int[] rotXlatWeights= { 25, 25, 10 };
-//	int[] rotXlatWeights= { 25, 25, 0 };	// library off
 
 	@Override
 	public void proposeParamChange(Tree tree) {
@@ -711,8 +721,12 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			curLogLike = calcAllColumnContrib();
 			
 			if(param == 1)
-				llratio = Math.log(sigma2HierDist.density(sigma2[sigmaInd])) + Math.log(reverse.density(oldpar)) 
-				- Math.log(sigma2HierDist.density(oldpar)) - Math.log(proposal.density(sigma2[sigmaInd]));
+				llratio = Math.log(reverse.density(oldpar)) 
+				            - Math.log(proposal.density(sigma2[sigmaInd]));
+				if (globalSigma) {
+					llratio += Math.log(sigma2HierDist.density(sigma2[sigmaInd]))
+							    - Math.log(sigma2HierDist.density(oldpar));
+				}
 			else
 				llratio = Math.log(tauPrior.density(tau)) + Math.log(reverse.density(oldpar)) 
 				- Math.log(tauPrior.density(oldpar)) - Math.log(proposal.density(tau));
