@@ -88,24 +88,24 @@ public class StructTrace extends Postprocess {
 	@Override
 	public void newSample(State state, int no, int total) {
 		if(postprocessWrite) {
-//			try {
-//				int siglen = structAlign.globalSigma ? 1 : structAlign.sigma2.length;
-//				outputFile.write(structAlign.tau+"\t");
-//				for(int i = 0; i < siglen; i++)
-//					outputFile.write(structAlign.sigma2[i]+"\t");
-//				
-//				if(lastSigmaProp == null || lastSigmaProp.length != structAlign.sigProposed.length)
-//					lastSigmaProp = new int[structAlign.sigProposed.length];
-//				outputFile.write(lastTauProp != structAlign.tauProposed ? ""+structAlign.tau : "");
-//				lastTauProp = structAlign.tauProposed;
-//				for(int i = 0; i < siglen; i++) {
-//					outputFile.write(lastSigmaProp[i] != structAlign.sigProposed[i] ? "\t"+structAlign.sigma2[i] : "\t");
-//					lastSigmaProp[i] = structAlign.sigProposed[i];
-//				}
-//				outputFile.write("\n");
-//			} catch (IOException e) {
-//				e.printStackTrace(); 
-//			}
+			try {
+				int siglen = structAlign.globalSigma ? 1 : structAlign.sigma2.length;
+				outputFile.write(structAlign.tau+"\t");
+				for(int i = 0; i < siglen; i++)
+					outputFile.write(structAlign.sigma2[i]+"\t");
+				
+				if(lastSigmaProp == null || lastSigmaProp.length != siglen)
+					lastSigmaProp = new int[siglen];
+				outputFile.write(lastTauProp != structAlign.tauProposed ? ""+structAlign.tau : "");
+				lastTauProp = structAlign.tauProposed;
+				for(int i = 0; i < siglen; i++) {
+					outputFile.write(lastSigmaProp[i] != structAlign.proposalCounts[i] ? "\t"+structAlign.sigma2[i] : "\t");
+					lastSigmaProp[i] = structAlign.proposalCounts[i];
+				}
+				outputFile.write("\n");
+			} catch (IOException e) {
+				e.printStackTrace(); 
+			}
 		}
 //		if(sampling) {
 //			try {
