@@ -80,7 +80,7 @@ public class StructTrace extends Postprocess {
 	public void newSample(State state, int no, int total) {
 		if(postprocessWrite) {
 			// TODO decide if this is still needed for new parameterization
-			/** try {
+			/* try {
 				outputFile.write(structAlign.sigma2+"\t"+structAlign.theta+"\t");
 				int newSigmaProp = structAlign.sigProposed;
 				outputFile.write(lastSigmaProp != newSigmaProp? ""+structAlign.sigma2 : "");
@@ -92,7 +92,7 @@ public class StructTrace extends Postprocess {
 				lastThetaProp = newThetaProp; 
 			} catch (IOException e) {
 				e.printStackTrace(); 
-			} **/
+			} */
 		}
 //		if(sampling) {
 //			try {
@@ -121,23 +121,15 @@ public class StructTrace extends Postprocess {
 			}
 			System.out.println();
 			System.out.println("Acceptance rates:");
-			System.out.println("Sigma2: " + structAlign.sigProposed + " " + structAlign.sigAccept);
+			System.out.println("Sigma2H: " + structAlign.sigHProposed + " " + structAlign.sigHAccept);
+			System.out.println("Tau: " + structAlign.tauProposed + " " + structAlign.tauAccept);
+			System.out.println("Nu: " + structAlign.nuProposed + " " + structAlign.nuAccept);
 			System.out.println("Rotation: " + structAlign.rotProposed + " " + structAlign.rotAccept);
 			System.out.println("Xlat: " + structAlign.xlatProposed + " " + structAlign.xlatAccept);
 			System.out.println("Library: " + structAlign.libProposed + " " + structAlign.libAccept);
+			for(int i = 0; i < structAlign.sigma2.length; i++)
+				System.out.println("Sigma2 " + i + ": " + structAlign.sigProposed[i] + " " + structAlign.sigAccept[i]);
 		}
-		
-		System.out.println("final translations:");
-		for(int i = 0; i < structAlign.xlats.length; i++) {
-			System.out.println(Arrays.toString(structAlign.xlats[i]));
-		}
-		
-		System.out.println();
-		System.out.println("Acceptance rates:");
-		System.out.println("Sigma2: " + structAlign.sigProposed + " " + structAlign.sigAccept);
-		System.out.println("Rotation: " + structAlign.rotProposed + " " + structAlign.rotAccept);
-		System.out.println("Xlat: " + structAlign.xlatProposed + " " + structAlign.xlatAccept);
-		System.out.println("Library: " + structAlign.libProposed + " " + structAlign.libAccept);
 	}
 	
 	public static void printMatrix(double[][] m) {

@@ -431,7 +431,6 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	public double[][] calcFullCovar(Tree tree) {
 		// I'm assuming that tree.names.length is equal to the number of vertices here
 		double[][] distMat = new double[tree.names.length][tree.names.length];
-		System.out.println("About to calculate distance matrix");
 		calcDistanceMatrix(tree.root, distMat);
 		//System.out.print("Distance: " + distMat[0][1]);
 		
@@ -477,8 +476,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			for(int j = 1; j < subTree.length; j++)
 				subTree[j] = -1;
 		}
-		System.out.println("Vertex edge length: " + vertex.edgeLength);
-		System.out.println("Sigma2 of edge: " + sigma2[vertex.index]);
+
 		addEdgeLength(distMat, subTree, vertex.edgeLength * sigma2[vertex.index] / tau);
 		/*System.out.println();
 		System.out.println("Distmat:");
