@@ -138,7 +138,9 @@ public class ModelExtManager {
 		
 		for (int i=0; i<proposalCounts.length; i++) {
 			if (proposalCounts[i] > Utils.MIN_SAMPLES_FOR_ACC_ESTIMATE) {
-				double accRate = (proposalCounts[i] == 0) ? 0 : (double)proposalCounts[i]/(double)acceptanceCounts[i];  
+				double accRate = (proposalCounts[i] == 0) ? 0 : (double)acceptanceCounts[i]/(double)proposalCounts[i];
+				//System.out.println("modExtParam["+i+"] acceptance rate = "+accRate);
+				//System.out.println("var = "+proposalWidthControlVariables[i]);
 				if (accRate < Utils.MIN_ACCEPTANCE) {
 					proposalWidthControlVariables[i] *= Utils.SPAN_MULTIPLIER;
 					proposalCounts[i] = 0;
