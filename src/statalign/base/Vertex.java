@@ -1384,8 +1384,10 @@ public class Vertex {
         // select the beginning and end of the window
         MuDouble p = new MuDouble(1.0);
         winLength = Utils.linearizerWeight(length, p, Utils.WINDOW_MULTIPLIER*Math.sqrt(length));
-        System.out.print("Window length: "+winLength+"\t");
+        //System.out.print("Length: "+length+"\t");
+        //System.out.print("Window length: "+winLength+"\t");
         int b = (length - winLength == 0 ? 0 : Utils.generator.nextInt(length - winLength));
+        //System.out.print("b: "+b+"\t");
         AlignColumn actualAC = first;
         for (int i = 0; i < b; i++) {
             actualAC = actualAC.next;

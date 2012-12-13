@@ -246,13 +246,13 @@ public class Mcmc extends Stoppable {
 				if (AutomateParameters.shouldAutomateProposalVariances() && i % mcmcpars.sampRate == 0) {
 					if (alignmentSampled > Utils.MIN_SAMPLES_FOR_ACC_ESTIMATE) {
 						double alignmentAccRate = (double) alignmentAccepted / (double) alignmentSampled;
-						System.out.println("alignmentAccRate = "+alignmentAccRate);
+						//System.out.println("alignmentAccRate = "+alignmentAccRate);
 						if (alignmentAccRate > Utils.MAX_ACCEPTANCE && 
 								Utils.WINDOW_MULTIPLIER < Utils.MAX_WINDOW_MULTIPLIER &&
 								Utils.WINDOW_MULTIPLIER > Utils.MIN_WINDOW_MULTIPLIER ) {
 							Utils.WINDOW_MULTIPLIER = Math.min(Utils.MAX_WINDOW_MULTIPLIER,
 									Utils.WINDOW_MULTIPLIER / Utils.WINDOW_CHANGE_FACTOR);
-							System.out.println("WINDOW_MULTIPLIER = "+Utils.WINDOW_MULTIPLIER);
+							//System.out.println("WINDOW_MULTIPLIER = "+Utils.WINDOW_MULTIPLIER);
 							alignmentSampled = 0;
 							alignmentAccepted = 0;
 						}
@@ -711,7 +711,7 @@ public class Mcmc extends Stoppable {
 		if (Math.log(Utils.generator.nextDouble()) < bpp
 				+ (newLogLi - oldLogLi) * tree.heat) {
 			// accepted
-			System.out.println("accepted (old: "+oldLogLi+" new: "+newLogLi+")");
+			//System.out.println("accepted (old: "+oldLogLi+" new: "+newLogLi+")");
 			totalLogLike = newLogLi;
 			alignmentAccepted++;
 			modelExtMan.afterAlignChange(tree, selectRoot, true);
@@ -720,7 +720,7 @@ public class Mcmc extends Stoppable {
 			// String[] s = tree.printedAlignment();
 			selectRoot.alignRestore();
 			// s = tree.printedAlignment();
-			System.out.println("rejected (old: "+oldLogLi+" new: "+newLogLi+")");
+			//System.out.println("rejected (old: "+oldLogLi+" new: "+newLogLi+")");
 			// System.out.println("after reject fast: "+tree.root.indelLogLike);
 			// tree.root.calcIndelRecursivelyWithCheck();
 			// System.out.println(" slow: "+tree.root.indelLogLike);

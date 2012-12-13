@@ -226,7 +226,12 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		
 
 		// number of branches in the tree is 2*leaves - 1
-		sigma2 = new double[2*coords.length - 1];
+		if (globalSigma) {
+			sigma2 = new double[1];
+		}
+		else {
+			sigma2 = new double[2*coords.length - 1];
+		}
 		proposalCounts = new int[sigma2.length+3]; // Includes tau, sigma2Hier and nu
 		acceptanceCounts = new int[sigma2.length+3];
 		proposalWidthControlVariables = new double[sigma2.length+3];
@@ -498,7 +503,12 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				subTree[j] = -1;
 		}
 
-		addEdgeLength(distMat, subTree, vertex.edgeLength * sigma2[vertex.index] / tau);
+		if (globalSigma) {
+			addEdgeLength(distMat, subTree, vertex.edgeLength * sigma2[0] / tau);	
+		}
+		else {
+			addEdgeLength(distMat, subTree, vertex.edgeLength * sigma2[vertex.index] / tau);
+		}
 		/*System.out.println();
 		System.out.println("Distmat:");
 		for(int i = 0; i < distMat.length; i++)
@@ -549,7 +559,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	/** Total weights calculated as const+perseq*nseq */
 	int[] paramPropWeights;
 	/** Weights for proposing rotation vs translation vs library */
-	int[] rotXlatWeights= { 25, 25, 1 };
+	int[] rotXlatWeights= { 25, 25, 10 };
 //	int[] rotXlatWeights= { 25, 25, 0 };	// library off
 
 	@Override
