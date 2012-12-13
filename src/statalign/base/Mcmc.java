@@ -246,12 +246,13 @@ public class Mcmc extends Stoppable {
 				if (AutomateParameters.shouldAutomateProposalVariances() && i % mcmcpars.sampRate == 0) {
 					if (alignmentSampled > Utils.MIN_SAMPLES_FOR_ACC_ESTIMATE) {
 						double alignmentAccRate = (double) alignmentAccepted / (double) alignmentSampled;
+						System.out.println("alignmentAccRate = "+alignmentAccRate);
 						if (alignmentAccRate > Utils.MAX_ACCEPTANCE && 
 								Utils.WINDOW_MULTIPLIER < Utils.MAX_WINDOW_MULTIPLIER &&
 								Utils.WINDOW_MULTIPLIER > Utils.MIN_WINDOW_MULTIPLIER ) {
 							Utils.WINDOW_MULTIPLIER = Math.min(Utils.MAX_WINDOW_MULTIPLIER,
 									Utils.WINDOW_MULTIPLIER / Utils.WINDOW_CHANGE_FACTOR);
-							//System.out.println("WINDOW_MULTIPLIER = "+Utils.WINDOW_MULTIPLIER);
+							System.out.println("WINDOW_MULTIPLIER = "+Utils.WINDOW_MULTIPLIER);
 							alignmentSampled = 0;
 							alignmentAccepted = 0;
 						}

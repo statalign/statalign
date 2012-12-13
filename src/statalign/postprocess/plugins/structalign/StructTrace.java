@@ -84,6 +84,8 @@ public class StructTrace extends Postprocess {
 	
 	int[] lastSigmaProp;
 	int lastTauProp;
+	int lastSigma2HProp;
+	int lastNuProp;
 	
 	@Override
 	public void newSample(State state, int no, int total) {
@@ -96,12 +98,20 @@ public class StructTrace extends Postprocess {
 				
 				if(lastSigmaProp == null || lastSigmaProp.length != sigLen)
 					lastSigmaProp = new int[sigLen];
-				outputFile.write(lastTauProp != structAlign.tauProposed ? ""+structAlign.tau : "");
-				lastTauProp = structAlign.tauProposed;
-				for(int i = 0; i < sigLen; i++) {
-					outputFile.write(lastSigmaProp[i] != structAlign.proposalCounts[i] ? "\t"+structAlign.sigma2[i] : "\t");
+				int i=0;
+				for(i = 0; i < sigLen; i++) {
+					outputFile.write(lastSigmaProp[i] != structAlign.proposalCounts[i] ? "\t"+structAlign.sigma2[i] : "\t"+-1);
 					lastSigmaProp[i] = structAlign.proposalCounts[i];
 				}
+				outputFile.write(lastTauProp != structAlign.proposalCounts[i] ? ""+structAlign.tau : "");
+				lastTauProp = structAlign.proposalCounts[i];
+				++i;
+				outputFile.write(lastSigma2HProp != structAlign.proposalCounts[i] ? ""+structAlign.sigma2Hier : "");
+				lastSigma2HProp = structAlign.proposalCounts[i];
+				++i;
+				outputFile.write(lastNuProp != structAlign.proposalCounts[i] ? ""+structAlign.nu : "");
+				lastNuProp = structAlign.proposalCounts[i];
+				
 				outputFile.write("\n");
 			} catch (IOException e) {
 				e.printStackTrace(); 
