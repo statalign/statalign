@@ -185,6 +185,7 @@ public class StructTrace extends Postprocess {
 		System.out.println("Rotation: " + structAlign.rotProposed + " " + structAlign.rotAccept);
 		System.out.println("Xlat: " + structAlign.xlatProposed + " " + structAlign.xlatAccept);
 		System.out.println("Library: " + structAlign.libProposed + " " + structAlign.libAccept);
+		System.out.println("Tau: " + structAlign.tau + "  Epsilon: " + structAlign.epsilon);
 	}
 	
 	public static void printMatrix(double[][] m) {

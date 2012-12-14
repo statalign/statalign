@@ -68,12 +68,13 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	public double nu = 1;
 	public double tau = 5;
 	public boolean globalSigma = true;
+	public double epsilon = 1;
 	double structTemp = 1;
 	
 	private int tauInd;
 	private int sigma2HInd;
 	private int nuInd;
-	
+	private int epsilonInd;
 	
 	
 	/** Covariance matrix implied by current tree topology */
@@ -111,6 +112,9 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	// tau - gamma prior, uses shape/scale parameterization
 	GammaDistribution tauPrior = new GammaDistribution(1, 100);
 	
+	// epsilon - gamma prior
+	GammaDistribution epsilonPrior = new GammaDistribution(1, 100);
+	
 	// sigma2Hier - gamma prior
 	GammaDistribution sigma2HPrior = new GammaDistribution(1, 100);
 	
@@ -123,10 +127,10 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	// priors for rotation and translation are uniform
 	// so do not need to be included in M-H ratio
 	
-	/** Constant weights for rotation/translation, sigma2, tau, sigma2Hier, and nu */
-	int[] paramPropWConst = { 0, 0, 3, 3, 3};
-	/** Weights per sequence for rotation/translation, sigma2, tau, sigma2Hier, and nu */
-	int[] paramPropWPerSeq = { 5, 3, 0, 0, 0 };
+	/** Constant weights for rotation/translation, sigma2, tau, sigma2Hier, nu, and epsilon */
+	int[] paramPropWConst = { 0, 0, 3, 3, 3, 3 };
+	/** Weights per sequence for rotation/translation, sigma2, tau, sigma2Hier, nu, and epsilon */
+	int[] paramPropWPerSeq = { 5, 3, 0, 0, 0, 0 };
 	/** Total weights calculated as const+perseq*nseq */
 	int[] paramPropWeights;
 	/** Weights for proposing rotation vs translation vs library */
@@ -234,7 +238,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			xlats[i] = new double[] { 0, 0, 0 };
 		} */
 		
-
+		int others = 4;
 		// number of branches in the tree is 2*leaves - 1
 		if (globalSigma) {
 			sigma2 = new double[1];
@@ -246,14 +250,14 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		}
 		
 		if (globalSigma) {
-			proposalCounts = new int[2]; // Includes tau
-			acceptanceCounts = new int[2];
-			proposalWidthControlVariables = new double[2];
+			proposalCounts = new int[3]; // Includes tau & epsilon
+			acceptanceCounts = new int[3];
+			proposalWidthControlVariables = new double[3];
 		}
 		else {
-			proposalCounts = new int[sigma2.length+3]; // Includes tau, sigma2Hier and nu
-			acceptanceCounts = new int[sigma2.length+3];
-			proposalWidthControlVariables = new double[sigma2.length+3];			
+			proposalCounts = new int[sigma2.length+others]; // Includes tau, sigma2Hier, nu, and epsilon
+			acceptanceCounts = new int[sigma2.length+others];
+			proposalWidthControlVariables = new double[sigma2.length+others];			
 		}
 		for (int ii=0; ii<proposalCounts.length; ii++) {
 			proposalCounts[ii] = 0;
@@ -268,8 +272,10 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		
 		// Indices of the variables in the arrays of proposal counts and acceptance counts.
 		tauInd = sigma2.length;
-		sigma2HInd = sigma2.length+1;
-		nuInd = sigma2.length+2;
+		epsilonInd = sigma2.length+1;
+		sigma2HInd = sigma2.length+2;
+		nuInd = sigma2.length+3;
+		
 		
 		tau = 5;
 		tauProposed = 0;
@@ -369,7 +375,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				throw new Error("Inconsistency in StructAlign, covar matrix "+i+" length: "+covar[i].length+", "+fullCovar[i].length);
 			for(int j = 0; j < covar[i].length; j++)
 				if(Math.abs(covar[i][j]-fullCovar[i][j]) > 1e-5)
-					throw new Error("Inconsistency in StructAlign, covar matrix "+i+","+j+" value: "+covar[i][j]+", "+fullCovar[i][j]+", "+tau);
+					throw new Error("Inconsistency in StructAlign, covar matrix "+i+","+j+" value: "+covar[i][j]+", "+fullCovar[i][j]+", "+tau+", "+epsilon);
 		}
 		return true;
 	}
@@ -486,6 +492,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		for(int i = 0; i < tree.names.length; i++)
 			for(int j = i; j < tree.names.length; j++)
 				distMat[j][i] = distMat[i][j] = tau * Math.exp(-distMat[i][j]);
+		for(int i = 0; i < tree.names.length; i++)
+			distMat[i][i] += epsilon;
 		return distMat;
 	}
 	
@@ -685,7 +693,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 					sigmaInd++;
 			}
 			
-			// proposing new sigma/theta
+			// proposing new sigma
 			double oldpar = param == 1 ? sigma2[sigmaInd] : tau;
 			double[][] oldcovar = fullCovar;
 			double oldll = curLogLike;
@@ -752,7 +760,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				fullCovar = oldcovar;
 				curLogLike = oldll;
 			}
-		} else {
+		} else if(param == 3 || param == 4){
 
 			// proposing new sigma2Hier/nu
 			double oldpar = param == 3 ? sigma2Hier : nu;
@@ -809,16 +817,49 @@ public class StructAlign extends ModelExtension implements ActionListener {
 					nuAccept++;
 					//acceptanceCounts[nuInd]++;
 				// accepted, nothing to do
-//				if(Utils.DEBUG)
-//					System.out.println(new String[] { "theta", "sigma2" }[param-1]+" accepted");
 			} else {
 				// rejected, restore
-//				if(Utils.DEBUG)
-//					System.out.println(new String[] { "theta", "sigma2" }[param-1]+" rejected");
 				if(param == 3)
 					sigma2Hier = oldpar;
 				else
 					nu = oldpar;
+			}
+		} else {
+			
+			// proposing new epsilon
+			double oldpar = epsilon;
+			double[][] oldcovar = fullCovar;
+			double oldll = curLogLike;
+			
+			double llratio = 0;
+			
+			GammaDistribution proposal;
+			GammaDistribution reverse;
+			
+			proposalCounts[epsilonInd]++;
+			double epsilonP = 1.0d/proposalWidthControlVariables[epsilonInd];
+			proposal = new GammaDistribution(epsilonP + .001, oldpar / epsilonP+.001);
+			epsilon = proposal.sample();
+			reverse = new GammaDistribution(epsilonP +.001, epsilon / epsilonP+.001);
+			
+			// TODO do not recalculate distances, only the covariance matrix
+			fullCovar = calcFullCovar(tree);
+			// for(int i = 0; i < coords.length; i++)
+			//	fullCovar[i][i] = fullCovar[i][i] - oldpar + epsilon;
+			curLogLike = calcAllColumnContrib();
+			
+			if(param == 1)
+				llratio = Math.log(epsilonPrior.density(epsilon)) + Math.log(reverse.density(oldpar)) 
+				            - Math.log(epsilonPrior.density(oldpar)) - Math.log(proposal.density(epsilon));
+
+			if(isParamChangeAccepted(llratio)) {
+					acceptanceCounts[epsilonInd]++;
+				// accepted, nothing to do
+			} else {
+				// rejected, restore
+				epsilon = oldpar;
+				fullCovar = oldcovar;
+				curLogLike = oldll;
 			}
 		}
 	}
