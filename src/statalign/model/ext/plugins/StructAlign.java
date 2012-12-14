@@ -262,7 +262,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		for (int ii=0; ii<proposalCounts.length; ii++) {
 			proposalCounts[ii] = 0;
 			acceptanceCounts[ii] = 0;
-			proposalWidthControlVariables[ii] = 0.1; 
+			proposalWidthControlVariables[ii] = 1; 
 			// This needs to be a variable that, when bigger, increases the 
 			// width of the proposal.
 		}
@@ -849,7 +849,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			curLogLike = calcAllColumnContrib();
 			
 			if(param == 1)
-				llratio = Math.log(epsilonPrior.density(epsilon)) + Math.log(reverse.density(oldpar)) 
+				llratio =  + Math.log(reverse.density(oldpar)) 
 				            - Math.log(epsilonPrior.density(oldpar)) - Math.log(proposal.density(epsilon));
 
 			if(isParamChangeAccepted(llratio)) {
@@ -1002,6 +1002,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 					System.out.print(" "+sigma2[i]);
 				}
 				System.out.println("");
+				System.out.println("tau = "+tau);
+				System.out.println("epsilon = "+epsilon);
 				System.out.println("covariances = ");
 				for (int i=0; i<dim; i++) {
 					for (int j=0; j<dim; j++) {
