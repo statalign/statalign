@@ -68,7 +68,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	public double nu = 1;
 	public double tau = 5;
 	public boolean globalSigma = true;
-	public double epsilon = 1;
+	public double epsilon = 5;
 	double structTemp = 1;
 	
 	private int tauInd;
@@ -128,7 +128,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	// so do not need to be included in M-H ratio
 	
 	/** Constant weights for rotation/translation, sigma2, tau, sigma2Hier, nu, and epsilon */
-	int[] paramPropWConst = { 0, 0, 3, 3, 3, 3 };
+	int[] paramPropWConst = { 0, 0, 3, 3, 3, 0 };
 	/** Weights per sequence for rotation/translation, sigma2, tau, sigma2Hier, nu, and epsilon */
 	int[] paramPropWPerSeq = { 5, 3, 0, 0, 0, 0 };
 	/** Total weights calculated as const+perseq*nseq */
@@ -532,10 +532,10 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		}
 
 		if (globalSigma) {
-			addEdgeLength(distMat, subTree, vertex.edgeLength * sigma2[0] / tau);	
+			addEdgeLength(distMat, subTree, vertex.edgeLength * sigma2[0] / (2*tau));	
 		}
 		else {
-			addEdgeLength(distMat, subTree, vertex.edgeLength * sigma2[vertex.index] / tau);
+			addEdgeLength(distMat, subTree, vertex.edgeLength * sigma2[vertex.index] / (2*tau));
 		}
 		/*System.out.println();
 		System.out.println("Distmat:");
@@ -728,35 +728,42 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			fullCovar = calcFullCovar(tree);
 			curLogLike = calcAllColumnContrib();
 			
-			if(param == 1)
+			if(param == 1){
 				llratio = Math.log(reverse.density(oldpar)) 
 				            - Math.log(proposal.density(sigma2[sigmaInd]));
-				if (globalSigma) {
+				if (!globalSigma) {
 					llratio += Math.log(sigma2HierDist.density(sigma2[sigmaInd]))
 							    - Math.log(sigma2HierDist.density(oldpar));
 				}
-			else
+			}
+			else {
 				llratio = Math.log(tauPrior.density(tau)) + Math.log(reverse.density(oldpar)) 
 				- Math.log(tauPrior.density(oldpar)) - Math.log(proposal.density(tau));
-			
-			if(isParamChangeAccepted(llratio)) {
-				if(param == 1)
+				System.out.println("Tau proposed");
+				System.out.println("oldll: " + oldll);
+				System.out.println("curLogLike: " + curLogLike);
+				System.out.println("llratio: " + llratio);
+				
+			}
+			if (isParamChangeAccepted(llratio)) {
+				if (param == 1)
 					//sigAccept[sigmaInd]++;
 					acceptanceCounts[sigmaInd]++;
-				else
+				else {
 					//tauAccept++;
 					acceptanceCounts[tauInd]++;
-				// accepted, nothing to do
-//				if(Utils.DEBUG)
-//					System.out.println(new String[] { "theta", "sigma2" }[param-1]+" accepted");
+					// accepted, nothing to do
+					System.out.println("tau accepted\n");
+				}
 			} else {
 				// rejected, restore
-//				if(Utils.DEBUG)
-//					System.out.println(new String[] { "theta", "sigma2" }[param-1]+" rejected");
 				if(param == 1)
 					sigma2[sigmaInd] = oldpar;
-				else
+				else{
+					System.out.println("tau rejected\n");
 					tau = oldpar;
+				}
+					
 				fullCovar = oldcovar;
 				curLogLike = oldll;
 			}
