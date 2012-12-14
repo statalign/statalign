@@ -68,18 +68,22 @@ public class StructTrace extends Postprocess {
 			}
 		}
 		try {
-			int sigLen = structAlign.globalSigma ? 1 : 2*inputData.seqs.sequences.size()-1;
+			int sigLen = structAlign.globalSigma ? 1 : structAlign.sigma2.length;
 			outputFile.write("sigma2_1");
 			for(int i = 1; i < sigLen; i++)
 				outputFile.write("\tsigma2_"+(i+1));
 			outputFile.write("\ttau");
-			outputFile.write("\tsigma2H");
-			outputFile.write("\tnu");
+			if (!structAlign.globalSigma) {
+				outputFile.write("\tsigma2H");
+				outputFile.write("\tnu");
+			}
 			for(int i = 0; i < sigLen; i++)
 				outputFile.write("\tsigma2_"+(i+1)+"_proposed");
 			outputFile.write("\ttau_proposed");
-			outputFile.write("\tsigma2H_proposed");
-			outputFile.write("\tnu_proposed");
+			if (!structAlign.globalSigma) {
+				outputFile.write("\tsigma2H_proposed");
+				outputFile.write("\tnu_proposed");
+			}
 			outputFile.write("\n");
 		} catch (IOException e) {
 		}
@@ -96,7 +100,7 @@ public class StructTrace extends Postprocess {
 	public void newSample(State state, int no, int total) {
 		if(postprocessWrite) {
 			try {
-				int sigLen = structAlign.sigma2.length;
+				int sigLen = (structAlign.globalSigma ? 1 : structAlign.sigma2.length);
 				for(int i = 0; i < sigLen; i++)
 					outputFile.write(structAlign.sigma2[i]+"\t");
 				outputFile.write(structAlign.tau+"\t");
