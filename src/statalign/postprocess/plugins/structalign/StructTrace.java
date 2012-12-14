@@ -73,6 +73,7 @@ public class StructTrace extends Postprocess {
 			for(int i = 1; i < sigLen; i++)
 				outputFile.write("\tsigma2_"+(i+1));
 			outputFile.write("\ttau");
+			outputFile.write("\tepsilon");
 			if (!structAlign.globalSigma) {
 				outputFile.write("\tsigma2H");
 				outputFile.write("\tnu");
@@ -80,6 +81,7 @@ public class StructTrace extends Postprocess {
 			for(int i = 0; i < sigLen; i++)
 				outputFile.write("\tsigma2_"+(i+1)+"_proposed");
 			outputFile.write("\ttau_proposed");
+			outputFile.write("\tepsilon_proposed");
 			if (!structAlign.globalSigma) {
 				outputFile.write("\tsigma2H_proposed");
 				outputFile.write("\tnu_proposed");
@@ -89,10 +91,14 @@ public class StructTrace extends Postprocess {
 		}
 		lastSigmaProp = null;
 		lastTauProp = 0;
+		lastEpsilonProp = 0;
+		lastSigma2HProp = 0;
+		lastNuProp = 0;
 	}
 	
 	int[] lastSigmaProp;
 	int lastTauProp;
+	int lastEpsilonProp;
 	int lastSigma2HProp;
 	int lastNuProp;
 	
@@ -104,6 +110,7 @@ public class StructTrace extends Postprocess {
 				for(int i = 0; i < sigLen; i++)
 					outputFile.write(structAlign.sigma2[i]+"\t");
 				outputFile.write(structAlign.tau+"\t");
+				outputFile.write(structAlign.epsilon+"\t");
 				if (!structAlign.globalSigma) {
 					outputFile.write(structAlign.sigma2Hier+"\t");
 					outputFile.write(structAlign.nu+"\t");
@@ -117,6 +124,9 @@ public class StructTrace extends Postprocess {
 					lastSigmaProp[i] = structAlign.proposalCounts[i];
 				}
 				outputFile.write(lastTauProp != structAlign.proposalCounts[i] ? structAlign.tau+"\t" : -1+"\t");
+				lastTauProp = structAlign.proposalCounts[i];
+				++i;
+				outputFile.write(lastEpsilonProp != structAlign.proposalCounts[i] ? structAlign.epsilon+"\t" : -1+"\t");
 				lastTauProp = structAlign.proposalCounts[i];
 				if (!structAlign.globalSigma) {
 					++i;
@@ -185,7 +195,7 @@ public class StructTrace extends Postprocess {
 		System.out.println("Rotation: " + structAlign.rotProposed + " " + structAlign.rotAccept);
 		System.out.println("Xlat: " + structAlign.xlatProposed + " " + structAlign.xlatAccept);
 		System.out.println("Library: " + structAlign.libProposed + " " + structAlign.libAccept);
-		System.out.println("Tau: " + structAlign.tau + "  Epsilon: " + structAlign.epsilon);
+		//System.out.println("Tau: " + structAlign.tau + "  Epsilon: " + structAlign.epsilon);
 	}
 	
 	public static void printMatrix(double[][] m) {
