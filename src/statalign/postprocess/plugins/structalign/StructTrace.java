@@ -127,7 +127,7 @@ public class StructTrace extends Postprocess {
 				lastTauProp = structAlign.proposalCounts[i];
 				++i;
 				outputFile.write(lastEpsilonProp != structAlign.proposalCounts[i] ? structAlign.epsilon+"\t" : -1+"\t");
-				lastTauProp = structAlign.proposalCounts[i];
+				lastEpsilonProp = structAlign.proposalCounts[i];
 				if (!structAlign.globalSigma) {
 					++i;
 					outputFile.write(lastSigma2HProp != structAlign.proposalCounts[i] ? structAlign.sigma2Hier+"\t" : -1+"\t");
