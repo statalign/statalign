@@ -128,7 +128,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	// so do not need to be included in M-H ratio
 	
 	/** Constant weights for rotation/translation, sigma2, tau, sigma2Hier, nu, and epsilon */
-	int[] paramPropWConst = { 0, 0, 3, 3, 3, 0 };
+	int[] paramPropWConst = { 0, 0, 3, 3, 3, 3 };
 	/** Weights per sequence for rotation/translation, sigma2, tau, sigma2Hier, nu, and epsilon */
 	int[] paramPropWPerSeq = { 5, 3, 0, 0, 0, 0 };
 	/** Total weights calculated as const+perseq*nseq */
@@ -151,6 +151,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	private static final double angleP = 1000;
 	// higher values lead to bigger step sizes
 	private static final double xlatP = .1;
+	
+	private static final double MIN_EPSILON = 0.1;
 	
 	@Override
 	public List<JComponent> getToolBarItems() {
@@ -739,10 +741,10 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			else {
 				llratio = Math.log(tauPrior.density(tau)) + Math.log(reverse.density(oldpar)) 
 				- Math.log(tauPrior.density(oldpar)) - Math.log(proposal.density(tau));
-				System.out.println("Tau proposed");
-				System.out.println("oldll: " + oldll);
-				System.out.println("curLogLike: " + curLogLike);
-				System.out.println("llratio: " + llratio);
+//				System.out.println("Tau proposed");
+//				System.out.println("oldll: " + oldll);
+//				System.out.println("curLogLike: " + curLogLike);
+//				System.out.println("llratio: " + llratio);
 				
 			}
 			if (isParamChangeAccepted(llratio)) {
@@ -753,14 +755,14 @@ public class StructAlign extends ModelExtension implements ActionListener {
 					//tauAccept++;
 					acceptanceCounts[tauInd]++;
 					// accepted, nothing to do
-					System.out.println("tau accepted\n");
+					//System.out.println("tau accepted\n");
 				}
 			} else {
 				// rejected, restore
 				if(param == 1)
 					sigma2[sigmaInd] = oldpar;
 				else{
-					System.out.println("tau rejected\n");
+					//System.out.println("tau rejected\n");
 					tau = oldpar;
 				}
 					
@@ -859,7 +861,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				llratio =  + Math.log(reverse.density(oldpar)) 
 				            - Math.log(epsilonPrior.density(oldpar)) - Math.log(proposal.density(epsilon));
 
-			if(isParamChangeAccepted(llratio)) {
+			if(epsilon > MIN_EPSILON && isParamChangeAccepted(llratio)) {
 					acceptanceCounts[epsilonInd]++;
 				// accepted, nothing to do
 			} else {
