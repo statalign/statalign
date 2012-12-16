@@ -77,6 +77,7 @@ unless($output) {
 my $atoms_printed = 0;
 my $res_printed = 1; # will be 1 even if actually 0 are printed, for purposes of counting.
 my $prev_res = $range[0]-1; # keeps track of duplicate residues
+my $prev_atom = 0; # keeps track of duplicate residues
 my $curr_alt_loc = "A";
 my $model = 0;
 
@@ -105,6 +106,8 @@ while (<PDB>) {
 
     if ($line =~ /^ATOM/) {
 
+	#print "1:\n";
+	#print;
 	$line_num++;
 	
 	if (($MODEL == 0)&&($model > 0)) { 
@@ -154,19 +157,23 @@ while (<PDB>) {
 		}
 	    }
 	}
-
-
+	#print "2:\n";
+	#print;
 	if ($CHAIN) {
 
 	    next unless (($chain eq $CHAIN)||($chain eq " "));
 	}
+	#print "3:\n";
+	#print;
 	if ($CALPHA) {
 
 	    next unless ($atom_name =~ /CA/);
 	}
+	#print "4:\n";
+	#print;
 	if ($ALTLOC) {
 
-	    unless ($res_n == $prev_res) {	
+	    if ($atom_n != $prev_atom) {	
 
 		$curr_alt_loc = "A";
 	    }
@@ -180,28 +187,33 @@ while (<PDB>) {
 		next unless ($alt_loc eq $ALTLOC);
 	    }
 	}
-
+	#print "5:\n";
+	#print;
 	if ($range) {
 
 	    next unless (($res_n >= $range[0])&&($res_n <= $range[1]));
 	}
-
-
+	#print "6:\n";
+	#print;
 	if ($NOMISSING) {
 
 	    if ((($res_n - $prev_res)>1)||(($line_num == 1)&&($res_n>$prev_res))) {
 		print "Missing residues detected. Gap between $prev_res and $res_n\n";
 	    }
 	}
+	#print "7:\n";
+	#print;
 	if (($res_n - $prev_res)==1) {
 
 	    $res_printed++;
 	}
 
+	$prev_atom = $atom_n;
 	$prev_res = $res_n;
-
+	
 	if ($COOR_ONLY) {
 	    print OUTPUT ($x+0.0)."\t".($y+0.0)."\t".($z+0.0)."\n";
+	    #print ($x+0.0)."\t".($y+0.0)."\t".($z+0.0)."\n";
 	}
 	else {
 	    print OUTPUT $line;
