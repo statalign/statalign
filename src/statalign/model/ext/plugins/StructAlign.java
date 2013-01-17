@@ -5,10 +5,14 @@ import java.awt.event.ActionListener;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Vector;
+import java.lang.Integer;
 
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 import javax.swing.JToggleButton;
+
+import java.io.*;
 
 import org.apache.commons.math3.distribution.BetaDistribution;
 import org.apache.commons.math3.distribution.GammaDistribution;
@@ -104,6 +108,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	public int xlatAccept;
 	public int libProposed;
 	public int libAccept;
+	public int subtreeRotProposed;
+	public int subtreeRotAccept;
 	
 	/** independence rotation proposal distribution */
 	RotationProposal rotProp;
@@ -127,10 +133,10 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	// priors for rotation and translation are uniform
 	// so do not need to be included in M-H ratio
 	
-	/** Constant weights for rotation/translation, sigma2, tau, sigma2Hier, nu, and epsilon */
-	int[] paramPropWConst = { 0, 0, 3, 3, 3, 3 };
-	/** Weights per sequence for rotation/translation, sigma2, tau, sigma2Hier, nu, and epsilon */
-	int[] paramPropWPerSeq = { 5, 3, 0, 0, 0, 0 };
+	/** Constant weights for rotation/translation, sigma2, tau, sigma2Hier, nu, epsilon, and subtree rotation */
+	int[] paramPropWConst = { 0, 0, 3, 3, 3, 3, 3 };
+	/** Weights per sequence for rotation/translation, sigma2, tau, sigma2Hier, nu, epsilon, and subtree rotation */
+	int[] paramPropWPerSeq = { 5, 3, 0, 0, 0, 0, 0 };
 	/** Total weights calculated as const+perseq*nseq */
 	int[] paramPropWeights;
 	/** Weights for proposing rotation vs translation vs library */
@@ -152,7 +158,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	// higher values lead to bigger step sizes
 	private static final double xlatP = .1;
 	
-	private static final double MIN_EPSILON = 0.1;
+	private static final double MIN_EPSILON = 2;
 	
 	@Override
 	public List<JComponent> getToolBarItems() {
@@ -363,7 +369,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			throw new Error("Inconsistency in StructAlign, alignment length: "+align.length+", "+curAlign.length);
 		for(int i = 0; i < align.length; i++)
 			if(!align[i].equals(curAlign[i]))
-				throw new Error("Inconsistency in StructAlign, alignment: "+align.length+", "+curAlign.length);
+				throw new Error("Inconsistency in StructAlign, alignment: "+align[i]+", "+curAlign[i]);
 		return true;
 	}
 
@@ -586,6 +592,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	public void proposeParamChange(Tree tree) {
 		int param = Utils.weightedChoose(paramPropWeights);
 		if(param == 0) {
+			writeRotationFiles(tree);
 			// proposing rotation/translation of a single sequence
 			int rotxlat = Utils.weightedChoose(rotXlatWeights);
 			// choose sequence to rotate/translate (never rotate 1st one)
@@ -833,7 +840,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				else
 					nu = oldpar;
 			}
-		} else {
+		} else if(param == 5){
 			
 			// proposing new epsilon
 			double oldpar = epsilon;
@@ -870,6 +877,89 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				fullCovar = oldcovar;
 				curLogLike = oldll;
 			}
+		} else { // propose rotation to a subtree
+			subtreeRotProposed++;
+			Vertex subtreeRoot = sampleVertex(tree);
+			Vector<Integer> subtreeLeaves = collectLeaves(subtreeRoot);
+			int index = subtreeLeaves.get(Utils.generator.nextInt(subtreeLeaves.size()));
+			
+			double[][] oldaxes = new double[axes.length][axes[0].length];
+			double[] oldangles = new double[angles.length];
+			double[][] oldxlats = new double[xlats.length][xlats.length];
+			double[][][] oldrots = new double[rotCoords.length][rotCoords[0].length][rotCoords[0][0].length];
+			int j;
+			for(int i = 0; i < subtreeLeaves.size(); i++){
+				j = subtreeLeaves.get(i);
+				oldaxes[j] = MathArrays.copyOf(axes[j]);
+				oldangles[j] = angles[j];
+				oldxlats[j] = MathArrays.copyOf(xlats[j]);
+				oldrots[j] = rotCoords[j];
+				rotCoords[j] = null;	// so that calcRotation creates new array
+			}
+
+			double oldll = curLogLike;
+			double llratio = 0;	
+			
+			
+			Transformation oldSub = new Transformation(axes[index], angles[index], xlats[index]);
+			// transformation should be relative to reference protein
+			oldSub.xlat = oldSub.xlat.subtract(new ArrayRealVector(xlats[0]));
+			Transformation libProp = rotProp.propose(index);
+			axes[index] = libProp.axis.toArray();
+			angles[index] = libProp.rot;
+			xlats[index] = libProp.xlat.toArray();
+
+			// library density 
+			llratio = rotProp.libraryLogDensity(index, oldSub) - 
+					  rotProp.libraryLogDensity(index, libProp);
+			
+			// proposed translation is relative to reference protein
+			for(int i = 0; i < 3; i++)
+				xlats[index][i] += xlats[0][i];			
+			
+			// calculate 'difference' between proposed and current transformations
+			double[] diffxlat = new double[3];
+			for(int i = 0; i < 3; i++)
+				diffxlat[i] = xlats[index][i] - oldxlats[index][i];
+			oldSub.fillRotationMatrix();
+			libProp.fillRotationMatrix();
+			RealMatrix diffRotMat = oldSub.rotMatrix.transpose().multiply(libProp.rotMatrix);
+			
+			for(int i = 0; i < subtreeLeaves.size(); i++){
+				j = subtreeLeaves.get(i);
+				if(j != index){
+					for(int k = 0; k < 3; k++)
+						xlats[j][k] += diffxlat[k];
+					Transformation temp = new Transformation(axes[j], angles[j], xlats[j]);
+					temp.fillRotationMatrix();
+					temp.rotMatrix = temp.rotMatrix.multiply(diffRotMat);
+					temp.fillAxisAngle();
+					axes[j] = temp.axis.toArray();
+					angles[j] = temp.rot;
+				}
+			}
+			
+			for(int i = 0; i < subtreeLeaves.size(); i++){
+				j = subtreeLeaves.get(i);
+				calcRotation(j);
+			}
+			curLogLike = calcAllColumnContrib();
+			
+			if(isParamChangeAccepted(llratio)) {
+				// accepted, nothing to do
+				subtreeRotAccept++;				
+			} else {
+				// rejected, restore
+				for(int i = 0; i < subtreeLeaves.size(); i++){
+					j = subtreeLeaves.get(i);
+					axes[j] = oldaxes[j];
+					angles[j] = oldangles[j];
+					xlats[j] = oldxlats[j];
+					rotCoords[j] = oldrots[j];
+				}
+				curLogLike = oldll;
+			}
+			
 		}
 	}
 	
@@ -1311,7 +1401,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		 * @param v - mean vector
 		 * @return - vector simulated from von Mises-Fisher distribution with given parameters
 		 */
-		// TODO replace with exact simulation method for S2
+		// TODO replace with exact simulation method for S2 from Kent et al 2012
 		static RealVector simulate(double kappa, RealVector mean){
 			double b, x0, c, z, u, w;
 			int dim = mean.getDimension();
@@ -1505,6 +1595,82 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		}
 	}
 
+	public Vertex sampleVertex(Tree tree){
+		Vertex v;
+		int n = tree.vertex.length;		// number of vertices
+		int l = coords.length;			// number of leaves
+		
+		Vector<Integer> inds = findRefSubtrees(tree, 0);	// returns indices of all ancestor vertices of reference protein
+		
+		int prop = Utils.generator.nextInt(n-l) + l;		// don't choose a leaf vertex
+		while(inds.contains(new Integer(prop)))
+			prop = Utils.generator.nextInt(n-l) + l;		// don't choose a subtree containing reference protein
+		v = tree.vertex[prop];
+		return v;
+	}
+	
+	public Vector<Integer> findRefSubtrees(Tree tree, int refInd){
+		Vector<Integer> inds = new Vector<Integer>(1);
+		moveUp(tree.vertex[refInd].parent, inds);
+		return inds;
+	}
+	
+	public void moveUp(Vertex v, Vector<Integer> inds){
+		inds.addElement(new Integer(v.index));
+		if(v.parent != null)
+			moveUp(v.parent, inds);
+	}
+	
+	public Vector<Integer> collectLeaves(Vertex v){
+		Vector<Integer> inds = new Vector<Integer>(1);
+		moveDown(v, inds);
+		return inds;
+	}
+	
+	public void moveDown(Vertex v, Vector<Integer> inds){
+		if(v.left != null){
+			moveDown(v.left, inds);
+			moveDown(v.right, inds);
+		}
+		else
+			inds.addElement(new Integer(v.index));
+	}
+	
+	public void writeRotationFiles(Tree tree){
+		try{
+			FileWriter fstream = new FileWriter("names.txt");
+			BufferedWriter out = new BufferedWriter(fstream);
+			for(int i = 0; i < coords.length; i++)
+				out.write(tree.vertex[i].name + "\n");
+			out.close();
+
+			FileWriter fstream2 = new FileWriter("trans.txt");
+			BufferedWriter out2 = new BufferedWriter(fstream2);
+			for(int i = 0; i < coords.length; i++){
+				for(int j = 0; j < 3; j++)
+					out2.write(xlats[i][j] + "\t");
+				out2.write("\n");
+			}
+			out2.close();
+			
+			FileWriter fstream3 = new FileWriter("rots.txt");
+			BufferedWriter out3 = new BufferedWriter(fstream3);
+			for(int i = 0; i < coords.length; i++){
+				Transformation trans = new Transformation(axes[i], angles[i], xlats[i]);
+				trans.fillRotationMatrix();
+				for(int j = 0; j < 3; j++){
+					for(int k = 0; k < 3; k++)
+						out3.write(trans.rotMatrix.getEntry(j, k) + "\t");
+					out3.write("\n");
+				}
+			}
+			out3.close();
+			
+		} catch (Exception e){
+			System.err.println("File writing error: " + e.getMessage());
+		}
+		
+	}
 	
 	// </StructAlign>
 }
