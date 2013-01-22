@@ -166,7 +166,7 @@ public class CurrentAlignment extends statalign.postprocess.Postprocess{
 			try {
 				String[] alignment = Utils.alignmentTransformation(allAlignment, seqNames, alignmentType, input);
 				for(int i = 0; i < alignment.length; i++){
-					file.write("Sample "+no+"\tAlignment:\t"+alignment[i]+"\n");
+					file.write("Sample "+no+"\tAlignment:\t"+"\t"+alignment[i]+"\n");
 				}
 			} catch (IOException e) {
 				e.printStackTrace();

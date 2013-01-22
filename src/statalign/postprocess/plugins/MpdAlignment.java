@@ -34,7 +34,7 @@ public class MpdAlignment extends statalign.postprocess.Postprocess {
 	int sizeOfAlignments;
 
 	int[] firstDescriptor; 
-	String t[][];
+	//String t[][];
 	String[] sequences;
 	String[] viterbialignment;
 
@@ -76,7 +76,7 @@ public class MpdAlignment extends statalign.postprocess.Postprocess {
 
 	@Override
 	public double getTabOrder() {
-		return 5.0d;
+		return 6.0d;
 	}
 
 	@Override
@@ -120,7 +120,7 @@ public class MpdAlignment extends statalign.postprocess.Postprocess {
 		if(show)
 			gui.alignment = alignment;
 			gui.sequenceNames = sequenceNames;
-		t = new String[sizeOfAlignments][];
+		//t = new String[sizeOfAlignments][];
 		sequences = null;
 		viterbialignment = new String[sizeOfAlignments];
 
