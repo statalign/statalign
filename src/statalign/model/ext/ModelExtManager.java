@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.List;
 
 import statalign.base.InputData;
+import statalign.base.MainManager;
 import statalign.base.Mcmc;
 import statalign.base.Tree;
 import statalign.base.Utils;
@@ -21,8 +22,8 @@ import statalign.postprocess.PluginParameters;
  */
 public class ModelExtManager {
 	
-//	private MainManager mainMan;
-	public Mcmc mcmc;
+	private MainManager mainMan;
+	private Mcmc mcmc;
 	
 	private List<ModelExtension> pluginList;
 	private List<ModelExtension> activeList;
@@ -32,8 +33,8 @@ public class ModelExtManager {
 	ModelExtension selectedPlugin;
 	
 
-	public ModelExtManager() {//MainManager mainMan) {
-//		this.mainMan = mainMan;
+	public ModelExtManager(MainManager mainMan) {
+		this.mainMan = mainMan;
 	}
 	
 	/**

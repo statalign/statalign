@@ -12,6 +12,7 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
@@ -67,9 +68,10 @@ public class OutputPreferences extends JDialog implements ActionListener{
 	//	JPanel logPanel = new JPanel(new BorderLayout());
 	//	leftPanel.add(logPanel);
 	//	logPanel.add(new JLabel("Select entries written into the logfile"),"North");
-		Postprocess[] postprocess = owner.manager.postProcMan.plugins;
-		ArrayList<Postprocess> list = new ArrayList<Postprocess>();
+		List<Postprocess> postprocess = owner.manager.postProcMan.getPlugins();
+		List<Postprocess> list = new ArrayList<Postprocess>();
 		Comparator<Postprocess> comp = new Comparator<Postprocess>() {
+			@Override
 			public int compare(Postprocess o1, Postprocess o2) {
 				return o1.getTabOrder()-o2.getTabOrder() < 0 ? -1 : 1;
 			}
@@ -180,12 +182,13 @@ public class OutputPreferences extends JDialog implements ActionListener{
 	/* (non-Javadoc)
 	 * @see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
 	 */
-   public void actionPerformed(ActionEvent e) {
+   @Override
+public void actionPerformed(ActionEvent e) {
 		//System.out.println(e.getSource().getClass());
 		try {
 			if(e.getSource().getClass() == Class.forName("javax.swing.JCheckBox")){
 				//System.out.println("Found!!!");
-				for(Postprocess plugin : owner.manager.postProcMan.plugins){
+				for(Postprocess plugin : owner.manager.postProcMan.getPlugins()){
 					if(e.getActionCommand().equals(plugin.getTabName())){
 						//System.out.println("This is the name: "+plugin.getTabName());
 						plugin.sampling = !plugin.sampling;

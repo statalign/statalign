@@ -158,7 +158,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	// higher values lead to bigger step sizes
 	private static final double xlatP = .1;
 	
-	private static final double MIN_EPSILON = 2;
+	private static final double MIN_EPSILON = 0.1;
 	
 	@Override
 	public List<JComponent> getToolBarItems() {
