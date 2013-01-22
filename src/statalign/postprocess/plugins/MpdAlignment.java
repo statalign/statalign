@@ -40,6 +40,7 @@ public class MpdAlignment extends statalign.postprocess.Postprocess {
 
 	double[] decoding;
 	String[] alignment;
+	String[] sequenceNames;
 
 	InputData input;
 
@@ -115,8 +116,10 @@ public class MpdAlignment extends statalign.postprocess.Postprocess {
 
 		sizeOfAlignments = input.seqs.sequences.size();
 		alignment = new String[sizeOfAlignments];
+		sequenceNames = new String[sizeOfAlignments];
 		if(show)
 			gui.alignment = alignment;
+			gui.sequenceNames = sequenceNames;
 		t = new String[sizeOfAlignments][];
 		sequences = null;
 		viterbialignment = new String[sizeOfAlignments];
@@ -133,22 +136,22 @@ public class MpdAlignment extends statalign.postprocess.Postprocess {
 	public void newSample(State state, int no, int total) {
 		//System.out.println(curAlig);
 		//System.out.println(curAlig.leafAlignment);
-		for(int i = 0; i < t.length; i++){
+		for(int i = 0; i < curAlig.leafAlignment.length; i++){
             if (curAlig == null || curAlig.leafAlignment[i] == null) {
                 System.out.println();
             }
-			t[i] = curAlig.leafAlignment[i].split("\t");
+			//t[i] = curAlig.leafAlignment[i].split("\t");
 		}
-		Arrays.sort(t, compStringArr);
+		//Arrays.sort(t, compStringArr);
 
 		int[] previousDescriptor = firstDescriptor;
 
-		int i, j, len = t[0][1].length();
+		int i, j, len = curAlig.leafAlignment[0].length();
 		for(j = 0; j < len; j++){
 			int[] nextDescriptor =  new int[sizeOfAlignments];
 			boolean allGap = true;
 			for(int k = 0; k < sizeOfAlignments; k++){
-				if(t[k][1].charAt(j) == '-')
+				if(curAlig.leafAlignment[k].charAt(j) == '-')
 					nextDescriptor[k] = ColumnKey.colNext(previousDescriptor[k]);
 				else {
 					nextDescriptor[k] = ColumnKey.colNext(previousDescriptor[k])+1;
@@ -177,8 +180,8 @@ public class MpdAlignment extends statalign.postprocess.Postprocess {
 				for(i = 0; i < sizeOfAlignments; i++){
 					sequences[i] = "";
 					for(j = 0; j < len; j++){
-						if(t[i][1].charAt(j) != '-'){
-							sequences[i] += t[i][1].charAt(j);
+						if(curAlig.leafAlignment[i].charAt(j) != '-'){
+							sequences[i] += curAlig.leafAlignment[i].charAt(j);
 						}
 					}
 				}
@@ -206,23 +209,26 @@ public class MpdAlignment extends statalign.postprocess.Postprocess {
 			}
 
 			for(i = 0; i < viterbialignment.length; i++){
-				alignment[i] = t[i][0]+"\t"+viterbialignment[i];
+				//alignment[i] = t[i][0]+"\t"+viterbialignment[i];
+				alignment[i] = viterbialignment[i];
+				sequenceNames[i] = curAlig.seqNames[i];
 			}
 
 			// sort alignment lexicographically
 			// TODO sort oder is parameter (alternatives: original, tree, lexico)
-			Arrays.sort(alignment);
+			//Arrays.sort(alignment);
 
 			if(show) {
 				gui.decoding = decoding;
 				gui.alignment = alignment;
+				gui.sequenceNames = sequenceNames;
 				gui.repaint();
 			}
 		}
 		
 		if(sampling){
 			try {
-				String[] aln = Utils.alignmentTransformation(alignment, alignmentType, input);
+				String[] aln = Utils.alignmentTransformation(alignment, sequenceNames, alignmentType, input);
 				for(i = 0; i < aln.length; i++){
 					file.write("Sample "+no+"\tMPD alignment:\t"+aln[i]+"\n");
 				}
@@ -265,7 +271,7 @@ public class MpdAlignment extends statalign.postprocess.Postprocess {
 	public void afterLastSample() {
 		if (postprocessWrite) {
 			try {
-				String[] aln = Utils.alignmentTransformation(alignment,
+				String[] aln = Utils.alignmentTransformation(alignment, sequenceNames,
 						alignmentType, input);
 				for (int i = 0; i < aln.length; i++) {
 					outputFile.write(aln[i] + "\n");
