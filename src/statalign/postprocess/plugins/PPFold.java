@@ -532,10 +532,10 @@ public class PPFold extends statalign.postprocess.Postprocess {
 
 	@Override	
 	public void newSample(State state, int no, int total) {
-		for (int i = 0; i < t.length; i++) {
-			t[i] = curAlig.leafAlignment[i].split("\t");
-		}
-		Arrays.sort(t, compStringArr);	
+//		for (int i = 0; i < t.length; i++) {
+//			t[i] = curAlig.leafAlignment[i].split("\t");
+//		}
+		//Arrays.sort(t, compStringArr);	
 		
 		if(experimental)
 		{
@@ -551,12 +551,12 @@ public class PPFold extends statalign.postprocess.Postprocess {
 		
 		if (sequences == null) {
 			sequences = new String[sizeOfAlignments];		
-			int len = t[0][1].length();
+			int len = curAlig.leafAlignment[0].length();
 			for (int i = 0; i < sizeOfAlignments; i++) {
 				sequences[i] = "";
 				for (int j = 0; j < len; j++) {
-					if (t[i][1].charAt(j) != '-') {
-						sequences[i] += t[i][1].charAt(j);
+					if (curAlig.leafAlignment[i].charAt(j) != '-') {
+						sequences[i] += curAlig.leafAlignment[i].charAt(j);
 					}
 				}
 			}
@@ -1323,23 +1323,23 @@ public class PPFold extends statalign.postprocess.Postprocess {
 		}
 	}
 
-	public static void appendAlignment(String label, String [] alignment, File outFile, boolean append, InputData input)
-	{
-		try
-		{
-			BufferedWriter buffer = new BufferedWriter(new FileWriter(outFile, append));
-			buffer.write("%"+label+"\n");
-			String [] fastaAlignment = Utils.alignmentTransformation(alignment,"Fasta", input);
-			for (int i = 0; i < fastaAlignment.length; i++) {
-				buffer.write(fastaAlignment[i] + "\n");
-			}
-			buffer.close();
-		}
-		catch(IOException ex)
-		{
-			ex.printStackTrace();
-		}
-	}
+//	public static void appendAlignment(String label, String [] alignment, File outFile, boolean append, InputData input)
+//	{
+//		try
+//		{
+//			BufferedWriter buffer = new BufferedWriter(new FileWriter(outFile, append));
+//			buffer.write("%"+label+"\n");
+//			String [] fastaAlignment = Utils.alignmentTransformation(alignment,"Fasta", input);
+//			for (int i = 0; i < fastaAlignment.length; i++) {
+//				buffer.write(fastaAlignment[i] + "\n");
+//			}
+//			buffer.close();
+//		}
+//		catch(IOException ex)
+//		{
+//			ex.printStackTrace();
+//		}
+//	}
 
 	public static String getSequenceByName(String[][] sequences, String name) {
 		for (int i = 0; i < sequences.length; i++) {

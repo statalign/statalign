@@ -102,13 +102,19 @@ public class CurrentAlignment extends statalign.postprocess.Postprocess{
 	private void updateAlignment(State state) {
 		String[] rows = state.getFullAlign();
 		for(int i = 0; i < rows.length; i++)
-			allAlignment[i] = seqNames[i]+'\t'+rows[i];
-		int ind = 0;
-		for(int i = 0; i < allAlignment.length; i++)
-			if(allAlignment[i].charAt(0) != ' ')
-				leafAlignment[ind++] = allAlignment[i];
+			//allAlignment[i] = seqNames[i]+'\t'+rows[i];
+			allAlignment[i] = rows[i];
+	//	int ind = 0;
+		//System.out.println("allAlignment.length = "+allAlignment.length+"leafAlignment.length = "+leafAlignment.length);
+		for(int i = 0; i < leafAlignment.length; i++) {
+			leafAlignment[i] = allAlignment[i];
+		}
+			//if(allAlignment[i].charAt(0) != ' ')
+				//leafAlignment[ind++] = allAlignment[i];
+				
 		if(show) {
 			gui.alignment = allAlignment;
+			gui.sequenceNames = seqNames;
 			gui.repaint();
 		}
 
@@ -158,7 +164,7 @@ public class CurrentAlignment extends statalign.postprocess.Postprocess{
 		
 		if(sampling){
 			try {
-				String[] alignment = Utils.alignmentTransformation(allAlignment, alignmentType, input);
+				String[] alignment = Utils.alignmentTransformation(allAlignment, seqNames, alignmentType, input);
 				for(int i = 0; i < alignment.length; i++){
 					file.write("Sample "+no+"\tAlignment:\t"+alignment[i]+"\n");
 				}
@@ -177,7 +183,7 @@ public class CurrentAlignment extends statalign.postprocess.Postprocess{
 		if(sampling){
 			try {
 				System.out.println("Alignment type: "+ alignmentType);
-				String[] alignment = Utils.alignmentTransformation(allAlignment, alignmentType, input);
+				String[] alignment = Utils.alignmentTransformation(allAlignment, seqNames, alignmentType, input);
 				for(int i = 0; i < alignment.length; i++){
 					file.write(alignment[i]+"\n");
 				}

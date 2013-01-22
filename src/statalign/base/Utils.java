@@ -502,28 +502,32 @@ public class Utils{
 	 *             in the substitution model (also read from input.model).
 	 * @return String array containing the alignment in the prescribed format
 	 */
-   public static String[] alignmentTransformation(String[] s, String type, InputData input){
+   public static String[] alignmentTransformation(String[] s, String[] names, String type, InputData input){
 		if(type.equals("StatAlign")){
+			for (int i=0; i<s.length; i++) {
+				s[i] += '\t'+names[i];
+			}
 			return s;
 		}
 		String[] returnAlignment = null;
 		//here we need different alignment types
-		String[] names = new String[s.length];
+		//String[] names = new String[s.length];
 		String[] alignment = new String[s.length];
 		int leavesNumber = 0;
 		for(int i = 0; i < names.length; i++){
-			names[i] = s[i].substring(0,s[i].indexOf('\t'));
+			//names[i] = s[i].substring(0,s[i].indexOf('\t'));
 			if(names[i].charAt(0) != ' '){
 				leavesNumber++;
 			}
-			alignment[i] = s[i].substring(s[i].indexOf('\t')+1,s[i].length());
+			//alignment[i] = s[i].substring(s[i].indexOf('\t')+1,s[i].length());
+			alignment[i] = s[i];
 		}
 		String[] onlyLeavesAlignment = new String[leavesNumber];
 		String[] newNames =  new String[leavesNumber];
 		leavesNumber = 0;
 		for(int i = 0; i < names.length; i++){
 			if(names[i].charAt(0) != ' '){
-				onlyLeavesAlignment[leavesNumber] = s[i].substring(s[i].indexOf('\t')+1);
+				onlyLeavesAlignment[leavesNumber] = s[i];//.substring(s[i].indexOf('\t')+1);
 				newNames[leavesNumber] = names[i];
 				newNames[leavesNumber] = newNames[leavesNumber].replaceAll(" ", "");
 //				newNames[leavesNumber] = newNames[leavesNumber].replaceAll("_", " ");
