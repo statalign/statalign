@@ -232,14 +232,14 @@ public class CommandLine {
 			if (set.isSet("log")) {
 				String log = set.getOption("log").getResultValue(0);
 				String[] keys = log.split(",");
-				Postprocess[] pps = manager.postProcMan.plugins;
+				List<Postprocess> pps = manager.postProcMan.getPlugins();
 
 				for (Postprocess pp : pps)
 					pp.sampling = false;
 
 				for (String key : keys) {
 					try {
-						pps[postprocAbbr.get(key.toUpperCase())].sampling = true;
+						pps.get(postprocAbbr.get(key.toUpperCase())).sampling = true;
 					} catch (NullPointerException e) {
 						return error("Log file entry code list not recognised: "
 								+ log);
@@ -423,13 +423,13 @@ public class CommandLine {
 	}
 
 	private void fillPostprocAbbr(PostprocessManager man) {
-		Postprocess[] plugins = man.plugins;
+		List<Postprocess> plugins = man.getPlugins();
 
-		final String[] keys = new String[plugins.length];
-		Integer[] sorted = new Integer[plugins.length];
+		final String[] keys = new String[plugins.size()];
+		Integer[] sorted = new Integer[plugins.size()];
 
-		for (int i = 0; i < plugins.length; i++) {
-			keys[i] = plugins[i].getTabName().toUpperCase().replace(' ', '_');
+		for (int i = 0; i < plugins.size(); i++) {
+			keys[i] = plugins.get(i).getTabName().toUpperCase().replace(' ', '_');
 			sorted[i] = i;
 		}
 
@@ -441,9 +441,9 @@ public class CommandLine {
 		});
 
 		int prevOverlap = 0;
-		for (int i = 0; i < plugins.length; i++) {
+		for (int i = 0; i < plugins.size(); i++) {
 			int nextOverlap = 0;
-			if (i < plugins.length - 1)
+			if (i < plugins.size() - 1)
 				nextOverlap = checkOverlap(keys[i], keys[i + 1]);
 			String key = keys[i].substring(0,
 					Math.max(prevOverlap, nextOverlap) + 1);
@@ -502,11 +502,12 @@ public class CommandLine {
 
 	private String buildPpListStr(MainManager man, String linePrefix) {
 		StringBuilder build = new StringBuilder();
+		List<Postprocess> plugins = man.postProcMan.getPlugins();
 		for (String key : postprocAbbr.keySet()) {
 			build.append(linePrefix);
 			build.append(key);
 			build.append(": ");
-			build.append(man.postProcMan.plugins[postprocAbbr.get(key)]
+			build.append(plugins.get(postprocAbbr.get(key))
 					.getTip());
 			build.append("\n");
 		}
@@ -514,9 +515,10 @@ public class CommandLine {
 	}
 
 	private String buildDefPpList(MainManager man) {
+		List<Postprocess> plugins = man.postProcMan.getPlugins();
 		StringBuilder build = new StringBuilder();
 		for (String key : postprocAbbr.keySet())
-			if (man.postProcMan.plugins[postprocAbbr.get(key)].sampling) {
+			if (plugins.get(postprocAbbr.get(key)).sampling) {
 				build.append(key);
 				build.append(",");
 			}

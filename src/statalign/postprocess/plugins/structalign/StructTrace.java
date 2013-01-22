@@ -59,7 +59,6 @@ public class StructTrace extends Postprocess {
 	public void setSampling(boolean enabled) {
 	}
 	
-	
 	@Override
 	public void beforeFirstSample(InputData inputData) {
 		for(ModelExtension modExt : getModExtPlugins()) {
@@ -67,6 +66,9 @@ public class StructTrace extends Postprocess {
 				structAlign = (StructAlign) modExt;
 			}
 		}
+		active = structAlign.isActive();
+		if(!active)
+			return;
 		try {
 			int sigLen = structAlign.globalSigma ? 1 : structAlign.sigma2.length;
 			outputFile.write("sigma2_1");
@@ -104,6 +106,8 @@ public class StructTrace extends Postprocess {
 	
 	@Override
 	public void newSample(State state, int no, int total) {
+		if(!active)
+			return;
 		if(postprocessWrite) {
 			try {
 				int sigLen = (structAlign.globalSigma ? 1 : structAlign.sigma2.length);
@@ -152,6 +156,8 @@ public class StructTrace extends Postprocess {
 	
 	@Override
 	public void afterLastSample() {
+		if(!active)
+			return;
 		try {
 			outputFile.close();
 		} catch (IOException e) {

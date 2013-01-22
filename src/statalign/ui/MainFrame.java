@@ -11,9 +11,10 @@ import java.awt.event.KeyEvent;
 import java.io.File;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 
 import javax.swing.ButtonGroup;
 import javax.swing.Icon;
@@ -66,7 +67,7 @@ public class MainFrame extends JFrame implements ActionListener {
     // Variables
 
     private JTabbedPane tab;
-    private Postprocess[] pluginTabs;
+    private List<Postprocess> pluginTabs;
     private Input input;
     
     public JToolBar toolBar;
@@ -356,8 +357,8 @@ public class MainFrame extends JFrame implements ActionListener {
         manager.inputgui = input.inputgui;
 
         // Sorts the tab according to their getTabOrder()
-        pluginTabs = manager.postProcMan.plugins.clone();
-        Arrays.sort(pluginTabs, new Comparator<Postprocess>() {
+        pluginTabs = new ArrayList(manager.postProcMan.getPlugins());
+        Collections.sort(pluginTabs, new Comparator<Postprocess>() {
             @Override
             public int compare(Postprocess firstTab, Postprocess secondTab) {
                 return Double.compare(firstTab.getTabOrder(), secondTab.getTabOrder());
@@ -365,8 +366,8 @@ public class MainFrame extends JFrame implements ActionListener {
         });
 
         tabPluginMap = new HashMap<Integer, Postprocess>();
-        for (int i = 0; i < pluginTabs.length; i++) {
-            Postprocess plugin = pluginTabs[i];
+        for (int i = 0; i < pluginTabs.size(); i++) {
+            Postprocess plugin = pluginTabs.get(i);
             if (plugin.selected && !plugin.rnaAssociated) {
                 tabPluginMap.put(i + 1, plugin); // TODO: Jesus Java, horrible.
                 tab.addTab(plugin.getTabName(), plugin.getIcon(), plugin.getJPanel(), plugin.getTip());

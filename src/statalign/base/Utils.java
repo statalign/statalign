@@ -415,7 +415,7 @@ public class Utils{
 	 * @param packageName  the package in which the classes are searched for
 	 * @return array of found class names (with full package prefixes)
 	 */
-	public static String[] classesInPackage(String packageName) {
+	public static List<String> classesInPackage(String packageName) {
 		ArrayList<String> classNames = new ArrayList<String>();
 		String packageDir = packageName.replace('.', '/');
 
@@ -465,7 +465,7 @@ public class Utils{
 			}
 		} // for classpath
 		
-		return classNames.toArray(new String[classNames.size()]);
+		return classNames;
 	}
 	
 	/**
@@ -477,11 +477,11 @@ public class Utils{
 	 */
 	@SuppressWarnings("unchecked")
 	public static<T> List<T> findPlugins(Class<T> superClass) {
-		String[] pluginNames = Utils.classesInPackage(superClass.getPackage().getName()+".plugins");
+		List<String> pluginNames = Utils.classesInPackage(superClass.getPackage().getName()+".plugins");
 		List<T> pluginList = new ArrayList<T>();
-		for(int i = 0; i < pluginNames.length; i++) {
+		for(int i = 0; i < pluginNames.size(); i++) {
 			try {
-				Class<?> cl = Class.forName(pluginNames[i]);
+				Class<?> cl = Class.forName(pluginNames.get(i));
 				if(!superClass.isAssignableFrom(cl))
 					continue;
 				pluginList.add((T)cl.newInstance());
