@@ -100,7 +100,7 @@ public class MainManager {
 		postProcMan = new PostprocessManager(this);
 		dataMan = new DataManager();
 		dataMan.init();
-		modelExtMan = new ModelExtManager();
+		modelExtMan = new ModelExtManager(this);
 	}
 	
 	/**
@@ -124,7 +124,7 @@ public class MainManager {
 		try {
 			postProcMan.logFile = new FileWriter(fullPath + ".log");
 
-			for (Postprocess p : postProcMan.plugins) {
+			for (Postprocess p : postProcMan.getPlugins()) {
 				if (p.postprocessWrite) {
 					String name = fullPath + "." + p.getFileExtension();
 					System.out.println("Output file for " + p.getTabName()
@@ -155,7 +155,7 @@ public class MainManager {
 			try {
 				postProcMan.logFile = new FileWriter(fullPath + ".log");
 
-				for (Postprocess p : postProcMan.plugins) {
+				for (Postprocess p : postProcMan.getPlugins()) {
 					if (p.postprocessWrite) {
 						String name = fullPath + "." + p.getFileExtension();
 						MPIUtils.println(rank, 

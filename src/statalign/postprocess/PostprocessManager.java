@@ -3,7 +3,9 @@ package statalign.postprocess;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 
 import statalign.base.MainManager;
 import statalign.base.Mcmc;
@@ -23,7 +25,7 @@ public class PostprocessManager {
 	/**
 	 * The recognized plugins are in this array
 	 */
-	public Postprocess[] plugins;
+	private List<Postprocess> plugins;
 	
 	/**
 	 * This is the Mcmc that is analyzed
@@ -51,17 +53,20 @@ public class PostprocessManager {
 	 */
 	public PostprocessManager(MainManager mainManager) {
 		this.mainManager = mainManager;
-		String[] pluginNames = Utils.classesInPackage(Postprocess.class.getPackage().getName()+".plugins");
+		List<String> pluginNames = Utils.classesInPackage(Postprocess.class.getPackage().getName()+".plugins");
 		HashMap<String,Integer> nameMap = new HashMap<String,Integer>();
-		plugins = new Postprocess[pluginNames.length];
-		for(int i = 0; i < pluginNames.length; i++) {
-			nameMap.put(pluginNames[i], i);
+		plugins = new ArrayList<Postprocess>(pluginNames.size());
+		for(int i = 0; i < pluginNames.size(); i++)
+			plugins.add(null);
+		for(int i = 0; i < pluginNames.size(); i++) {
+			nameMap.put(pluginNames.get(i), i);
 			try {
-				Class<?> cl = Class.forName(pluginNames[i]);
+				Class<?> cl = Class.forName(pluginNames.get(i));
 				if(!Postprocess.class.isAssignableFrom(cl))
 					continue;
-				plugins[i] = (Postprocess)cl.newInstance();
-				plugins[i].selected = plugins[i].active = true;
+				Postprocess plugin = (Postprocess)cl.newInstance();
+				plugin.selected = plugin.active = true;
+				plugins.set(i, plugin);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -70,7 +75,7 @@ public class PostprocessManager {
 		for(Postprocess plugin : plugins)
 			dependProb(plugin, nameMap, workingPlugins);
 
-		plugins = workingPlugins.toArray(new Postprocess[workingPlugins.size()]);
+		plugins = workingPlugins;
 
 		boolean show = mainManager.frame != null;
 		for(Postprocess plugin : plugins){
@@ -80,6 +85,10 @@ public class PostprocessManager {
 			}
 			plugin.init();
 		}
+	}
+	
+	public List<Postprocess> getPlugins() {
+		return Collections.unmodifiableList(plugins);
 	}
 	
 	/**
@@ -97,9 +106,9 @@ public class PostprocessManager {
 			refs = new Postprocess[deps.length];
 			for(int i = 0; i < deps.length; i++) {
 				Integer ind = nameMap.get(deps[i]);
-				if(ind == null || dependProb(plugins[ind], nameMap, workingPlugins))
+				if(ind == null || dependProb(plugins.get(ind), nameMap, workingPlugins))
 					return true;
-				refs[i] = plugins[ind];
+				refs[i] = plugins.get(ind);
 			}
 		}
 		plugin.refToDependences(refs);
