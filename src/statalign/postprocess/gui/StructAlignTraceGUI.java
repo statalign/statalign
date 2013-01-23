@@ -13,10 +13,10 @@ import statalign.postprocess.utils.StructAlignTraceParameterGetters;
 import statalign.postprocess.utils.StructAlignTraceParameterGetters.*;
 
 /**
- * This class implements the graphical interface for showing the log-likelihood
- * plot.
+ * This class implements the graphical interface for showing the trace
+ * plots for the StructAlign parameters.
  *
- * @author miklos, novak
+ * @author herman
  *
  */
 public class StructAlignTraceGUI extends JPanel {
@@ -24,8 +24,7 @@ public class StructAlignTraceGUI extends JPanel {
 	private static final Font STR_FONT = new Font("Dialog", Font.PLAIN, 10);
 	private static final long serialVersionUID = 1L;
 
-	// int cornerx, cornery;
-//	private JPanel parent;
+
 	private StructTrace owner;
 
 	/**
