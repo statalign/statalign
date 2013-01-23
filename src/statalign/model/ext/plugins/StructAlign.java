@@ -878,87 +878,90 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				fullCovar = oldcovar;
 				curLogLike = oldll;
 			}
+			
 		} else if(param == 6) { // propose rotation to a subtree
-			subtreeRotProposed++;
 			Vertex subtreeRoot = sampleVertex(tree);
-			List<Integer> subtreeLeaves = collectLeaves(subtreeRoot);
-			int index = subtreeLeaves.get(Utils.generator.nextInt(subtreeLeaves.size()));
+			if(subtreeRoot != tree.root){	// if sampleVertex returns the root there are no eligible vertices, skip this step
+				subtreeRotProposed++;
+				List<Integer> subtreeLeaves = collectLeaves(subtreeRoot);
+				int index = subtreeLeaves.get(Utils.generator.nextInt(subtreeLeaves.size()));
 			
-			double[][] oldaxes = new double[axes.length][axes[0].length];
-			double[] oldangles = new double[angles.length];
-			double[][] oldxlats = new double[xlats.length][xlats.length];
-			double[][][] oldrots = new double[rotCoords.length][rotCoords[0].length][rotCoords[0][0].length];
-			int j;
-			for(int i = 0; i < subtreeLeaves.size(); i++){
-				j = subtreeLeaves.get(i);
-				oldaxes[j] = MathArrays.copyOf(axes[j]);
-				oldangles[j] = angles[j];
-				oldxlats[j] = MathArrays.copyOf(xlats[j]);
-				oldrots[j] = rotCoords[j];
-				rotCoords[j] = null;	// so that calcRotation creates new array
-			}
-
-			double oldll = curLogLike;
-			double llratio = 0;	
-			
-			
-			Transformation oldSub = new Transformation(axes[index], angles[index], xlats[index]);
-			// transformation should be relative to reference protein
-			oldSub.xlat = oldSub.xlat.subtract(new ArrayRealVector(xlats[0]));
-			Transformation libProp = rotProp.propose(index);
-			axes[index] = libProp.axis.toArray();
-			angles[index] = libProp.rot;
-			xlats[index] = libProp.xlat.toArray();
-
-			// library density 
-			llratio = rotProp.libraryLogDensity(index, oldSub) - 
-					  rotProp.libraryLogDensity(index, libProp);
-			
-			// proposed translation is relative to reference protein
-			for(int i = 0; i < 3; i++)
-				xlats[index][i] += xlats[0][i];			
-			
-			// calculate 'difference' between proposed and current transformations
-			double[] diffxlat = new double[3];
-			for(int i = 0; i < 3; i++)
-				diffxlat[i] = xlats[index][i] - oldxlats[index][i];
-			oldSub.fillRotationMatrix();
-			libProp.fillRotationMatrix();
-			RealMatrix diffRotMat = oldSub.rotMatrix.transpose().multiply(libProp.rotMatrix);
-			
-			for(int i = 0; i < subtreeLeaves.size(); i++){
-				j = subtreeLeaves.get(i);
-				if(j != index){
-					for(int k = 0; k < 3; k++)
-						xlats[j][k] += diffxlat[k];
-					Transformation temp = new Transformation(axes[j], angles[j], xlats[j]);
-					temp.fillRotationMatrix();
-					temp.rotMatrix = temp.rotMatrix.multiply(diffRotMat);
-					temp.fillAxisAngle();
-					axes[j] = temp.axis.toArray();
-					angles[j] = temp.rot;
-				}
-			}
-			
-			for(int i = 0; i < subtreeLeaves.size(); i++){
-				j = subtreeLeaves.get(i);
-				calcRotation(j);
-			}
-			curLogLike = calcAllColumnContrib();
-			
-			if(isParamChangeAccepted(llratio)) {
-				// accepted, nothing to do
-				subtreeRotAccept++;				
-			} else {
-				// rejected, restore
+				double[][] oldaxes = new double[axes.length][axes[0].length];
+				double[] oldangles = new double[angles.length];
+				double[][] oldxlats = new double[xlats.length][xlats.length];
+				double[][][] oldrots = new double[rotCoords.length][rotCoords[0].length][rotCoords[0][0].length];
+				int j;
 				for(int i = 0; i < subtreeLeaves.size(); i++){
 					j = subtreeLeaves.get(i);
-					axes[j] = oldaxes[j];
-					angles[j] = oldangles[j];
-					xlats[j] = oldxlats[j];
-					rotCoords[j] = oldrots[j];
+					oldaxes[j] = MathArrays.copyOf(axes[j]);
+					oldangles[j] = angles[j];
+					oldxlats[j] = MathArrays.copyOf(xlats[j]);
+					oldrots[j] = rotCoords[j];
+					rotCoords[j] = null;	// so that calcRotation creates new array
 				}
-				curLogLike = oldll;
+
+				double oldll = curLogLike;
+				double llratio = 0;	
+
+
+				Transformation oldSub = new Transformation(axes[index], angles[index], xlats[index]);
+				// transformation should be relative to reference protein
+				oldSub.xlat = oldSub.xlat.subtract(new ArrayRealVector(xlats[0]));
+				Transformation libProp = rotProp.propose(index);
+				axes[index] = libProp.axis.toArray();
+				angles[index] = libProp.rot;
+				xlats[index] = libProp.xlat.toArray();
+
+				// library density 
+				llratio = rotProp.libraryLogDensity(index, oldSub) - 
+						rotProp.libraryLogDensity(index, libProp);
+
+				// proposed translation is relative to reference protein
+				for(int i = 0; i < 3; i++)
+					xlats[index][i] += xlats[0][i];			
+
+				// calculate 'difference' between proposed and current transformations
+				double[] diffxlat = new double[3];
+				for(int i = 0; i < 3; i++)
+					diffxlat[i] = xlats[index][i] - oldxlats[index][i];
+				oldSub.fillRotationMatrix();
+				libProp.fillRotationMatrix();
+				RealMatrix diffRotMat = oldSub.rotMatrix.transpose().multiply(libProp.rotMatrix);
+
+				for(int i = 0; i < subtreeLeaves.size(); i++){
+					j = subtreeLeaves.get(i);
+					if(j != index){
+						for(int k = 0; k < 3; k++)
+							xlats[j][k] += diffxlat[k];
+						Transformation temp = new Transformation(axes[j], angles[j], xlats[j]);
+						temp.fillRotationMatrix();
+						temp.rotMatrix = temp.rotMatrix.multiply(diffRotMat);
+						temp.fillAxisAngle();
+						axes[j] = temp.axis.toArray();
+						angles[j] = temp.rot;
+					}
+				}
+
+				for(int i = 0; i < subtreeLeaves.size(); i++){
+					j = subtreeLeaves.get(i);
+					calcRotation(j);
+				}
+				curLogLike = calcAllColumnContrib();
+
+				if(isParamChangeAccepted(llratio)) {
+					// accepted, nothing to do
+					subtreeRotAccept++;				
+				} else {
+					// rejected, restore
+					for(int i = 0; i < subtreeLeaves.size(); i++){
+						j = subtreeLeaves.get(i);
+						axes[j] = oldaxes[j];
+						angles[j] = oldangles[j];
+						xlats[j] = oldxlats[j];
+						rotCoords[j] = oldrots[j];
+					}
+					curLogLike = oldll;
+				}
 			}
 			
 		} else if(param == 7) { // propose rotation to a subtree and realignment in a combined step
@@ -1292,7 +1295,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		Transformation[][] libraries;
 		int window = 25;
 		int fixed = 0;
-		double percent = 1;  // (value between 0 and 100
+		double percent = 1;  // (value between 0 and 100)
 		
 		/* concentration parameters of proposal distribution */
 		double kvMF = 100;
@@ -1701,12 +1704,14 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		int l = coords.length;			// number of leaves
 		
 		List<Integer> inds = findRefSubtrees(tree, 0);	// returns indices of all ancestor vertices of reference protein
-		
-		int prop = Utils.generator.nextInt(n-l) + l;		// don't choose a leaf vertex
-		while(inds.contains(new Integer(prop)))
-			prop = Utils.generator.nextInt(n-l) + l;		// don't choose a subtree containing reference protein
-		v = tree.vertex[prop];
-		return v;
+		if(inds.size() + l < n){
+			int prop = Utils.generator.nextInt(n-l) + l;		// don't choose a leaf vertex
+			while(inds.contains(new Integer(prop)))
+				prop = Utils.generator.nextInt(n-l) + l;		// don't choose a subtree containing reference protein
+			v = tree.vertex[prop];
+			return v;
+		} else
+			return tree.root;
 	}
 	
 	public List<Integer> findRefSubtrees(Tree tree, int refInd){

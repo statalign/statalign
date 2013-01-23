@@ -504,10 +504,11 @@ public class Utils{
 	 */
    public static String[] alignmentTransformation(String[] s, String[] names, String type, InputData input){
 		if(type.equals("StatAlign")){
+			String[] returnString = new String[s.length];
 			for (int i=0; i<s.length; i++) {
-				s[i] += '\t'+names[i];
+				returnString[i] = names[i]+"\t"+s[i];
 			}
-			return s;
+			return returnString;
 		}
 		String[] returnAlignment = null;
 		//here we need different alignment types
