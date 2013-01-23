@@ -965,9 +965,13 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			}
 			
 		} else if(param == 7) { // propose rotation to a subtree and realignment in a combined step
-			System.out.println("Joint proposal!");
-			subtreeRotAlignProposed++;
+			System.out.print("Joint proposal: ");
 			Vertex subtreeRoot = sampleVertex(tree);
+			if(subtreeRoot == tree.root) {		// if sampleVertex returns the root there are no eligible vertices, skip this step
+				System.out.println("skipped");
+				return;
+			}
+			subtreeRotAlignProposed++;
 			List<Integer> subtreeLeaves = collectLeaves(subtreeRoot);
 			int index = subtreeLeaves.get(Utils.generator.nextInt(subtreeLeaves.size()));
 
