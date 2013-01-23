@@ -104,10 +104,13 @@ public class CurrentAlignment extends statalign.postprocess.Postprocess{
 		for(int i = 0; i < rows.length; i++)
 			//allAlignment[i] = seqNames[i]+'\t'+rows[i];
 			allAlignment[i] = rows[i];
-	//	int ind = 0;
+		int ind = 0;
 		//System.out.println("allAlignment.length = "+allAlignment.length+"leafAlignment.length = "+leafAlignment.length);
 		for(int i = 0; i < leafAlignment.length; i++) {
-			leafAlignment[i] = allAlignment[i];
+			if (seqNames[i].charAt(0) != ' ') {
+				leafAlignment[ind++] = allAlignment[i];
+			}
+			//leafAlignment[i] = allAlignment[i];
 		}
 			//if(allAlignment[i].charAt(0) != ' ')
 				//leafAlignment[ind++] = allAlignment[i];

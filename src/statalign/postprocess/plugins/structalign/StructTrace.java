@@ -35,6 +35,15 @@ public class StructTrace extends Postprocess {
 		return parameterHistory;
 	}
 	
+	public double[] getAcceptanceRates() {
+		int n = structAlign.proposalCounts.length;
+		double[] acceptanceRates = new double[n];
+		for (int i=0; i<n; i++) {
+			acceptanceRates[i] = (double) structAlign.acceptanceCounts[i] / (double) structAlign.proposalCounts[i]; 
+		}
+		return acceptanceRates;
+	}
+	
 	JPanel pan;
 	int current;
 	int step;
@@ -254,6 +263,10 @@ public class StructTrace extends Postprocess {
 		//if (screenable) {
 			StructAlignTraceParameters currentParameters = new StructAlignTraceParameters(mcmcStep.burnIn);
 			currentParameters.tau = structAlign.tau;
+			currentParameters.epsilon = structAlign.epsilon;
+			currentParameters.nu = structAlign.nu;
+			currentParameters.sigma2Hier = structAlign.sigma2Hier;
+			currentParameters.globalSigma = structAlign.globalSigma;
 			currentParameters.sigma2 = structAlign.sigma2.clone();
 								
 			if(parameterHistory.size() < 300){

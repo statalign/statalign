@@ -71,7 +71,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	public double sigma2Hier = 1;
 	public double nu = 1;
 	public double tau = 5;
-	public boolean globalSigma = true;
+	public boolean globalSigma = false;
 	public double epsilon = 5;
 	double structTemp = 1;
 	

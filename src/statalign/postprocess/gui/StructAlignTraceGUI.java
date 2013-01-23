@@ -3,6 +3,9 @@ package statalign.postprocess.gui;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Shape;
+import java.awt.geom.Line2D;
 import java.util.List;
 
 import javax.swing.JPanel;
@@ -62,55 +65,75 @@ public class StructAlignTraceGUI extends JPanel {
 		int minY = border;
 		
 		List<StructAlignTraceParameters> parameterHistory = owner.getParameterHistory();
+		double[] acceptanceRates = owner.getAcceptanceRates();
 		StructAlignTraceParameterGetters g = new StructAlignTraceParameterGetters(); 
 		
 		int plotSep = 30;
 		if (parameterHistory.get(0).globalSigma) {
 			paintParameter(gr,border,plotSep,minX,minY,
 					maxX / 2 - plotSep, maxY,
-					g.new Sigma2Getter(0), parameterHistory);
+					g.new Sigma2Getter(0), parameterHistory, acceptanceRates[0]);
 		}
 		else {	
 			int nSubplots = ( 1 + parameterHistory.get(0).sigma2.length );
-			int subplotHeight = (int) ((double) maxY / (double) nSubplots);
+			double subplotHeight = (double) maxY / (double) nSubplots;
 			int i=0;
-			for (i=0; i<(nSubplots-1); i++) {
-				paintParameter(gr,border,plotSep,minX,minY+(i-1)*subplotHeight,
-						maxX / 2 - plotSep, i*subplotHeight,
-						g.new Sigma2Getter(i), parameterHistory);				
+			for (i=0; i<(nSubplots-2); i++) {
+				paintParameter(gr,border,plotSep,minX,minY+i*subplotHeight,
+						maxX / 2 - plotSep, (i+1)*subplotHeight,
+						g.new Sigma2Getter(i), parameterHistory, acceptanceRates[i]);				
 			}
-			paintParameter(gr,border,plotSep,minX,minY+(i-1)*subplotHeight,
-					maxX / 2 - plotSep, i*subplotHeight,
-					g.new Sigma2HGetter(), parameterHistory);
+			++i;
+			paintParameter(gr,border,plotSep,minX,minY+i*subplotHeight,
+					maxX / 2 - plotSep, (i+1)*subplotHeight,
+					g.new Sigma2HGetter(), parameterHistory, acceptanceRates[i+2]);
 			
 		}
-		int nSubplots = 3; // nu, tau, epsilon
-		int subplotHeight = (int) ((double) maxY / (double) nSubplots);
+		int nSubplots; 
+		if (parameterHistory.get(0).globalSigma) {
+			nSubplots = 2; 		// tau, epsilon
+		}
+		else {
+			nSubplots = 3; 		// tau, epsilon, nu
+		}
+		double subplotHeight = (double) maxY / (double) nSubplots;
+		int index = parameterHistory.get(0).sigma2.length;
+					
 		paintParameter(gr,border,plotSep,minX+maxX/2 + plotSep,minY+0*subplotHeight,
 			maxX - border, 1*subplotHeight,
-			g.new NuGetter(), parameterHistory);				
+			g.new TauGetter(), parameterHistory, acceptanceRates[index]);
 		paintParameter(gr,border,plotSep,minX+maxX/2 + plotSep,minY+1*subplotHeight,
 			maxX - border, 2*subplotHeight,
-			g.new TauGetter(), parameterHistory);
-		paintParameter(gr,border,plotSep,minX+maxX/2 + plotSep,minY+2*subplotHeight,
-			maxX - border, 3*subplotHeight,
-			g.new EpsilonGetter(), parameterHistory);
-	
+			g.new EpsilonGetter(), parameterHistory, acceptanceRates[index+1]);
+		if (!parameterHistory.get(0).globalSigma) {
+			paintParameter(gr,border,plotSep,minX+maxX/2 + plotSep,minY+2*subplotHeight,
+				maxX - border, 3*subplotHeight,
+				g.new NuGetter(), parameterHistory, acceptanceRates[index+3]);	
+		}
 		
 	}
 	
-	private void paintParameter(Graphics gr, final int border, int plotSep,
-			int minX, int minY, int maxX, int maxY,
-			ParameterGetter getter, List<StructAlignTraceParameters> parameterHistory) {
+	private void paintParameter(Graphics g, final int border, double plotSep,
+			double minX, double minY, double maxX, double maxY,
+			ParameterGetter getter, List<StructAlignTraceParameters> parameterHistory,
+			double acceptanceRate) {
 		
+		Graphics2D gr = (Graphics2D) g;
+		Shape line;
+		
+		double textShift = 30;
 		// y-axis
-		gr.drawLine(20+minX,minY,20+minX,maxY);
+		line = new Line2D.Double(textShift+minX,minY,textShift+minX,maxY);
+		gr.draw(line);
 		// x-axis
-		gr.drawLine(20+minX,minY,50+maxX,minY);
+		line = new Line2D.Double(textShift+minX,minY,50+maxX,minY);
+		gr.draw(line);
 		// right border
-		gr.drawLine(50+maxX,minY,50+maxX,maxY);
+		line = new Line2D.Double(50+maxX,minY,50+maxX,maxY);
+		gr.draw(line);
 		// top border
-		gr.drawLine(20+minX,maxY,50+maxX,maxY);
+		line = new Line2D.Double(textShift+minX,maxY,50+maxX,maxY);
+		gr.draw(line);
 		
 		//gr.drawLine(20+minX, minY, 10+minX, 10+minY);
 		//gr.drawLine(20+minX, minY, 30+minX, 10+minY);
@@ -129,8 +152,12 @@ public class StructAlignTraceGUI extends JPanel {
 			}
 		}
 		gr.setFont(STR_FONT);
-		gr.drawString("" + ((int) maxParam), minX, 15+minY);
-		gr.drawString("" + ((int) minParam), minX, 10 + maxY);
+		gr.drawString("" + String.format("%.1f",maxParam), (int) minX, 5 + (int)minY);
+		gr.drawString("" + String.format("%.1f",minParam), (int) minX, 5 + (int)maxY);
+		
+		gr.drawString("" + String.format("%.1f",maxParam), (int) minX, 5 + (int)minY);
+		gr.drawString("" + String.format("%.1f",minParam), (int) minX, 5 + (int)maxY);
+		
 		// TODO replace the (int) casts with sprintf to 
 		// 3sf.
 		
@@ -138,6 +165,7 @@ public class StructAlignTraceGUI extends JPanel {
 		if (parameterHistory.size() == 0) {
 			return;
 		}
+		
 		gr.setColor(new Color(221, 87, 20));
 		double current;
 		double next = getter.getParameter(parameterHistory.get(0));
@@ -151,10 +179,15 @@ public class StructAlignTraceGUI extends JPanel {
 					gr.setColor(new Color(46, 87, 221));
 				}
 			}
-			gr.drawLine(minX+(maxX-minX) * i / 300 + 20,
-					minY+(int) ((maxParam - current) * (maxY-minY) / (maxParam - minParam + 1.0)),
-					minX+(maxX-minX) * (i + 1) / 300 + 20,
-					minY+(int) ((maxParam - next) * (maxY-minY) / (maxParam - minParam + 1.0)));
+            line = new Line2D.Double(minX+(maxX-minX) * i / 300 + textShift, 
+            		minY+((maxParam - current) * (maxY-minY) / (maxParam - minParam + 1.0)),
+					minX+(maxX-minX) * (i + 1) / 300 + textShift,
+					minY+ ((maxParam - next) * (maxY-minY) / (maxParam - minParam + 1.0)));
+            gr.draw(line);
+//			gr.drawLine(minX+(maxX-minX) * i / 300 + 20,
+//					minY+(int) ((maxParam - current) * (maxY-minY) / (maxParam - minParam + 1.0)),
+//					minX+(maxX-minX) * (i + 1) / 300 + 20,
+//					minY+(int) ((maxParam - next) * (maxY-minY) / (maxParam - minParam + 1.0)));
 		}
 		gr.setColor(Color.black);
 	}
