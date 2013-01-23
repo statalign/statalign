@@ -64,6 +64,17 @@ public class ModelExtManager {
 		propWeights = new int[activeList.size()];
 	}
 	
+	public void setMcmc(Mcmc mcmc) {
+		this.mcmc = mcmc;
+	}
+	
+	/**
+	 * Allows access to the Mcmc class. Generally not recommended.
+	 */
+	public Mcmc getMcmc() {
+		return mcmc;
+	}
+	
 	/**
 	 * Calls {@link ModelExtension#beforeSampling(Tree)} on each active plugin.
 	 * @param tree current tree
@@ -118,8 +129,7 @@ public class ModelExtManager {
 				plugin.beforeModExtParamChange(tree, selectedPlugin);
 	}
 	
-	public void proposeParamChange(Tree tree, Mcmc mcmc) {
-		this.mcmc = mcmc;
+	public void proposeParamChange(Tree tree) {
 		selectedPlugin.proposeParamChange(tree);
 	}
 	
@@ -299,4 +309,5 @@ public class ModelExtManager {
 	public List<ModelExtension> getPluginList() {
 		return Collections.unmodifiableList(pluginList);
 	}
+	
 }

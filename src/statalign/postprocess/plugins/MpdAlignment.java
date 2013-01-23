@@ -96,6 +96,7 @@ public class MpdAlignment extends statalign.postprocess.Postprocess {
 	}
 
 	static Comparator<String[]> compStringArr = new Comparator<String[]>() {
+		@Override
 		public int compare(String[] a1, String[] a2) {
 			return a1[0].compareTo(a2[0]);
 		}};
@@ -117,9 +118,10 @@ public class MpdAlignment extends statalign.postprocess.Postprocess {
 		sizeOfAlignments = input.seqs.sequences.size();
 		alignment = new String[sizeOfAlignments];
 		sequenceNames = new String[sizeOfAlignments];
-		if(show)
+		if(show) {
 			gui.alignment = alignment;
 			gui.sequenceNames = sequenceNames;
+		}
 		t = new String[sizeOfAlignments][];
 		sequences = null;
 		viterbialignment = new String[sizeOfAlignments];

@@ -101,6 +101,7 @@ public class Mcmc extends Stoppable {
 		postprocMan = ppm;
 		this.modelExtMan = modelExtMan;
 		ppm.mcmc = this;
+		this.modelExtMan.setMcmc(this);
 		this.tree = tree;
 		weights = new double[tree.vertex.length];
 		mcmcpars = pars;
@@ -1129,7 +1130,7 @@ public class Mcmc extends Stoppable {
 //		modextSampled++;
 		modelExtMan.beforeModExtParamChange(tree);
 		modExtParamChangeAccepted = false;
-		modelExtMan.proposeParamChange(tree, this);
+		modelExtMan.proposeParamChange(tree);
 //		if(modExtParamChangeAccepted)
 //			modextAccepted++;
 		modelExtMan.afterModExtParamChange(tree, modExtParamChangeAccepted);

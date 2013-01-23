@@ -6,6 +6,7 @@ import java.util.List;
 import javax.swing.JComponent;
 
 import statalign.base.InputData;
+import statalign.base.Mcmc;
 import statalign.base.Tree;
 import statalign.base.Vertex;
 import statalign.base.hmm.Hmm;
@@ -164,6 +165,7 @@ public abstract class ModelExtension {
 	public final boolean isParamChangeAccepted(double logProbRatio) {
 		return manager.modExtParamChangeCallback(logProbRatio);
 	}
+	
 	public double logLikeModExtParamChange(Tree tree, ModelExtension ext) {
 		return logLikeFactor(tree);
 	}
@@ -282,4 +284,11 @@ public abstract class ModelExtension {
 	 * @param accepted true if the change was accepted
 	 */
 	public void afterSubstParamChange(Tree tree, SubstitutionModel model, int ind, boolean accepted) {}
+	
+	/**
+	 * Allows access to the Mcmc class. Generally not recommended.
+	 */
+	protected Mcmc getMcmc() {
+		return manager.getMcmc();
+	}
 }

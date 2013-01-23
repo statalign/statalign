@@ -1430,13 +1430,75 @@ public class Vertex {
         bpp += bppProp;
         //System.out.println("bpp after proposal: "+bpp);
 
-        // check proposal - backproposal consistency
-        //	double bppBack = doRecBackprop();
-        //if(parent != null)
-        //  bppBack += hmm2BackProp();
-        //if(Math.abs(bppProp+bppBack) > 1e-5) {
-        //  System.out.println("Proposal - backproposal inconsistent! Prop: "+bppProp+" Back: "+bppBack);
-        //}
+        if(Utils.DEBUG) {
+        	// check proposal - backproposal consistency
+        	double bppBack = doRecBackprop();
+        	if(parent != null)
+        		bppBack += hmm2BackProp();
+        	if(Math.abs(bppProp+bppBack) > 1e-5) {
+        		System.out.println("Proposal - backproposal inconsistent! Prop: "+bppProp+" Back: "+bppBack);
+        	}
+        }
+
+        // backproposal probability for cutting out the window
+        //bpp += Math.log(Utils.linearizerWeightProb(length, winLength, Utils.WINDOW_MULTIPLIER*Math.sqrt(length)) 
+        //		* (length - winLength));
+        bpp += Math.log(Utils.linearizerWeightProb(length, winLength, Utils.WINDOW_MULTIPLIER*Math.sqrt(length)) 
+               		/ (length - winLength + 1));
+
+        // 	System.out.print(" Prop: "+bppProp+" it's doublecheck: "+bppBack+" bpp: "+bpp+" ");
+
+        return bpp;
+    }
+    
+    /**
+     * Samples a new alignment between the subtree rooted at this vertex and the rest of the sequences.
+     * Only the alignment between this vertex and its parent is changed.
+     * @return the ratio between backproposal and proposal probabilities
+     */
+    public double realignToParent() {
+    	if(parent == null)
+    		throw new Error("realignToParent was called on the root vertex");
+        MuDouble p = new MuDouble(1.0);
+        winLength = Utils.linearizerWeight(length, p, Utils.WINDOW_MULTIPLIER*Math.sqrt(length));
+        //System.out.print("Length: "+length+"\t");
+        //System.out.print("Window length: "+winLength+"\t");
+        int b = (length - winLength == 0 ? 0 : Utils.generator.nextInt(length - winLength));
+        //System.out.print("b: "+b+"\t");
+        AlignColumn actualAC = first;
+        for (int i = 0; i < b; i++) {
+            actualAC = actualAC.next;
+        }
+        winFirst = actualAC;
+        for (int i = 0; i < winLength; i++) {
+            actualAC = actualAC.next;
+        }
+        winLast = actualAC;
+
+        //double bpp = -Math.log(p.value * (length - winLength == 0 ? 1 : length - winLength));
+        double bpp = -Math.log(p.value / (length - winLength + 1));
+
+        // nothing is selected for realignment below this vertex
+        lastSelected();
+
+        // window is projected to parent
+        selectWindowUp();
+
+        // compute alignment backproposal
+        bpp += hmm2BackProp();
+
+        // align the sequences
+        double bppProp = hmm2AlignWithSave();
+        bpp += bppProp;
+        parent.calcAllUp();
+
+        if(Utils.DEBUG) {
+        	// check proposal - backproposal consistency
+        	double bppBack = hmm2BackProp();
+        	if(Math.abs(bppProp+bppBack) > 1e-5) {
+        	  System.out.println("Proposal - backproposal inconsistent in realignToParent! Prop: "+bppProp+" Back: "+bppBack);
+        	}
+        }
 
         // backproposal probability for cutting out the window
         //bpp += Math.log(Utils.linearizerWeightProb(length, winLength, Utils.WINDOW_MULTIPLIER*Math.sqrt(length)) 
@@ -1488,7 +1550,7 @@ public class Vertex {
      * Restores all the changes an alignment resampling on the currently selected subtree has produced.
      * Must be called on selected subtree root.
      */
-    void alignRestore() {
+    public void alignRestore() {
         doRecRestore();
         if (parent != null) {
             if (parent.left == this)
