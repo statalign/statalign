@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JPanel;
@@ -21,7 +20,6 @@ import statalign.base.Utils;
 import statalign.model.ext.ModelExtension;
 import statalign.model.ext.plugins.StructAlign;
 import statalign.postprocess.Postprocess;
-
 import statalign.postprocess.gui.StructAlignTraceGUI;
 import statalign.postprocess.utils.StructAlignTraceParameters;
 
@@ -260,6 +258,8 @@ public class StructTrace extends Postprocess {
 	
 	@Override
 	public void newStep(McmcStep mcmcStep) {
+		if(!active)
+			return;
 		//if (screenable) {
 			StructAlignTraceParameters currentParameters = new StructAlignTraceParameters(mcmcStep.burnIn);
 			currentParameters.tau = structAlign.tau;
