@@ -24,6 +24,7 @@ public class AlignmentGUI extends JPanel{
 	 *  The alignment that is written onto the screen is stored in this array
 	 */
 	public String[] alignment = null;
+	public String[] sequenceNames = null;
 	/**
 	 * The title of the current analysis
 	 */
@@ -63,13 +64,13 @@ public class AlignmentGUI extends JPanel{
 		this.subst = subst;
 	}
 
-	private static boolean allTab(String[] s, int p){
-		boolean b = true;
-		for(int i = 0; i < s.length && b; i++){
-			b = s[i].charAt(p) == '\t';
-		}
-		return b;
-	}
+//	private static boolean allTab(String[] s, int p){
+//		boolean b = true;
+//		for(int i = 0; i < s.length && b; i++){
+//			b = s[i].charAt(p) == '\t';
+//		}
+//		return b;
+//	}
 
 	/**
 	 * This function updates the graphics
@@ -98,17 +99,31 @@ public class AlignmentGUI extends JPanel{
 
 			// Changed this to fixed height:
 			int colHeight = (decoding == null ? 0 : 130);
-
-            if(alignment.length > aligNum || alignment[0].length() > aligLen) {
-				aligNum = alignment.length;
-				aligLen = alignment[0].length()+5;
-				setSize(OFFSET_X + COLUMN_WIDTH * aligLen + 30, OFFSET_Y + TITLE_Y + FONT_HEIGHT * aligNum+30);
+			int maxNameLength = 0;
+			aligNum = alignment.length;			
+			for (int i=0; i<aligNum; i++) {
+				//System.out.println(sequenceNames[i]+"...");
+				int l = sequenceNames[i].length();
+				if (l > 0) {
+					maxNameLength = (l > maxNameLength) ? l : maxNameLength;
+				}
 			}
-			//Find the first all space column
-			int tab =alignment[0].length()-2;
-			while(!allTab(alignment, tab)){
-				tab--;
-			}
+			aligLen = alignment[0].length() + maxNameLength + 5;
+			setSize(OFFSET_X + COLUMN_WIDTH * aligLen + 30, OFFSET_Y + TITLE_Y + FONT_HEIGHT * aligNum+30);
+			//Find the maximum length of the sequence names
+//            int[] nameLength = new int[alignment.length];
+//            int maxSeqNameLength = 0;
+//            for (int i=0; i<alignment.length; i++) {
+//            	int j=0;
+//            	while(alignment[i].charAt(j++) != '\t') { nameLength[i] = j + 1; }
+//            	maxSeqNameLength = j > maxSeqNameLength ? j : maxSeqNameLength; 
+//            }
+//            int maxSNL = maxSeqNameLength; // Shorthand 
+            
+//			int tab =alignment[0].length()-2;
+//			while(!allTab(alignment, tab)){
+//				tab--;
+//			}
 			//System.out.println("Tab: "+tab);
 
 			g.setColor(Color.BLACK);
@@ -119,18 +134,31 @@ public class AlignmentGUI extends JPanel{
 
 			for (int i = 0; i < alignment.length; i++) {
 				//System.out.println(alignment[i]);
+				g.drawString(sequenceNames[i],OFFSET_X,colHeight + OFFSET_Y + TITLE_Y + FONT_HEIGHT * (i+1));
+//				if (sequenceNames[i].length() < maxNameLength) {
+//					for (int j=0; j<maxNameLength-sequenceNames[i].length(); j++) {
+//						g.drawString(' ',OFFSET_X + COLUMN_WIDTH * j);
+//					}
+//				}
+			//	System.out.println("i = "+i+", maxNameLength = "+maxNameLength);
+
 				for (int j = 0; j < alignment[i].length(); j++) {
-					if(j>tab){
-						g.setColor(subst.getColor(alignment[i].charAt(j)));
-						g.fillRect(OFFSET_X + COLUMN_WIDTH * j,
+					char ch = alignment[i].charAt(j);
+//					int jOffset = j;
+//					if (j==nameLength[i]) { 
+//						jOffset = maxSNL;
+//					}
+//					if (j>=maxNameLength){
+						g.setColor(subst.getColor(ch));
+						g.fillRect(OFFSET_X + COLUMN_WIDTH * (j+maxNameLength),
 								colHeight + OFFSET_Y + TITLE_Y + FONT_HEIGHT * i + 3, 
 								COLUMN_WIDTH,
 								FONT_HEIGHT);
 						//System.out.println((OFFSET_X + COLUMN_WIDTH * j)+" "+(colHeight + OFFSET_Y + TITLE_Y + FONT_HEIGHT * i + 3));
-					}
+					//}
 					g.setColor(Color.BLACK);
-					g.drawString(alignment[i].charAt(j) + "",
-							OFFSET_X + COLUMN_WIDTH * j,
+					g.drawString(ch + "",
+							OFFSET_X + COLUMN_WIDTH * (j+maxNameLength),
 							colHeight + OFFSET_Y + TITLE_Y + FONT_HEIGHT * (i+1));
 
 				}
@@ -140,10 +168,10 @@ public class AlignmentGUI extends JPanel{
 				g.setColor(Color.BLUE);
 				//int colHeight = Math.min(100, g.getClipBounds().height - (2 * OFFSET_Y + TITLE_Y + alignment.length * FONT_HEIGHT));
 				for(int i = 1; i < decoding.length; i++){
-					g.drawLine( OFFSET_X + (tab + i) * COLUMN_WIDTH + COLUMN_WIDTH / 2,
+					g.drawLine( OFFSET_X + (maxNameLength + i) * COLUMN_WIDTH + COLUMN_WIDTH / 2,
 							(int)(OFFSET_Y + TITLE_Y + colHeight - Math.round(decoding[i-1] * (colHeight) / max)),
 //							(int)(OFFSET_Y + TITLE_Y - Math.round(decoding[i-1] * (TITLE_Y) / max)),
-							OFFSET_X + (tab + i + 1) * COLUMN_WIDTH + COLUMN_WIDTH / 2,
+							OFFSET_X + (maxNameLength + i + 1) * COLUMN_WIDTH + COLUMN_WIDTH / 2,
 							(int)(OFFSET_Y + TITLE_Y + colHeight - Math.round(decoding[i] * (colHeight) / max))
 //							(int)(OFFSET_Y + TITLE_Y - Math.round(decoding[i] * (TITLE_Y) / max))
 							);

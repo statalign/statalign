@@ -1,9 +1,14 @@
 package statalign.postprocess.plugins.structalign;
 
+import java.awt.BorderLayout;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+
 
 import javax.swing.Icon;
+import javax.swing.ImageIcon;
 import javax.swing.JPanel;
 
 import org.apache.commons.math3.geometry.euclidean.threed.Rotation;
@@ -17,9 +22,24 @@ import statalign.model.ext.ModelExtension;
 import statalign.model.ext.plugins.StructAlign;
 import statalign.postprocess.Postprocess;
 
+import statalign.postprocess.gui.StructAlignTraceGUI;
+import statalign.postprocess.utils.StructAlignTraceParameters;
+
+
 public class StructTrace extends Postprocess {
 	
 	StructAlign structAlign;
+	List<StructAlignTraceParameters> parameterHistory;
+	
+	public List<StructAlignTraceParameters> getParameterHistory() {
+		return parameterHistory;
+	}
+	
+	JPanel pan;
+	int current;
+	int step;
+	int count;
+	private StructAlignTraceGUI gui;
 
 	public StructTrace() {
 		screenable = true;
@@ -36,18 +56,24 @@ public class StructTrace extends Postprocess {
 	}
 
 	@Override
+	public double getTabOrder() {
+		return 5.0d;
+	}
+	
+	@Override
 	public Icon getIcon() {
-		return null;
+		return new ImageIcon(ClassLoader.getSystemResource("icons/loglikelihood1.gif"));
 	}
 
 	@Override
 	public JPanel getJPanel() {
-		return null;
+		pan = new JPanel(new BorderLayout());
+		return pan;
 	}
 
 	@Override
 	public String getTip() {
-		return "Structural protein alignment";
+		return "StructAlign parameter values";
 	}
 	
 	@Override
@@ -59,7 +85,6 @@ public class StructTrace extends Postprocess {
 	public void setSampling(boolean enabled) {
 	}
 	
-	
 	@Override
 	public void beforeFirstSample(InputData inputData) {
 		for(ModelExtension modExt : getModExtPlugins()) {
@@ -67,6 +92,9 @@ public class StructTrace extends Postprocess {
 				structAlign = (StructAlign) modExt;
 			}
 		}
+		active = structAlign.isActive();
+		if(!active)
+			return;
 		try {
 			int sigLen = structAlign.globalSigma ? 1 : structAlign.sigma2.length;
 			outputFile.write("sigma2_1");
@@ -94,6 +122,18 @@ public class StructTrace extends Postprocess {
 		lastEpsilonProp = 0;
 		lastSigma2HProp = 0;
 		lastNuProp = 0;
+		
+		if(show) {
+			pan.removeAll();
+			gui = new StructAlignTraceGUI(pan, this);
+			pan.add(gui);
+			pan.getParent().getParent().getParent().validate();
+		}
+		
+		parameterHistory = new ArrayList<StructAlignTraceParameters>();
+		current = 0;
+		step = 2;
+		count = 0;
 	}
 	
 	int[] lastSigmaProp;
@@ -104,6 +144,8 @@ public class StructTrace extends Postprocess {
 	
 	@Override
 	public void newSample(State state, int no, int total) {
+		if(!active)
+			return;
 		if(postprocessWrite) {
 			try {
 				int sigLen = (structAlign.globalSigma ? 1 : structAlign.sigma2.length);
@@ -142,6 +184,7 @@ public class StructTrace extends Postprocess {
 				e.printStackTrace(); 
 			}
 		}
+		
 //		if(sampling) {
 //			try {
 //				file.write("Sample "+no+"\tStructure:\t");
@@ -152,6 +195,8 @@ public class StructTrace extends Postprocess {
 	
 	@Override
 	public void afterLastSample() {
+		if(!active)
+			return;
 		try {
 			outputFile.close();
 		} catch (IOException e) {
@@ -206,6 +251,36 @@ public class StructTrace extends Postprocess {
 	
 	@Override
 	public void newStep(McmcStep mcmcStep) {
-	}
+		//if (screenable) {
+			StructAlignTraceParameters currentParameters = new StructAlignTraceParameters(mcmcStep.burnIn);
+			currentParameters.tau = structAlign.tau;
+			currentParameters.sigma2 = structAlign.sigma2.clone();
+								
+			if(parameterHistory.size() < 300){
+				parameterHistory.add(currentParameters);
+			} else {
+				count++;
+				if(count == step){
+					count = 0;
+					parameterHistory.remove(current);
+					parameterHistory.add(currentParameters);
+					current += 2;
+					if(current > 150){
+						current = 0;
+						step *= 2;
+					}
+				}
+			}
+			if(show) {
+//				int L = parameterHistory.size();
+//				L = (L > 20) ? 20 : L;
+//				for (int i=0; i<L; i++) {
+//					System.out.print(parameterHistory.get(i).tau+" ");
+//				}
+//				System.out.println();
+				gui.repaint();
+			}
+		}
+	//}
 	
 }
