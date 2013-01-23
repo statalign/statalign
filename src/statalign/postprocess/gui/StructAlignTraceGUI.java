@@ -75,15 +75,14 @@ public class StructAlignTraceGUI extends JPanel {
 					g.new Sigma2Getter(0), parameterHistory, acceptanceRates[0]);
 		}
 		else {	
-			int nSubplots = ( 1 + parameterHistory.get(0).sigma2.length );
+			int nSubplots = parameterHistory.get(0).sigma2.length;
 			double subplotHeight = (double) maxY / (double) nSubplots;
 			int i=0;
-			for (i=0; i<(nSubplots-2); i++) {
+			for (i=0; i<(nSubplots-1); i++) {
 				paintParameter(gr,border,plotSep,minX,minY+i*subplotHeight,
 						maxX / 2 - plotSep, (i+1)*subplotHeight,
 						g.new Sigma2Getter(i), parameterHistory, acceptanceRates[i]);				
 			}
-			++i;
 			paintParameter(gr,border,plotSep,minX,minY+i*subplotHeight,
 					maxX / 2 - plotSep, (i+1)*subplotHeight,
 					g.new Sigma2HGetter(), parameterHistory, acceptanceRates[i+2]);
