@@ -1138,10 +1138,10 @@ public class Mcmc extends Stoppable {
 	
 	private boolean modExtParamChangeAccepted;
 	
-	public boolean modExtParamChangeCallback(double logLikeRatio) {
+	public boolean modExtParamChangeCallback(double logProposalRatio) {
 		double oldLogLikelihood = totalLogLike;
 		double newLogLikelihood = modelExtMan.logLikeModExtParamChange(tree);
-		if (Utils.generator.nextDouble() < Math.exp(logLikeRatio + newLogLikelihood - oldLogLikelihood)) {
+		if (Utils.generator.nextDouble() < Math.exp(logProposalRatio + newLogLikelihood - oldLogLikelihood)) {
 			// accepted
 			modExtParamChangeAccepted = true;
 			totalLogLike = newLogLikelihood;

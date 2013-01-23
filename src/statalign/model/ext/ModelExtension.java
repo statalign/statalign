@@ -152,18 +152,18 @@ public abstract class ModelExtension {
 	 * Should be called from {@link #proposeParamChange(Tree)} to find out whether a proposed parameter
 	 * change was accepted.
 	 * 
-	 * <p>Parameter <code>logProbRatio</code> must be the log of P(x|x')/P(x'|x) * Pr(x')/Pr(x) where x is the
+	 * <p>Parameter <code>logProposalRatio</code> must be the log of P(x|x')/P(x'|x) * Pr(x')/Pr(x) where x is the
 	 * old value of the model parameter, x' is new value, P(x'|x) is the probability of the proposed change
 	 * (proposal probability), P(x|x') is the backproposal probability, Pr(x') is the prior probability
 	 * of the new parameter value (new prior), Pr(x) is the old prior. The remaining factor
 	 * Pi(new state)/Pi(old state) of the Metropolis-Hastings ratio will be calculated by calls to
 	 * {@link #logLikeModExtParamChange(Tree, ModelExtension)}.
 	 * 
-	 * @param logProbRatio MH-like ratio as explained above
+	 * @param logProposalRatio Ratio of proposal and prior densities as explained above
 	 * @return <code>true</code> if the change was accepted
 	 */
-	public final boolean isParamChangeAccepted(double logProbRatio) {
-		return manager.modExtParamChangeCallback(logProbRatio);
+	public final boolean isParamChangeAccepted(double logProposalRatio) {
+		return manager.modExtParamChangeCallback(logProposalRatio);
 	}
 	
 	public double logLikeModExtParamChange(Tree tree, ModelExtension ext) {
