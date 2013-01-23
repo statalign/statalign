@@ -135,7 +135,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	// so do not need to be included in M-H ratio
 	
 	/** Constant weights for rotation/translation, sigma2, tau, sigma2Hier, nu, epsilon, subtree rotation and subtree rot+align combined */
-	int[] paramPropWConst = { 0, 0, 3, 3, 3, 3, 3, 6 };
+	int[] paramPropWConst = { 0, 0, 3, 3, 3, 3, 3, 1 };
 	/** Weights per sequence for rotation/translation, sigma2, tau, sigma2Hier, nu, epsilon, subtree rotation  and subtree rot+align combined */
 	int[] paramPropWPerSeq = { 5, 3, 0, 0, 0, 0, 0, 0 };
 	/** Total weights calculated as const+perseq*nseq */
@@ -607,7 +607,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			rotCoords[ind] = null;	// so that calcRotation creates new array
 			double oldll = curLogLike;
 
-			double llratio = 0;
+			double logProposalRatio = 0;
 
 			switch(rotxlat) {
 			case 0:
@@ -632,7 +632,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				axes[ind] = temp.axis.toArray();
 				angles[ind] = temp.rot;
 				
-				// llratio is 0 because prior is uniform and proposal is symmetric
+				// logProposalRatio is 0 because prior is uniform and proposal is symmetric
 				
 				break;
 			case 1:
@@ -641,7 +641,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				for(int i = 0; i < 3; i++)
 					xlats[ind][i] = Utils.generator.nextGaussian() * xlatP + xlats[ind][i];  
 				
-				// llratio is 0 because prior is uniform and proposal is symmetric
+				// logProposalRatio is 0 because prior is uniform and proposal is symmetric
 				
 				break;
 			case 2:
@@ -656,7 +656,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				xlats[ind] = prop.xlat.toArray();
 
 				// library density 
-				llratio = rotProp.libraryLogDensity(ind, old) - 
+				logProposalRatio = rotProp.libraryLogDensity(ind, old) - 
 						  rotProp.libraryLogDensity(ind, prop);
 				
 				// proposed translation is relative to reference protein
@@ -668,7 +668,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 
 			calcRotation(ind);
 			curLogLike = calcAllColumnContrib();
-			if(isParamChangeAccepted(llratio)) {
+			if(isParamChangeAccepted(logProposalRatio)) {
 				// accepted, nothing to do
 				switch(rotxlat) {
 				case 0:
@@ -708,7 +708,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			double[][] oldcovar = fullCovar;
 			double oldll = curLogLike;
 			
-			double llratio = 0;
+			double logProposalRatio = 0;
 			
 			GammaDistribution proposal;
 			GammaDistribution reverse;
@@ -739,23 +739,23 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			curLogLike = calcAllColumnContrib();
 			
 			if(param == 1){
-				llratio = Math.log(reverse.density(oldpar)) 
+				logProposalRatio = Math.log(reverse.density(oldpar)) 
 				            - Math.log(proposal.density(sigma2[sigmaInd]));
 				if (!globalSigma) {
-					llratio += Math.log(sigma2HierDist.density(sigma2[sigmaInd]))
+					logProposalRatio += Math.log(sigma2HierDist.density(sigma2[sigmaInd]))
 							    - Math.log(sigma2HierDist.density(oldpar));
 				}
 			}
 			else {
-				llratio = Math.log(tauPrior.density(tau)) + Math.log(reverse.density(oldpar)) 
+				logProposalRatio = Math.log(tauPrior.density(tau)) + Math.log(reverse.density(oldpar)) 
 				- Math.log(tauPrior.density(oldpar)) - Math.log(proposal.density(tau));
 //				System.out.println("Tau proposed");
 //				System.out.println("oldll: " + oldll);
 //				System.out.println("curLogLike: " + curLogLike);
-//				System.out.println("llratio: " + llratio);
+//				System.out.println("logProposalRatio: " + logProposalRatio);
 				
 			}
-			if (isParamChangeAccepted(llratio)) {
+			if (isParamChangeAccepted(logProposalRatio)) {
 				if (param == 1)
 					//sigAccept[sigmaInd]++;
 					acceptanceCounts[sigmaInd]++;
@@ -786,7 +786,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				if(i != tree.root.index)
 					oldsigll += Math.log(sigma2HierDist.density(sigma2[i]));
 			
-			double llratio = 0;
+			double logProposalRatio = 0;
 			
 			GammaDistribution proposal;
 			GammaDistribution reverse;
@@ -820,13 +820,13 @@ public class StructAlign extends ModelExtension implements ActionListener {
 					newsigll += Math.log(sigma2HierDist.density(sigma2[i]));
 					
 			if(param == 3)
-				llratio = newsigll + Math.log(sigma2HPrior.density(sigma2Hier)) + Math.log(reverse.density(oldpar)) 
+				logProposalRatio = newsigll + Math.log(sigma2HPrior.density(sigma2Hier)) + Math.log(reverse.density(oldpar)) 
 				- oldsigll - Math.log(sigma2HPrior.density(oldpar)) - Math.log(proposal.density(sigma2Hier));
 			else
-				llratio = newsigll + Math.log(nuPrior.density(nu)) + Math.log(reverse.density(oldpar)) 
+				logProposalRatio = newsigll + Math.log(nuPrior.density(nu)) + Math.log(reverse.density(oldpar)) 
 				- oldsigll - Math.log(nuPrior.density(oldpar)) - Math.log(proposal.density(nu));
 			
-			if(isParamChangeAccepted(llratio)) {
+			if(isParamChangeAccepted(logProposalRatio)) {
 				if(param == 3)
 					sigHAccept++;
 					//acceptanceCounts[sigHInd]++;
@@ -848,7 +848,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			double[][] oldcovar = fullCovar;
 			double oldll = curLogLike;
 			
-			double llratio = 0;
+			double logProposalRatio = 0;
 			
 			GammaDistribution proposal;
 			GammaDistribution reverse;
@@ -866,10 +866,10 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			curLogLike = calcAllColumnContrib();
 			
 			if(param == 1)
-				llratio =  + Math.log(reverse.density(oldpar)) 
+				logProposalRatio =  + Math.log(reverse.density(oldpar)) 
 				            - Math.log(epsilonPrior.density(oldpar)) - Math.log(proposal.density(epsilon));
 
-			if(epsilon > MIN_EPSILON && isParamChangeAccepted(llratio)) {
+			if(epsilon > MIN_EPSILON && isParamChangeAccepted(logProposalRatio)) {
 					acceptanceCounts[epsilonInd]++;
 				// accepted, nothing to do
 			} else {
@@ -901,7 +901,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				}
 
 				double oldll = curLogLike;
-				double llratio = 0;	
+				double logProposalRatio = 0;	
 
 
 				Transformation oldSub = new Transformation(axes[index], angles[index], xlats[index]);
@@ -913,7 +913,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				xlats[index] = libProp.xlat.toArray();
 
 				// library density 
-				llratio = rotProp.libraryLogDensity(index, oldSub) - 
+				logProposalRatio = rotProp.libraryLogDensity(index, oldSub) - 
 						rotProp.libraryLogDensity(index, libProp);
 
 				// proposed translation is relative to reference protein
@@ -948,7 +948,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				}
 				curLogLike = calcAllColumnContrib();
 
-				if(isParamChangeAccepted(llratio)) {
+				if(isParamChangeAccepted(logProposalRatio)) {
 					// accepted, nothing to do
 					subtreeRotAccept++;				
 				} else {
@@ -990,7 +990,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			}
 
 			double oldll = curLogLike;
-			double llratio = 0;	
+			double logProposalRatio = 0;	
 
 
 			Transformation oldSub = new Transformation(axes[index], angles[index], xlats[index]);
@@ -1002,7 +1002,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			xlats[index] = libProp.xlat.toArray();
 
 			// library density 
-			llratio = rotProp.libraryLogDensity(index, oldSub) - 
+			logProposalRatio = rotProp.libraryLogDensity(index, oldSub) - 
 					rotProp.libraryLogDensity(index, libProp);
 
 			// proposed translation is relative to reference protein
@@ -1039,12 +1039,12 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			
 			oldAlign = curAlign;
 			
-			llratio += subtreeRoot.realignToParent();
+			logProposalRatio += subtreeRoot.realignToParent();
 			
 			curAlign = tree.getState().getLeafAlign();
 			curLogLike = calcAllColumnContrib();
 
-			if(isParamChangeAccepted(llratio)) {
+			if(isParamChangeAccepted(logProposalRatio)) {
 				// accepted, nothing to do
 				subtreeRotAlignAccept++;
 				System.out.println("accepted!");
@@ -1709,7 +1709,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		
 		List<Integer> inds = findRefSubtrees(tree, 0);	// returns indices of all ancestor vertices of reference protein
 		if(inds.size() + l < n){
-			int prop = Utils.generator.nextInt(n-l) + l;		// don't choose a leaf vertex
+			int prop = Utils.generator.nextInt(n-l) + l;		// don't choose a leaf vertex			
 			while(inds.contains(new Integer(prop)))
 				prop = Utils.generator.nextInt(n-l) + l;		// don't choose a subtree containing reference protein
 			v = tree.vertex[prop];

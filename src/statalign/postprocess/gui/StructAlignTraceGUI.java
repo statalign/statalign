@@ -50,14 +50,16 @@ public class StructAlignTraceGUI extends JPanel {
 	 * It updates the graphics of the panel
 	 */
 	@Override
-	public void paintComponent(Graphics gr) {
-		super.paintComponent(gr);
+	public void paintComponent(Graphics gra) {
+		super.paintComponent(gra);
 		
 		final int border = 10;
 		
-		gr.setColor(Color.white);
-		gr.fillRect(0, 0, getWidth(), getHeight());
-		gr.setColor(Color.black);
+		gra.setColor(Color.white);
+		gra.fillRect(0, 0, getWidth(), getHeight());
+		gra.setColor(Color.black);
+		
+		Graphics2D gr = (Graphics2D) gra;
 		
 		int maxX = getWidth()-50-border;
 		int maxY = getHeight()-2*border;
@@ -112,12 +114,11 @@ public class StructAlignTraceGUI extends JPanel {
 		
 	}
 	
-	private void paintParameter(Graphics g, final int border, double plotSep,
+	private void paintParameter(Graphics2D gr, final int border, double plotSep,
 			double minX, double minY, double maxX, double maxY,
 			ParameterGetter getter, List<StructAlignTraceParameters> parameterHistory,
 			double acceptanceRate) {
 		
-		Graphics2D gr = (Graphics2D) g;
 		Shape line;
 		
 		double textShift = 30;
