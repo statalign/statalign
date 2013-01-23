@@ -1,8 +1,8 @@
 #!/usr/bin/perl -w
-my $MAX_SET_SIZE = 6;
+my $MAX_SET_SIZE = 10;
 
 my $pir = shift;
-my $MAX_PERCENT_ID = 100;
+my $MAX_PERCENT_ID = 25;
 if (@ARGV) {
     $MAX_PERCENT_ID = shift;
 }

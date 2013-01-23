@@ -96,6 +96,7 @@ public class MpdAlignment extends statalign.postprocess.Postprocess {
 	}
 
 	static Comparator<String[]> compStringArr = new Comparator<String[]>() {
+		@Override
 		public int compare(String[] a1, String[] a2) {
 			return a1[0].compareTo(a2[0]);
 		}};
