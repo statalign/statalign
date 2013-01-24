@@ -49,7 +49,7 @@ public class Utils{
 	public static final double MIN_ACCEPTANCE = 0.15;
 	public static final double MAX_ACCEPTANCE = 0.4;
 	
-	public static final double WINDOW_CHANGE_FACTOR = 0.8;
+	public static final double WINDOW_CHANGE_FACTOR = 0.9;
 	public static final double MIN_WINDOW_MULTIPLIER = 0.1;
 	public static final double MAX_WINDOW_MULTIPLIER = 1.5;
 	public static double WINDOW_MULTIPLIER = 1.0;
