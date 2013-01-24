@@ -5,6 +5,7 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Shape;
+import java.awt.BasicStroke;
 import java.awt.geom.Line2D;
 import java.util.List;
 
@@ -29,6 +30,7 @@ public class StructAlignTraceGUI extends JPanel {
 
 
 	private StructTrace owner;
+	private int burninLength;
 
 	/**
 	 * Constructor to initialise the GUI for StructAlign trace
@@ -42,6 +44,7 @@ public class StructAlignTraceGUI extends JPanel {
 //		super((int) (panel.getWidth() / 6.6), panel.getHeight() / 13);
 //		this.parent = parent;
 		this.owner = owner;
+		this.burninLength = owner.burninLength;
 //		setFont(new Font("Monospaced", Font.PLAIN, 10));
 //		setEditable(false);
 	}
@@ -67,6 +70,7 @@ public class StructAlignTraceGUI extends JPanel {
 		int minY = border;
 		
 		List<StructAlignTraceParameters> parameterHistory = owner.getParameterHistory();
+		
 		double[] acceptanceRates = owner.getAcceptanceRates();
 		StructAlignTraceParameterGetters g = new StructAlignTraceParameterGetters(); 
 		
@@ -74,7 +78,7 @@ public class StructAlignTraceGUI extends JPanel {
 		if (parameterHistory.get(0).globalSigma) {
 			paintParameter(gr,border,plotSep,minX,minY,
 					maxX / 2 - plotSep, maxY,
-					g.new Sigma2Getter(0), parameterHistory, acceptanceRates[0]);
+					g.new Sigma2Getter(0), parameterHistory, acceptanceRates[0],"σ");
 		}
 		else {	
 			int nSubplots = parameterHistory.get(0).sigma2.length;
@@ -83,11 +87,11 @@ public class StructAlignTraceGUI extends JPanel {
 			for (i=0; i<(nSubplots-1); i++) {
 				paintParameter(gr,border,plotSep,minX,minY+i*subplotHeight,
 						maxX / 2 - plotSep, (i+1)*subplotHeight,
-						g.new Sigma2Getter(i), parameterHistory, acceptanceRates[i]);				
+						g.new Sigma2Getter(i), parameterHistory, acceptanceRates[i], "σ_"+i);				
 			}
 			paintParameter(gr,border,plotSep,minX,minY+i*subplotHeight,
 					maxX / 2 - plotSep, (i+1)*subplotHeight,
-					g.new Sigma2HGetter(), parameterHistory, acceptanceRates[i+2]);
+					g.new Sigma2HGetter(), parameterHistory, acceptanceRates[nSubplots+2],"σ_g");
 			
 		}
 		int nSubplots; 
@@ -99,17 +103,17 @@ public class StructAlignTraceGUI extends JPanel {
 		}
 		double subplotHeight = (double) maxY / (double) nSubplots;
 		int index = parameterHistory.get(0).sigma2.length;
-					
+		
 		paintParameter(gr,border,plotSep,minX+maxX/2 + plotSep,minY+0*subplotHeight,
 			maxX - border, 1*subplotHeight,
-			g.new TauGetter(), parameterHistory, acceptanceRates[index]);
+			g.new TauGetter(), parameterHistory, acceptanceRates[index], "τ");
 		paintParameter(gr,border,plotSep,minX+maxX/2 + plotSep,minY+1*subplotHeight,
 			maxX - border, 2*subplotHeight,
-			g.new EpsilonGetter(), parameterHistory, acceptanceRates[index+1]);
+			g.new EpsilonGetter(), parameterHistory, acceptanceRates[index+1], "ε");
 		if (!parameterHistory.get(0).globalSigma) {
 			paintParameter(gr,border,plotSep,minX+maxX/2 + plotSep,minY+2*subplotHeight,
 				maxX - border, 3*subplotHeight,
-				g.new NuGetter(), parameterHistory, acceptanceRates[index+3]);	
+				g.new NuGetter(), parameterHistory, acceptanceRates[index+3], "ν");	
 		}
 		
 	}
@@ -117,7 +121,7 @@ public class StructAlignTraceGUI extends JPanel {
 	private void paintParameter(Graphics2D gr, final int border, double plotSep,
 			double minX, double minY, double maxX, double maxY,
 			ParameterGetter getter, List<StructAlignTraceParameters> parameterHistory,
-			double acceptanceRate) {
+			double acceptanceRate, String paramName) {
 		
 		Shape line;
 		
@@ -154,41 +158,63 @@ public class StructAlignTraceGUI extends JPanel {
 		gr.setFont(STR_FONT);
 		gr.drawString("" + String.format("%.1f",maxParam), (int) minX, 5 + (int)minY);
 		gr.drawString("" + String.format("%.1f",minParam), (int) minX, 5 + (int)maxY);
-		
-		gr.drawString("" + String.format("%.1f",maxParam), (int) minX, 5 + (int)minY);
-		gr.drawString("" + String.format("%.1f",minParam), (int) minX, 5 + (int)maxY);
-		
-		// TODO replace the (int) casts with sprintf to 
-		// 3sf.
-		
+		gr.setFont(new Font("Dialog", Font.BOLD, 12));
+		gr.drawString(paramName, (int) minX + 3, (int)((minY+maxY)/2));
+		gr.setFont(new Font("Dialog", Font.BOLD, 10));
+		gr.drawString("α = " + String.format("%.2f",acceptanceRate), 5 + (int)textShift + (int) minX, 15 + (int)minY);
+		gr.setFont(STR_FONT);
+				
 		// drawing the trace
 		if (parameterHistory.size() == 0) {
 			return;
 		}
 		
-		gr.setColor(new Color(221, 87, 20));
+		Color burninColor = new Color(221, 87, 20);
+		Color nonBurninColor = new Color(46, 87, 221);
+		gr.setColor(burninColor);
+		boolean finishedBurnin = (parameterHistory.get(parameterHistory.size()-1)).burnin;
+		int startFrom = 0;
+//		if (finishedBurnin) {
+//			startFrom = parameterHistory.size() - 1 - burninLength; // need -1?
+//			if (startFrom > burninLength) {
+//				startFrom = burninLength; // i.e. start at first non-burnin step?
+//			} 
+//		}
 		double current;
-		double next = getter.getParameter(parameterHistory.get(0));
+		double next = getter.getParameter(parameterHistory.get(startFrom));
 		boolean burnin = true;
 		for (int i = 0; i < parameterHistory.size() - 1; i++) {
 			current = next;
 			next = getter.getParameter(parameterHistory.get(i + 1));
 			if (burnin) {
 				burnin = (parameterHistory.get(i + 1)).burnin;
-				if (!burnin) {
-					gr.setColor(new Color(46, 87, 221));
-				}
 			}
-            line = new Line2D.Double(minX+(maxX-minX) * i / 300 + textShift, 
-            		minY+((maxParam - current) * (maxY-minY) / (maxParam - minParam + 1.0)),
-					minX+(maxX-minX) * (i + 1) / 300 + textShift,
-					minY+ ((maxParam - next) * (maxY-minY) / (maxParam - minParam + 1.0)));
-            gr.draw(line);
+			boolean wasProposed = getter.wasProposed(parameterHistory.get(i+1));
+//			if (!wasProposed) {
+//                gr.setStroke(new BasicStroke(0));
+//				gr.setColor(Color.white);
+//			}
+			if (wasProposed) {
+                gr.setStroke(new BasicStroke());
+				if (burnin) {
+					gr.setColor(burninColor);
+				}
+				else {
+					gr.setColor(nonBurninColor);
+				}
+			
+				line = new Line2D.Double(minX+(maxX-minX) * i / parameterHistory.size() + textShift, 
+            		minY+((maxParam - current) * (maxY-minY) / (maxParam - minParam)),
+					minX+(maxX-minX) * (i + 1) / parameterHistory.size() + textShift,
+					minY+ ((maxParam - next) * (maxY-minY) / (maxParam - minParam)));
+				gr.draw(line);
+			}
 //			gr.drawLine(minX+(maxX-minX) * i / 300 + 20,
 //					minY+(int) ((maxParam - current) * (maxY-minY) / (maxParam - minParam + 1.0)),
 //					minX+(maxX-minX) * (i + 1) / 300 + 20,
 //					minY+(int) ((maxParam - next) * (maxY-minY) / (maxParam - minParam + 1.0)));
 		}
 		gr.setColor(Color.black);
+		gr.setStroke(new BasicStroke());
 	}
 }

@@ -70,14 +70,14 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	public double sigma2Hier = 1;
 	public double nu = 1;
 	public double tau = 5;
-	public boolean globalSigma = false;
+	public boolean globalSigma = true;
 	public double epsilon = 5;
 	double structTemp = 1;
 	
-	private int tauInd;
-	private int sigma2HInd;
-	private int nuInd;
-	private int epsilonInd;
+	public int tauInd;
+	public int sigma2HInd;
+	public int nuInd;
+	public int epsilonInd;
 	
 	
 	/** Covariance matrix implied by current tree topology */
@@ -135,7 +135,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	// so do not need to be included in M-H ratio
 	
 	/** Constant weights for rotation/translation, sigma2, tau, sigma2Hier, nu, epsilon, subtree rotation and subtree rot+align combined */
-	int[] paramPropWConst = { 0, 0, 3, 3, 3, 3, 3, 1 };
+	int[] paramPropWConst = { 0, 0, 3, 3, 3, 3, 3, 0 };
 	/** Weights per sequence for rotation/translation, sigma2, tau, sigma2Hier, nu, epsilon, subtree rotation  and subtree rot+align combined */
 	int[] paramPropWPerSeq = { 5, 3, 0, 0, 0, 0, 0, 0 };
 	/** Total weights calculated as const+perseq*nseq */
@@ -827,12 +827,14 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				- oldsigll - Math.log(nuPrior.density(oldpar)) - Math.log(proposal.density(nu));
 			
 			if(isParamChangeAccepted(logProposalRatio)) {
-				if(param == 3)
+				if(param == 3) {
 					sigHAccept++;
-					//acceptanceCounts[sigHInd]++;
-				else
+					acceptanceCounts[sigma2HInd]++;
+				}
+				else {
 					nuAccept++;
-					//acceptanceCounts[nuInd]++;
+					acceptanceCounts[nuInd]++;
+				}
 				// accepted, nothing to do
 			} else {
 				// rejected, restore

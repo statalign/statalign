@@ -10,26 +10,30 @@ package statalign.postprocess.utils;
 public class StructAlignTraceParameters {
 
 	/**
-	 * The log-likelihood value
+	 * The parameter values
 	 */
 	public double[] sigma2;
+	public boolean[] sigma2Proposed;
 	public double sigma2Hier;
+	public boolean sigma2HProposed;
 	public double nu;
+	public boolean nuProposed;
 	public double tau;
-	public boolean globalSigma = true;
+	public boolean tauProposed;
 	public double epsilon;
+	public boolean epsilonProposed;
+	
+	public boolean globalSigma = true;
 	/**
-	 * It tells if the sample comes from the burn-in phase or not.
+	 * Whether the sample comes from the burn-in phase or not.
 	 */
 	public boolean burnin;
 	
 	/**
-	 * This constructor sets the values in the container.
-	 * @param loglikelihood The loglikelihood value
-	 * @param burnin It is true, if the sample comes from the burn-in phase.
+	 * This constructor initialises the container.
+	 * @param burnin True if the sample comes from the burn-in phase.
 	 */
 	public StructAlignTraceParameters(boolean burnin){
-//		this.loglikelihood = loglikelihood;
 		this.burnin = burnin;
 //		
 	}
