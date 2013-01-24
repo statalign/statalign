@@ -6,6 +6,9 @@ import java.util.ArrayList;
 import java.util.Random;
 
 import mpi.MPI;
+
+import org.apache.commons.math3.random.Well19937c;
+
 import statalign.MPIUtils;
 import statalign.base.thread.Stoppable;
 import statalign.base.thread.StoppedException;
@@ -157,7 +160,7 @@ public class Mcmc extends Stoppable {
 		}
 
 		MainFrame frame = postprocMan.mainManager.frame;
-		Utils.generator = new Random(mcmcpars.seed + rank);
+		Utils.generator = new Well19937c(mcmcpars.seed + rank);
 
 		// TODO add weights to MCMCPars and take from there
 		proposalWeights = DEF_PROP_WEIGHTS;

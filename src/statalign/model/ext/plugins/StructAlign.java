@@ -13,9 +13,6 @@ import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 import javax.swing.JToggleButton;
 
-import org.apache.commons.math3.distribution.BetaDistribution;
-import org.apache.commons.math3.distribution.GammaDistribution;
-import org.apache.commons.math3.distribution.NormalDistribution;
 import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.geometry.euclidean.threed.Rotation;
 import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
@@ -43,6 +40,9 @@ import statalign.io.ProteinSkeletons;
 import statalign.model.ext.ModelExtension;
 import statalign.model.subst.SubstitutionModel;
 import statalign.postprocess.PluginParameters;
+import statalign.utils.BetaDistribution;
+import statalign.utils.GammaDistribution;
+import statalign.utils.NormalDistribution;
 import cern.jet.math.Bessel;
 
 public class StructAlign extends ModelExtension implements ActionListener {
