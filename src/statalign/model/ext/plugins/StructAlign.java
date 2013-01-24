@@ -135,7 +135,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	// so do not need to be included in M-H ratio
 	
 	/** Constant weights for rotation/translation, sigma2, tau, sigma2Hier, nu, epsilon, subtree rotation and subtree rot+align combined */
-	int[] paramPropWConst = { 0, 0, 3, 3, 3, 3, 3, 3 };
+	int[] paramPropWConst = { 0, 0, 3, 3, 3, 3, 3, 1 };
 	/** Weights per sequence for rotation/translation, sigma2, tau, sigma2Hier, nu, epsilon, subtree rotation  and subtree rot+align combined */
 	int[] paramPropWPerSeq = { 5, 3, 0, 0, 0, 0, 0, 0 };
 	/** Total weights calculated as const+perseq*nseq */
@@ -159,7 +159,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	// higher values lead to bigger step sizes
 	private static final double xlatP = .1;
 	
-	private static final double MIN_EPSILON = 0.1;
+	public double MIN_EPSILON = 2;
 	
 	@Override
 	public List<JComponent> getToolBarItems() {
