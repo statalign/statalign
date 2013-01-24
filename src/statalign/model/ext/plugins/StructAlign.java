@@ -13,9 +13,6 @@ import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 import javax.swing.JToggleButton;
 
-import org.apache.commons.math3.distribution.BetaDistribution;
-import org.apache.commons.math3.distribution.GammaDistribution;
-import org.apache.commons.math3.distribution.NormalDistribution;
 import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.geometry.euclidean.threed.Rotation;
 import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
@@ -43,6 +40,9 @@ import statalign.io.ProteinSkeletons;
 import statalign.model.ext.ModelExtension;
 import statalign.model.subst.SubstitutionModel;
 import statalign.postprocess.PluginParameters;
+import statalign.utils.BetaDistribution;
+import statalign.utils.GammaDistribution;
+import statalign.utils.NormalDistribution;
 import cern.jet.math.Bessel;
 
 public class StructAlign extends ModelExtension implements ActionListener {
@@ -70,7 +70,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	public double sigma2Hier = 1;
 	public double nu = 1;
 	public double tau = 5;
-	public boolean globalSigma = true;
+	public boolean globalSigma = false;
 	public double epsilon = 5;
 	double structTemp = 1;
 	
@@ -143,6 +143,13 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	/** Weights for proposing rotation vs translation vs library */
 	int[] rotXlatWeights= { 25, 25, 10 };
 //	int[] rotXlatWeights= { 25, 25, 0 };	// library off
+	
+	
+	/** Default proposal weights in this order: 
+	 *  align, topology, edge, indel param, subst param, modelext param 
+	*   { 35, 20, 15, 15, 10, 0 };
+	*/
+	private final int pluginProposalWeight = 50; 
 	
 	/** Proposal tuning parameters */
 	// higher values lead to smaller step sizes
@@ -594,7 +601,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	@Override
 	public int getParamChangeWeight() {
 		// TODO test converge and tune value
-		return 25;
+		return pluginProposalWeight;
 	}
 
 	@Override

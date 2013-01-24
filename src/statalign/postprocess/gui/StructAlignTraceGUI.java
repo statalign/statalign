@@ -158,10 +158,8 @@ public class StructAlignTraceGUI extends JPanel {
 		gr.setFont(STR_FONT);
 		gr.drawString("" + String.format("%.1f",maxParam), (int) minX, 5 + (int)minY);
 		gr.drawString("" + String.format("%.1f",minParam), (int) minX, 5 + (int)maxY);
-		gr.setFont(new Font("Dialog", Font.BOLD, 12));
-		gr.drawString(paramName, (int) minX + 3, (int)((minY+maxY)/2));
 		gr.setFont(new Font("Dialog", Font.BOLD, 10));
-		gr.drawString("α = " + String.format("%.2f",acceptanceRate), 5 + (int)textShift + (int) minX, 15 + (int)minY);
+		gr.drawString(paramName, (int) minX + 3, (int)((minY+maxY)/2));
 		gr.setFont(STR_FONT);
 				
 		// drawing the trace
@@ -169,7 +167,7 @@ public class StructAlignTraceGUI extends JPanel {
 			return;
 		}
 		
-		Color burninColor = new Color(221, 87, 20);
+		Color burninColor = new Color(251, 87, 20);
 		Color nonBurninColor = new Color(46, 87, 221);
 		gr.setColor(burninColor);
 		boolean finishedBurnin = (parameterHistory.get(parameterHistory.size()-1)).burnin;
@@ -190,25 +188,25 @@ public class StructAlignTraceGUI extends JPanel {
 				burnin = (parameterHistory.get(i + 1)).burnin;
 			}
 			boolean wasProposed = getter.wasProposed(parameterHistory.get(i+1));
-//			if (!wasProposed) {
-//                gr.setStroke(new BasicStroke(0));
-//				gr.setColor(Color.white);
-//			}
+			if (!wasProposed) {
+                gr.setStroke(new BasicStroke(0));
+				gr.setColor(Color.black);
+			}
 			if (wasProposed) {
-                gr.setStroke(new BasicStroke());
+                gr.setStroke(new BasicStroke(2));
 				if (burnin) {
 					gr.setColor(burninColor);
 				}
 				else {
 					gr.setColor(nonBurninColor);
 				}
-			
+			}
 				line = new Line2D.Double(minX+(maxX-minX) * i / parameterHistory.size() + textShift, 
             		minY+((maxParam - current) * (maxY-minY) / (maxParam - minParam)),
 					minX+(maxX-minX) * (i + 1) / parameterHistory.size() + textShift,
 					minY+ ((maxParam - next) * (maxY-minY) / (maxParam - minParam)));
 				gr.draw(line);
-			}
+			//}
 //			gr.drawLine(minX+(maxX-minX) * i / 300 + 20,
 //					minY+(int) ((maxParam - current) * (maxY-minY) / (maxParam - minParam + 1.0)),
 //					minX+(maxX-minX) * (i + 1) / 300 + 20,
@@ -216,5 +214,9 @@ public class StructAlignTraceGUI extends JPanel {
 		}
 		gr.setColor(Color.black);
 		gr.setStroke(new BasicStroke());
+		
+		gr.setFont(new Font("Dialog", Font.BOLD, 10));
+		gr.drawString("α = " + String.format("%.2f",acceptanceRate), 5 + (int)textShift + (int) minX, 15 + (int)minY);
+		gr.setFont(STR_FONT);
 	}
 }

@@ -10,6 +10,9 @@ import java.util.Random;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
+import org.apache.commons.math3.random.RandomGenerator;
+import org.apache.commons.math3.random.Well19937c;
+
 import statalign.model.subst.plugins.Dayhoff;
 import statalign.ui.ErrorMessage;
 
@@ -36,7 +39,7 @@ public class Utils{
 	 * A new generator is constructed at each MCMC run using the seed in the
 	 * corresponding MCMCPars object.
 	 */
-	public static Random generator = new Random(1);
+	public static RandomGenerator generator = new Well19937c(1);
 	
 	/**
 	 * During the burnin, the SPAN variables for all continuous parameters
@@ -49,7 +52,7 @@ public class Utils{
 	public static final double MIN_ACCEPTANCE = 0.15;
 	public static final double MAX_ACCEPTANCE = 0.4;
 	
-	public static final double WINDOW_CHANGE_FACTOR = 0.8;
+	public static final double WINDOW_CHANGE_FACTOR = 0.9;
 	public static final double MIN_WINDOW_MULTIPLIER = 0.1;
 	public static final double MAX_WINDOW_MULTIPLIER = 1.5;
 	public static double WINDOW_MULTIPLIER = 1.0;
