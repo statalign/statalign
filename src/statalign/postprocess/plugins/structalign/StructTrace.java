@@ -29,6 +29,10 @@ public class StructTrace extends Postprocess {
 	StructAlign structAlign;
 	List<StructAlignTraceParameters> parameterHistory;
 	
+	public int burninLength; 
+	public final int MAX_HISTORY_SIZE = 1000;
+	public int refreshRate;
+	
 	public List<StructAlignTraceParameters> getParameterHistory() {
 		return parameterHistory;
 	}
@@ -44,7 +48,6 @@ public class StructTrace extends Postprocess {
 	
 	JPanel pan;
 	int current;
-	int step;
 	int count;
 	private StructAlignTraceGUI gui;
 
@@ -59,7 +62,7 @@ public class StructTrace extends Postprocess {
 
 	@Override
 	public String getTabName() {
-		return "Structural alignment";
+		return "Structural parameters";
 	}
 
 	@Override
@@ -130,6 +133,12 @@ public class StructTrace extends Postprocess {
 		lastSigma2HProp = 0;
 		lastNuProp = 0;
 		
+		sigma2Proposed = null;
+		tauProposed = 0;
+		epsilonProposed = 0;
+		sigma2HProposed = 0;
+		nuProposed = 0;
+		
 		if(show) {
 			pan.removeAll();
 			gui = new StructAlignTraceGUI(pan, this);
@@ -138,8 +147,9 @@ public class StructTrace extends Postprocess {
 		}
 		
 		parameterHistory = new ArrayList<StructAlignTraceParameters>();
+		burninLength = inputData.pars.burnIn;
 		current = 0;
-		step = 2;
+		refreshRate = inputData.pars.burnIn / (2*MAX_HISTORY_SIZE);
 		count = 0;
 	}
 	
@@ -148,6 +158,12 @@ public class StructTrace extends Postprocess {
 	int lastEpsilonProp;
 	int lastSigma2HProp;
 	int lastNuProp;
+	
+	int[] sigma2Proposed;
+	int tauProposed;
+	int epsilonProposed;
+	int sigma2HProposed;
+	int nuProposed;
 	
 	@Override
 	public void newSample(State state, int no, int total) {
@@ -260,40 +276,79 @@ public class StructTrace extends Postprocess {
 	public void newStep(McmcStep mcmcStep) {
 		if(!active)
 			return;
-		//if (screenable) {
+		++count;
+		if (count > burninLength / 2) {
+			structAlign.MIN_EPSILON = 0.1;
+		}
+		if (count % refreshRate == 0) {
 			StructAlignTraceParameters currentParameters = new StructAlignTraceParameters(mcmcStep.burnIn);
-			currentParameters.tau = structAlign.tau;
-			currentParameters.epsilon = structAlign.epsilon;
-			currentParameters.nu = structAlign.nu;
-			currentParameters.sigma2Hier = structAlign.sigma2Hier;
+
 			currentParameters.globalSigma = structAlign.globalSigma;
-			currentParameters.sigma2 = structAlign.sigma2.clone();
-								
-			if(parameterHistory.size() < 300){
-				parameterHistory.add(currentParameters);
-			} else {
-				count++;
-				if(count == step){
-					count = 0;
-					parameterHistory.remove(current);
-					parameterHistory.add(currentParameters);
-					current += 2;
-					if(current > 150){
-						current = 0;
-						step *= 2;
-					}
+
+			currentParameters.tau = structAlign.tau;
+			if (structAlign.proposalCounts[structAlign.tauInd] != tauProposed) {
+				currentParameters.tauProposed = true;
+				tauProposed = structAlign.proposalCounts[structAlign.tauInd];
+			}
+			else {
+				currentParameters.tauProposed = false;
+			}
+			currentParameters.epsilon = structAlign.epsilon;
+			if (structAlign.proposalCounts[structAlign.epsilonInd] != epsilonProposed) {
+				currentParameters.epsilonProposed = true;
+				epsilonProposed = structAlign.proposalCounts[structAlign.epsilonInd];
+			}
+			else {
+				currentParameters.epsilonProposed = false;
+			}
+			if (!currentParameters.globalSigma) {
+				currentParameters.nu = structAlign.nu;
+				if (structAlign.proposalCounts[structAlign.nuInd] != nuProposed) {
+					currentParameters.nuProposed = true;
+					nuProposed = structAlign.proposalCounts[structAlign.nuInd];
+				}
+				else {
+					currentParameters.nuProposed = false;
+				}
+				currentParameters.sigma2Hier = structAlign.sigma2Hier;
+				if (structAlign.proposalCounts[structAlign.sigma2HInd] != sigma2HProposed) {
+					currentParameters.sigma2HProposed = true;
+					sigma2HProposed = structAlign.proposalCounts[structAlign.sigma2HInd];
+				}
+				else {
+					currentParameters.sigma2HProposed = false;
 				}
 			}
+			currentParameters.sigma2 = structAlign.sigma2.clone();
+			int sigLen = currentParameters.sigma2.length;
+			currentParameters.sigma2Proposed = new boolean[sigLen];
+			if(sigma2Proposed == null || sigma2Proposed.length != sigLen) {
+				sigma2Proposed = new int[sigLen];
+				for (int i=0; i<sigLen; i++) {
+					sigma2Proposed[i] = 0;
+				}
+			}	
+			for (int i=0; i<sigLen; i++) {
+				if (structAlign.proposalCounts[i] != sigma2Proposed[i]) {
+					currentParameters.sigma2Proposed[i] = true;
+					sigma2Proposed[i] = structAlign.proposalCounts[i];
+				}
+				else {
+					currentParameters.sigma2Proposed[i] = false;
+				}
+			}
+			
+								
+			if(parameterHistory.size() < MAX_HISTORY_SIZE){
+				parameterHistory.add(currentParameters);
+			} else {
+				parameterHistory.remove(0);
+				parameterHistory.add(currentParameters);				
+			}
 			if(show) {
-//				int L = parameterHistory.size();
-//				L = (L > 20) ? 20 : L;
-//				for (int i=0; i<L; i++) {
-//					System.out.print(parameterHistory.get(i).tau+" ");
-//				}
-//				System.out.println();
 				gui.repaint();
 			}
 		}
-	//}
+	}
 	
 }
