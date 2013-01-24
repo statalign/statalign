@@ -76,8 +76,10 @@ public class MainFrame extends JFrame implements ActionListener {
     private JButton pauseButton;
     private JButton resumeButton;
     private JButton stopButton;
-    private JToggleButton rnaButton;
-
+    
+    public JToggleButton rnaButton;
+    // TODO The above should be inside the RNA plugin classes rather than here
+    
     private JMenuItem openItem;
     private JMenuItem runItem;
     private JMenuItem pauseItem;
@@ -133,7 +135,7 @@ public class MainFrame extends JFrame implements ActionListener {
         substModels = (Class<? extends SubstitutionModel>[]) substModList.toArray(new Class<?>[substModList.size()]);
         manager = new MainManager(this);
         manager.init(null);
-        mcmcSettingsDlg = new McmcSettingsDlg(this);
+        //mcmcSettingsDlg = new McmcSettingsDlg(this);
 
         setMinimumSize(new Dimension(500, 250));
 
@@ -172,6 +174,8 @@ public class MainFrame extends JFrame implements ActionListener {
         rnaButton.setEnabled(false);
         rnaButton.setSelected(false);
         toolBar.add(rnaButton);
+        
+        mcmcSettingsDlg = new McmcSettingsDlg(this);
         
         toolBar.addSeparator();
 

@@ -62,7 +62,7 @@ public class StructTrace extends Postprocess {
 
 	@Override
 	public String getTabName() {
-		return "Structural alignment";
+		return "Structural parameters";
 	}
 
 	@Override
@@ -277,6 +277,9 @@ public class StructTrace extends Postprocess {
 		if(!active)
 			return;
 		++count;
+		if (count > burninLength / 2) {
+			structAlign.MIN_EPSILON = 0.1;
+		}
 		if (count % refreshRate == 0) {
 			StructAlignTraceParameters currentParameters = new StructAlignTraceParameters(mcmcStep.burnIn);
 

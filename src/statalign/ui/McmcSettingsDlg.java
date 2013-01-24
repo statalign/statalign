@@ -67,7 +67,9 @@ public class McmcSettingsDlg extends JDialog implements ActionListener, KeyListe
 		automateBurnIn.setActionCommand("burnin");
 		automateBurnIn.addKeyListener(this);
 		automateBurnIn.addActionListener(this);
-		pan.add(automateBurnIn);
+		if (owner.rnaButton.isSelected()) {
+			pan.add(automateBurnIn);
+		}
 		
 		pan.add(new JLabel("Cycles after burn-in:"));
 		cycles.addKeyListener(this);
@@ -78,7 +80,9 @@ public class McmcSettingsDlg extends JDialog implements ActionListener, KeyListe
 		automateNumberOfSamples.setActionCommand("numsam");
 		automateNumberOfSamples.addKeyListener(this);
 		automateNumberOfSamples.addActionListener(this);
-		pan.add(automateNumberOfSamples);
+		if (owner.rnaButton.isSelected()) {
+			pan.add(automateNumberOfSamples);
+		}
 		
 		pan.add(new JLabel("Sampling rate:"));
 		sampRate.addKeyListener(this);
@@ -90,11 +94,15 @@ public class McmcSettingsDlg extends JDialog implements ActionListener, KeyListe
 		automateStepRate.setActionCommand("steprate");
 		automateStepRate.addKeyListener(this);
 		automateStepRate.addActionListener(this);
-		pan.add(automateStepRate);
+		if (owner.rnaButton.isSelected()) {
+			pan.add(automateStepRate);
+		}
 		
 		pan.add(new JLabel("Seed:"));
 		seed.addKeyListener(this);
 		pan.add(seed);
+		
+		//myButton.isSelected()
 		
 		
 		
