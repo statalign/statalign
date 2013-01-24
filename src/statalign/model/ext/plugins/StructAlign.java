@@ -232,15 +232,17 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		axes[0] = new double[] { 1, 0, 0 };
 		angles[0] = 0;
 		xlats[0] = new double[] { 0, 0, 0 };
-				
+						
+		
+		// alternative initializations
+		// actual initialization now occurs in beforeSampling()
+		/*
 		for(i = 1; i < axes.length; i++) {
 			Transformation initial = rotProp.propose(i);
 			axes[i] = initial.axis.toArray();
 			angles[i] = initial.rot;
 			xlats[i] = initial.xlat.toArray();
 		}
-		// alternative initialization
-		/*
 		for(i = 0; i < axes.length; i++) {
 			axes[i] = new double[] { 1, 0, 0 };
 			angles[i] = 0;
@@ -301,6 +303,12 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			paramPropWeights[i] += paramPropWPerSeq[i]*coords.length;
 
 	}
+	
+	@Override
+	public void beforeSampling(Tree tree) {
+		initLSRotations(tree);
+	}
+	
 	
 	@Override
 	public double logLikeFactor(Tree tree) {
@@ -427,7 +435,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			if(col[i] != -1)
 				numMatch++;
 		}
-		if(numMatch == 0)  // TODO temporary fix because some alignment columns are all gaps
+		if(numMatch == 0) 
 			return 1;
 		// collect indices of ungapped positions
 		int[] notgap = new int[numMatch];
@@ -1651,6 +1659,33 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			return density;
 		}
 		
+		public void lsTrans(RealMatrix A, RealMatrix B){
+			
+			int n = A.getRowDimension();
+			
+			RealMatrix C = new Array2DRowRealMatrix(new double[n][n]);
+			for(int i = 0; i < n; i++)
+				C.setEntry(i, i, 1);
+			C = C.scalarAdd(-1/ (double) n);
+			
+			SingularValueDecomposition svd = new SingularValueDecomposition(B.transpose().multiply(C).multiply(A));
+
+			// U V^T from the SVD yields the optimal rotation/reflection matrix
+			// for rotations only, use U S V^T, where S is the identity with
+			// S_{n,n} = det(U V^T)
+			double det = new LUDecomposition(svd.getU().multiply(svd.getVT())).getDeterminant();
+			RealMatrix S = new Array2DRowRealMatrix(new double[3][3]);
+			S.setEntry(0, 0, 1);
+			S.setEntry(1, 1, 1);
+			S.setEntry(2, 2, det);
+
+			// rotation = U S V^T
+			this.rotMatrix = svd.getU().multiply(S).multiply(svd.getVT());
+
+			// translation = mean(a) - mean(b) R
+			this.xlat = Funcs.meanVector(A).subtract(this.rotMatrix.preMultiply(Funcs.meanVector(B)));
+		}
+		
 		// </Transformation>
 	}
 	
@@ -1715,6 +1750,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			}
 			return mean;
 		}
+		
 	}
 
 	public Vertex sampleVertex(Tree tree){
@@ -1798,6 +1834,45 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		
 	}
 	
+	public void initLSRotations(Tree tree){
+		String[] align = tree.getState().getLeafAlign();
+		String ref = align[0];
+		for(int i = 1; i < align.length; i++){
+			ArrayList<Integer> refInds = new ArrayList<Integer>(0);
+			ArrayList<Integer> otherInds = new ArrayList<Integer>(0);
+			String other = align[i];
+			
+			int r = 0, o = 0;
+			for(int j = 0; j < align[0].length(); j++){
+				if(ref.charAt(j) != '-' & other.charAt(j) != '-'){
+					refInds.add(r);
+					otherInds.add(o);
+				}
+				r += ref.charAt(j) != '-' ? 1 : 0;
+				o += other.charAt(j) != '-' ? 1 : 0;
+			}
+			
+			double[][] refSub = getRowSub(coords[0], refInds);
+			double[][] otherSub = getRowSub(coords[i], otherInds);
+			
+			Transformation trans = new Transformation();
+			
+			trans.lsTrans(new Array2DRowRealMatrix(refSub), new Array2DRowRealMatrix(otherSub));
+			trans.fillAxisAngle();
+			axes[i] = trans.axis.toArray();
+			xlats[i] = trans.xlat.toArray();
+			angles[i]  = trans.rot;
+		}
+	}
+	
+	public double[][] getRowSub(double[][] coord, ArrayList<Integer> rows){
+		double[][] sub = new double[rows.size()][coord[0].length];
+		
+		for(int i = 0; i < sub.length; i++)
+			for(int j = 0; j < sub[0].length; j++)
+				sub[i][j] = coord[rows.get(i)][j];
+		return sub;
+	}
 	// </StructAlign>
 }
 
