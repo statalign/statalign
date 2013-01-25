@@ -647,11 +647,10 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				
 				R = R.multiply(Q);
 				
-				Transformation temp = new Transformation();
-				temp.rotMatrix = R;
-				temp = temp.fillAxisAngle();
-				axes[ind] = temp.axis.toArray();
-				angles[ind] = temp.rot;
+				Rotation temp = new Rotation(R.getData(), 1e-20);
+				
+				axes[ind] = temp.getAxis().toArray();
+				angles[ind] = temp.getAngle();
 				
 				// logProposalRatio is 0 because prior is uniform and proposal is symmetric
 				
@@ -672,8 +671,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				// transformation should be relative to reference protein
 				old.xlat = old.xlat.subtract(new ArrayRealVector(xlats[0]));
 				Transformation prop = rotProp.propose(ind);
-				axes[ind] = prop.axis.toArray();
-				angles[ind] = prop.rot;
+				axes[ind] = prop.rotMatrix.getAxis().toArray();
+				angles[ind] = prop.rotMatrix.getAngle();
 				xlats[ind] = prop.xlat.toArray();
 
 				// library density 
@@ -993,11 +992,10 @@ public class StructAlign extends ModelExtension implements ActionListener {
 					
 						R = R.multiply(Q);
 					
-						Transformation temp = new Transformation();
-						temp.rotMatrix = R;
-						temp = temp.fillAxisAngle();
-						axes[j] = temp.axis.toArray();
-						angles[j] = temp.rot;
+						Rotation temp = new Rotation(R.getData(), 1e-20);
+						
+						axes[j] = temp.getAxis().toArray();
+						angles[j] = temp.getAngle();
 					}
 					// logProposalRatio is 0 because prior is uniform and proposal is symmetric
 					
@@ -1025,8 +1023,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 					// transformation should be relative to reference protein
 					oldSub.xlat = oldSub.xlat.subtract(new ArrayRealVector(xlats[0]));
 					Transformation libProp = rotProp.propose(index);
-					axes[index] = libProp.axis.toArray();
-					angles[index] = libProp.rot;
+					axes[index] = libProp.rotMatrix.getAxis().toArray();
+					angles[index] = libProp.rotMatrix.getAngle();
 					xlats[index] = libProp.xlat.toArray();
 
 					// library density 
@@ -1041,9 +1039,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 					double[] diffxlat = new double[3];
 					for(int i = 0; i < 3; i++)
 						diffxlat[i] = xlats[index][i] - oldxlats[index][i];
-					oldSub.fillRotationMatrix();
-					libProp.fillRotationMatrix();
-					RealMatrix diffRotMat = oldSub.rotMatrix.transpose().multiply(libProp.rotMatrix);
+					Rotation diffRotMat = oldSub.rotMatrix.applyInverseTo(libProp.rotMatrix);
 
 					for(int i = 0; i < subtreeLeaves.size(); i++){
 						int j = subtreeLeaves.get(i);
@@ -1051,11 +1047,9 @@ public class StructAlign extends ModelExtension implements ActionListener {
 							for(int k = 0; k < 3; k++)
 								xlats[j][k] += diffxlat[k];
 							Transformation temp = new Transformation(axes[j], angles[j], xlats[j]);
-							temp.fillRotationMatrix();
-							temp.rotMatrix = temp.rotMatrix.multiply(diffRotMat);
-							temp.fillAxisAngle();
-							axes[j] = temp.axis.toArray();
-							angles[j] = temp.rot;
+							temp.rotMatrix = diffRotMat.applyTo(temp.rotMatrix);
+							axes[j] = temp.rotMatrix.getAxis().toArray();
+							angles[j] = temp.rotMatrix.getAngle();
 						}
 					}
 					break;
@@ -1411,7 +1405,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 						for(int n = 0; n < diff[0].length; n++)
 							ss += Math.pow(diff[m][n], 2);
 					allOptimal[k].ss = ss;
-					allOptimal[k].rotMatrix = R;
+					allOptimal[k].rotMatrix = new Rotation(R.getData(), 1e-20);
 					allOptimal[k].xlat = xlat;
 					k++;
 				}
@@ -1437,7 +1431,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			int j = 0;
 			for(int i = 0; i < library.length; i++)
 				if(library[i].ss < cutoff)
-					best[j++] = library[i].fillAxisAngle();
+					best[j++] = library[i];
 			return best;
 		}
 		
@@ -1447,13 +1441,13 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			Transformation[] library = libraries[index];
 			int n = library.length;
 			int k = Utils.generator.nextInt(n);
-			Transformation trans = new Transformation();
-			trans.axis = vonMisesFisher.simulate(kvMF, library[k].axis);
-			trans.rot = vonMises.simulate(kvM, library[k].rot);
-			trans.xlat = new ArrayRealVector(3);
+			
+			Vector3D axis = vonMisesFisher.simulate(kvMF, library[k].rotMatrix.getAxis());
+			double angle = vonMises.simulate(kvM, library[k].rotMatrix.getAngle());
+			double[] xlat = new double[3];
 			for(int i = 0; i < 3; i++)
-				trans.xlat.setEntry(i, Utils.generator.nextGaussian() * sd + library[k].xlat.getEntry(i) );			
-			return trans.fillRotationMatrix();
+				xlat[i] = Utils.generator.nextGaussian() * sd + library[k].xlat.getEntry(i);			
+			return new Transformation(axis, angle, xlat);
 		}
 		
 		/**
@@ -1537,11 +1531,11 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		 * @param v - vector to be evaluated
 		 * @return log density of distribution at @param v
 		 */
-		static double logDensity(double kappa, RealVector mean, RealVector v){
+		static double logDensity(double kappa, Vector3D mean, Vector3D v){
 			return Math.log(kappa) - Math.log(4 * Math.PI * Math.sinh(kappa)) + kappa * mean.dotProduct(v);
 		}	
 		
-		static double density(double kappa, RealVector mean, RealVector v){
+		static double density(double kappa, Vector3D mean, Vector3D v){
 			return kappa / (4 * Math.PI * Math.sinh(kappa)) * Math.exp(kappa * mean.dotProduct(v));
 		}	
 		
@@ -1552,9 +1546,9 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		 * @return - vector simulated from von Mises-Fisher distribution with given parameters
 		 */
 		// TODO replace with exact simulation method for S2 from Kent et al 2012
-		static RealVector simulate(double kappa, RealVector mean){
+		static Vector3D simulate(double kappa, Vector3D mean){
 			double b, x0, c, z, u, w;
-			int dim = mean.getDimension();
+			int dim = 3;
 			RealVector unitSphere = new ArrayRealVector(new double[dim-1]);
 			RealVector sample;
 			do {
@@ -1570,21 +1564,15 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				unitSphere.setEntry(i, Utils.generator.nextGaussian());
 			unitSphere = unitSphere.unitVector();
 			sample = unitSphere.mapMultiply(Math.pow(1-Math.pow(w,2), .5));
-			sample = sample.append(w);
+			Vector3D sample3D = new Vector3D(sample.getEntry(0), sample.getEntry(1), w);
 					  
-			// calculate axis and angle to rotate (0,0,1) to mean
-			// axis is cross product of mean and (0,0,1)
-			RealVector axis = Funcs.crossProduct(mean, new ArrayRealVector(new double[]{0,0,1}));
-			axis = axis.unitVector();
+			// calculate rotation to rotate (0,0,1) to mean
+			Rotation Q = new Rotation(new Vector3D(0, 0, 1), mean);
 			
-			// shortcut for dot(a,b) / |a||b| when a = (0,0,1) and both are unit vectors
-			double angle = Math.acos(mean.getEntry(2));
-			RealMatrix Q  = Funcs.calcRotationMatrix(axis, angle);
-					  
 			// Output simulated vector rotated to center around mean
-			sample = Q.preMultiply(sample);
+			sample3D = Q.applyTo(sample3D);
 			
-			return sample;
+			return sample3D;
 		}
 		// </vonMisesFisher>
 	}
@@ -1595,31 +1583,40 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	 *
 	 */
 	public class Transformation{
-		RealVector axis;
-		double rot;
+		//RealVector axis;
+		//double rot;
 		RealVector xlat;
-		RealMatrix rotMatrix;
+		//RealMatrix rotMatrix;
+		Rotation rotMatrix;
 		// sum of squares for coordinate sub-matrix optimal rotation
 		double ss;
 		
 		Transformation(){}
 		
-		Transformation(RealVector axis, double rot){
-			this.axis = axis;
-			this.rot = rot;
+		Transformation(Vector3D axis, double angle){
+			rotMatrix = new Rotation(axis, angle);
 		}
 		
-		Transformation(double[] axis, double rot, double[] xlat){
-			this.axis = new ArrayRealVector(axis);
-			this.rot = rot;
+		Transformation(double[] axis, double angle, double[] xlat){
+			Vector3D ax = new Vector3D(axis[0], axis[1], axis[2]);
+			rotMatrix = new Rotation(ax, angle);
 			this.xlat = new ArrayRealVector(xlat);
+		}
+		
+		Transformation(Vector3D axis, double angle, double[] xlat){
+			rotMatrix = new Rotation(axis, angle);
+			this.xlat = new ArrayRealVector(xlat);
+		}
+		
+		public RealMatrix getRealRotation(){
+			return new Array2DRowRealMatrix(rotMatrix.getMatrix());
 		}
 		
 		/**
 		 * 
 		 * @return same Transformation object with axis and angle filled
 		 */		
-		public Transformation fillAxisAngle(){
+		/* public Transformation fillAxisAngle(){
 			EigenDecomposition eigen = new EigenDecomposition(rotMatrix);
 			
 			double real = 0;
@@ -1643,7 +1640,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			// check axis
 			axis = axis.mapMultiply(Math.signum(axis.dotProduct(Funcs.crossProduct(v, rotv))));
 			return this;
-		}
+		} */
 		
 		/** 
 		 * Calculates the rotation matrix from an axis and angle
@@ -1653,7 +1650,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		 * 
 		 * @return Transformation object with rotation matrix calculated from axis and angle
 		 */
-		public Transformation fillRotationMatrix(){
+		/* public Transformation fillRotationMatrix(){
 			RealMatrix outer = axis.outerProduct(axis);
 			// use transpose of cross product matrix (as given on wikipedia) because
 			// we post-mulitply by rotation matrix (other components of final step are symmetric)
@@ -1669,11 +1666,11 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			outer = outer.scalarMultiply(1 - Math.cos(rot));
 			rotMatrix = Icos.add(crossTranspose).add(outer);
 			return this;
-		}
+		} */
 		
 		public double density(Transformation candidate, double kvM, double kvMF, double sd){
-			double density = vonMises.density(kvM, rot, candidate.rot);
-			density *= vonMisesFisher.density(kvMF, axis, candidate.axis);
+			double density = vonMises.density(kvM, rotMatrix.getAngle(), candidate.rotMatrix.getAngle());
+			density *= vonMisesFisher.density(kvMF, rotMatrix.getAxis(), candidate.rotMatrix.getAxis());
 			for(int i = 0; i < 3; i++)
 				density *= new NormalDistribution(xlat.getEntry(i), sd).density(candidate.xlat.getEntry(i));
 			return density;
@@ -1700,10 +1697,12 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			S.setEntry(2, 2, det);
 
 			// rotation = U S V^T
-			this.rotMatrix = svd.getU().multiply(S).multiply(svd.getVT());
-
+			rotMatrix = new Rotation( svd.getU().multiply(S).multiply(svd.getVT()).getData(), 1e-20 );
+			
+			RealMatrix temp = getRealRotation();
+			
 			// translation = mean(a) - mean(b) R
-			this.xlat = Funcs.meanVector(A).subtract(this.rotMatrix.preMultiply(Funcs.meanVector(B)));
+			xlat = Funcs.meanVector(A).subtract(temp.preMultiply(Funcs.meanVector(B))) ;
 		}
 		
 		// </Transformation>
@@ -1839,10 +1838,10 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			BufferedWriter out3 = new BufferedWriter(fstream3);
 			for(int i = 0; i < coords.length; i++){
 				Transformation trans = new Transformation(axes[i], angles[i], xlats[i]);
-				trans.fillRotationMatrix();
+				RealMatrix temp = trans.getRealRotation();
 				for(int j = 0; j < 3; j++){
 					for(int k = 0; k < 3; k++)
-						out3.write(trans.rotMatrix.getEntry(j, k) + "\t");
+						out3.write(temp.getEntry(j, k) + "\t");
 					out3.write("\n");
 				}
 			}
@@ -1878,10 +1877,9 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			Transformation trans = new Transformation();
 			
 			trans.lsTrans(new Array2DRowRealMatrix(refSub), new Array2DRowRealMatrix(otherSub));
-			trans.fillAxisAngle();
-			axes[i] = trans.axis.toArray();
+			axes[i] = trans.rotMatrix.getAxis().toArray();
 			xlats[i] = trans.xlat.toArray();
-			angles[i]  = trans.rot;
+			angles[i]  = trans.rotMatrix.getAngle();
 		}
 	}
 	
