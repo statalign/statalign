@@ -637,15 +637,13 @@ public class StructAlign extends ModelExtension implements ActionListener {
 					randomAxis.setEntry(i, Utils.generator.nextGaussian());
 				randomAxis.unitize();
 				
-				RealMatrix Q = Funcs.calcRotationMatrix(randomAxis, smallAngle);
-				RealMatrix R = Funcs.calcRotationMatrix(new ArrayRealVector(axes[ind]), angles[ind]);
+				Rotation Q = new Rotation(new Vector3D(randomAxis.toArray()), smallAngle);
+				Rotation R = new Rotation(new Vector3D(axes[ind]), angles[ind]);
 				
-				R = R.multiply(Q);
-				
-				Rotation temp = new Rotation(R.getData(), 1e-20);
-				
-				axes[ind] = temp.getAxis().toArray();
-				angles[ind] = temp.getAngle();
+				R = Q.applyTo(R);
+			
+				axes[ind] = R.getAxis().toArray();
+				angles[ind] = R.getAngle();
 				
 				// logProposalRatio is 0 because prior is uniform and proposal is symmetric
 				
@@ -980,21 +978,19 @@ public class StructAlign extends ModelExtension implements ActionListener {
 						randomAxis.setEntry(i, Utils.generator.nextGaussian());
 					randomAxis.unitize();
 					
-					RealMatrix Q = Funcs.calcRotationMatrix(randomAxis, smallAngle);
+					Rotation Q = new Rotation(new Vector3D(randomAxis.toArray()), smallAngle);
 					for(int i = 0; i < subtreeLeaves.size(); i++){
 						int j = subtreeLeaves.get(i);
-						RealMatrix R = Funcs.calcRotationMatrix(new ArrayRealVector(axes[j]), angles[j]);
+						Rotation R = new Rotation(new Vector3D(axes[j]), angles[j]);
 					
-						R = R.multiply(Q);
-					
-						Rotation temp = new Rotation(R.getData(), 1e-20);
+						R = Q.applyTo(R);
 						
-						axes[j] = temp.getAxis().toArray();
-						angles[j] = temp.getAngle();
+						axes[j] = R.getAxis().toArray();
+						angles[j] = R.getAngle();
 					}
 					// logProposalRatio is 0 because prior is uniform and proposal is symmetric
-					
 					break;
+					
 				case 1:
 					// translation of group of proteins
 					System.out.print("Translation: ");
@@ -1574,12 +1570,12 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		 * @param b second vector
 		 * @return cross product
 		 */
-		static RealVector crossProduct(RealVector a, RealVector b){
+		/*static RealVector crossProduct(RealVector a, RealVector b){
 			RealMatrix skew = new Array2DRowRealMatrix(
 					new double[][] {{0, -a.getEntry(2), a.getEntry(1)}, {a.getEntry(2), 0, -a.getEntry(0)},
 							{-a.getEntry(1), a.getEntry(0), 0}});
 			return skew.operate(b);
-		}		
+		}		*/
 
 		/** 
 		 * Calculates the rotation matrix from an axis and angle
@@ -1589,7 +1585,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		 * 
 		 * @return Transformation object with rotation matrix calculated from axis and angle
 		 */
-		static RealMatrix calcRotationMatrix(RealVector axis, double rot){
+		/*static RealMatrix calcRotationMatrix(RealVector axis, double rot){
 			RealMatrix outer = axis.outerProduct(axis);
 			// use transpose of cross product matrix (as given on wikipedia) because
 			// we post-multiply by rotation matrix (other components of final step are symmetric)
@@ -1604,7 +1600,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			crossTranspose = crossTranspose.scalarMultiply(Math.sin(rot));
 			outer = outer.scalarMultiply(1 - Math.cos(rot));
 			return Icos.add(crossTranspose).add(outer);
-		}
+		} */
 
 		/**
 		 * For an n X 3 coordinate matrix, calculate the 1 X 3 mean vector
