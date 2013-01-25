@@ -17,7 +17,6 @@ import org.apache.commons.math3.geometry.euclidean.threed.Rotation;
 import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.ArrayRealVector;
-import org.apache.commons.math3.linear.EigenDecomposition;
 import org.apache.commons.math3.linear.LUDecomposition;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
@@ -1035,7 +1034,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 					double[] diffxlat = new double[3];
 					for(int i = 0; i < 3; i++)
 						diffxlat[i] = xlats[index][i] - oldxlats[index][i];
-					Rotation diffRotMat = oldSub.rotMatrix.applyInverseTo(libProp.rotMatrix);
+					Rotation diffRotMat = libProp.rotMatrix.applyTo(oldSub.rotMatrix.revert());
 
 					for(int i = 0; i < subtreeLeaves.size(); i++){
 						int j = subtreeLeaves.get(i);
@@ -1255,8 +1254,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 						for(int n = 0; n < diff[0].length; n++)
 							ss += Math.pow(diff[m][n], 2);
 					allOptimal[k].ss = ss;
-					allOptimal[k].rotMatrix = new Rotation(R.getData(), 1e-20);
-					allOptimal[k].xlat = xlat;
+					allOptimal[k].rotMatrix = new Rotation(R.getData(), 1e-20).revert(); // Rotation class applies rotations
+					allOptimal[k].xlat = xlat;											 // differently, so use inverse
 					k++;
 				}
 			}	
@@ -1546,13 +1545,16 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			S.setEntry(1, 1, 1);
 			S.setEntry(2, 2, det);
 
-			// rotation = U S V^T
+			// rotation = U S V^T  
 			rotMatrix = new Rotation( svd.getU().multiply(S).multiply(svd.getVT()).getData(), 1e-20 );
 			
 			RealMatrix temp = getRealRotation();
 			
 			// translation = mean(a) - mean(b) R
 			xlat = Funcs.meanVector(A).subtract(temp.preMultiply(Funcs.meanVector(B))) ;
+			
+			// with Rotation class, use transpose (revert method)
+			rotMatrix = rotMatrix.revert();		
 		}
 		
 		// </Transformation>
