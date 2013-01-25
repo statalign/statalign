@@ -502,7 +502,7 @@ public class Vertex {
         if (left != null && right != null)
             orphanLogLike += left.orphanLogLike + right.orphanLogLike;
 
-        if (oldorphanLogLike != orphanLogLike) {
+        if (oldorphanLogLike - orphanLogLike > 1e-6) {
             new ErrorMessage(null, "Problem with orphan loglike: fast: " + oldorphanLogLike + " slow: " + orphanLogLike, true);
             int index = 0;
             while (owner.vertex[index] != this) {
