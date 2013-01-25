@@ -250,6 +250,9 @@ public class StructTrace extends Postprocess {
 			System.out.println("Rotation: " + structAlign.rotProposed + " " + structAlign.rotAccept);
 			System.out.println("Xlat: " + structAlign.xlatProposed + " " + structAlign.xlatAccept);
 			System.out.println("Library: " + structAlign.libProposed + " " + structAlign.libAccept);
+			System.out.println("Subtree rotations: " + structAlign.subtreeRotProposed + " " + structAlign.subtreeRotAccept);
+			System.out.println("Subtree alignments: " + structAlign.subtreeAlignProposed + " " + structAlign.subtreeAlignAccept);
+			System.out.println("Subtree rotation + alignment: " + structAlign.subtreeRotAlignProposed + " " + structAlign.subtreeRotAlignAccept);
 		}
 		
 		System.out.println("final translations:");
@@ -263,6 +266,9 @@ public class StructTrace extends Postprocess {
 		System.out.println("Rotation: " + structAlign.rotProposed + " " + structAlign.rotAccept);
 		System.out.println("Xlat: " + structAlign.xlatProposed + " " + structAlign.xlatAccept);
 		System.out.println("Library: " + structAlign.libProposed + " " + structAlign.libAccept);
+		System.out.println("Subtree rotations: " + structAlign.subtreeRotProposed + " " + structAlign.subtreeRotAccept);
+		System.out.println("Subtree alignments: " + structAlign.subtreeAlignProposed + " " + structAlign.subtreeAlignAccept);
+		System.out.println("Subtree rotation + alignment: " + structAlign.subtreeRotAlignProposed + " " + structAlign.subtreeRotAlignAccept);
 		//System.out.println("Tau: " + structAlign.tau + "  Epsilon: " + structAlign.epsilon);
 	}
 	
