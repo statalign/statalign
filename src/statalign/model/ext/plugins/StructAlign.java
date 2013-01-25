@@ -147,6 +147,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	int[] paramPropWeights;
 	/** Weights for proposing rotation vs translation vs library */
 	int[] rotXlatWeights= { 25, 25, 10 };
+	int[] subtreeRotXlatWeights = { 25, 25, 0};
 //	int[] rotXlatWeights= { 25, 25, 0 };	// library off
 	
 	
@@ -325,14 +326,14 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	@Override
 	public double logLikeFactor(Tree tree) {
 		String[] align = tree.getState().getLeafAlign();
-		checkConsAlign(align); // TODO Disable this once we finish testing.
+		checkConsAlign(align); 		
 		curAlign = align;
 		
 		double[][] covar = calcFullCovar(tree);
-		checkConsCovar(covar); // TODO Disable this once we finish testing.
+		checkConsCovar(covar); 
 		fullCovar = covar;
 		
-		if(!checkConsRots())
+		if(!checkConsRots() && rotCoords[0] == null)
 			calcAllRotations();
 		
 		/** TESTING
@@ -359,7 +360,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		
 		
 		double logli = calcAllColumnContrib();
-		checkConsLogLike(logli); // TODO Disable this once we finish testing.
+		checkConsLogLike(logli); 
 		curLogLike = logli;
 		
 		// testing
@@ -970,7 +971,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 					rotCoords[j] = null;	// so that calcRotation creates new array
 				}
 				
-				int rotxlat = Utils.weightedChoose(rotXlatWeights);
+				int rotxlat = Utils.weightedChoose(subtreeRotXlatWeights);
 				
 				switch(rotxlat) {
 				case 0:
