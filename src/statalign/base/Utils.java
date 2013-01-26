@@ -780,21 +780,21 @@ public class Utils{
 	 * 
 	 * @param args Arguments are not used.
 	 */
-	public static void main(String[] args){
-		for(String s : Utils.classesInPackage(Dayhoff.class.getPackage().getName()))
-			System.out.println(s);
-//		double[] w = new double[] {1,0,3,4,5};
-//		for(int i = 0; i < 10000; i++){
-//			MuDouble x = new MuDouble();
-//			int index = linearizerWeight(1000,x);
-//			System.out.println("I chose index "+index+" probability: "+x.value+" backprobability: "+
-//					linearizerWeightProb(1000,index));
-//		}
-//		for(int i = 0; i < 1000; i++){
-//			Double x = new Double(0.0);
-//
-//		}
-	}
+//	public static void main(String[] args){
+//		for(String s : Utils.classesInPackage(Dayhoff.class.getPackage().getName()))
+//			System.out.println(s);
+////		double[] w = new double[] {1,0,3,4,5};
+////		for(int i = 0; i < 10000; i++){
+////			MuDouble x = new MuDouble();
+////			int index = linearizerWeight(1000,x);
+////			System.out.println("I chose index "+index+" probability: "+x.value+" backprobability: "+
+////					linearizerWeightProb(1000,index));
+////		}
+////		for(int i = 0; i < 1000; i++){
+////			Double x = new Double(0.0);
+////
+////		}
+//	}
 }
 
 /**
