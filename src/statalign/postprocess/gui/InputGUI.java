@@ -16,6 +16,7 @@ import javax.swing.border.EtchedBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
+import statalign.io.DataType;
 import statalign.base.Input;
 import statalign.base.MainManager;
 
@@ -38,6 +39,8 @@ public class InputGUI extends JPanel implements ActionListener, ListSelectionLis
 	
 	private JList sequences;
 	DefaultListModel dlmSequences;
+	private ArrayList<JList> auxData;
+	ArrayList<DefaultListModel> dlmAuxData;
 	JButton jbDelete;
 	JButton jbDeleteAll;
 	
@@ -81,14 +84,20 @@ public class InputGUI extends JPanel implements ActionListener, ListSelectionLis
 	 * It rereads sequences from MainManager
 	 */
 	public void updateSequences(){
-		if(dlmSequences.size() > 0){
+		//if(dlmSequences.size() > 0){
 			dlmSequences.removeAllElements();
-		}
+		//}
 		if(manager.inputData.seqs != null){
 //			System.out.println("sequences size: "+manager.seqs.sequences.size()+
 //					" names size: "+manager.seqs.seqNames.size());		    
 			for(int i = 0; i < manager.inputData.seqs.sequences.size(); i++){
 				String s1 = manager.inputData.seqs.sequences.get(i);
+				String seqTitle = "<font color=\"000099\">&gt; "+manager.inputData.seqs.seqNames.get(i)+"</font>";
+				for (DataType d : manager.inputData.auxData) {
+					if (d.perSequenceData()) {
+						seqTitle += "<font color=\"C80000\"> + "+d.getSummaryAssociatedWith(manager.inputData.seqs.seqNames.get(i))+"</font>";
+					}
+				}
 				String s2 = "";
 				int length = 0;
 				for(int j = 0; j < s1.length(); j++){
@@ -100,7 +109,7 @@ public class InputGUI extends JPanel implements ActionListener, ListSelectionLis
 						}
 					}
 				}
-				dlmSequences.addElement("<html><font color=\"000099\">&gt; "+manager.inputData.seqs.seqNames.get(i)+"</font>\n<br><font face=\"Courier New\">"+s2+"</font></html>");
+				dlmSequences.addElement("<html>"+ seqTitle +"\n<br><font face=\"Courier New\">"+s2+"</font></html>");
 		    }
 		}
 		listListener();
@@ -161,6 +170,11 @@ public class InputGUI extends JPanel implements ActionListener, ListSelectionLis
 		if("Remove".equals(e.getActionCommand())) {
 			//listListener();
 			for (int i : indices) {
+				for (DataType d : manager.inputData.auxData) {
+					if (d.perSequenceData()) {
+						d.removeDataAssociatedWith(manager.inputData.seqs.seqNames.get(i));
+					}
+				}
 				manager.inputData.seqs.seqNames.remove(i);
 				manager.inputData.seqs.sequences.remove(i);
 				dlmSequences.remove(i);

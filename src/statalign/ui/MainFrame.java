@@ -491,6 +491,7 @@ public class MainFrame extends JFrame implements ActionListener {
 	                } else {
 	                	// TODO add Tree type as in console version
 	                	manager.inputData.auxData.add(data);
+	                	manager.inputgui.updateSequences();
 	                }
 //	                FileFormatReader reader = new FastaReader();
 //	                try {

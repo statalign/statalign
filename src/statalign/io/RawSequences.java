@@ -27,6 +27,16 @@ public class RawSequences implements DataType {
 	 */
 	public String alphabet;
 	
+	public boolean perSequenceData() {
+		return false;
+	}
+	public String getSummaryAssociatedWith(String sequenceName) { 
+		return sequenceName;
+	}
+	public void removeDataAssociatedWith(String sequenceName) { 
+		
+	}
+	
 	public RawSequences() {
 		sequences = new ArrayList<String>();
 		seqNames = new ArrayList<String>();

@@ -71,7 +71,7 @@ public class StatAlign{
 				mf = new MainFrame();
 				
 				if(allowVersionCheck) {
-					URL urlVersion = new URL("http://phylogeny-cafe.elte.hu/StatAlign/version.txt");
+					URL urlVersion = new URL("http://raw.github.com/statalign/statalign/master/version.txt");
 					try {
 						URLConnection connection = urlVersion.openConnection();
 						//System.out.println("Connection letrehozva");
@@ -81,7 +81,7 @@ public class StatAlign{
 							JOptionPane.showMessageDialog(mf, "You are using StatAlign "+version+
 															". StatAlign "+s+" is now available!\n"+
 															"To download the new version, please visit" +
-															" http://phylogeny-cafe.elte.hu/StatAlign/",
+															" http://statalign.github.com/statalign/",
 															"New version available!",
 															JOptionPane.INFORMATION_MESSAGE);
 						}

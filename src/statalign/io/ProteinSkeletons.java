@@ -8,10 +8,33 @@ import java.util.List;
  * only one 3d-coordinate per character (amino acid) is stored. For amino acids, this is
  * normally the spatial location of the alpha-carbon atom.
  * 
- * @author novak
+ * @author novak, herman
  */
 public class ProteinSkeletons implements DataType {
 	
+	@Override
+	public boolean perSequenceData() {
+		return true;
+	}
+	
+	@Override
+	public void removeDataAssociatedWith(String sequenceName) {
+		for (int i=0; i<names.size(); i++) {
+			if (names.get(i).toUpperCase().equals(sequenceName.toUpperCase())) {
+				names.remove(i);
+				coords.remove(i);
+			}
+		}
+	}
+	@Override
+	public String getSummaryAssociatedWith(String sequenceName) {
+		for (int i=0; i<names.size(); i++) {
+			if (names.get(i).toUpperCase().equals(sequenceName.toUpperCase())) {
+				return (names.get(i)+".pdb ("+coords.get(i).size()+" residues)");
+			}
+		}
+		return "";
+	}
 	/** names of sequences */
 	public List<String> names = new ArrayList<String>();
 	
