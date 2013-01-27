@@ -39,8 +39,6 @@ public class InputGUI extends JPanel implements ActionListener, ListSelectionLis
 	
 	private JList sequences;
 	DefaultListModel dlmSequences;
-	private ArrayList<JList> auxData;
-	ArrayList<DefaultListModel> dlmAuxData;
 	JButton jbDelete;
 	JButton jbDeleteAll;
 	
