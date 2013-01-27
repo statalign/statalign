@@ -581,7 +581,7 @@ public class Mcmc extends Stoppable {
 
 	private void sample(int samplingMethod) throws StoppedException {
 		if (samplingMethod == 0) {
-			long timer;
+			long timer = 0;
 			stoppable();
 
 			proposalWeights[5] = modelExtMan.getParamChangeWeight();

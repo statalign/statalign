@@ -75,6 +75,7 @@ public class CommandLine {
 		Options opt = new Options(args, Multiplicity.ZERO_OR_ONE, 0,
 				Integer.MAX_VALUE);
 		opt.addSet("run")
+				.addOption("debug", Separator.NONE)
 				.addOption("subst", Separator.EQUALS)
 				.addOption("mcmc", Separator.EQUALS)
 				.addOption("seed", Separator.EQUALS)
@@ -89,7 +90,11 @@ public class CommandLine {
 		if ((set = opt.getMatchingSet(false, false)) == null) {
 			return usage(null,manager);
 		}
-		else if (set.isSet("help")) {
+		if (set.isSet("debug")) {
+			Utils.DEBUG = true;
+			System.out.println("Debug mode enabled.");
+		}
+		if (set.isSet("help")) {
 			OptionData help = set.getOption("help");
 			ArrayList<String> argsVector = new ArrayList<String>();
 			for (int i = 0; i < help.getResultCount(); i++) {
