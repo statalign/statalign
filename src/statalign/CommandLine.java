@@ -26,6 +26,7 @@ import statalign.model.subst.plugins.Kimura3;
 import statalign.postprocess.PluginParameters;
 import statalign.postprocess.Postprocess;
 import statalign.postprocess.PostprocessManager;
+import statalign.model.ext.ModelExtension;
 
 public class CommandLine {
 
@@ -71,7 +72,7 @@ public class CommandLine {
 		 * System.out.println(args[i]); parsedArgs.add(args[i]); } }
 		 */
 
-		Options opt = new Options(args, Multiplicity.ZERO_OR_ONE, 1,
+		Options opt = new Options(args, Multiplicity.ZERO_OR_ONE, 0,
 				Integer.MAX_VALUE);
 		opt.addSet("run")
 				.addOption("subst", Separator.EQUALS)
@@ -80,11 +81,53 @@ public class CommandLine {
 				.addOption("ot", Separator.EQUALS)
 				.addOption("log", Separator.EQUALS)
 				.addOption("plugin", Separator.COLON, Multiplicity.ZERO_OR_MORE)
+				.addOption("help", Separator.COLON, Multiplicity.ZERO_OR_MORE)
+				.addOption("list", Separator.COLON, Multiplicity.ZERO_OR_MORE)
 				.addOption("automate", Separator.EQUALS, Multiplicity.ZERO_OR_ONE);
 
 		OptionSet set;
 		if ((set = opt.getMatchingSet(false, false)) == null) {
-			return usage(manager);
+			return usage(null,manager);
+		}
+		else if (set.isSet("help")) {
+			OptionData help = set.getOption("help");
+			ArrayList<String> argsVector = new ArrayList<String>();
+			for (int i = 0; i < help.getResultCount(); i++) {
+				argsVector.add(help.getResultValue(i)); 
+			}
+			return usage(argsVector,manager);
+		}
+		else if (set.isSet("list")) {
+			OptionData list = set.getOption("list");
+			for (int i = 0; i < list.getResultCount(); i++) {
+				if (list.getResultValue(i).equals("subst")) {
+					System.out.println("Available substitition models:\n");
+					for (String model : substModNames) {
+						try {
+							String simpleName = Class.forName(model).getSimpleName();
+							System.out.print("\t" + simpleName);
+							if (simpleName.equals("Kimura3")) {
+								System.out.print("\t\t(Default for DNA)");							
+							}
+							else if (simpleName.equals("Dayhoff")) {
+								System.out.print("\t\t(Default for proteins)");
+							}
+						}
+						catch (ClassNotFoundException e) {
+							System.out.println("Substitution model "+model+" has no matching class.");
+						}
+						System.out.println();						
+					}
+				}
+				else if (list.getResultValue(i).equals("plugin") || list.getResultValue(i).equals("plugins")) {
+					System.out.println("Available plugins:\n");
+					List<ModelExtension> pluginList = Utils.findPlugins(ModelExtension.class);
+					for (ModelExtension plugin : pluginList) {
+						System.out.println(plugin.getPluginID()+" ("+(plugin.isActive() ? "active" : "inactive")+")\n");
+					}
+				}
+			}
+			return 1;
 		}
 
 //		FastaReader f = new FastaReader();
@@ -229,24 +272,6 @@ public class CommandLine {
 				}
 			}
 
-			if (set.isSet("log")) {
-				String log = set.getOption("log").getResultValue(0);
-				String[] keys = log.split(",");
-				List<Postprocess> pps = manager.postProcMan.getPlugins();
-
-				for (Postprocess pp : pps)
-					pp.sampling = false;
-
-				for (String key : keys) {
-					try {
-						pps.get(postprocAbbr.get(key.toUpperCase())).sampling = true;
-					} catch (NullPointerException e) {
-						return error("Log file entry code list not recognised: "
-								+ log);
-					}
-				}
-			}
-
 			// retrieve all parameters starting with plugin:
 			OptionData plugins = set.getOption("plugin");
 			ArrayList<String> argsVector = new ArrayList<String>();
@@ -292,6 +317,24 @@ public class CommandLine {
 					AutomateParameters.setAutomateStepRate(true);
 					AutomateParameters.setAutomateNumberOfSamples(true);
 				}*/
+				
+				if (set.isSet("log")) {
+					String log = set.getOption("log").getResultValue(0);
+					String[] keys = log.split(",");
+					List<Postprocess> pps = manager.postProcMan.getPlugins();
+
+					for (Postprocess pp : pps)
+						pp.sampling = false;
+
+					for (String key : keys) {
+						try {
+							pps.get(postprocAbbr.get(key.toUpperCase())).sampling = true;
+						} catch (NullPointerException e) {
+							return error("Log file entry code list not recognised: "
+									+ log);
+						}
+					}
+				}
 			}
 
 		} catch (Exception e) {
@@ -302,75 +345,101 @@ public class CommandLine {
 		return 0;
 	}
 
-	private String getUsageString(MainManager man) {
+	private String getUsageString(ArrayList<String> args, MainManager man) {
 		StringBuilder sb = new StringBuilder();
-
-		sb.append("Usage:\n\n");
-		if (isParallel) {
-			// TODO: this.
-			sb.append("    <depends> statalign.jar [options] seqfile1 [seqfile2 ...]\n\n\n");
-		} else {
-			sb.append("    java -Xmx512m -jar statalign.jar [options] seqfile1 [seqfile2 ...]\n\n\n");
-		}
-
-		sb.append("Description:\n\n");
-		sb.append("    StatAlign can be used for Bayesian analysis of protein, DNA and RNA\n");
-		sb.append("    sequences. Multiple alignments, phylogenetic trees and evolutionary\n");
-		sb.append("    parameters are co-estimated in a Markov Chain Monte Carlo framework.\n");
-		sb.append("    The input sequence files must be in Fasta format.\n\n\n");
-
-		sb.append("Options:\n\n");
-
-		sb.append("    -subst=MODEL\n");
-		sb.append("        Lets you select from the present substitution models (see list below)\n");
-		sb.append("        Default: " + Kimura3.class.getSimpleName()
-				+ " (for DNA/RNA data), " + Dayhoff.class.getSimpleName()
-				+ " (for protein data)\n\n");
-
-		if (isParallel) {
-			sb.append("    -mcmc=burn,cycl,samprate,swaprate\n");
-			sb.append("        Sets MCMC parameters: burn-in, cycles after burn-in, sampling rate, swap rate.\n");
-			sb.append("          Abbreviations k and m mean 1e3 and 1e6 factors.\n");
-			sb.append("        Default: 10k,100k,1k,100\n\n");
-		} else {
-			sb.append("    -mcmc=burn,cycl,rate\n");
-			sb.append("        Sets MCMC parameters: burn-in, cycles after burn-in, sampling rate.\n");
-			sb.append("          Abbreviations k and m mean 1e3 and 1e6 factors.\n");
-			sb.append("        Default: 10k,100k,1k\n\n");
-		}
 		
-		sb.append("    -automate=burn,cycl,rate\n");
-		sb.append("        Automate MCMC parameters: burn-in, cycles after burn-in, sampling rate.\n");
-		sb.append("        Select which parameters to automate by listing one or more of: burn, cycl, rate\n\n");
-		
-		sb.append("    -plugins:ppfold,rnaalifold\n");
-		sb.append("        Specify which RNA plugins you want to run and the corresponding parameters for each.\n");
-		sb.append("        Each plugin should be specified seperately, e.g. -plugin:ppfold plugin:rnaalifold\n");
-		sb.append("        Currently only the RNAalifold plugin takes additional options.\n");
-		sb.append("        For RNAalifold you should specify the path of the RNAalifold executable followed by the  RNAalifold command-line options in inverted commas.\n");
-		sb.append("        e.g. -plugin:rnalifold=\"C:\\ViennaRNA\\RNAalifold.exe -T 37 -cv 1\"\n\n");
+		if (args == null || args.size() == 0) {
 
-		sb.append("    -seed=value\n");
-		sb.append("        Sets the random seed (same value will reproduce same results for\n");
-		sb.append("          identical input and settings)\n");
-		sb.append("        Default: 1\n\n");
+			sb.append("Usage:\n\n");
 
-		sb.append("    -ot=OUTTYPE\n");
-		sb.append("        Sets output alignment type.\n");
-		sb.append("          (One of: "
-				+ Utils.joinStrings(MainManager.alignmentTypes, ", ") + ")\n");
-		sb.append("        Default: " + MainManager.alignmentTypes[0] + "\n\n");
-
-		sb.append("    -log=["
-				+ Utils.joinStrings(postprocAbbr.keySet().toArray(), "][,")
-				+ "]\n");
-		sb.append("        Lets you customise what is written into the log file (one entry\n");
-		sb.append("        for each sample).\n");
-		sb.append(buildPpListStr(man, "          "));
-		sb.append("        Default: " + buildDefPpList(man) + "\n\n");
-		
+			if (isParallel) {
+				// TODO: this.
+				sb.append("    <depends> statalign.jar [options] seqfile1 [seqfile2 ...]\n\n\n");
+			} else {
+				sb.append("    java -Xmx512m -jar statalign.jar [options] seqfile1 [seqfile2 ...]\n\n\n");
+			}
 	
-
+			sb.append("Description:\n\n");
+			sb.append("    StatAlign can be used for Bayesian analysis of protein, DNA and RNA\n");
+			sb.append("    sequences. Multiple alignments, phylogenetic trees and evolutionary\n");
+			sb.append("    parameters are co-estimated in a Markov Chain Monte Carlo framework.\n");
+			sb.append("    The input sequence files must be in Fasta format.\n\n\n");
+	
+			sb.append("Options:\n\n");
+	
+			sb.append("    -subst=MODEL\n");
+			sb.append("        Select from the present substitution models (for full list, see \"-list:subst\").\n");
+			sb.append("        Default: " + Kimura3.class.getSimpleName()
+					+ " (for DNA/RNA data), " + Dayhoff.class.getSimpleName()
+					+ " (for protein data)\n\n");
+			
+			if (isParallel) {
+				sb.append("    -mcmc=burn,cycl,samprate,swaprate\n");
+				sb.append("        Sets MCMC parameters: burn-in, cycles after burn-in, sampling rate, swap rate.\n");
+				sb.append("          Abbreviations k and m mean 1e3 and 1e6 factors.\n");
+				sb.append("        Default: 10k,100k,1k,100\n\n");
+			} else {
+				sb.append("    -mcmc=burn,cycl,rate\n");
+				sb.append("        Sets MCMC parameters: burn-in, cycles after burn-in, sampling rate.\n");
+				sb.append("          Abbreviations k and m mean 1e3 and 1e6 factors.\n");
+				sb.append("        Default: 10k,100k,1k\n\n");
+			}
+			
+			sb.append("    -automate=burn,cycl,rate\n");
+			sb.append("        Automate MCMC parameters: burn-in, cycles after burn-in, sampling rate.\n");
+			sb.append("        Select which parameters to automate by listing one or more of: burn, cycl, rate\n\n");
+			
+			sb.append("    -plugin:PLUGIN_NAME\n");
+			sb.append("        Specify additional plugins to be run and the corresponding parameters for each.\n");
+			sb.append("        Each plugin should be specified seperately, e.g. -plugin:ppfold -plugin:rnaalifold\n");
+			sb.append("        For additional usage information for a specific plugin, use -help:PLUGIN_NAME.\n\n");
+			
+			sb.append("    -help:PLUGIN_NAME\n");
+			sb.append("        Prints usage information for the specified plugin.\n\n");			
+	
+			sb.append("    -list:subst\n");
+			sb.append("        Prints the list of available substition models.\n\n");			
+	
+			sb.append("    -list:plugin\n");
+			sb.append("        Prints the list of available model extension plugins.\n\n");
+			
+			sb.append("    -seed=value\n");
+			sb.append("        Sets the random seed (same value will reproduce same results for\n");
+			sb.append("          identical input and settings)\n");
+			sb.append("        Default: 1\n\n");
+	
+			sb.append("    -ot=OUTTYPE\n");
+			sb.append("        Sets output alignment type.\n");
+			sb.append("          (One of: "
+					+ Utils.joinStrings(MainManager.alignmentTypes, ", ") + ")\n");
+			sb.append("        Default: " + MainManager.alignmentTypes[0] + "\n\n");
+	
+			sb.append("    -log=["
+					+ Utils.joinStrings(postprocAbbr.keySet().toArray(), "][,")
+					+ "]\n");
+			sb.append("        Lets you customise what is written into the log file (one entry\n");
+			sb.append("        for each sample).\n");
+			sb.append(buildPpListStr(man, "          "));
+			sb.append("        Default: " + buildDefPpList(man) + "\n\n");
+		}
+		else {
+			List<ModelExtension> pluginList = Utils.findPlugins(ModelExtension.class);
+			// TODO Maybe also want to display info for postprocessing plugins?
+			for (int i=0; i<args.size(); i++) {
+				System.out.println("help:"+args.get(i)+"\n");
+				boolean pluginFound = false;
+				for (ModelExtension plugin : pluginList) {
+					if (args.get(i).equals(plugin.getPluginID())) {
+						sb.append(plugin.getUsageInfo());
+						pluginFound = true;
+						continue;
+					}
+				}
+				if (!pluginFound) {
+					throw new IllegalArgumentException("No information available for '"+args.get(i)+"'\n");
+				}
+			}
+		}
 		return sb.toString();
 	}
 
@@ -396,14 +465,12 @@ public class CommandLine {
 		return result;
 	}
 
-	private int usage(MainManager man) {
-		System.out.println(getUsageString(man));
-		System.out.println("\nList of available substitution models:");
-		for (String model : substModNames) {
-			try {
-				System.out.println("\t" + Class.forName(model).getSimpleName());
-			} catch (Exception e) {
-			}
+	private int usage(ArrayList<String> args, MainManager man) {
+		try {
+			System.out.println(getUsageString(args,man));
+		}
+		catch (IllegalArgumentException e) {
+			System.out.println(e.getMessage());
 		}
 		return 1;
 	}

@@ -35,6 +35,18 @@ public abstract class ModelExtension {
 	}
 
 	/**
+	 * Prints the usage information for this plugin.
+	 */
+	public String getUsageInfo() {
+		return "Currently no information available for this plugin";
+	}
+	/**
+	 * @return The command line identifier string for the plugin. 
+	 */
+	public String getPluginID() {
+		return null;
+	}
+	/**
 	 * @return <code>true</code> if this plugin is active
 	 */
 	public boolean isActive() {

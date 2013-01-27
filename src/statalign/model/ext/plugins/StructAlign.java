@@ -43,7 +43,13 @@ import cern.jet.math.Bessel;
 public class StructAlign extends ModelExtension implements ActionListener {
 	
 	/** The command line identifier of this plugin */
-	private static final String CMD_LINE_PLUGIN_ID = "structal";
+	//private static final String CMD_LINE_PLUGIN_ID = "structal";
+	private final String pluginID = "structal";
+	
+	@Override
+	public String getPluginID() {
+		return pluginID;
+	}
 	
 	JToggleButton myButton;
 
@@ -184,6 +190,16 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		setActive(myButton.isSelected());
 	}
 	
+
+	@Override
+	public String getUsageInfo() {
+		StringBuilder usage = new StringBuilder();
+		usage.append("StructAlign version 1.0\n\n");
+		usage.append("java -jar statalign.jar -plugin:structal=[OPTIONS]\n");
+		
+		return usage.toString();
+	}
+
 	@Override
 	public void setActive(boolean active) {
 		super.setActive(active);
@@ -192,7 +208,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	
 	@Override
 	public void init(PluginParameters params) {
-		if(params != null && params.getParameter(CMD_LINE_PLUGIN_ID) != null) {
+		if(params != null && params.getParameter(pluginID) != null) {
 			// TODO parse plugin parameters
 			setActive(true);
 		}
