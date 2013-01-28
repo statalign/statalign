@@ -13,8 +13,9 @@ public class RotationMove extends RotationOrTranslationMove {
 
 	StructAlign owner;
 	
-	public RotationMove (StructAlign s) {
+	public RotationMove (StructAlign s, String n) {
 		owner = s;
+		name = n;
 		omit = 1;
 	}
 

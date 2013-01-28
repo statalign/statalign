@@ -29,11 +29,12 @@ public abstract class ModelExtension {
 	
 	protected boolean active;
 	
-	protected List<McmcMove> mcmcMoves;
-	void addMcmcMove(McmcMove m) {
+	private List<McmcMove<Object>> mcmcMoves;
+	protected void addMcmcMove(McmcMove<Object> m, int weight) {
 		mcmcMoves.add(m);
+		mcmcMoveWeights.add(weight);
 	}
-	public List<McmcMove> getMcmcMoves() {
+	public List<McmcMove<Object>> getMcmcMoves() {
 		return mcmcMoves;
 	}
 	protected List<Integer> mcmcMoveWeights;
@@ -177,6 +178,7 @@ public abstract class ModelExtension {
 	
 	public void modifyProposalWidths() {
 		for (McmcMove m : mcmcMoves) {
+			if (!m.autoTune) { continue; }
 			if (m.proposalCount > Utils.MIN_SAMPLES_FOR_ACC_ESTIMATE) {
 				if (m.acceptanceRate() < Utils.MIN_ACCEPTANCE) {
 					m.proposalWidthControlVariable *= Utils.SPAN_MULTIPLIER;

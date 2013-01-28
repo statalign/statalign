@@ -1,15 +1,19 @@
 package statalign.model.ext;
 
 import statalign.model.ext.ModelExtension;
+import statalign.model.ext.PriorDistribution;
 
-public abstract class McmcMove {
 
-	ModelExtension owner;
+public abstract class McmcMove<T> {
+
+	protected ModelExtension owner;
+	protected PriorDistribution<T> prior;
+	
+	public int proposalCount = 0;
+	public int acceptanceCount = 0;
+	public boolean lastMoveAccepted = false;
+	
 	public String name;
-	//public T value;
-	public int proposalCount;
-	public int acceptanceCount;
-	public boolean lastMoveAccepted;
 	public double proposalWidthControlVariable;
 	public boolean autoTune;
 	
@@ -18,7 +22,10 @@ public abstract class McmcMove {
 	}
 	
 	public abstract void copyState();
-	public abstract double proposal(Object externalState); // Returns logProposalRatio
+	public abstract double proposal(Object externalState); 
+	// Modifies variables and returns logProposalRatio
+	
+	public abstract double logPriorDensity(Object externalState);
 	public abstract void updateLikelihood(Object externalState); 
 	public abstract void restoreState();
 	
@@ -26,7 +33,9 @@ public abstract class McmcMove {
 		
 		proposalCount++;
 		copyState();
-		double logProposalRatio = proposal(externalState);
+		double logProposalRatio = -logPriorDensity(externalState);
+		logProposalRatio = proposal(externalState); 
+		logProposalRatio += logPriorDensity(externalState);
 		updateLikelihood(externalState);
 		if(owner.isParamChangeAccepted(logProposalRatio)) {
 			acceptanceCount++;

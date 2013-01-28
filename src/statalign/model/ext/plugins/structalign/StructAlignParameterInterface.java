@@ -5,15 +5,20 @@ import statalign.model.ext.plugins.StructAlign;
 // I wish Java allowed pointers and proper functors...
 
 public class StructAlignParameterInterface {
+	private StructAlign structAlign;
+	public StructAlignParameterInterface(StructAlign s) {
+		structAlign = s;
+	}
 	public interface ParameterInterface {
 		abstract double get();
 		abstract void set(double x);
 	}
 	public class Sigma2Interface implements ParameterInterface {
-		private StructAlign structAlign;
 		private int index;
-		public Sigma2Interface(StructAlign s,int i) {
-			structAlign = s;
+		public int getIndex() {
+			return index;
+		}
+		public Sigma2Interface(int i) {
 			index = i;
 		}
 		public double get() {
@@ -24,10 +29,6 @@ public class StructAlignParameterInterface {
 		}
 	}
 	public class Sigma2HInterface implements ParameterInterface {
-		private StructAlign structAlign;
-		public Sigma2HInterface(StructAlign s) {
-			structAlign = s;
-		}
 		public double get() {
 			return structAlign.sigma2Hier;
 		}
@@ -36,10 +37,6 @@ public class StructAlignParameterInterface {
 		}
 	}
 	public class NuInterface implements ParameterInterface {
-		private StructAlign structAlign;
-		public NuInterface(StructAlign s) {
-			structAlign = s;
-		}
 		public double get() {
 			return structAlign.nu;
 		}
@@ -48,10 +45,6 @@ public class StructAlignParameterInterface {
 		}
 	}
 	public class TauInterface implements ParameterInterface {
-		StructAlign structAlign;
-		public TauInterface(StructAlign s) {
-			structAlign = s;
-		}
 		public double get() {
 			return structAlign.tau;
 		}
@@ -60,10 +53,6 @@ public class StructAlignParameterInterface {
 		}
 	}
 	public class EpsilonInterface implements ParameterInterface {
-		StructAlign structAlign;
-		public EpsilonInterface(StructAlign s) {
-			structAlign = s;
-		}
 		public double get() {
 			return structAlign.epsilon;
 		}

@@ -17,6 +17,13 @@ import statalign.model.ext.plugins.structalign.Transformation;
 
 public class Funcs{
 
+	public static double[][] getSubMatrix(double[][] matrix, int[] rows, int[] cols) {
+		double[][] submat = new double[rows.length][cols.length];
+		for(int i = 0; i < rows.length; i++)
+			for(int j = 0; j < cols.length; j++)
+				submat[i][j] = matrix[rows[i]][cols[j]];
+		return submat;
+	}
 	/** Calculates the cross product of 2 vectors
 	 * 
 	 * @param a first vector

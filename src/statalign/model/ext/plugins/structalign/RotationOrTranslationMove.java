@@ -6,7 +6,7 @@ import statalign.base.Utils;
 import statalign.model.ext.McmcMove;
 import statalign.model.ext.plugins.StructAlign;
 
-public abstract class RotationOrTranslationMove extends McmcMove {
+public abstract class RotationOrTranslationMove extends McmcMove<Double> {
 
 	StructAlign owner;
 	
@@ -32,6 +32,10 @@ public abstract class RotationOrTranslationMove extends McmcMove {
 
 	public abstract double proposal(Object externalState);
 	
+	public double logPriorDensity(Object externalState) {
+		return 0; // Uniform prior
+	}
+
 	public void updateLikelihood(Object externalState) {
 		owner.calcRotation(ind);
 		owner.curLogLike = owner.calcAllColumnContrib();

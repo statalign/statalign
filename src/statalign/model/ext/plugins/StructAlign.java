@@ -32,6 +32,7 @@ import statalign.base.hmm.Hmm;
 import statalign.io.DataType;
 import statalign.io.ProteinSkeletons;
 import statalign.model.ext.ModelExtension;
+import statalign.model.ext.GammaPrior;
 import statalign.model.ext.plugins.structalign.*;
 import statalign.model.ext.plugins.structalign.StructAlignParameterInterface.*;
 
@@ -100,24 +101,27 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	private double oldLogLi;
 	
 	
-	
-	
 	/** Priors */
-	// tau - gamma prior, uses shape/scale parameterization
-	GammaDistribution tauPrior = new GammaDistribution(1, 100);
+	private double sigma2PriorShape = 0.001;
+	private double sigma2PriorRate = 0.001;
+	public GammaPrior sigma2Prior = new GammaPrior(sigma2PriorShape,sigma2PriorRate);
 	
-	// epsilon - gamma prior
-	GammaDistribution epsilonPrior = new GammaDistribution(1, 100);
+	private double tauPriorShape = 0.001;
+	private double tauPriorRate = 0.001;
+	public GammaPrior tauPrior = new GammaPrior(tauPriorShape,tauPriorRate);
 	
-	// sigma2Hier - gamma prior
-	GammaDistribution sigma2HPrior = new GammaDistribution(1, 100);
+	private double epsilonPriorShape = 0.001;
+	private double epsilonPriorRate = 0.001;
+	public GammaPrior epsilonPrior = new GammaPrior(epsilonPriorShape,epsilonPriorRate);
 	
-	// nu - gamma prior
-	GammaDistribution nuPrior = new GammaDistribution(1, 100);
+	private double sigma2HPriorShape = 0.001;
+	private double sigma2HPriorRate = 0.001;
+	public GammaPrior sigma2HPrior = new GammaPrior(sigma2HPriorShape,sigma2HPriorRate);
 	
-	// initialize hierarchical distribution for sigma2
-	GammaDistribution sigma2HierDist = new GammaDistribution(nu, sigma2Hier / nu);
-
+	private double nuPriorShape = 0.001;
+	private double nuPriorRate = 0.001;
+	public GammaPrior nuPrior = new GammaPrior(nuPriorShape,nuPriorRate);
+	
 	// priors for rotation and translation are uniform
 	// so do not need to be included in M-H ratio
 	
@@ -146,7 +150,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	public static final double angleP = 1000;
 	public static final double xlatP = .1;
 	
-	public double MIN_EPSILON = 2;
+	public final double MIN_EPSILON = 0.1;
 	
 	@Override
 	public List<JComponent> getToolBarItems() {
@@ -266,34 +270,46 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		paramPropWeights = Utils.copyOf(paramPropWConst);
 		for(i = 0; i < paramPropWeights.length; i++)
 			paramPropWeights[i] += paramPropWPerSeq[i]*coords.length;
-
-		mcmcMoves.add(new RotationMove(this));
-		mcmcMoveWeights.add(10); // change to correct weight
-		mcmcMoves.add(new TranslationMove(this));
-		mcmcMoveWeights.add(10); // change to correct weight
-		mcmcMoves.add(new LibraryMove(this));
-		mcmcMoveWeights.add(10); // change to correct weight
 		
-		StructAlignParameterInterface paramInterfaceGenerator = new StructAlignParameterInterface(); 
+		addMcmcMove(new RotationMove(this,"rotation"),10); // change to correct weight
+		addMcmcMove(new TranslationMove(this,"translation"),10); // change to correct weight
+		addMcmcMove(new LibraryMove(this,"library"),10); // change to correct weight
+				
+		StructAlignParameterInterface paramInterfaceGenerator = new StructAlignParameterInterface(this); 
 		
-		ParameterInterface tauInterface = paramInterfaceGenerator.new TauInterface(this);
-		mcmcMoves.add(new ContinuousPositiveParameterMove(this,tauInterface));
-		mcmcMoveWeights.add(10); // change to correct weight
+		ParameterInterface tauInterface = paramInterfaceGenerator.new TauInterface();
+		ContinuousPositiveParmameterMove tauMove = 
+			new ContinuousPositiveParameterMove(this,tauInterface,tauPrior,"tau");
+		addMcmcMove(tauMove,10); // change to correct weight
 		
-		ParameterInterface epsilonInterface = paramInterfaceGenerator.new EpsilonInterface(this);
-		mcmcMoves.add(new ContinuousPositiveParameterMove(this,epsilonInterface));
-		mcmcMoveWeights.add(10); // change to correct weight
-		
+		ParameterInterface epsilonInterface = paramInterfaceGenerator.new EpsilonInterface();
+		ContinuousPositiveParmameterMove epsilonMove = 
+			new ContinuousPositiveParameterMove(this,epsilonInterface,epsilonPrior,"epsilon");
+		epsilonMove.setMinValue(MIN_EPSILON);
+		addMcmcMove(epsilonMove,10); // change to correct weight
+				
+		HierarchicalContinuousPositiveParmameterMove sigma2HMove;
+		HierarchicalContinuousPositiveParmameterMove nuMove; 
 		if (!globalSigma) {
-			ParameterInterface sigma2HInterface = paramInterfaceGenerator.new Sigma2HInterface(this);
-			mcmcMoves.add(new ContinuousPositiveParameterMove(this,sigma2HInterface));
-			mcmcMoveWeights.add(10); // change to correct weight
+			ParameterInterface sigma2HInterface = paramInterfaceGenerator.new Sigma2HInterface();
+			sigma2HMove = new ContinuousPositiveParameterMove(this,sigma2HInterface,sigma2HPrior,"sigma2Hier");
+			addMcmcMove(new ContinuousPositiveParameterMove(this,sigma2HInterface),10); // change to correct weight
+			
+			ParameterInterface nuInterface = paramInterfaceGenerator.new NuInterface();
+			nuMove = new ContinuousPositiveParameterMove(this,nuInterface,nuPrior,"nu");
+			addMcmcMove(new ContinuousPositiveParameterMove(this,nuInterface),10); // change to correct weight
 		}
 		
 		for (int j=0; j<sigma2.length; j++) {
-			ParameterInterface sigma2Interface = paramInterfaceGenerator.new Sigma2Interface(this,j);
-			mcmcMoves.add(new ContinuousPositiveParameterMove(this,sigma2Interface));
-			mcmcMoveWeights.add(10); // change to correct weight
+			ParameterInterface sigma2Interface = paramInterfaceGenerator.new Sigma2Interface(j);
+			ContinuousPositiveParameterMove m = new ContinuousPositiveParameterMove(
+														this,sigma2Interface,
+														sigma2Prior,"sigma2_"+i);
+			addMcmcMoves(m,10); // change to correct weight
+			if (!globalSigma) {
+				sigma2HMove.addChildMove(m);
+				nuMove.addChildMove(m);
+			}
 		}
 	}
 	
@@ -440,7 +456,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				notgap[j++] = i;
 		
 		// extract covariance corresponding to ungapped positions
-		double[][] subCovar = getSubMatrix(fullCovar, notgap, notgap);
+		double[][] subCovar = Funcs.getSubMatrix(fullCovar, notgap, notgap);
 		// create normal distribution with mean 0 and covariance subCovar
 		MultiNormCholesky multiNorm = new MultiNormCholesky(new double[numMatch], subCovar);
 		
@@ -466,14 +482,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	 * @param matrix, 2d array from which to extract; rows, rows to extract; cols, columns to extract
 	 * @return submatrix
 	 */
-	public double[][] getSubMatrix(double[][] matrix, int[] rows, int[] cols) {
-		double[][] submat = new double[rows.length][cols.length];
-		for(int i = 0; i < rows.length; i++)
-			for(int j = 0; j < cols.length; j++)
-				submat[i][j] = matrix[rows[i]][cols[j]];
-		return submat;
-	}
-	
+		
 	private void calcAllRotations() {
 		for(int i = 0; i < coords.length; i++)
 			calcRotation(i);
@@ -594,10 +603,10 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		return pluginProposalWeight;
 	}
 
-	@Override
+/**	@Override
 	public void proposeParamChange(Tree tree) {
+	
 		
-			
 			int sigmaInd = 0;
 			if(param == 1 && !globalSigma) {	// select sigma to propose if not global
 				sigmaInd = Utils.generator.nextInt(2*coords.length-2);
@@ -985,7 +994,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		}
 		
 	}
-	
+	*/
 	@Override
 	public double logLikeModExtParamChange(Tree tree, ModelExtension ext) {
 		// current log-likelihood always precomputed (regardless of whether ext == this)
