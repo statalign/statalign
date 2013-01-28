@@ -29,13 +29,21 @@ public abstract class ModelExtension {
 	
 	protected boolean active;
 	
-	private List<McmcMove> mcmcMoves;
+	private ArrayList<McmcMove> mcmcMoves;
 	protected void addMcmcMove(McmcMove m, int weight) {
 		mcmcMoves.add(m);
 		mcmcMoveWeights.add(weight);
 	}
 	public List<McmcMove> getMcmcMoves() {
 		return mcmcMoves;
+	}
+	public McmcMove getMcmcMove(String name) {
+		for (McmcMove mcmcMove : mcmcMoves) {
+			if (mcmcMove.name.equals(name)) {
+				return mcmcMove;
+			}
+		}
+		throw new RuntimeException("McmcMove "+name+" not found.");
 	}
 	protected List<Integer> mcmcMoveWeights;
 	

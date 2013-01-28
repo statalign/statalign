@@ -132,6 +132,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	int[] subtreeRotXlatWeights = { 25, 25, 0};
 //	int[] rotXlatWeights= { 25, 25, 0 };	// library off
 	
+	RotationMove rotationMove;
+	
 	
 	/** Default proposal weights in this order: 
 	 *  align, topology, edge, indel param, subst param, modelext param 

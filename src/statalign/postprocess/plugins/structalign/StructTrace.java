@@ -101,22 +101,12 @@ public class StructTrace extends Postprocess {
 			for (McmcMove mcmcMove : structAlign.getMcmcMoves()) {
 				if (mcmcMove.getParam() != null) {
 					outputFile.write(mcmcMove.name+"\t");
+					outputFile.write(mcmcMove.name+" (Proposed)\t");
 				}
 			}				
 			outputFile.write("\n");
 		} catch (IOException e) {
 		}
-		lastSigmaProp = null;
-		lastTauProp = 0;
-		lastEpsilonProp = 0;
-		lastSigma2HProp = 0;
-		lastNuProp = 0;
-		
-		sigma2Proposed = null;
-		tauProposed = 0;
-		epsilonProposed = 0;
-		sigma2HProposed = 0;
-		nuProposed = 0;
 		
 		if(show) {
 			pan.removeAll();
@@ -189,14 +179,17 @@ public class StructTrace extends Postprocess {
 		System.out.println();
 	}
 	
+	int tauProposed = 0;
+	int epsilonProposed = 0;
+	int nuProposed = 0;
+	int sigma2HProposed = 0;
+	int[] sigma2Proposed = null;
+	
 	@Override
 	public void newStep(McmcStep mcmcStep) {
 		if(!active)
 			return;
 		++count;
-		if (count > burninLength / 2) {
-			structAlign.MIN_EPSILON = 0.1;
-		}
 		if (count % refreshRate == 0) {
 			StructAlignTraceParameters currentParameters = new StructAlignTraceParameters(mcmcStep.burnIn);
 			/*
@@ -205,34 +198,34 @@ public class StructTrace extends Postprocess {
 			currentParameters.globalSigma = structAlign.globalSigma;
 
 			currentParameters.tau = structAlign.tau;
-			if (structAlign.proposalCounts[structAlign.tauInd] != tauProposed) {
+			if (structAlign.getMcmcMove("tau").proposalCount != tauProposed) {
 				currentParameters.tauProposed = true;
-				tauProposed = structAlign.proposalCounts[structAlign.tauInd];
+				tauProposed = structAlign.getMcmcMove("tau").proposalCount;
 			}
 			else {
 				currentParameters.tauProposed = false;
 			}
 			currentParameters.epsilon = structAlign.epsilon;
-			if (structAlign.proposalCounts[structAlign.epsilonInd] != epsilonProposed) {
+			if (structAlign.getMcmcMove("epsilon").proposalCount != epsilonProposed) {
 				currentParameters.epsilonProposed = true;
-				epsilonProposed = structAlign.proposalCounts[structAlign.epsilonInd];
+				epsilonProposed = structAlign.getMcmcMove("epsilon").proposalCount;
 			}
 			else {
 				currentParameters.epsilonProposed = false;
 			}
 			if (!currentParameters.globalSigma) {
 				currentParameters.nu = structAlign.nu;
-				if (structAlign.proposalCounts[structAlign.nuInd] != nuProposed) {
+				if (structAlign.getMcmcMove("nu").proposalCount != nuProposed) {
 					currentParameters.nuProposed = true;
-					nuProposed = structAlign.proposalCounts[structAlign.nuInd];
+					tauProposed = structAlign.getMcmcMove("nu").proposalCount;
 				}
 				else {
 					currentParameters.nuProposed = false;
 				}
 				currentParameters.sigma2Hier = structAlign.sigma2Hier;
-				if (structAlign.proposalCounts[structAlign.sigma2HInd] != sigma2HProposed) {
+				if (structAlign.getMcmcMove("sigma2Hier").proposalCount != sigma2HProposed) {
 					currentParameters.sigma2HProposed = true;
-					sigma2HProposed = structAlign.proposalCounts[structAlign.sigma2HInd];
+					sigma2HProposed = structAlign.getMcmcMove("sigma2Hier").proposalCount;
 				}
 				else {
 					currentParameters.sigma2HProposed = false;
@@ -248,9 +241,9 @@ public class StructTrace extends Postprocess {
 				}
 			}	
 			for (int i=0; i<sigLen; i++) {
-				if (structAlign.proposalCounts[i] != sigma2Proposed[i]) {
+				if (structAlign.getMcmcMove("sigma2_"+i).proposalCount != sigma2Proposed[i]) {
 					currentParameters.sigma2Proposed[i] = true;
-					sigma2Proposed[i] = structAlign.proposalCounts[i];
+					sigma2Proposed[i] = structAlign.getMcmcMove("sigma2_"+i).proposalCount;
 				}
 				else {
 					currentParameters.sigma2Proposed[i] = false;
