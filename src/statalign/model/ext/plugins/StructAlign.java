@@ -306,24 +306,32 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		
 		ParameterInterface tauInterface = paramInterfaceGenerator.new TauInterface();
 		ContinuousPositiveParameterMove tauMove = 
-			new ContinuousPositiveParameterMove(this,tauInterface,tauPrior,"tau");
+			new ContinuousPositiveParameterMove(this,tauInterface,tauPrior,"τ");
+		tauMove.setPlottable();
+		tauMove.setPlotSide(1);
 		addMcmcMove(tauMove,10); // change to correct weight
 		
 		ParameterInterface epsilonInterface = paramInterfaceGenerator.new EpsilonInterface();
 		ContinuousPositiveParameterMove epsilonMove = 
-			new ContinuousPositiveParameterMove(this,epsilonInterface,epsilonPrior,"epsilon");
+			new ContinuousPositiveParameterMove(this,epsilonInterface,epsilonPrior,"ε");
 		epsilonMove.setMinValue(MIN_EPSILON);
+		epsilonMove.setPlottable();
+		epsilonMove.setPlotSide(1);
 		addMcmcMove(epsilonMove,10); // change to correct weight
 				
 		HierarchicalContinuousPositiveParameterMove sigma2HMove = null;
 		HierarchicalContinuousPositiveParameterMove nuMove = null;
 		if (!globalSigma) {
 			ParameterInterface sigma2HInterface = paramInterfaceGenerator.new Sigma2HInterface();
-			sigma2HMove = new HierarchicalContinuousPositiveParameterMove(this,sigma2HInterface,sigma2HPrior,"sigma2Hier");
+			sigma2HMove = new HierarchicalContinuousPositiveParameterMove(this,sigma2HInterface,sigma2HPrior,"σ_g");
+			sigma2HMove.setPlottable();
+			sigma2HMove.setPlotSide(0);
 			addMcmcMove(sigma2HMove,10); // change to correct weight
 			
 			ParameterInterface nuInterface = paramInterfaceGenerator.new NuInterface();
-			nuMove = new HierarchicalContinuousPositiveParameterMove(this,nuInterface,nuPrior,"nu");
+			nuMove = new HierarchicalContinuousPositiveParameterMove(this,nuInterface,nuPrior,"ν");
+			nuMove.setPlottable();
+			nuMove.setPlotSide(1);
 			addMcmcMove(nuMove,10); // change to correct weight
 		}
 		
@@ -331,7 +339,9 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			ParameterInterface sigma2Interface = paramInterfaceGenerator.new Sigma2Interface(j);
 			ContinuousPositiveParameterMove m = new ContinuousPositiveParameterMove(
 														this,sigma2Interface,
-														sigma2Prior,"sigma2_"+j);
+														sigma2Prior,"σ_"+j);
+			m.setPlottable();
+			m.setPlotSide(0);
 			addMcmcMove(m,10); // change to correct weight
 			if (!globalSigma) {
 				sigma2HMove.addChildMove(m);

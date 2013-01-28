@@ -13,8 +13,7 @@ import javax.swing.JPanel;
 
 import statalign.postprocess.plugins.structalign.StructTrace;
 import statalign.postprocess.utils.StructAlignTraceParameters;
-import statalign.postprocess.utils.StructAlignTraceParameterGetters;
-import statalign.postprocess.utils.StructAlignTraceParameterGetters.*;
+import statalign.postprocess.utils.StructAlignTraceParameters.*;
 
 /**
  * This class implements the graphical interface for showing the trace
@@ -70,58 +69,45 @@ public class StructAlignTraceGUI extends JPanel {
 		int minY = border;
 		
 		List<StructAlignTraceParameters> parameterHistory = owner.getParameterHistory();
-		
-		double[] acceptanceRates = owner.getAcceptanceRates();
-		StructAlignTraceParameterGetters g = new StructAlignTraceParameterGetters(); 
-		
-		int plotSep = 30;
-		if (parameterHistory.get(0).globalSigma) {
-			paintParameter(gr,border,plotSep,minX,minY,
-					maxX / 2 - plotSep, maxY,
-					g.new Sigma2Getter(0), parameterHistory, acceptanceRates[0],"σ");
-		}
-		else {	
-			int nSubplots = parameterHistory.get(0).sigma2.length;
-			double subplotHeight = (double) maxY / (double) nSubplots;
-			int i=0;
-			for (i=0; i<(nSubplots-1); i++) {
-				paintParameter(gr,border,plotSep,minX,minY+i*subplotHeight,
-						maxX / 2 - plotSep, (i+1)*subplotHeight,
-						g.new Sigma2Getter(i), parameterHistory, acceptanceRates[i], "σ_"+i);				
-			}
-			paintParameter(gr,border,plotSep,minX,minY+i*subplotHeight,
-					maxX / 2 - plotSep, (i+1)*subplotHeight,
-					g.new Sigma2HGetter(), parameterHistory, acceptanceRates[nSubplots+2],"σ_g");
 			
+		int plotSep = 30;
+		List<PlottableParameter> plottableParameters = parameterHistory.get(0).plottableParameters;
+		int nPlottableParams = plottableParameters.size();
+		int nLeft = 0, nRight = 0;
+		for (int i=0; i<nPlottableParams; i++) {
+			int plotSide = plottableParameters.get(i).plotSide;
+			if (plotSide == 0) {
+				nLeft++;
+			}
+			else {
+				nRight++;
+			}
 		}
-		int nSubplots; 
-		if (parameterHistory.get(0).globalSigma) {
-			nSubplots = 2; 		// tau, epsilon
-		}
-		else {
-			nSubplots = 3; 		// tau, epsilon, nu
-		}
-		double subplotHeight = (double) maxY / (double) nSubplots;
-		int index = parameterHistory.get(0).sigma2.length;
-		
-		paintParameter(gr,border,plotSep,minX+maxX/2 + plotSep,minY+0*subplotHeight,
-			maxX - border, 1*subplotHeight,
-			g.new TauGetter(), parameterHistory, acceptanceRates[index], "τ");
-		paintParameter(gr,border,plotSep,minX+maxX/2 + plotSep,minY+1*subplotHeight,
-			maxX - border, 2*subplotHeight,
-			g.new EpsilonGetter(), parameterHistory, acceptanceRates[index+1], "ε");
-		if (!parameterHistory.get(0).globalSigma) {
-			paintParameter(gr,border,plotSep,minX+maxX/2 + plotSep,minY+2*subplotHeight,
-				maxX - border, 3*subplotHeight,
-				g.new NuGetter(), parameterHistory, acceptanceRates[index+3], "ν");	
-		}
-		
+		int iLeft = 0, iRight = 0;
+		for (int i=0; i<nPlottableParams; i++) {
+			int plotSide = plottableParameters.get(i).plotSide;
+			if (plotSide == 0) {
+				int nSubplots = nLeft;
+				double subplotHeight = (double) maxY / (double) nSubplots;
+				paintParameter(gr,border,plotSep,minX,minY+iLeft*subplotHeight,
+						maxX / 2 - plotSep, (iLeft+1)*subplotHeight,
+						i, parameterHistory);
+				iLeft++;
+			}
+			else {
+				int nSubplots = nRight;
+				double subplotHeight = (double) maxY / (double) nSubplots;
+				paintParameter(gr,border,plotSep,minX+maxX/2 + plotSep,minY+iRight*subplotHeight,
+						maxX - border, (iRight+1)*subplotHeight,
+						i, parameterHistory);
+				iRight++;
+			}
+		}	
 	}
 	
 	private void paintParameter(Graphics2D gr, final int border, double plotSep,
 			double minX, double minY, double maxX, double maxY,
-			ParameterGetter getter, List<StructAlignTraceParameters> parameterHistory,
-			double acceptanceRate, String paramName) {
+			int parameterIndex, List<StructAlignTraceParameters> parameterHistory) {
 		
 		Shape line;
 		
@@ -147,7 +133,7 @@ public class StructAlignTraceGUI extends JPanel {
 		// finding the maximum and minimum
 		double maxParam = 0.0, minParam = 10000000.0;
 		for (int i = 0; i < parameterHistory.size(); i++) {
-			double param = getter.getParameter(parameterHistory.get(i));
+			double param = (Double) parameterHistory.get(i).plottableParameters.get(parameterIndex).value;
 			if (param < minParam) {
 				minParam = param;
 			}
@@ -159,6 +145,7 @@ public class StructAlignTraceGUI extends JPanel {
 		gr.drawString("" + String.format("%.1f",maxParam), (int) minX, 5 + (int)minY);
 		gr.drawString("" + String.format("%.1f",minParam), (int) minX, 5 + (int)maxY);
 		gr.setFont(new Font("Dialog", Font.BOLD, 10));
+		String paramName = parameterHistory.get(0).plottableParameters.get(parameterIndex).name;
 		gr.drawString(paramName, (int) minX + 3, (int)((minY+maxY)/2));
 		gr.setFont(STR_FONT);
 				
@@ -179,15 +166,15 @@ public class StructAlignTraceGUI extends JPanel {
 //			} 
 //		}
 		double current;
-		double next = getter.getParameter(parameterHistory.get(startFrom));
+		double next = (Double) parameterHistory.get(startFrom).plottableParameters.get(parameterIndex).value;
 		boolean burnin = true;
-		for (int i = 0; i < parameterHistory.size() - 1; i++) {
+		for (int i = startFrom; i < parameterHistory.size() - 1; i++) {
 			current = next;
-			next = getter.getParameter(parameterHistory.get(i + 1));
+			next = (Double) parameterHistory.get(i+1).plottableParameters.get(parameterIndex).value;
 			if (burnin) {
 				burnin = (parameterHistory.get(i + 1)).burnin;
 			}
-			boolean wasProposed = getter.wasProposed(parameterHistory.get(i+1));
+			boolean wasProposed = parameterHistory.get(i+1).plottableParameters.get(parameterIndex).wasProposed;
 			if (!wasProposed) {
                 gr.setStroke(new BasicStroke(0));
 				gr.setColor(Color.black);
@@ -216,6 +203,7 @@ public class StructAlignTraceGUI extends JPanel {
 		gr.setStroke(new BasicStroke());
 		
 		gr.setFont(new Font("Dialog", Font.BOLD, 10));
+		double acceptanceRate = (Double) parameterHistory.get(parameterHistory.size()-1).plottableParameters.get(parameterIndex).acceptanceRate;
 		gr.drawString("α = " + String.format("%.2f",acceptanceRate), 5 + (int)textShift + (int) minX, 15 + (int)minY);
 		gr.setFont(STR_FONT);
 	}

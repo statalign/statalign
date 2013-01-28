@@ -1,5 +1,12 @@
 package statalign.postprocess.utils;
 
+import java.util.List;
+import java.util.ArrayList;
+import statalign.model.ext.McmcMove;
+import statalign.model.ext.plugins.structalign.StructAlignMcmcMove;
+import statalign.model.ext.plugins.StructAlign;
+import statalign.postprocess.plugins.structalign.StructTrace;
+
 /**
  * A container class that stores a parameter values from the StructAlign plugin
  * and a logical value indicating whether the sample comes from the burn-in period or not.
@@ -9,32 +16,58 @@ package statalign.postprocess.utils;
  */
 public class StructAlignTraceParameters {
 
-	/**
-	 * The parameter values
-	 */
-	public double[] sigma2;
-	public boolean[] sigma2Proposed;
-	public double sigma2Hier;
-	public boolean sigma2HProposed;
-	public double nu;
-	public boolean nuProposed;
-	public double tau;
-	public boolean tauProposed;
-	public double epsilon;
-	public boolean epsilonProposed;
+	public boolean burnin; // True if this sample of parameters came from the burnin
+	public boolean globalSigma; 
 	
-	public boolean globalSigma = true;
-	/**
-	 * Whether the sample comes from the burn-in phase or not.
-	 */
-	public boolean burnin;
-	
-	/**
-	 * This constructor initialises the container.
-	 * @param burnin True if the sample comes from the burn-in phase.
-	 */
-	public StructAlignTraceParameters(boolean burnin){
-		this.burnin = burnin;
-//		
+	public class PlottableParameter {
+		public String name;
+		public Number value;
+		public double acceptanceRate;
+		public int proposalCount;
+		public int plotSide;
+		public boolean wasProposed = true;
+		PlottableParameter (String n,Number v, double a, int p, int s) {
+			name = n;
+			value = v;
+			acceptanceRate = a;
+			proposalCount = p;
+			plotSide = s;
+		}
+	}
+	public List<PlottableParameter> plottableParameters = new ArrayList<PlottableParameter>(); 
+
+	public StructAlignTraceParameters(StructTrace s, boolean isBurnin){
+		burnin = isBurnin;
+		globalSigma = s.structAlign.globalSigma;
+		for (McmcMove mcmcMove : s.structAlign.getMcmcMoves()) {
+			if (mcmcMove instanceof StructAlignMcmcMove) {
+				if (((StructAlignMcmcMove) mcmcMove).isPlottable()) {
+					plottableParameters.add(
+							new PlottableParameter(
+									mcmcMove.name,
+									mcmcMove.getParam().get(),
+									mcmcMove.acceptanceRate(),
+									mcmcMove.proposalCount,
+									((StructAlignMcmcMove) mcmcMove).plotSide()));
+									
+				}
+			}
+		}
+	}
+	public void setProposalFlags(StructAlignTraceParameters previous) {
+		if (previous.plottableParameters.size() == plottableParameters.size()) {
+			for (int i=0; i<plottableParameters.size(); i++) {
+				plottableParameters.get(i).wasProposed = 
+					(plottableParameters.get(i).proposalCount != 
+						previous.plottableParameters.get(i).proposalCount);
+			}
+			// We assume that the two lists being the same length implies
+			// that the same set of parameters was recorded at the previous step.
+			// This might not be true if somebody adds a method for altering
+			// whether a parameter is plottable during the simulation.
+		}
+		else {
+			throw new IllegalArgumentException("The number of plottable parameters has changed during the simulation.");
+		}
 	}
 }
