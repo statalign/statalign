@@ -29,6 +29,7 @@ import statalign.io.DataType;
 import statalign.io.ProteinSkeletons;
 import statalign.model.ext.ModelExtension;
 import statalign.model.ext.McmcMove;
+import statalign.model.ext.McmcCombinationMove;
 import statalign.model.ext.GammaPrior;
 import statalign.model.ext.plugins.structalign.*;
 import statalign.model.ext.ParameterInterface;
@@ -279,22 +280,22 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		ArrayList<McmcMove> alignmentRotation = new ArrayList<McmcMove>();
 		alignmentRotation.add(alignmentMove);
 		alignmentRotation.add(rotationMove);
-		AlignmentRotationCombinationMove alignmentRotationMove = 
-			new AlignmentRotationCombinationMove(this,alignmentRotation);
+		McmcCombinationMove alignmentRotationMove = 
+			new McmcCombinationMove(alignmentRotation);
 		addMcmcMove(alignmentRotationMove,10); // change to correct weight
 		
 		ArrayList<McmcMove> alignmentTranslation = new ArrayList<McmcMove>(); 
 		alignmentTranslation.add(alignmentMove);
 		alignmentTranslation.add(translationMove);
-		AlignmentRotationCombinationMove alignmentTranslationMove = 
-			new AlignmentRotationCombinationMove(this,alignmentTranslation);
+		McmcCombinationMove alignmentTranslationMove = 
+			new McmcCombinationMove(alignmentTranslation);
 		addMcmcMove(alignmentTranslationMove,10); // change to correct weight
 		
 		ArrayList<McmcMove> alignmentLibrary = new ArrayList<McmcMove>();
 		alignmentLibrary.add(alignmentMove);
 		alignmentLibrary.add(libraryMove);
-		AlignmentRotationCombinationMove alignmentLibraryMove = 
-			new AlignmentRotationCombinationMove(this,alignmentLibrary);
+		McmcCombinationMove alignmentLibraryMove = 
+			new McmcCombinationMove(alignmentLibrary);
 		addMcmcMove(alignmentLibraryMove,10); // change to correct weight
 		
 		/** Add moves for scalar parameters */

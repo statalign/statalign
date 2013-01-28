@@ -1,14 +1,27 @@
 package statalign.model.ext;
 
 import java.util.List;
+import java.util.ArrayList;
 
-public abstract class McmcCombinationMove extends McmcMove {
+import statalign.base.Tree;
+
+public class McmcCombinationMove extends McmcMove {
 
 	protected List<McmcMove> mcmcMoves;
 	protected List<Integer> mcmcMoveWeights;
 	
-	protected double oldll;
+	Tree tree;
 	
+	public McmcCombinationMove (ArrayList<McmcMove> mcmcMoves) {
+		if (mcmcMoves.size() < 2) {
+			throw new IllegalArgumentException("McmcCombinationMove must contain at least two McmcMove objects");
+		}
+		
+		name = mcmcMoves.get(0).name;
+		for (int i=1; i<mcmcMoves.size(); i++) {
+			name += "_"+mcmcMoves.get(i).name;
+		}
+	}
 	public void copyState(Object externalState) {
 		for (McmcMove mcmcMove : mcmcMoves) {
 			mcmcMove.copyState(externalState);
@@ -32,7 +45,11 @@ public abstract class McmcCombinationMove extends McmcMove {
 		}
 		return logPriorDensity;
 	}
-	public abstract void updateLikelihood(Object externalState);
+	public void updateLikelihood(Object externalState) {
+		for (McmcMove mcmcMove : mcmcMoves) {
+			mcmcMove.updateLikelihood(externalState);
+		}
+	}
 	
 	public void restoreState(Object externalState) {
 		for (McmcMove mcmcMove : mcmcMoves) {
