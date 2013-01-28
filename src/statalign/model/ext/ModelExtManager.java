@@ -138,34 +138,36 @@ public class ModelExtManager {
 	}
 	
 	public void modifyProposalWidths() {
-		for(ModelExtension modExt : activeList)
-			modExtParamModifyProposalWidths(modExt.proposalCounts, modExt.acceptanceCounts,
-					modExt.proposalWidthControlVariables);
-	}
-	
-	public void modExtParamModifyProposalWidths(
-			int[] proposalCounts, int[] acceptanceCounts,
-			double[] proposalWidthControlVariables) {
-		
-		for (int i=0; i<proposalCounts.length; i++) {
-			if (proposalCounts[i] > Utils.MIN_SAMPLES_FOR_ACC_ESTIMATE) {
-				double accRate = (proposalCounts[i] == 0) ? 0 : (double)acceptanceCounts[i]/(double)proposalCounts[i];
-				//System.out.println("modExtParam["+i+"] acceptance rate = "+accRate);
-				//System.out.println("var = "+proposalWidthControlVariables[i]);
-				if (accRate < Utils.MIN_ACCEPTANCE) {
-					proposalWidthControlVariables[i] *= Utils.SPAN_MULTIPLIER;
-					proposalCounts[i] = 0;
-					acceptanceCounts[i] = 0;
-				}
-				else if (accRate > Utils.MAX_ACCEPTANCE) {
-					proposalWidthControlVariables[i] /= Utils.SPAN_MULTIPLIER;
-					proposalCounts[i] = 0;
-					acceptanceCounts[i] = 0;
-				}
-			}
+		for(ModelExtension modExt : activeList) {
+			modExt.modifyProposalWidths();
 		}
+//			modExtParamModifyProposalWidths(modExt.proposalCounts, modExt.acceptanceCounts,
+//					modExt.proposalWidthControlVariables);
 	}
-	
+//	
+//	public void modExtParamModifyProposalWidths(
+//			int[] proposalCounts, int[] acceptanceCounts,
+//			double[] proposalWidthControlVariables) {
+//		
+//		for (int i=0; i<proposalCounts.length; i++) {
+//			if (proposalCounts[i] > Utils.MIN_SAMPLES_FOR_ACC_ESTIMATE) {
+//				double accRate = (proposalCounts[i] == 0) ? 0 : (double)acceptanceCounts[i]/(double)proposalCounts[i];
+//				//System.out.println("modExtParam["+i+"] acceptance rate = "+accRate);
+//				//System.out.println("var = "+proposalWidthControlVariables[i]);
+//				if (accRate < Utils.MIN_ACCEPTANCE) {
+//					proposalWidthControlVariables[i] *= Utils.SPAN_MULTIPLIER;
+//					proposalCounts[i] = 0;
+//					acceptanceCounts[i] = 0;
+//				}
+//				else if (accRate > Utils.MAX_ACCEPTANCE) {
+//					proposalWidthControlVariables[i] /= Utils.SPAN_MULTIPLIER;
+//					proposalCounts[i] = 0;
+//					acceptanceCounts[i] = 0;
+//				}
+//			}
+//		}
+//	}
+//	
 //	/**
 //	 * Calculates the total log-likelihood of the state by adding the log-likelihood factor
 //	 * contributions from all model extension plugins to the log-likelihood of the tree.

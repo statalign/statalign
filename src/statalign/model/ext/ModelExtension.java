@@ -8,11 +8,14 @@ import javax.swing.JComponent;
 import statalign.base.InputData;
 import statalign.base.Mcmc;
 import statalign.base.Tree;
+import statalign.base.Utils;
 import statalign.base.Vertex;
 import statalign.base.hmm.Hmm;
 import statalign.io.DataType;
 import statalign.model.subst.SubstitutionModel;
 import statalign.postprocess.PluginParameters;
+import statalign.model.ext.McmcMove;
+
 
 /**
  * Ancestral class for model extension plugins.
@@ -26,9 +29,18 @@ public abstract class ModelExtension {
 	
 	protected boolean active;
 	
-	public int[] proposalCounts;
-	public int[] acceptanceCounts;
-	public double[] proposalWidthControlVariables;
+	private List<McmcMove> mcmcMoves;
+	void addMcmcMove(McmcMove m) {
+		mcmcMoves.add(m);
+	}
+	public List<McmcMove> getMcmcMoves() {
+		return mcmcMoves;
+	}
+	private int[] mcmcMoveWeights;
+	
+//	public int[] proposalCounts;
+//	public int[] acceptanceCounts;
+//	public double[] proposalWidthControlVariables;
 	
 	public void setManager(ModelExtManager manager) {
 		this.manager = manager;
@@ -158,8 +170,27 @@ public abstract class ModelExtension {
 	 * 
 	 * @param tree the current tree
 	 */
-	public void proposeParamChange(Tree tree) {}
+	public void proposeParamChange(Tree tree) {
+		int selectedMove = Utils.weightedChoose(mcmcMoveWeights);
+		mcmcMoves.get(selectedMove).move();
+	}
 	
+	public void modifyProposalWidths() {
+		for (McmcMove m : mcmcMoves) {
+			if (m.proposalCount > Utils.MIN_SAMPLES_FOR_ACC_ESTIMATE) {
+				if (m.acceptanceRate() < Utils.MIN_ACCEPTANCE) {
+					m.proposalWidthControlVariable *= Utils.SPAN_MULTIPLIER;
+					m.proposalCount = 0;
+					m.acceptanceCount = 0;
+				}
+				else if (m.acceptanceRate() > Utils.MAX_ACCEPTANCE) {
+					m.proposalWidthControlVariable /= Utils.SPAN_MULTIPLIER;
+					m.proposalCount = 0;
+					m.acceptanceCount = 0;
+				}
+			}
+		}
+	}
 	/**
 	 * Should be called from {@link #proposeParamChange(Tree)} to find out whether a proposed parameter
 	 * change was accepted.

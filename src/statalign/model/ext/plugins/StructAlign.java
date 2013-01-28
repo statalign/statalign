@@ -32,7 +32,8 @@ import statalign.base.hmm.Hmm;
 import statalign.io.DataType;
 import statalign.io.ProteinSkeletons;
 import statalign.model.ext.ModelExtension;
-import statalign.model.ext.plugins.structalign.MultiNormCholesky;
+import statalign.model.ext.plugins.structalign.*;
+
 import statalign.model.subst.SubstitutionModel;
 import statalign.postprocess.PluginParameters;
 import statalign.utils.BetaDistribution;
@@ -52,9 +53,13 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	}
 	
 	JToggleButton myButton;
+	
+	public boolean globalSigma = true;
+	double structTemp = 1;
 
+	
 	/** Alpha-C atomic coordinate for each sequence and each residue */
-	double[][][] coords;
+	public double[][][] coords;
 	
 	/** Alpha-C atomic coordinates under the current set of rotations/translations */
 	public double[][][] rotCoords;
@@ -71,52 +76,35 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	public double sigma2Hier = 1;
 	public double nu = 1;
 	public double tau = 5;
-	public boolean globalSigma = true;
 	public double epsilon = 5;
-	double structTemp = 1;
-	
-	public int tauInd;
-	public int sigma2HInd;
-	public int nuInd;
-	public int epsilonInd;
-	
+	// TODO Allow starting values to be specified at command line/GUI
 	
 	/** Covariance matrix implied by current tree topology */
 	double[][] fullCovar;
 	/** Current alignment between all leaf sequences */
 	private String[] curAlign;
+	
 	/** Current log-likelihood contribution */
-	double curLogLike = 0;
+	public double curLogLike = 0;
+	
+	/** independence rotation proposal distribution */
+	public RotationProposal rotProp;
+	
+	/** MCMC moves */
+	addMcmcMove(new RotationMove(this));
+	TranslationMove translationMove = new TranslationMove(this);
+	LibraryMove libraryMove = new LibraryMove(this);
+	
+	
+	// TODO change the above public variables to package visible and put 
+	// StructAlign.java in statalign.model.ext.plugins.structalign
 	
 	private double[][] oldCovar;
 	private String[] oldAlign;
 	private double oldLogLi;
 	
-//	public int[] sigProposed;
-//	public int[] sigAccept;
-//	public int thetaProposed = 0;
-//	public int thetaAccept = 0;
-	public int sigHProposed;
-	public int sigHAccept;
-	public int nuProposed;
-	public int nuAccept;
-	public int tauProposed;
-	public int tauAccept;
-	public int rotProposed;
-	public int rotAccept;
-	public int xlatProposed;
-	public int xlatAccept;
-	public int libProposed;
-	public int libAccept;
-	public int subtreeRotProposed;
-	public int subtreeRotAccept;
-	public int subtreeAlignProposed;
-	public int subtreeAlignAccept;
-	public int subtreeRotAlignProposed;
-	public int subtreeRotAlignAccept;
 	
-	/** independence rotation proposal distribution */
-	RotationProposal rotProp;
+	
 	
 	/** Priors */
 	// tau - gamma prior, uses shape/scale parameterization
@@ -143,6 +131,9 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	/** Weights per sequence for 
 	 * rotation/translation, sigma2, tau, sigma2Hier, nu, epsilon, subtree rotation, fixed-subtree alignment, and subtree rot+align combined */
 	int[] paramPropWPerSeq = { 5, 3, 0, 0, 0, 0, 0, 0, 0 };
+	
+	private int[] mcmcMoveWeights;
+
 
 	/** Total weights calculated as const+perseq*nseq */
 	int[] paramPropWeights;
@@ -169,9 +160,9 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	//private static final double sigma2HP = 10;
 	//private static final double nuP = 10;
 	//private static final double axisP = 100;
-	private static final double angleP = 1000;
+	public static final double angleP = 1000;
 	// higher values lead to bigger step sizes
-	private static final double xlatP = .1;
+	public static final double xlatP = .1;
 	
 	public double MIN_EPSILON = 2;
 	
@@ -247,7 +238,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		if(seqMap.size() > 0)
 			throw new IllegalArgumentException("structalign: missing structure for sequence "+seqMap.keySet().iterator().next());
 		
-		rotProp = new RotationProposal();
+		rotProp = new RotationProposal(this);
 		rotCoords = new double[coords.length][][];
 		axes = new double[coords.length][];
 		angles = new double[coords.length];
@@ -380,7 +371,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		return curLogLike;
 	}
 	
-	private double calcAllColumnContrib() {
+	public double calcAllColumnContrib() {
 		String[] align = curAlign;
 		double logli = 0;
 		int[] inds = new int[align.length];		// current char indices
@@ -394,6 +385,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		}
 		return structTemp * logli;
 	}
+	// TODO Change visibility of this to package, after moving
+	// StructAlign.java to statalign.model.ext.plugins.structalign
 
 	private boolean checkConsAlign(String[] align) {
 		if(!Utils.DEBUG || curAlign == null)
@@ -508,7 +501,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			calcRotation(i);
 	}
 	
-	private void calcRotation(int ind) {
+	public void calcRotation(int ind) {
 		double[][] ci = coords[ind], rci = rotCoords[ind];
 		if(rci == null)
 			rci = rotCoords[ind] = new double[ci.length][];
@@ -517,6 +510,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			rci[i] = rot.applyTo(new Vector3D(ci[i])).add(new Vector3D(xlats[ind])).toArray();
 		}
 	}
+	// TODO Change visibility of this to package, after moving
+	// StructAlign.java into statalign.model.ext.plugins.structalign.
 
 	/**
 	 * return the full covariance matrix for the tree topology and branch lengths
@@ -628,6 +623,16 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			writeRotationFiles(tree);
 			// proposing rotation/translation of a single sequence
 			int rotxlat = Utils.weightedChoose(rotXlatWeights);
+			if (rotxlat == 0) {
+				rotationMove.move();
+			}
+			else if (rotxlat == 1) {
+				translationMove.move();
+			}
+			else if (rotxlat == 2) {
+				libraryMove.move();
+			}
+			
 			// choose sequence to rotate/translate (never rotate 1st one)
 			int omit = (rotxlat != 1 ? 1 : 0);
 			int ind = Utils.generator.nextInt(coords.length - omit) + omit;
@@ -1191,561 +1196,25 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	 *
 	 */
 	
-	public class RotationProposal{
-		
-		/* libraries of axes, angles, and translation vectors for each protein */
-		Transformation[][] libraries;
-		int window = 25;
-		int fixed = 0;
-		double percent = 1;  // (value between 0 and 100)
-		
-		/* concentration parameters of proposal distribution */
-		double kvMF = 100;
-		double kvM = 100;
-		double sd = .1;
-		
-		// TODO All of the values above this point should probably be chosen elsewhere
-		
-		RotationProposal(){
-			// calculate all rotations relative to fixed protein
-			libraries = new Transformation[coords.length][];
-			for(int i = 0; i < coords.length; i++)
-				if(i != fixed)
-					libraries[i] = selectBest(calculateAllOptimal(fixed, i, window), percent);
-		}
-		
-		public Transformation[] calculateAllOptimal(int a, int b, int window){
-			RealMatrix A = new Array2DRowRealMatrix(coords[a]);
-			RealMatrix B = new Array2DRowRealMatrix(coords[b]);
-			int nA = A.getColumn(0).length - window + 1;
-			int nB = B.getColumn(0).length - window + 1;
-			Transformation[] allOptimal = new Transformation[nA * nB];
-			for(int i = 0; i < nA * nB; i++)
-				allOptimal[i] = new Transformation();
-			
-			// create centering matrix 
-			RealMatrix C = new Array2DRowRealMatrix(new double[window][window]);
-			for(int i = 0; i < window; i++)
-				C.setEntry(i, i, 1);
-			C = C.scalarAdd(-1/ (double) window);
-			
-			RealMatrix subA;
-			RealMatrix subB;
-			
-			int k = 0;
-			for(int i = 0; i < nA; i++){
-				for(int j = 0; j < nB; j++){
-					subA = A.getSubMatrix(i, i + window - 1, 0, 2);
-					subB = B.getSubMatrix(j, j + window - 1, 0, 2);
-					
-					SingularValueDecomposition svd = new SingularValueDecomposition(subB.transpose().multiply(C).multiply(subA));
-					
-					// U V^T from the SVD yields the optimal rotation/reflection matrix
-					// for rotations only, use U S V^T, where S is the identity with
-					// S_{n,n} = det(U V^T)
-					double det = new LUDecomposition(svd.getU().multiply(svd.getVT())).getDeterminant();
-					RealMatrix S = new Array2DRowRealMatrix(new double[3][3]);
-					S.setEntry(0, 0, 1);
-					S.setEntry(1, 1, 1);
-					S.setEntry(2, 2, det);
-					
-					// rotation = U S V^T
-					RealMatrix R = svd.getU().multiply(S).multiply(svd.getVT());
-					
-					// translation = mean(a) - mean(b) R
-					RealVector xlat = Funcs.meanVector(subA).subtract(R.preMultiply(Funcs.meanVector(subB)));
-					
-					// calculate the resulting sum of squares
-					double ss = 0;
-					
-					// a - (R b + 1 xlat)
-					RealVector one = new ArrayRealVector(new double[window]).mapAdd(1);
-					
-					double[][] diff = subA.subtract( subB.multiply(R).add(one.outerProduct(xlat))).getData();
-					for(int m = 0; m < diff.length; m++)
-						for(int n = 0; n < diff[0].length; n++)
-							ss += Math.pow(diff[m][n], 2);
-					allOptimal[k].ss = ss;
-					allOptimal[k].rotMatrix = new Rotation(R.getData(), 1e-20).revert(); // Rotation class applies rotations
-					allOptimal[k].xlat = xlat;											 // differently, so use inverse
-					k++;
-				}
-			}	
-			return allOptimal;
-		}
-		
-		/**
-		 * @param
-		 * @param library - a set of optimal Transformations between protein fragments
-		 * @return - the @percent of optimal Transformations with the lowest RMSD
-		 */
-		
-		public Transformation[] selectBest(Transformation[] library, double percent){
-			double[] ss = new double[library.length];
-			for(int i = 0; i < ss.length; i++)
-				ss[i] = library[i].ss;
-			double cutoff = new Percentile().evaluate(ss, percent);
-			int n = 0;
-			for(int i = 0; i < library.length; i++)
-				n += library[i].ss < cutoff ? 1 : 0;
-			Transformation[] best = new Transformation[n];
-			int j = 0;
-			for(int i = 0; i < library.length; i++)
-				if(library[i].ss < cutoff)
-					best[j++] = library[i];
-			return best;
-		}
-		
-	
-		/** propose from a library mixture distribution */
-		public Transformation propose(int index){
-			Transformation[] library = libraries[index];
-			int n = library.length;
-			int k = Utils.generator.nextInt(n);
-			
-			Vector3D axis = vonMisesFisher.simulate(kvMF, library[k].rotMatrix.getAxis());
-			double angle = vonMises.simulate(kvM, library[k].rotMatrix.getAngle());
-			double[] xlat = new double[3];
-			for(int i = 0; i < 3; i++)
-				xlat[i] = Utils.generator.nextGaussian() * sd + library[k].xlat.getEntry(i);			
-			return new Transformation(axis, angle, xlat);
-		}
-		
-		/**
-		 * 
-		 * @param index - index indicating the set of Transformations on which mixture components are centered
-		 * @param candidate - a candidate Transformation whose density is to be evaluated
-		 * @return the log density of @candidate according to the library mixture distribution
-		 */
-		public double libraryLogDensity(int index, Transformation candidate){
-			Transformation[] library = libraries[index];
-			double density = 0;
-			for(int i = 0; i < library.length; i++)
-				density += library[i].density(candidate, kvM, kvMF, sd);
-			density /= library.length;
-			return Math.log(density);
-		}						
-		// </RotationProposal>
-	}
 	
 	
-	static class vonMises{
-		/**
-		 * 
-		 * @param kappa - concentration parameter
-		 * @param mean - mean angle
-		 * @param angle - angle to be evaluated
-		 * @return log density of distribution at @param angle
-		 */
-		static double logDensity(double kappa, double mean, double angle){
-			return kappa * Math.cos(angle - mean) - Math.log(2 * Math.PI * Bessel.i0(kappa));
-		}
-		
-		static double density(double kappa, double mean, double angle){
-			return Math.exp(kappa * Math.cos(angle - mean)) / (2 * Math.PI * Bessel.i0(kappa));
-		}
-		
-		/**
-		 * 
-		 * @param kappa - concentration parameter
-		 * @param mean - mean angle
-		 * @return - angle simulated from vonMises distribution with given parameters
-		 */
-		static double simulate(double kappa, double mean){
-			double vm = 0, U1, U2, U3, a, b, c, f, r, z;
-			boolean cont;
-			a = 1 + Math.pow(1 + 4 * Math.pow(kappa, 2), 0.5);
-			b = (a - Math.pow(2 * a, 0.5)) / (2 * kappa);
-			r = (1 + Math.pow(b, 2)) / (2 * b);
-			cont = true;
-			while (cont) {
-				U1 = Utils.generator.nextDouble();
-				z = Math.cos(Math.PI * U1);
-				f = (1 + r * z) / (r + z);
-				c = kappa * (r - f);
-				U2 = Utils.generator.nextDouble();
-				if (c * (2 - c) - U2 > 0) {
-					U3 = Utils.generator.nextDouble();
-					vm = Math.signum(U3 - 0.5) * Math.acos(f) + mean;
-					vm = vm % (2 * Math.PI);
-					cont = false;
-				}
-				else {
-					if (Math.log(c/U2) + 1 - c >= 0) {
-						U3 = Utils.generator.nextDouble();
-						vm = Math.signum(U3 - 0.5) * Math.acos(f) + mean;
-						vm = vm % (2 * Math.PI);
-						cont = false;
-					}
-				}
-			}
-			return vm;
-		}
-		// </vonMises>
-	}
 	
-	static class vonMisesFisher{
-		/**
-		 * 
-		 * @param kappa - concentration parameter
-		 * @param mean - mean direction
-		 * @param v - vector to be evaluated
-		 * @return log density of distribution at @param v
-		 */
-		static double logDensity(double kappa, Vector3D mean, Vector3D v){
-			return Math.log(kappa) - Math.log(4 * Math.PI * Math.sinh(kappa)) + kappa * mean.dotProduct(v);
-		}	
-		
-		static double density(double kappa, Vector3D mean, Vector3D v){
-			return kappa / (4 * Math.PI * Math.sinh(kappa)) * Math.exp(kappa * mean.dotProduct(v));
-		}	
-		
-		/**
-		 * 
-		 * @param kappa - concentration parameter
-		 * @param v - mean vector
-		 * @return - vector simulated from von Mises-Fisher distribution with given parameters
-		 */
-		// TODO replace with exact simulation method for S2 from Kent et al 2012
-		static Vector3D simulate(double kappa, Vector3D mean){
-			double b, x0, c, z, u, w;
-			int dim = 3;
-			RealVector unitSphere = new ArrayRealVector(new double[dim-1]);
-			RealVector sample;
-			do {
-				b = (-2*kappa + Math.pow(Math.pow(4*Math.pow(kappa,2) + (dim-1),2),.5) ) / (dim-1);
-				x0 = (1-b)/(1+b);
-				c = kappa*x0 + (dim-1)*Math.log(1-Math.pow(x0, 2));
-				z = new BetaDistribution((dim-1)/2,(dim-1)/2).sample();
-				u = Utils.generator.nextDouble();
-				w = (1 - (1+b)*z)/(1 - (1-b)*z);
-			} while(kappa*w + (dim-1) * Math.log(1-x0*w) - c < Math.log(u));
-
-			for(int i = 0; i < dim - 1; i++)
-				unitSphere.setEntry(i, Utils.generator.nextGaussian());
-			unitSphere = unitSphere.unitVector();
-			sample = unitSphere.mapMultiply(Math.pow(1-Math.pow(w,2), .5));
-			Vector3D sample3D = new Vector3D(sample.getEntry(0), sample.getEntry(1), w);
-					  
-			// calculate rotation to rotate (0,0,1) to mean
-			Rotation Q = new Rotation(new Vector3D(0, 0, 1), mean);
-			
-			// Output simulated vector rotated to center around mean
-			sample3D = Q.applyTo(sample3D);
-			
-			return sample3D;
-		}
-		// </vonMisesFisher>
-	}
+	
+	
+	
 	
 	/**
 	 * 
 	 * @author Challis
 	 *
 	 */
-	public class Transformation{
-		//RealVector axis;
-		//double rot;
-		RealVector xlat;
-		//RealMatrix rotMatrix;
-		Rotation rotMatrix;
-		// sum of squares for coordinate sub-matrix optimal rotation
-		double ss;
-		
-		Transformation(){}
-		
-		Transformation(Vector3D axis, double angle){
-			rotMatrix = new Rotation(axis, angle);
-		}
-		
-		Transformation(double[] axis, double angle, double[] xlat){
-			Vector3D ax = new Vector3D(axis[0], axis[1], axis[2]);
-			rotMatrix = new Rotation(ax, angle);
-			this.xlat = new ArrayRealVector(xlat);
-		}
-		
-		Transformation(Vector3D axis, double angle, double[] xlat){
-			rotMatrix = new Rotation(axis, angle);
-			this.xlat = new ArrayRealVector(xlat);
-		}
-		
-		public RealMatrix getRealRotation(){
-			return new Array2DRowRealMatrix(rotMatrix.getMatrix());
-		}
-		
-		/**
-		 * 
-		 * @return same Transformation object with axis and angle filled
-		 */		
-		/* public Transformation fillAxisAngle(){
-			EigenDecomposition eigen = new EigenDecomposition(rotMatrix);
-			
-			double real = 0;
-			int i = -1;
-			// TODO seems like there should be a better way to do this
-			while(real < .99999999){
-				i++;
-				real = eigen.getRealEigenvalue(i);
-			}
-			axis = eigen.getEigenvector(i);
-			
-			RealVector v;
-			if(axis.getEntry(2) < .98)
-				v = Funcs.crossProduct(axis, new ArrayRealVector(new double[] {0, 0, 1}));
-			else
-				v = Funcs.crossProduct(axis, new ArrayRealVector(new double[] {1, 0, 0}));
-			
-			RealVector rotv = rotMatrix.preMultiply(v);
-			
-			rot = Math.acos(v.dotProduct(rotv) / (v.getNorm() * rotv.getNorm()) );
-			// check axis
-			axis = axis.mapMultiply(Math.signum(axis.dotProduct(Funcs.crossProduct(v, rotv))));
-			return this;
-		} */
-		
-		/** 
-		 * Calculates the rotation matrix from an axis and angle
-		 * with axis x and angle r, the rotation matrix is
-		 * cos(r)I + sin(r)cross(x) + (1-cos(r))outer(x)
-		 * where cross(x) is the crossproduct matrix of x and outer(x) is the outer (tensor) product
-		 * 
-		 * @return Transformation object with rotation matrix calculated from axis and angle
-		 */
-		/* public Transformation fillRotationMatrix(){
-			RealMatrix outer = axis.outerProduct(axis);
-			// use transpose of cross product matrix (as given on wikipedia) because
-			// we post-mulitply by rotation matrix (other components of final step are symmetric)
-			RealMatrix crossTranspose = new Array2DRowRealMatrix(new double[][] { 
-					{0, -axis.getEntry(2), axis.getEntry(1)},
-					{axis.getEntry(2), 0, -axis.getEntry(0)},
-					{-axis.getEntry(1), axis.getEntry(0), 0} 
-			});
-			RealMatrix Icos = new Array2DRowRealMatrix(new double[3][3]);
-			for(int i = 0; i < 3; i++)
-				Icos.setEntry(i, i, Math.cos(rot));
-			crossTranspose = crossTranspose.scalarMultiply(Math.sin(rot));
-			outer = outer.scalarMultiply(1 - Math.cos(rot));
-			rotMatrix = Icos.add(crossTranspose).add(outer);
-			return this;
-		} */
-		
-		public double density(Transformation candidate, double kvM, double kvMF, double sd){
-			double density = vonMises.density(kvM, rotMatrix.getAngle(), candidate.rotMatrix.getAngle());
-			density *= vonMisesFisher.density(kvMF, rotMatrix.getAxis(), candidate.rotMatrix.getAxis());
-			for(int i = 0; i < 3; i++)
-				density *= new NormalDistribution(xlat.getEntry(i), sd).density(candidate.xlat.getEntry(i));
-			return density;
-		}
-		
-		public void lsTrans(RealMatrix A, RealMatrix B){
-			
-			int n = A.getRowDimension();
-			
-			RealMatrix C = new Array2DRowRealMatrix(new double[n][n]);
-			for(int i = 0; i < n; i++)
-				C.setEntry(i, i, 1);
-			C = C.scalarAdd(-1/ (double) n);
-			
-			SingularValueDecomposition svd = new SingularValueDecomposition(B.transpose().multiply(C).multiply(A));
-
-			// U V^T from the SVD yields the optimal rotation/reflection matrix
-			// for rotations only, use U S V^T, where S is the identity with
-			// S_{n,n} = det(U V^T)
-			double det = new LUDecomposition(svd.getU().multiply(svd.getVT())).getDeterminant();
-			RealMatrix S = new Array2DRowRealMatrix(new double[3][3]);
-			S.setEntry(0, 0, 1);
-			S.setEntry(1, 1, 1);
-			S.setEntry(2, 2, det);
-
-			// rotation = U S V^T  
-			rotMatrix = new Rotation( svd.getU().multiply(S).multiply(svd.getVT()).getData(), 1e-20 );
-			
-			RealMatrix temp = getRealRotation();
-			
-			// translation = mean(a) - mean(b) R
-			xlat = Funcs.meanVector(A).subtract(temp.preMultiply(Funcs.meanVector(B))) ;
-			
-			// with Rotation class, use transpose (revert method)
-			rotMatrix = rotMatrix.revert();		
-		}
-		
-		// </Transformation>
-	}
+	
 	
 	/**
 	 * For storing helpful functions
 	 * @author Challis
 	 *
 	 */
-	
-	static class Funcs{
-
-		/** Calculates the cross product of 2 vectors
-		 * 
-		 * @param a first vector
-		 * @param b second vector
-		 * @return cross product
-		 */
-		/*static RealVector crossProduct(RealVector a, RealVector b){
-			RealMatrix skew = new Array2DRowRealMatrix(
-					new double[][] {{0, -a.getEntry(2), a.getEntry(1)}, {a.getEntry(2), 0, -a.getEntry(0)},
-							{-a.getEntry(1), a.getEntry(0), 0}});
-			return skew.operate(b);
-		}		*/
-
-		/** 
-		 * Calculates the rotation matrix from an axis and angle
-		 * with axis x and angle r, the rotation matrix is
-		 * cos(r)I + sin(r)cross(x) + (1-cos(r))outer(x)
-		 * where cross(x) is the crossproduct matrix of x and outer(x) is the outer (tensor) product
-		 * 
-		 * @return Transformation object with rotation matrix calculated from axis and angle
-		 */
-		/*static RealMatrix calcRotationMatrix(RealVector axis, double rot){
-			RealMatrix outer = axis.outerProduct(axis);
-			// use transpose of cross product matrix (as given on wikipedia) because
-			// we post-multiply by rotation matrix (other components of final step are symmetric)
-			RealMatrix crossTranspose = new Array2DRowRealMatrix(new double[][] { 
-					{0, axis.getEntry(2), -axis.getEntry(1)},
-					{-axis.getEntry(2), 0, axis.getEntry(0)},
-					{axis.getEntry(1), -axis.getEntry(0), 0} 
-			});
-			RealMatrix Icos = new Array2DRowRealMatrix(new double[3][3]);
-			for(int i = 0; i < 3; i++)
-				Icos.setEntry(i, i, Math.cos(rot));
-			crossTranspose = crossTranspose.scalarMultiply(Math.sin(rot));
-			outer = outer.scalarMultiply(1 - Math.cos(rot));
-			return Icos.add(crossTranspose).add(outer);
-		} */
-
-		/**
-		 * For an n X 3 coordinate matrix, calculate the 1 X 3 mean vector
-		 * @param A - coordinate matrix
-		 * @return mean vector
-		 */
-		
-		static RealVector meanVector(RealMatrix A){
-			RealVector mean = new ArrayRealVector(new double[3]);
-			for(int i = 0; i < 3; i ++){
-				for(int j = 0; j < A.getColumn(0).length; j++)
-					mean.addToEntry(i, A.getEntry(j, i));
-				mean.setEntry(i, mean.getEntry(i) / A.getColumn(0).length);
-			}
-			return mean;
-		}
-		
-	}
-
-	public Vertex sampleVertex(Tree tree){
-		/* Vertex v;
-		int n = tree.vertex.length;		// number of vertices
-		int l = coords.length;			// number of leaves
-		
-		
-		List<Integer> inds = findRefSubtrees(tree, 0);	// returns indices of all ancestor vertices of reference protein
-		if(inds.size() + l < n){
-			int prop = Utils.generator.nextInt(n-l) + l;		// don't choose a leaf vertex			
-			while(inds.contains(new Integer(prop)))
-				prop = Utils.generator.nextInt(n-l) + l;		// don't choose a subtree containing reference protein
-			v = tree.vertex[prop];
-			return v;
-		} else
-			return tree.root; */
-		return tree.vertex[Utils.generator.nextInt(tree.vertex.length - 1)]; // -1 excludes root
-	}
-	
-	public ArrayList<Integer> findRefSubtrees(Tree tree, int refInd){
-		ArrayList<Integer> inds = new ArrayList<Integer>(0);
-		moveUp(tree.vertex[refInd].parent, inds);
-		return inds;
-	}
-	
-	public void moveUp(Vertex v, List<Integer> inds){
-		inds.add(v.index);
-		if(v.parent != null)
-			moveUp(v.parent, inds);
-	}
-	
-	public ArrayList<Integer> collectLeaves(Vertex v){
-		ArrayList<Integer> inds = new ArrayList<Integer>(0);
-		moveDown(v, inds);
-		return inds;
-	}
-	
-	public void moveDown(Vertex v, List<Integer> inds){
-		if(v.left != null){
-			moveDown(v.left, inds);
-			moveDown(v.right, inds);
-		}
-		else
-			inds.add(v.index);
-	}
-	
-	public void writeRotationFiles(Tree tree){
-		try{
-			FileWriter fstream = new FileWriter("names.txt");
-			BufferedWriter out = new BufferedWriter(fstream);
-			for(int i = 0; i < coords.length; i++)
-				out.write(tree.vertex[i].name + "\n");
-			out.close();
-
-			FileWriter fstream2 = new FileWriter("trans.txt");
-			BufferedWriter out2 = new BufferedWriter(fstream2);
-			for(int i = 0; i < coords.length; i++){
-				for(int j = 0; j < 3; j++)
-					out2.write(xlats[i][j] + "\t");
-				out2.write("\n");
-			}
-			out2.close();
-			
-			FileWriter fstream3 = new FileWriter("rots.txt");
-			BufferedWriter out3 = new BufferedWriter(fstream3);
-			for(int i = 0; i < coords.length; i++){
-				Transformation trans = new Transformation(axes[i], angles[i], xlats[i]);
-				RealMatrix temp = trans.getRealRotation();
-				for(int j = 0; j < 3; j++){
-					for(int k = 0; k < 3; k++)
-						out3.write(temp.getEntry(j, k) + "\t");
-					out3.write("\n");
-				}
-			}
-			out3.close();
-			
-		} catch (Exception e){
-			System.err.println("File writing error: " + e.getMessage());
-		}
-		
-	}
-	
-	public void initLSRotations(Tree tree){
-		String[] align = tree.getState().getLeafAlign();
-		String ref = align[0];
-		for(int i = 1; i < align.length; i++){
-			ArrayList<Integer> refInds = new ArrayList<Integer>(0);
-			ArrayList<Integer> otherInds = new ArrayList<Integer>(0);
-			String other = align[i];
-			
-			int r = 0, o = 0;
-			for(int j = 0; j < align[0].length(); j++){
-				if(ref.charAt(j) != '-' & other.charAt(j) != '-'){
-					refInds.add(r);
-					otherInds.add(o);
-				}
-				r += ref.charAt(j) != '-' ? 1 : 0;
-				o += other.charAt(j) != '-' ? 1 : 0;
-			}
-			
-			double[][] refSub = getRowSub(coords[0], refInds);
-			double[][] otherSub = getRowSub(coords[i], otherInds);
-			
-			Transformation trans = new Transformation();
-			
-			trans.lsTrans(new Array2DRowRealMatrix(refSub), new Array2DRowRealMatrix(otherSub));
-			axes[i] = trans.rotMatrix.getAxis().toArray();
-			xlats[i] = trans.xlat.toArray();
-			angles[i]  = trans.rotMatrix.getAngle();
-		}
-	}
 	
 	public double[][] getRowSub(double[][] coord, ArrayList<Integer> rows){
 		double[][] sub = new double[rows.size()][coord[0].length];
@@ -1755,6 +1224,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				sub[i][j] = coord[rows.get(i)][j];
 		return sub;
 	}
+
 	// </StructAlign>
 }
 

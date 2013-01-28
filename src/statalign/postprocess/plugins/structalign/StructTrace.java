@@ -38,7 +38,8 @@ public class StructTrace extends Postprocess {
 	}
 	
 	public double[] getAcceptanceRates() {
-		int n = structAlign.proposalCounts.length;
+		return structAlign.getMcmcMoves()
+		int n = structAlign.getMcmcMoves().size();
 		double[] acceptanceRates = new double[n];
 		for (int i=0; i<n; i++) {
 			acceptanceRates[i] = (double) structAlign.acceptanceCounts[i] / (double) structAlign.proposalCounts[i]; 
@@ -288,7 +289,9 @@ public class StructTrace extends Postprocess {
 		}
 		if (count % refreshRate == 0) {
 			StructAlignTraceParameters currentParameters = new StructAlignTraceParameters(mcmcStep.burnIn);
-
+			/*
+			Parameters currentParameters = structAlign.getParameters().clone(); 
+			*/
 			currentParameters.globalSigma = structAlign.globalSigma;
 
 			currentParameters.tau = structAlign.tau;

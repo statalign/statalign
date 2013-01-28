@@ -170,7 +170,7 @@ public class StructAlignTraceGUI extends JPanel {
 		Color burninColor = new Color(251, 87, 20);
 		Color nonBurninColor = new Color(46, 87, 221);
 		gr.setColor(burninColor);
-		boolean finishedBurnin = (parameterHistory.get(parameterHistory.size()-1)).burnin;
+		//boolean finishedBurnin = (parameterHistory.get(parameterHistory.size()-1)).burnin;
 		int startFrom = 0;
 //		if (finishedBurnin) {
 //			startFrom = parameterHistory.size() - 1 - burninLength; // need -1?
