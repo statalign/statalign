@@ -3,7 +3,7 @@ package statalign.model.ext.plugins.structalign;
 import java.util.List;
 
 import statalign.base.Tree;
-import statalign.model.ext.PriorDistribution;
+import statalign.model.ext.GammaPrior;
 import statalign.model.ext.plugins.StructAlign;
 import statalign.model.ext.plugins.structalign.StructAlignParameterInterface.*;
 
@@ -12,12 +12,12 @@ public class HierarchicalContinuousPositiveParameterMove extends ContinuousPosit
 	private List<ContinuousPositiveParameterMove> children;
 	
 	public HierarchicalContinuousPositiveParameterMove (StructAlign s, 
-			ParameterInterface p, PriorDistribution<Double> pr, 
+			ParameterInterface p, GammaPrior pr, 
 			String n, double a, double b) {
 		super(s,p,pr,n,a,b);
 	}
 	public HierarchicalContinuousPositiveParameterMove (StructAlign s, 
-			ParameterInterface p,  PriorDistribution<Double> pr, 
+			ParameterInterface p,  GammaPrior pr, 
 			String n) {
 		super(s,p,pr,n);
 	}
@@ -25,6 +25,8 @@ public class HierarchicalContinuousPositiveParameterMove extends ContinuousPosit
 	public void addChildMove(ContinuousPositiveParameterMove child) {
 		children.add(child);
 	}
+	
+	@Override
 	public double proposal(Object externalState) {
 		double logProposalDensity = super.proposal(externalState);
 		// The super method also acquires the Tree
@@ -43,6 +45,8 @@ public class HierarchicalContinuousPositiveParameterMove extends ContinuousPosit
 		}
 		return logProposalDensity;
 	}
+	
+	@Override
 	public double logPriorDensity(Object externalState) {
 		if (param.get() < minValue) {
 			return(Double.NEGATIVE_INFINITY);
@@ -52,6 +56,7 @@ public class HierarchicalContinuousPositiveParameterMove extends ContinuousPosit
 		}
 	}
 	
+	@Override
 	public void updateLikelihood(Object externalState) {
 		if (externalState instanceof Tree) {
 			tree = (Tree) externalState;
@@ -62,7 +67,9 @@ public class HierarchicalContinuousPositiveParameterMove extends ContinuousPosit
 		owner.fullCovar = owner.calcFullCovar(tree);
 		owner.curLogLike = owner.calcAllColumnContrib();
 	}
-	public void restoreState() {
+	
+	@Override
+	public void restoreState(Object externalState) {
 		param.set(oldpar);
 		owner.sigma2Prior.updateDistribution(owner.nu * owner.sigma2Hier,owner.nu);
 		owner.fullCovar = oldcovar;

@@ -37,16 +37,6 @@ public class StructTrace extends Postprocess {
 		return parameterHistory;
 	}
 	
-	public double[] getAcceptanceRates() {
-		return structAlign.getMcmcMoves()
-		int n = structAlign.getMcmcMoves().size();
-		double[] acceptanceRates = new double[n];
-		for (int i=0; i<n; i++) {
-			acceptanceRates[i] = (double) structAlign.acceptanceCounts[i] / (double) structAlign.proposalCounts[i]; 
-		}
-		return acceptanceRates;
-	}
-	
 	JPanel pan;
 	int current;
 	int count;

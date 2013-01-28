@@ -10,13 +10,10 @@ import statalign.model.ext.plugins.StructAlign;
 import statalign.model.ext.plugins.structalign.vonMises;
 
 public class RotationMove extends RotationOrTranslationMove {
-
-	StructAlign owner;
 	
 	public RotationMove (StructAlign s, String n) {
 		owner = s;
 		name = n;
-		omit = 1;
 	}
 
 	public double proposal(Object externalState) {
@@ -28,14 +25,17 @@ public class RotationMove extends RotationOrTranslationMove {
 		randomAxis.unitize();
 		
 		Rotation Q = new Rotation(new Vector3D(randomAxis.toArray()), smallAngle);
-		Rotation R = new Rotation(new Vector3D(owner.axes[ind]), owner.angles[ind]);
+		for(int i = 0; i < subtreeLeaves.size(); i++){
+			int j = subtreeLeaves.get(i);
+			Rotation R = new Rotation(new Vector3D(owner.axes[j]), owner.angles[j]);
 		
-		R = Q.applyTo(R);
-	
-		owner.axes[ind] = R.getAxis().toArray();
-		owner.angles[ind] = R.getAngle();
-				
+			R = Q.applyTo(R);
+			
+			owner.axes[j] = R.getAxis().toArray();
+			owner.angles[j] = R.getAngle();
+		}
+					
 		return 0;
 		// logProposalRatio is 0 because prior is uniform and proposal is symmetric
-	}
+	}	
 }

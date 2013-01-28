@@ -29,12 +29,12 @@ public abstract class ModelExtension {
 	
 	protected boolean active;
 	
-	private List<McmcMove<Object>> mcmcMoves;
-	protected void addMcmcMove(McmcMove<Object> m, int weight) {
+	private List<McmcMove> mcmcMoves;
+	protected void addMcmcMove(McmcMove m, int weight) {
 		mcmcMoves.add(m);
 		mcmcMoveWeights.add(weight);
 	}
-	public List<McmcMove<Object>> getMcmcMoves() {
+	public List<McmcMove> getMcmcMoves() {
 		return mcmcMoves;
 	}
 	protected List<Integer> mcmcMoveWeights;

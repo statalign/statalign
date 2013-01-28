@@ -2,15 +2,13 @@ package statalign.model.ext.plugins.structalign;
 
 import java.util.ArrayList;
 
-import org.apache.commons.math3.util.MathArrays;
-
 import statalign.base.Utils;
 import statalign.base.Vertex;
 import statalign.base.Tree;
 import statalign.model.ext.McmcMove;
 import statalign.model.ext.plugins.StructAlign;
 
-public abstract class RotationOrTranslationMove extends McmcMove {
+public class AlignmentMove extends McmcMove {
 
 	StructAlign owner;
 	Tree tree;
@@ -26,6 +24,10 @@ public abstract class RotationOrTranslationMove extends McmcMove {
 	ArrayList<Integer> subtreeLeaves;
 	int index;
 	
+	public AlignmentMove (StructAlign s, String n) {
+		owner = s;
+		name = n;
+	}
 	public void copyState(Object externalState) {
 		if (externalState instanceof Tree) {
 			tree = (Tree) externalState;
@@ -37,42 +39,26 @@ public abstract class RotationOrTranslationMove extends McmcMove {
 		nLeaves = owner.coords.length;
 		subtreeLeaves = Subtree.getSubtreeLeaves(tree, subtreeRoot, nLeaves);
 		index = subtreeLeaves.get(Utils.generator.nextInt(subtreeLeaves.size()));
-		oldaxes = new double[owner.axes.length][owner.axes[0].length];
-		oldangles = new double[owner.angles.length];
-		oldxlats = new double[owner.xlats.length][owner.xlats.length];
-		oldrots = new double[owner.rotCoords.length][owner.rotCoords[0].length][owner.rotCoords[0][0].length];
-		for(int i = 0; i < subtreeLeaves.size(); i++){
-			int j = subtreeLeaves.get(i);
-			oldaxes[j] = MathArrays.copyOf(owner.axes[j]);
-			oldangles[j] = owner.angles[j];
-			oldxlats[j] = MathArrays.copyOf(owner.xlats[j]);
-			oldrots[j] = owner.rotCoords[j];
-			owner.rotCoords[j] = null;	// so that calcRotation creates new array
-		}
+		owner.oldAlign = owner.curAlign;
 		oldll = owner.curLogLike;
 	}
 
-	public abstract double proposal(Object externalState);
+	public double proposal(Object externalState) {
+		double logProposalRatio = subtreeRoot.realignToParent();
+		owner.curAlign = tree.getState().getLeafAlign();
+		return logProposalRatio;
+	}
 	
 	public double logPriorDensity(Object externalState) {
 		return 0; // Uniform prior
 	}
 
-	public void updateLikelihood(Object externalState) {
-		for(int i = 0; i < subtreeLeaves.size(); i++){
-			int j = subtreeLeaves.get(i);
-			owner.calcRotation(j);
-		}
+	public void updateLikelihood(Object externalState) {		
 		owner.curLogLike = owner.calcAllColumnContrib();
 	}
 	public void restoreState(Object externalState) {
-		for(int i = 0; i < subtreeLeaves.size(); i++){
-			int j = subtreeLeaves.get(i);
-			owner.axes[j] = oldaxes[j];
-			owner.angles[j] = oldangles[j];
-			owner.xlats[j] = oldxlats[j];
-			owner.rotCoords[j] = oldrots[j];
-		}
+		subtreeRoot.alignRestore();
+		owner.curAlign = owner.oldAlign;
 		owner.curLogLike = oldll;
 	}
 }

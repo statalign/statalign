@@ -32,6 +32,7 @@ import statalign.base.hmm.Hmm;
 import statalign.io.DataType;
 import statalign.io.ProteinSkeletons;
 import statalign.model.ext.ModelExtension;
+import statalign.model.ext.McmcMove;
 import statalign.model.ext.GammaPrior;
 import statalign.model.ext.plugins.structalign.*;
 import statalign.model.ext.plugins.structalign.StructAlignParameterInterface.*;
@@ -84,7 +85,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	/** Covariance matrix implied by current tree topology */
 	public double[][] fullCovar;
 	/** Current alignment between all leaf sequences */
-	private String[] curAlign;
+	public String[] curAlign;
 	
 	/** Current log-likelihood contribution */
 	public double curLogLike = 0;
@@ -92,13 +93,13 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	/** independence rotation proposal distribution */
 	public RotationProposal rotProp;
 
-		
+	public double[][] oldCovar;
+	public String[] oldAlign;
+	public double oldLogLi;
+	
+	
 	// TODO change the above public variables to package visible and put 
 	// StructAlign.java in statalign.model.ext.plugins.structalign
-	
-	private double[][] oldCovar;
-	private String[] oldAlign;
-	private double oldLogLi;
 	
 	
 	/** Priors */
@@ -271,33 +272,61 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		for(i = 0; i < paramPropWeights.length; i++)
 			paramPropWeights[i] += paramPropWPerSeq[i]*coords.length;
 		
-		addMcmcMove(new RotationMove(this,"rotation"),10); // change to correct weight
-		addMcmcMove(new TranslationMove(this,"translation"),10); // change to correct weight
-		addMcmcMove(new LibraryMove(this,"library"),10); // change to correct weight
-				
+		/** Add alignment and rotation/translation moves */
+		RotationMove rotationMove = new RotationMove(this,"rotation"); 
+		addMcmcMove(rotationMove,10); // change to correct weight
+		TranslationMove translationMove = new TranslationMove(this,"translation");
+		addMcmcMove(translationMove,10); // change to correct weight
+		LibraryMove libraryMove = new LibraryMove(this,"library");
+		addMcmcMove(libraryMove,10); // change to correct weight
+		AlignmentMove alignmentMove = new AlignmentMove(this,"alignment");
+		addMcmcMove(alignmentMove,10); // change to correct weight
+		
+		ArrayList<McmcMove> alignmentRotation = new ArrayList<McmcMove>();
+		alignmentRotation.add(alignmentMove);
+		alignmentRotation.add(rotationMove);
+		AlignmentRotationCombinationMove alignmentRotationMove = 
+			new AlignmentRotationCombinationMove(this,alignmentRotation);
+		addMcmcMove(alignmentRotationMove,10); // change to correct weight
+		
+		ArrayList<McmcMove> alignmentTranslation = new ArrayList<McmcMove>(); 
+		alignmentTranslation.add(alignmentMove);
+		alignmentTranslation.add(translationMove);
+		AlignmentRotationCombinationMove alignmentTranslationMove = 
+			new AlignmentRotationCombinationMove(this,alignmentTranslation);
+		addMcmcMove(alignmentTranslationMove,10); // change to correct weight
+		
+		ArrayList<McmcMove> alignmentLibrary = new ArrayList<McmcMove>();
+		alignmentLibrary.add(alignmentMove);
+		alignmentLibrary.add(libraryMove);
+		AlignmentRotationCombinationMove alignmentLibraryMove = 
+			new AlignmentRotationCombinationMove(this,alignmentLibrary);
+		addMcmcMove(alignmentLibraryMove,10); // change to correct weight
+		
+		/** Add moves for scalar parameters */
 		StructAlignParameterInterface paramInterfaceGenerator = new StructAlignParameterInterface(this); 
 		
 		ParameterInterface tauInterface = paramInterfaceGenerator.new TauInterface();
-		ContinuousPositiveParmameterMove tauMove = 
+		ContinuousPositiveParameterMove tauMove = 
 			new ContinuousPositiveParameterMove(this,tauInterface,tauPrior,"tau");
 		addMcmcMove(tauMove,10); // change to correct weight
 		
 		ParameterInterface epsilonInterface = paramInterfaceGenerator.new EpsilonInterface();
-		ContinuousPositiveParmameterMove epsilonMove = 
+		ContinuousPositiveParameterMove epsilonMove = 
 			new ContinuousPositiveParameterMove(this,epsilonInterface,epsilonPrior,"epsilon");
 		epsilonMove.setMinValue(MIN_EPSILON);
 		addMcmcMove(epsilonMove,10); // change to correct weight
 				
-		HierarchicalContinuousPositiveParmameterMove sigma2HMove;
-		HierarchicalContinuousPositiveParmameterMove nuMove; 
+		HierarchicalContinuousPositiveParameterMove sigma2HMove = null;
+		HierarchicalContinuousPositiveParameterMove nuMove = null;
 		if (!globalSigma) {
 			ParameterInterface sigma2HInterface = paramInterfaceGenerator.new Sigma2HInterface();
-			sigma2HMove = new ContinuousPositiveParameterMove(this,sigma2HInterface,sigma2HPrior,"sigma2Hier");
-			addMcmcMove(new ContinuousPositiveParameterMove(this,sigma2HInterface),10); // change to correct weight
+			sigma2HMove = new HierarchicalContinuousPositiveParameterMove(this,sigma2HInterface,sigma2HPrior,"sigma2Hier");
+			addMcmcMove(sigma2HMove,10); // change to correct weight
 			
 			ParameterInterface nuInterface = paramInterfaceGenerator.new NuInterface();
-			nuMove = new ContinuousPositiveParameterMove(this,nuInterface,nuPrior,"nu");
-			addMcmcMove(new ContinuousPositiveParameterMove(this,nuInterface),10); // change to correct weight
+			nuMove = new HierarchicalContinuousPositiveParameterMove(this,nuInterface,nuPrior,"nu");
+			addMcmcMove(nuMove,10); // change to correct weight
 		}
 		
 		for (int j=0; j<sigma2.length; j++) {
@@ -305,7 +334,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			ContinuousPositiveParameterMove m = new ContinuousPositiveParameterMove(
 														this,sigma2Interface,
 														sigma2Prior,"sigma2_"+i);
-			addMcmcMoves(m,10); // change to correct weight
+			addMcmcMove(m,10); // change to correct weight
 			if (!globalSigma) {
 				sigma2HMove.addChildMove(m);
 				nuMove.addChildMove(m);
@@ -603,398 +632,6 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		return pluginProposalWeight;
 	}
 
-/**	@Override
-	public void proposeParamChange(Tree tree) {
-	
-		
-			int sigmaInd = 0;
-			if(param == 1 && !globalSigma) {	// select sigma to propose if not global
-				sigmaInd = Utils.generator.nextInt(2*coords.length-2);
-				if(sigmaInd >= tree.root.index)
-					sigmaInd++;
-			}
-			// proposing new sigma
-			double oldpar = param == 1 ? sigma2[sigmaInd] : tau;
-			double[][] oldcovar = fullCovar;
-			double oldll = curLogLike;
-			
-			double logProposalRatio = 0;
-			
-			GammaDistribution proposal;
-			GammaDistribution reverse;
-			
-			if(param == 1){
-				//System.out.println("sigma2["+sigmaInd+"] = "+sigma2[sigmaInd]);
-				//sigProposed[sigmaInd]++;
-				proposalCounts[sigmaInd]++;
-				double sigma2P = 1.0d/proposalWidthControlVariables[sigmaInd];
-				proposal = new GammaDistribution(sigma2P + 0.001, oldpar / sigma2P + 0.001);
-				//proposal = new GammaDistribution((0.001+oldpar)/sigma2P, sigma2P);
-				sigma2[sigmaInd] = proposal.sample();
-				reverse = new GammaDistribution(sigma2P + 0.001, sigma2[sigmaInd] / sigma2P + 0.001);
-				//reverse = new GammaDistribution((0.001+sigma2[sigmaInd])/sigma2P, sigma2P);				
-			} else{
-				//tauProposed++;
-				proposalCounts[tauInd]++;
-				// creates a gamma distribution with mean theta & variance controlled by thetaP
-				double tauP = 1.0d/proposalWidthControlVariables[tauInd];
-				proposal = new GammaDistribution(tauP + 0.001, oldpar / tauP + 0.001);
-				//proposal = new GammaDistribution((0.001+oldpar)/tauP, tauP);
-				tau = proposal.sample();
-				reverse = new GammaDistribution(tauP + 0.001, tau / tauP + 0.001);
-				//reverse = new GammaDistribution((0.001+tau)/tauP, tauP);
-			}
-			// TODO do not recalculate distances, only the covariance matrix
-			fullCovar = calcFullCovar(tree);
-			curLogLike = calcAllColumnContrib();
-			
-			if(param == 1){
-				logProposalRatio = Math.log(reverse.density(oldpar)) 
-				            - Math.log(proposal.density(sigma2[sigmaInd]));
-				if (!globalSigma) {
-					logProposalRatio += Math.log(sigma2HierDist.density(sigma2[sigmaInd]))
-							    - Math.log(sigma2HierDist.density(oldpar));
-				}
-			}
-			else {
-				logProposalRatio = Math.log(tauPrior.density(tau)) + Math.log(reverse.density(oldpar)) 
-				- Math.log(tauPrior.density(oldpar)) - Math.log(proposal.density(tau));
-//				System.out.println("Tau proposed");
-//				System.out.println("oldll: " + oldll);
-//				System.out.println("curLogLike: " + curLogLike);
-//				System.out.println("logProposalRatio: " + logProposalRatio);
-				
-			}
-			if (isParamChangeAccepted(logProposalRatio)) {
-				if (param == 1)
-					//sigAccept[sigmaInd]++;
-					acceptanceCounts[sigmaInd]++;
-				else {
-					//tauAccept++;
-					acceptanceCounts[tauInd]++;
-					// accepted, nothing to do
-					//System.out.println("tau accepted\n");
-				}
-			} else {
-				// rejected, restore
-				if(param == 1)
-					sigma2[sigmaInd] = oldpar;
-				else{
-					//System.out.println("tau rejected\n");
-					tau = oldpar;
-				}
-					
-				fullCovar = oldcovar;
-				curLogLike = oldll;
-			}
-		} else if(param == 3 || param == 4){
-
-			// proposing new sigma2Hier/nu
-			double oldpar = param == 3 ? sigma2Hier : nu;
-			double oldsigll = 0;
-			for(int i = 0; i < tree.vertex.length-1; i++)
-				if(i != tree.root.index)
-					oldsigll += Math.log(sigma2HierDist.density(sigma2[i]));
-			
-			double logProposalRatio = 0;
-			
-			GammaDistribution proposal;
-			GammaDistribution reverse;
-			
-			if(param == 3){
-				//sigHProposed++;
-				proposalCounts[sigma2HInd]++;
-				double sigma2HP = 1.0d/proposalWidthControlVariables[sigma2HInd];
-				proposal = new GammaDistribution(sigma2HP + 0.001, oldpar / sigma2HP + 0.001);
-				//proposal = new GammaDistribution((0.001+oldpar)/sigma2HP, sigma2HP);
-				sigma2Hier = proposal.sample();
-				reverse = new GammaDistribution(sigma2HP + 0.001, sigma2Hier / sigma2HP + 0.001);
-				//reverse = new GammaDistribution((0.001+sigma2Hier)/sigma2HP, sigma2HP);
-			} else{
-				//nuProposed++;
-				proposalCounts[nuInd]++;
-				double nuP = 1.0d/proposalWidthControlVariables[nuInd];
-				// creates a gamma distribution with mean nu & variance controlled by nuP
-				proposal = new GammaDistribution(nuP + 0.001, oldpar / nuP + 0.001);
-				//proposal = new GammaDistribution((0.001+oldpar)/nuP, nuP);
-				nu = proposal.sample();
-				reverse = new GammaDistribution(nuP + 0.001, nu / nuP + 0.001);
-				//reverse = new GammaDistribution((0.001+nu)/nuP, nuP);
-			}
-			
-			sigma2HierDist = new GammaDistribution(nu, sigma2Hier / nu);
-			
-			double newsigll = 0;
-			for(int i = 0; i < tree.vertex.length-1; i++)
-				if(i != tree.root.index)
-					newsigll += Math.log(sigma2HierDist.density(sigma2[i]));
-					
-			if(param == 3)
-				logProposalRatio = newsigll + Math.log(sigma2HPrior.density(sigma2Hier)) + Math.log(reverse.density(oldpar)) 
-				- oldsigll - Math.log(sigma2HPrior.density(oldpar)) - Math.log(proposal.density(sigma2Hier));
-			else
-				logProposalRatio = newsigll + Math.log(nuPrior.density(nu)) + Math.log(reverse.density(oldpar)) 
-				- oldsigll - Math.log(nuPrior.density(oldpar)) - Math.log(proposal.density(nu));
-			
-			if(isParamChangeAccepted(logProposalRatio)) {
-				if(param == 3) {
-					sigHAccept++;
-					acceptanceCounts[sigma2HInd]++;
-				}
-				else {
-					nuAccept++;
-					acceptanceCounts[nuInd]++;
-				}
-				// accepted, nothing to do
-			} else {
-				// rejected, restore
-				if(param == 3)
-					sigma2Hier = oldpar;
-				else
-					nu = oldpar;
-			}
-		} else if(param == 5){
-			
-			// proposing new epsilon
-			double oldpar = epsilon;
-			double[][] oldcovar = fullCovar;
-			double oldll = curLogLike;
-			
-			double logProposalRatio = 0;
-			
-			GammaDistribution proposal;
-			GammaDistribution reverse;
-			
-			proposalCounts[epsilonInd]++;
-			double epsilonP = 1.0d/proposalWidthControlVariables[epsilonInd];
-			proposal = new GammaDistribution(epsilonP + .001, oldpar / epsilonP+.001);
-			epsilon = proposal.sample();
-			reverse = new GammaDistribution(epsilonP +.001, epsilon / epsilonP+.001);
-			
-			// TODO do not recalculate distances, only the covariance matrix
-			fullCovar = calcFullCovar(tree);
-			// for(int i = 0; i < coords.length; i++)
-			//	fullCovar[i][i] = fullCovar[i][i] - oldpar + epsilon;
-			curLogLike = calcAllColumnContrib();
-			
-			if(param == 1)
-				logProposalRatio =  + Math.log(reverse.density(oldpar)) 
-				            - Math.log(epsilonPrior.density(oldpar)) - Math.log(proposal.density(epsilon));
-
-			if(epsilon > MIN_EPSILON && isParamChangeAccepted(logProposalRatio)) {
-					acceptanceCounts[epsilonInd]++;
-				// accepted, nothing to do
-			} else {
-				// rejected, restore
-				epsilon = oldpar;
-				fullCovar = oldcovar;
-				curLogLike = oldll;
-			}
-			
-		} else if(param==6 || param==7 || param==8) { // propose subtree move
-			
-			boolean proposingFixedSubtreeRotation = false;
-			boolean proposingFixedSubtreeAlignment = false;
-			System.out.print("Subtree ");
-			if (param==6) {
-				proposingFixedSubtreeRotation = true;
-				System.out.print("rotation ");
-				subtreeRotProposed++;
-			}
-			else if (param==7){
-				proposingFixedSubtreeAlignment = true;
-				System.out.print("alignment ");
-				subtreeAlignProposed++;
-			}
-			else {
-				proposingFixedSubtreeRotation = true;
-				proposingFixedSubtreeAlignment = true;
-				System.out.print("rotation + alignment");
-				subtreeRotAlignProposed++;
-			}
-			
-			double[][] oldaxes = null;
-			double[] oldangles = null;
-			double[][] oldxlats = null;
-			double[][][] oldrots = null;
-			
-			double oldll = curLogLike;
-			double logProposalRatio = 0;
-			
-			Vertex subtreeRoot = sampleVertex(tree);
-			ArrayList<Integer> subtreeLeaves = collectLeaves(subtreeRoot);
-			if(subtreeLeaves.contains(0)){	// check if subtree contains reference protein
-				ArrayList<Integer> complement = new ArrayList<Integer>(0);
-				for(int i = 0; i < coords.length; i++)
-					complement.add(i);
-				for(int i = 0; i < subtreeLeaves.size(); i++) {
-					complement.remove(subtreeLeaves.get(i));
-				}
-				subtreeLeaves = complement;
-			}
-			System.out.print(" {");
-			for(int i = 0; i < subtreeLeaves.size(); i++){
-				int j = subtreeLeaves.get(i);
-				System.out.print(j);
-				if (i < (subtreeLeaves.size() - 1)) {
-					System.out.print(",");
-				}
-			}
-			System.out.print("} ");
-
-			int index = subtreeLeaves.get(Utils.generator.nextInt(subtreeLeaves.size()));
-
-
-			if (proposingFixedSubtreeRotation) {
-				oldaxes = new double[axes.length][axes[0].length];
-				oldangles = new double[angles.length];
-				oldxlats = new double[xlats.length][xlats.length];
-				oldrots = new double[rotCoords.length][rotCoords[0].length][rotCoords[0][0].length];
-
-				for(int i = 0; i < subtreeLeaves.size(); i++){
-					int j = subtreeLeaves.get(i);
-					oldaxes[j] = MathArrays.copyOf(axes[j]);
-					oldangles[j] = angles[j];
-					oldxlats[j] = MathArrays.copyOf(xlats[j]);
-					oldrots[j] = rotCoords[j];
-					rotCoords[j] = null;	// so that calcRotation creates new array
-				}
-				
-				int rotxlat = Utils.weightedChoose(subtreeRotXlatWeights);
-				
-				switch(rotxlat) {
-				case 0:
-					System.out.print("Rotation: ");
-					// rotation of group of proteins
-					rotProposed++;
-					// axes[ind] = vonMisesFisher.simulate(axisP, new ArrayRealVector(axes[ind])).toArray();
-					double smallAngle = vonMises.simulate(angleP, 0);
-					
-					RealVector randomAxis = new ArrayRealVector(3);
-					for(int i = 0; i < 3; i++)
-						randomAxis.setEntry(i, Utils.generator.nextGaussian());
-					randomAxis.unitize();
-					
-					Rotation Q = new Rotation(new Vector3D(randomAxis.toArray()), smallAngle);
-					for(int i = 0; i < subtreeLeaves.size(); i++){
-						int j = subtreeLeaves.get(i);
-						Rotation R = new Rotation(new Vector3D(axes[j]), angles[j]);
-					
-						R = Q.applyTo(R);
-						
-						axes[j] = R.getAxis().toArray();
-						angles[j] = R.getAngle();
-					}
-					// logProposalRatio is 0 because prior is uniform and proposal is symmetric
-					break;
-					
-				case 1:
-					// translation of group of proteins
-					System.out.print("Translation: ");
-					xlatProposed++;
-					double[] shift = new double[3];
-					for(int i = 0; i < 3; i++)
-						shift[i] = Utils.generator.nextGaussian() * xlatP;
-					for(int l = 0; l < subtreeLeaves.size(); l++){
-						int j = subtreeLeaves.get(l);
-						for(int i = 0; i < 3; i++)
-							xlats[j][i] += shift[i];  
-					}
-					
-					// logProposalRatio is 0 because prior is uniform and proposal is symmetric
-					
-					break;
-					
-				case 2:
-					System.out.print("Library: ");
-					Transformation oldSub = new Transformation(axes[index], angles[index], xlats[index]);
-					// transformation should be relative to reference protein
-					oldSub.xlat = oldSub.xlat.subtract(new ArrayRealVector(xlats[0]));
-					Transformation libProp = rotProp.propose(index);
-					axes[index] = libProp.rotMatrix.getAxis().toArray();
-					angles[index] = libProp.rotMatrix.getAngle();
-					xlats[index] = libProp.xlat.toArray();
-
-					// library density 
-					logProposalRatio = rotProp.libraryLogDensity(index, oldSub) - 
-							rotProp.libraryLogDensity(index, libProp);
-
-					// proposed translation is relative to reference protein
-					for(int i = 0; i < 3; i++)
-						xlats[index][i] += xlats[0][i];			
-
-					// calculate 'difference' between proposed and current transformations
-					double[] diffxlat = new double[3];
-					for(int i = 0; i < 3; i++)
-						diffxlat[i] = xlats[index][i] - oldxlats[index][i];
-					Rotation diffRotMat = libProp.rotMatrix.applyTo(oldSub.rotMatrix.revert());
-
-					for(int i = 0; i < subtreeLeaves.size(); i++){
-						int j = subtreeLeaves.get(i);
-						if(j != index){
-							for(int k = 0; k < 3; k++)
-								xlats[j][k] += diffxlat[k];
-							Transformation temp = new Transformation(axes[j], angles[j], xlats[j]);
-							temp.rotMatrix = diffRotMat.applyTo(temp.rotMatrix);
-							axes[j] = temp.rotMatrix.getAxis().toArray();
-							angles[j] = temp.rotMatrix.getAngle();
-						}
-					}
-					break;
-				}
-				
-				for(int i = 0; i < subtreeLeaves.size(); i++){
-					int j = subtreeLeaves.get(i);
-					calcRotation(j);
-				}
-			}
-			
-			if (proposingFixedSubtreeAlignment) {
-				oldAlign = curAlign;
-				logProposalRatio += subtreeRoot.realignToParent();
-				curAlign = tree.getState().getLeafAlign();
-			}
-			
-			curLogLike = calcAllColumnContrib();
-
-			if(isParamChangeAccepted(logProposalRatio)) {
-				// accepted, nothing to do
-				if (param==6) {
-					subtreeRotAccept++;
-				}
-				else if (param==7){
-					subtreeAlignAccept++;
-				}
-				else {
-					subtreeRotAlignAccept++;
-				}
-				System.out.println("accepted!");
-			} else {
-				// rejected, restore
-				curLogLike = oldll;
-				int j;
-				if (proposingFixedSubtreeRotation) {
-					for(int i = 0; i < subtreeLeaves.size(); i++){
-						j = subtreeLeaves.get(i);
-						axes[j] = oldaxes[j];
-						angles[j] = oldangles[j];
-						xlats[j] = oldxlats[j];
-						rotCoords[j] = oldrots[j];
-					}
-				}
-				if (proposingFixedSubtreeAlignment) {
-					subtreeRoot.alignRestore();
-					curAlign = oldAlign;
-				}
-				System.out.println("rejected!");
-			}
-	
-		} else {
-			throw new Error("Unknown parameter proposal type");
-		}
-		
-	}
-	*/
 	@Override
 	public double logLikeModExtParamChange(Tree tree, ModelExtension ext) {
 		// current log-likelihood always precomputed (regardless of whether ext == this)

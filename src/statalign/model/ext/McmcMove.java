@@ -4,10 +4,10 @@ import statalign.model.ext.ModelExtension;
 import statalign.model.ext.PriorDistribution;
 
 
-public abstract class McmcMove<T> {
+public abstract class McmcMove {
 
 	protected ModelExtension owner;
-	protected PriorDistribution<T> prior;
+	protected PriorDistribution<? extends Object> prior;
 	
 	public int proposalCount = 0;
 	public int acceptanceCount = 0;
@@ -21,18 +21,18 @@ public abstract class McmcMove<T> {
 		return (double) acceptanceCount / (double) proposalCount;
 	}
 	
-	public abstract void copyState();
+	public abstract void copyState(Object externalState);
 	public abstract double proposal(Object externalState); 
 	// Modifies variables and returns logProposalRatio
 	
 	public abstract double logPriorDensity(Object externalState);
 	public abstract void updateLikelihood(Object externalState); 
-	public abstract void restoreState();
+	public abstract void restoreState(Object externalState);
 	
 	public void move(Object externalState) {
 		
 		proposalCount++;
-		copyState();
+		copyState(externalState);
 		double logProposalRatio = -logPriorDensity(externalState);
 		logProposalRatio = proposal(externalState); 
 		logProposalRatio += logPriorDensity(externalState);
@@ -43,7 +43,7 @@ public abstract class McmcMove<T> {
 		}
 		else {
 			lastMoveAccepted = false;
-			restoreState();
+			restoreState(externalState);
 		}
 	}
 	
