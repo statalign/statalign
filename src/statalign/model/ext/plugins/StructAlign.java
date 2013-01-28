@@ -270,10 +270,13 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		/** Add alignment and rotation/translation moves */
 		RotationMove rotationMove = new RotationMove(this,"rotation"); 
 		addMcmcMove(rotationMove,10); // change to correct weight
+		
 		TranslationMove translationMove = new TranslationMove(this,"translation");
 		addMcmcMove(translationMove,10); // change to correct weight
+		
 		LibraryMove libraryMove = new LibraryMove(this,"library");
 		addMcmcMove(libraryMove,10); // change to correct weight
+		
 		AlignmentMove alignmentMove = new AlignmentMove(this,"alignment");
 		addMcmcMove(alignmentMove,10); // change to correct weight
 		

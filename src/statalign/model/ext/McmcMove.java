@@ -17,9 +17,14 @@ public abstract class McmcMove {
 	public int acceptanceCount = 0;
 	public boolean lastMoveAccepted = false;
 	
+	
+	public double proposalWidthControlVariable = 1.0;
+	public boolean autoTune = true;
+	// TODO Add constructor fields for specifying the above two
+	// variables.
+	
 	public String name;
-	public double proposalWidthControlVariable;
-	public boolean autoTune;
+
 	
 	public double acceptanceRate() {
 		return (double) acceptanceCount / (double) proposalCount;
