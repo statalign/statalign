@@ -1,13 +1,18 @@
 package statalign.model.ext;
 
 import statalign.model.ext.ModelExtension;
+import statalign.model.ext.ParameterInterface;
 import statalign.model.ext.PriorDistribution;
-
 
 public abstract class McmcMove {
 
 	protected ModelExtension owner;
 	protected PriorDistribution<? extends Object> prior;
+	
+	protected ParameterInterface param;
+	public ParameterInterface getParam() {
+		return param;
+	}
 	
 	public int proposalCount = 0;
 	public int acceptanceCount = 0;

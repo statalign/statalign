@@ -1,6 +1,7 @@
 package statalign.model.ext.plugins.structalign;
 
 import statalign.model.ext.plugins.StructAlign;
+import statalign.model.ext.ParameterInterface;
 
 // I wish Java allowed pointers and proper functors...
 
@@ -8,10 +9,6 @@ public class StructAlignParameterInterface {
 	private StructAlign structAlign;
 	public StructAlignParameterInterface(StructAlign s) {
 		structAlign = s;
-	}
-	public interface ParameterInterface {
-		abstract double get();
-		abstract void set(double x);
 	}
 	public class Sigma2Interface implements ParameterInterface {
 		private int index;

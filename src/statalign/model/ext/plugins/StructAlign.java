@@ -16,12 +16,8 @@ import javax.swing.JToggleButton;
 import org.apache.commons.math3.geometry.euclidean.threed.Rotation;
 import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
-import org.apache.commons.math3.linear.ArrayRealVector;
-import org.apache.commons.math3.linear.LUDecomposition;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
-import org.apache.commons.math3.linear.SingularValueDecomposition;
-import org.apache.commons.math3.stat.descriptive.rank.Percentile;
 import org.apache.commons.math3.util.MathArrays;
 
 import statalign.base.InputData;
@@ -35,14 +31,10 @@ import statalign.model.ext.ModelExtension;
 import statalign.model.ext.McmcMove;
 import statalign.model.ext.GammaPrior;
 import statalign.model.ext.plugins.structalign.*;
-import statalign.model.ext.plugins.structalign.StructAlignParameterInterface.*;
+import statalign.model.ext.ParameterInterface;
 
 import statalign.model.subst.SubstitutionModel;
 import statalign.postprocess.PluginParameters;
-import statalign.utils.BetaDistribution;
-import statalign.utils.GammaDistribution;
-import statalign.utils.NormalDistribution;
-import cern.jet.math.Bessel;
 
 public class StructAlign extends ModelExtension implements ActionListener {
 	

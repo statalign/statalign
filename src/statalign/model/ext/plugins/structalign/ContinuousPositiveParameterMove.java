@@ -2,7 +2,7 @@ package statalign.model.ext.plugins.structalign;
 
 import statalign.model.ext.GammaPrior;
 import statalign.model.ext.McmcMove;
-import statalign.model.ext.PriorDistribution;
+import statalign.model.ext.ParameterInterface;
 import statalign.base.Tree;
 import statalign.model.ext.plugins.StructAlign;
 import statalign.utils.GammaDistribution;
@@ -23,7 +23,6 @@ public class ContinuousPositiveParameterMove extends McmcMove {
 	double oldpar;
 	double[][] oldcovar;
 	double oldll;
-	ParameterInterface param;
 	
 	protected double minValue = 0.0;
 	// If the proposal takes the parameter below this value, 

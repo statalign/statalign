@@ -18,6 +18,7 @@ import statalign.base.McmcStep;
 import statalign.base.State;
 import statalign.base.Utils;
 import statalign.model.ext.ModelExtension;
+import statalign.model.ext.McmcMove;
 import statalign.model.ext.plugins.StructAlign;
 import statalign.postprocess.Postprocess;
 import statalign.postprocess.gui.StructAlignTraceGUI;
@@ -97,24 +98,11 @@ public class StructTrace extends Postprocess {
 		if(!active)
 			return;
 		try {
-			int sigLen = structAlign.globalSigma ? 1 : structAlign.sigma2.length;
-			outputFile.write("sigma2_1");
-			for(int i = 1; i < sigLen; i++)
-				outputFile.write("\tsigma2_"+(i+1));
-			outputFile.write("\ttau");
-			outputFile.write("\tepsilon");
-			if (!structAlign.globalSigma) {
-				outputFile.write("\tsigma2H");
-				outputFile.write("\tnu");
-			}
-			for(int i = 0; i < sigLen; i++)
-				outputFile.write("\tsigma2_"+(i+1)+"_proposed");
-			outputFile.write("\ttau_proposed");
-			outputFile.write("\tepsilon_proposed");
-			if (!structAlign.globalSigma) {
-				outputFile.write("\tsigma2H_proposed");
-				outputFile.write("\tnu_proposed");
-			}
+			for (McmcMove mcmcMove : structAlign.getMcmcMoves()) {
+				if (mcmcMove.getParam() != null) {
+					outputFile.write(mcmcMove.name+"\t");
+				}
+			}				
 			outputFile.write("\n");
 		} catch (IOException e) {
 		}
@@ -144,67 +132,28 @@ public class StructTrace extends Postprocess {
 		count = 0;
 	}
 	
-	int[] lastSigmaProp;
-	int lastTauProp;
-	int lastEpsilonProp;
-	int lastSigma2HProp;
-	int lastNuProp;
-	
-	int[] sigma2Proposed;
-	int tauProposed;
-	int epsilonProposed;
-	int sigma2HProposed;
-	int nuProposed;
-	
 	@Override
 	public void newSample(State state, int no, int total) {
 		if(!active)
 			return;
 		if(postprocessWrite) {
 			try {
-				int sigLen = (structAlign.globalSigma ? 1 : structAlign.sigma2.length);
-				for(int i = 0; i < sigLen; i++)
-					outputFile.write(structAlign.sigma2[i]+"\t");
-				outputFile.write(structAlign.tau+"\t");
-				outputFile.write(structAlign.epsilon+"\t");
-				if (!structAlign.globalSigma) {
-					outputFile.write(structAlign.sigma2Hier+"\t");
-					outputFile.write(structAlign.nu+"\t");
-				}
-				
-				if(lastSigmaProp == null || lastSigmaProp.length != sigLen)
-					lastSigmaProp = new int[sigLen];
-				int i=0;
-				for(i = 0; i < sigLen; i++) {
-					outputFile.write(lastSigmaProp[i] != structAlign.proposalCounts[i] ? structAlign.sigma2[i]+"\t" : -1+"\t");
-					lastSigmaProp[i] = structAlign.proposalCounts[i];
-				}
-				outputFile.write(lastTauProp != structAlign.proposalCounts[i] ? structAlign.tau+"\t" : -1+"\t");
-				lastTauProp = structAlign.proposalCounts[i];
-				++i;
-				outputFile.write(lastEpsilonProp != structAlign.proposalCounts[i] ? structAlign.epsilon+"\t" : -1+"\t");
-				lastEpsilonProp = structAlign.proposalCounts[i];
-				if (!structAlign.globalSigma) {
-					++i;
-					outputFile.write(lastSigma2HProp != structAlign.proposalCounts[i] ? structAlign.sigma2Hier+"\t" : -1+"\t");
-					lastSigma2HProp = structAlign.proposalCounts[i];
-					++i;
-					outputFile.write(lastNuProp != structAlign.proposalCounts[i] ? structAlign.nu+"\t" : -1+"\t");
-					lastNuProp = structAlign.proposalCounts[i];
-				}
-
+				for (McmcMove mcmcMove : structAlign.getMcmcMoves()) {
+					if (mcmcMove.getParam() != null) {
+						outputFile.write(mcmcMove.getParam().get()+"\t");
+						if (mcmcMove.lastMoveAccepted) {
+							outputFile.write(mcmcMove.getParam().get()+"\t");
+						}
+						else {
+							outputFile.write(-1+"\t");
+						}
+					}
+				}				
 				outputFile.write("\n");
 			} catch (IOException e) {
 				e.printStackTrace(); 
 			}
 		}
-		
-//		if(sampling) {
-//			try {
-//				file.write("Sample "+no+"\tStructure:\t");
-//			} catch (IOException e) {
-//			}
-//		}
 	}
 	
 	@Override
@@ -226,41 +175,12 @@ public class StructTrace extends Postprocess {
 			for(int i = 0; i < structAlign.xlats.length; i++) {
 				System.out.println(Arrays.toString(structAlign.xlats[i]));
 			}
-			System.out.println();
-			System.out.println("Acceptance rates:");
-
-			System.out.print("Sigma2 (prop): ");
-			for (int i=0; i<structAlign.proposalCounts.length; i++) {
-				System.out.print(structAlign.proposalCounts[i]+" ");
-			}
-			System.out.println("");
-			System.out.print("Sigma2 (acce): ");
-			for (int i=0; i<structAlign.acceptanceCounts.length; i++) {
-				System.out.print(structAlign.acceptanceCounts[i]+" ");
-			}
-			System.out.println("Rotation: " + structAlign.rotProposed + " " + structAlign.rotAccept);
-			System.out.println("Xlat: " + structAlign.xlatProposed + " " + structAlign.xlatAccept);
-			System.out.println("Library: " + structAlign.libProposed + " " + structAlign.libAccept);
-			System.out.println("Subtree rotations: " + structAlign.subtreeRotProposed + " " + structAlign.subtreeRotAccept);
-			System.out.println("Subtree alignments: " + structAlign.subtreeAlignProposed + " " + structAlign.subtreeAlignAccept);
-			System.out.println("Subtree rotation + alignment: " + structAlign.subtreeRotAlignProposed + " " + structAlign.subtreeRotAlignAccept);
+			System.out.println();				
 		}
-		
-		System.out.println("final translations:");
-		for(int i = 0; i < structAlign.xlats.length; i++) {
-			System.out.println(Arrays.toString(structAlign.xlats[i]));
-		}
-		
-		System.out.println();
 		System.out.println("Acceptance rates:");
-		//System.out.println("Sigma2: " + structAlign.sigProposed + " " + structAlign.sigAccept);
-		System.out.println("Rotation: " + structAlign.rotProposed + " " + structAlign.rotAccept);
-		System.out.println("Xlat: " + structAlign.xlatProposed + " " + structAlign.xlatAccept);
-		System.out.println("Library: " + structAlign.libProposed + " " + structAlign.libAccept);
-		System.out.println("Subtree rotations: " + structAlign.subtreeRotProposed + " " + structAlign.subtreeRotAccept);
-		System.out.println("Subtree alignments: " + structAlign.subtreeAlignProposed + " " + structAlign.subtreeAlignAccept);
-		System.out.println("Subtree rotation + alignment: " + structAlign.subtreeRotAlignProposed + " " + structAlign.subtreeRotAlignAccept);
-		//System.out.println("Tau: " + structAlign.tau + "  Epsilon: " + structAlign.epsilon);
+		for (McmcMove mcmcMove : structAlign.getMcmcMoves()) {
+			System.out.println(mcmcMove.name+"\t"+mcmcMove.acceptanceRate());
+		}	
 	}
 	
 	public static void printMatrix(double[][] m) {

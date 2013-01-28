@@ -4,8 +4,8 @@ import java.util.List;
 
 import statalign.base.Tree;
 import statalign.model.ext.GammaPrior;
+import statalign.model.ext.ParameterInterface;
 import statalign.model.ext.plugins.StructAlign;
-import statalign.model.ext.plugins.structalign.StructAlignParameterInterface.*;
 
 public class HierarchicalContinuousPositiveParameterMove extends ContinuousPositiveParameterMove {
 
