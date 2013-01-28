@@ -29,6 +29,8 @@ public class McmcCombinationMove extends McmcMove {
 			mcmcMove.copyState(externalState);
 			logProposalRatio += mcmcMove.proposal(externalState); 
 		}
+		// We implicitly assume here that the order of the proposals
+		// does not matter.
 		return logProposalRatio;
 	}
 	
