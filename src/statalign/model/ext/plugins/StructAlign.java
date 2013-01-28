@@ -92,7 +92,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	
 	
 	// TODO change the above public variables to package visible and put 
-	// StructAlign.java in statalign.model.ext.plugins.structalign
+	// StructAlign.java in statalign.model.ext.plugins.structalign ?
 	
 	
 	/** Priors */
@@ -119,28 +119,27 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	// priors for rotation and translation are uniform
 	// so do not need to be included in M-H ratio
 	
-	/** Constant weights for 
-	 * rotation/translation, sigma2, tau, sigma2Hier, nu, epsilon, subtree rotation, fixed-subtree alignment, and subtree rot+align combined */
-	int[] paramPropWConst = { 0, 0, 3, 3, 3, 3, 2, 2, 2 };
-	/** Weights per sequence for 
-	 * rotation/translation, sigma2, tau, sigma2Hier, nu, epsilon, subtree rotation, fixed-subtree alignment, and subtree rot+align combined */
-	int[] paramPropWPerSeq = { 5, 3, 0, 0, 0, 0, 0, 0, 0 };
-	
-	/** Total weights calculated as const+perseq*nseq */
-	int[] paramPropWeights;
-	/** Weights for proposing rotation vs translation vs library */
-	int[] rotXlatWeights= { 25, 25, 10 };
-	int[] subtreeRotXlatWeights = { 25, 25, 0};
-//	int[] rotXlatWeights= { 25, 25, 0 };	// library off
-	
-	RotationMove rotationMove;
-	
 	
 	/** Default proposal weights in this order: 
 	 *  align, topology, edge, indel param, subst param, modelext param 
-	*   { 35, 20, 15, 15, 10, 0 };
-	*/
+	 *  { 35, 20, 15, 15, 10, 0 };
+	 */
 	private final int pluginProposalWeight = 50; 
+	
+	int sigma2Weight = 5;
+	int tauWeight = 3;
+	int sigma2HierWeight = 3;
+	int nuWeight = 3;
+	int epsilonWeight = 3;
+	int rotationWeight = 2;
+	int translationWeight = 2;
+	int libraryWeight = 1;
+	int alignmentWeight = 2;
+	
+	int alignmentRotationWeight = 2;
+	int alignmentTranslationWeight = 2;
+	int alignmentLibraryWeight = 1;
+	
 	
 	/** Proposal tuning parameters */
 	public static final double angleP = 1000;
@@ -253,8 +252,6 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		// number of branches in the tree is 2*leaves - 1
 		if (globalSigma) {
 			sigma2 = new double[1];
-			paramPropWConst[3] = 0;
-			paramPropWConst[4] = 0;
 		}
 		else {
 			sigma2 = new double[2*coords.length - 1];
@@ -263,43 +260,43 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		for(i = 0; i < sigma2.length; i++)
 			sigma2[i] = 1;
 		
-		paramPropWeights = Utils.copyOf(paramPropWConst);
-		for(i = 0; i < paramPropWeights.length; i++)
-			paramPropWeights[i] += paramPropWPerSeq[i]*coords.length;
+		// Probably remove the following
+		sigma2Weight *= coords.length;
+		tauWeight *= coords.length;
 		
 		/** Add alignment and rotation/translation moves */
 		RotationMove rotationMove = new RotationMove(this,"rotation"); 
-		addMcmcMove(rotationMove,10); // change to correct weight
+		addMcmcMove(rotationMove,rotationWeight); // change to correct weight
 		
 		TranslationMove translationMove = new TranslationMove(this,"translation");
-		addMcmcMove(translationMove,10); // change to correct weight
+		addMcmcMove(translationMove,translationWeight); // change to correct weight
 		
 		LibraryMove libraryMove = new LibraryMove(this,"library");
-		addMcmcMove(libraryMove,10); // change to correct weight
+		addMcmcMove(libraryMove,libraryWeight); // change to correct weight
 		
 		AlignmentMove alignmentMove = new AlignmentMove(this,"alignment");
-		addMcmcMove(alignmentMove,10); // change to correct weight
+		addMcmcMove(alignmentMove,alignmentWeight); // change to correct weight
 		
 		ArrayList<McmcMove> alignmentRotation = new ArrayList<McmcMove>();
 		alignmentRotation.add(alignmentMove);
 		alignmentRotation.add(rotationMove);
 		McmcCombinationMove alignmentRotationMove = 
 			new McmcCombinationMove(alignmentRotation);
-		addMcmcMove(alignmentRotationMove,10); // change to correct weight
+		addMcmcMove(alignmentRotationMove,alignmentRotationWeight); // change to correct weight
 		
 		ArrayList<McmcMove> alignmentTranslation = new ArrayList<McmcMove>(); 
 		alignmentTranslation.add(alignmentMove);
 		alignmentTranslation.add(translationMove);
 		McmcCombinationMove alignmentTranslationMove = 
 			new McmcCombinationMove(alignmentTranslation);
-		addMcmcMove(alignmentTranslationMove,10); // change to correct weight
+		addMcmcMove(alignmentTranslationMove,alignmentTranslationWeight); // change to correct weight
 		
 		ArrayList<McmcMove> alignmentLibrary = new ArrayList<McmcMove>();
 		alignmentLibrary.add(alignmentMove);
 		alignmentLibrary.add(libraryMove);
 		McmcCombinationMove alignmentLibraryMove = 
 			new McmcCombinationMove(alignmentLibrary);
-		addMcmcMove(alignmentLibraryMove,10); // change to correct weight
+		addMcmcMove(alignmentLibraryMove,alignmentLibraryWeight); // change to correct weight
 		
 		/** Add moves for scalar parameters */
 		StructAlignParameterInterface paramInterfaceGenerator = new StructAlignParameterInterface(this); 
