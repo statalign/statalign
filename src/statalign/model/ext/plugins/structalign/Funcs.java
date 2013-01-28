@@ -23,7 +23,7 @@ public class Funcs{
 	 * @param b second vector
 	 * @return cross product
 	 */
-	/*static RealVector crossProduct(RealVector a, RealVector b){
+	/*public static RealVector crossProduct(RealVector a, RealVector b){
 		RealMatrix skew = new Array2DRowRealMatrix(
 				new double[][] {{0, -a.getEntry(2), a.getEntry(1)}, {a.getEntry(2), 0, -a.getEntry(0)},
 						{-a.getEntry(1), a.getEntry(0), 0}});
@@ -38,7 +38,7 @@ public class Funcs{
 	 * 
 	 * @return Transformation object with rotation matrix calculated from axis and angle
 	 */
-	/*static RealMatrix calcRotationMatrix(RealVector axis, double rot){
+	/*public static RealMatrix calcRotationMatrix(RealVector axis, double rot){
 		RealMatrix outer = axis.outerProduct(axis);
 		// use transpose of cross product matrix (as given on wikipedia) because
 		// we post-multiply by rotation matrix (other components of final step are symmetric)
@@ -61,7 +61,7 @@ public class Funcs{
 	 * @return mean vector
 	 */
 	
-	static RealVector meanVector(RealMatrix A){
+	public static RealVector meanVector(RealMatrix A){
 		RealVector mean = new ArrayRealVector(new double[3]);
 		for(int i = 0; i < 3; i ++){
 			for(int j = 0; j < A.getColumn(0).length; j++)
@@ -72,7 +72,7 @@ public class Funcs{
 	}
 
 
-	public Vertex sampleVertex(Tree tree){
+	public static Vertex sampleVertex(Tree tree){
 		/* Vertex v;
 		int n = tree.vertex.length;		// number of vertices
 		int l = coords.length;			// number of leaves
@@ -90,25 +90,25 @@ public class Funcs{
 		return tree.vertex[Utils.generator.nextInt(tree.vertex.length - 1)]; // -1 excludes root
 	}
 	
-	public ArrayList<Integer> findRefSubtrees(Tree tree, int refInd){
+	public static ArrayList<Integer> findRefSubtrees(Tree tree, int refInd){
 		ArrayList<Integer> inds = new ArrayList<Integer>(0);
 		moveUp(tree.vertex[refInd].parent, inds);
 		return inds;
 	}
 	
-	public void moveUp(Vertex v, List<Integer> inds){
+	public static void moveUp(Vertex v, List<Integer> inds){
 		inds.add(v.index);
 		if(v.parent != null)
 			moveUp(v.parent, inds);
 	}
 	
-	public ArrayList<Integer> collectLeaves(Vertex v){
+	public static ArrayList<Integer> collectLeaves(Vertex v){
 		ArrayList<Integer> inds = new ArrayList<Integer>(0);
 		moveDown(v, inds);
 		return inds;
 	}
 	
-	public void moveDown(Vertex v, List<Integer> inds){
+	public static void moveDown(Vertex v, List<Integer> inds){
 		if(v.left != null){
 			moveDown(v.left, inds);
 			moveDown(v.right, inds);
@@ -154,7 +154,7 @@ public class Funcs{
 		
 	}
 	
-	public void initLSRotations(Tree tree, double[][][] coords, 
+	public static void initLSRotations(Tree tree, double[][][] coords, 
 			double[][] xlats, double[][] axes, double[] angles){
 		String[] align = tree.getState().getLeafAlign();
 		String ref = align[0];
@@ -185,7 +185,7 @@ public class Funcs{
 		}
 	}
 	
-	public double[][] getRowSub(double[][] coord, ArrayList<Integer> rows){
+	public static double[][] getRowSub(double[][] coord, ArrayList<Integer> rows){
 		double[][] sub = new double[rows.size()][coord[0].length];
 		
 		for(int i = 0; i < sub.length; i++)

@@ -12,7 +12,7 @@ public class TranslationMove extends RotationOrTranslationMove {
 		omit = 0;
 	}
 
-	public double proposal() {
+	public double proposal(Object externalState) {
 		for(int i = 0; i < 3; i++)
 			owner.xlats[ind][i] = Utils.generator.nextGaussian() * owner.xlatP + owner.xlats[ind][i];  
 				

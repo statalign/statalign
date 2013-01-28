@@ -18,16 +18,16 @@ public abstract class McmcMove {
 	}
 	
 	public abstract void copyState();
-	public abstract double proposal(); // Returns logProposalRatio
-	public abstract void updateLikelihood(); 
+	public abstract double proposal(Object externalState); // Returns logProposalRatio
+	public abstract void updateLikelihood(Object externalState); 
 	public abstract void restoreState();
 	
-	public void move() {
+	public void move(Object externalState) {
 		
 		proposalCount++;
 		copyState();
-		double logProposalRatio = proposal();
-		updateLikelihood();
+		double logProposalRatio = proposal(externalState);
+		updateLikelihood(externalState);
 		if(owner.isParamChangeAccepted(logProposalRatio)) {
 			acceptanceCount++;
 			lastMoveAccepted = true;

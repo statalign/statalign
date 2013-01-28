@@ -20,7 +20,7 @@ import statalign.model.ext.McmcMove;
 /**
  * Ancestral class for model extension plugins.
  * 
- * @author novak
+ * @author novak, herman
  */
 public abstract class ModelExtension {
 	
@@ -29,14 +29,14 @@ public abstract class ModelExtension {
 	
 	protected boolean active;
 	
-	private List<McmcMove> mcmcMoves;
+	protected List<McmcMove> mcmcMoves;
 	void addMcmcMove(McmcMove m) {
 		mcmcMoves.add(m);
 	}
 	public List<McmcMove> getMcmcMoves() {
 		return mcmcMoves;
 	}
-	private int[] mcmcMoveWeights;
+	protected List<Integer> mcmcMoveWeights;
 	
 //	public int[] proposalCounts;
 //	public int[] acceptanceCounts;
@@ -172,7 +172,7 @@ public abstract class ModelExtension {
 	 */
 	public void proposeParamChange(Tree tree) {
 		int selectedMove = Utils.weightedChoose(mcmcMoveWeights);
-		mcmcMoves.get(selectedMove).move();
+		mcmcMoves.get(selectedMove).move(tree);
 	}
 	
 	public void modifyProposalWidths() {

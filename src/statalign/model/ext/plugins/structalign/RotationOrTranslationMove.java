@@ -30,9 +30,9 @@ public abstract class RotationOrTranslationMove extends McmcMove {
 		oldll = owner.curLogLike;
 	}
 
-	public abstract double proposal();
+	public abstract double proposal(Object externalState);
 	
-	public void updateLikelihood() {
+	public void updateLikelihood(Object externalState) {
 		owner.calcRotation(ind);
 		owner.curLogLike = owner.calcAllColumnContrib();
 	}

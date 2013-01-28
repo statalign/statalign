@@ -11,10 +11,10 @@ public class LibraryMove extends RotationOrTranslationMove {
 	
 	public LibraryMove (StructAlign s) {
 		owner = s;
-		omit = 0;
+		omit = 1;
 	}
 
-	public double proposal() {
+	public double proposal(Object externalState) {
 		Transformation old = new Transformation(owner.axes[ind], owner.angles[ind], owner.xlats[ind]);
 		// transformation should be relative to reference protein
 		old.xlat = old.xlat.subtract(new ArrayRealVector(owner.xlats[0]));

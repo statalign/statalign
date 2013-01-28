@@ -170,6 +170,26 @@ public class Utils{
 
 		return k;
 	}
+	
+	/**
+	 * This function returns a random index, weighted by the weights in the array `weights'
+	 */
+	public static int weightedChoose(List<Integer> weights){
+		int sum = 0;
+
+		for(int i = 0; i < weights.size(); i++){
+			sum += weights.get(i);
+		}
+
+		int w = generator.nextInt(sum);
+		int k = 0;
+		sum = 0;
+		while((sum += weights.get(k)) <= w){
+			k++;
+		}
+
+		return k;
+	}
 
 	/**
 	 * Similar to weightedChoose(weights), but the log-probability of the selection

@@ -18,7 +18,7 @@ public class RotationMove extends RotationOrTranslationMove {
 		omit = 1;
 	}
 
-	public double proposal() {
+	public double proposal(Object externalState) {
 		double smallAngle = vonMises.simulate(owner.angleP, 0);
 		
 		RealVector randomAxis = new ArrayRealVector(3);

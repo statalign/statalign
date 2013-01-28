@@ -33,6 +33,7 @@ import statalign.io.DataType;
 import statalign.io.ProteinSkeletons;
 import statalign.model.ext.ModelExtension;
 import statalign.model.ext.plugins.structalign.*;
+import statalign.model.ext.plugins.structalign.StructAlignParameterInterface.*;
 
 import statalign.model.subst.SubstitutionModel;
 import statalign.postprocess.PluginParameters;
@@ -73,14 +74,14 @@ public class StructAlign extends ModelExtension implements ActionListener {
 
 	/** Parameters of structural drift */
 	public double[] sigma2;
-	public double sigma2Hier = 1;
-	public double nu = 1;
-	public double tau = 5;
-	public double epsilon = 5;
+	public double sigma2Hier;
+	public double nu;
+	public double tau;
+	public double epsilon;
 	// TODO Allow starting values to be specified at command line/GUI
 	
 	/** Covariance matrix implied by current tree topology */
-	double[][] fullCovar;
+	public double[][] fullCovar;
 	/** Current alignment between all leaf sequences */
 	private String[] curAlign;
 	
@@ -89,13 +90,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	
 	/** independence rotation proposal distribution */
 	public RotationProposal rotProp;
-	
-	/** MCMC moves */
-	addMcmcMove(new RotationMove(this));
-	TranslationMove translationMove = new TranslationMove(this);
-	LibraryMove libraryMove = new LibraryMove(this);
-	
-	
+
+		
 	// TODO change the above public variables to package visible and put 
 	// StructAlign.java in statalign.model.ext.plugins.structalign
 	
@@ -132,9 +128,6 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	 * rotation/translation, sigma2, tau, sigma2Hier, nu, epsilon, subtree rotation, fixed-subtree alignment, and subtree rot+align combined */
 	int[] paramPropWPerSeq = { 5, 3, 0, 0, 0, 0, 0, 0, 0 };
 	
-	private int[] mcmcMoveWeights;
-
-
 	/** Total weights calculated as const+perseq*nseq */
 	int[] paramPropWeights;
 	/** Weights for proposing rotation vs translation vs library */
@@ -150,18 +143,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	private final int pluginProposalWeight = 50; 
 	
 	/** Proposal tuning parameters */
-	// higher values lead to smaller step sizes
-	//proposalCounts = new int[6];
-	//proposalCounts = new int[6];
-	//proposalCounts = new int[6];
-	
-	//private static final double tauP = 10;
-	//private static final double sigma2P = 10;
-	//private static final double sigma2HP = 10;
-	//private static final double nuP = 10;
-	//private static final double axisP = 100;
 	public static final double angleP = 1000;
-	// higher values lead to bigger step sizes
 	public static final double xlatP = .1;
 	
 	public double MIN_EPSILON = 2;
@@ -248,6 +230,10 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		angles[0] = 0;
 		xlats[0] = new double[] { 0, 0, 0 };
 						
+		sigma2Hier = 1;
+		nu = 1;
+		tau = 5;
+		epsilon = 5;
 		
 		// alternative initializations
 		// actual initialization now occurs in beforeSampling()
@@ -264,7 +250,6 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			xlats[i] = new double[] { 0, 0, 0 };
 		} */
 		
-		int others = 4;
 		// number of branches in the tree is 2*leaves - 1
 		if (globalSigma) {
 			sigma2 = new double[1];
@@ -275,53 +260,46 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			sigma2 = new double[2*coords.length - 1];
 		}
 		
-		if (globalSigma) {
-			proposalCounts = new int[3]; // Includes tau & epsilon
-			acceptanceCounts = new int[3];
-			proposalWidthControlVariables = new double[3];
-		}
-		else {
-			proposalCounts = new int[sigma2.length+others]; // Includes tau, sigma2Hier, nu, and epsilon
-			acceptanceCounts = new int[sigma2.length+others];
-			proposalWidthControlVariables = new double[sigma2.length+others];			
-		}
-		for (int ii=0; ii<proposalCounts.length; ii++) {
-			proposalCounts[ii] = 0;
-			acceptanceCounts[ii] = 0;
-			proposalWidthControlVariables[ii] = 1; 
-			// This needs to be a variable that, when bigger, increases the 
-			// width of the proposal.
-		}
-		
 		for(i = 0; i < sigma2.length; i++)
 			sigma2[i] = 1;
-		
-		// Indices of the variables in the arrays of proposal counts and acceptance counts.
-		tauInd = sigma2.length;
-		epsilonInd = sigma2.length+1;
-		sigma2HInd = sigma2.length+2;
-		nuInd = sigma2.length+3;
-		
-		
-		tau = 5;
-		tauProposed = 0;
-		tauAccept = 0;
-		rotProposed = 0;
-		rotAccept = 0;
-		xlatProposed = 0;
-		xlatAccept = 0;
-		libProposed = 0;
-		libAccept = 0;
 		
 		paramPropWeights = Utils.copyOf(paramPropWConst);
 		for(i = 0; i < paramPropWeights.length; i++)
 			paramPropWeights[i] += paramPropWPerSeq[i]*coords.length;
 
+		mcmcMoves.add(new RotationMove(this));
+		mcmcMoveWeights.add(10); // change to correct weight
+		mcmcMoves.add(new TranslationMove(this));
+		mcmcMoveWeights.add(10); // change to correct weight
+		mcmcMoves.add(new LibraryMove(this));
+		mcmcMoveWeights.add(10); // change to correct weight
+		
+		StructAlignParameterInterface paramInterfaceGenerator = new StructAlignParameterInterface(); 
+		
+		ParameterInterface tauInterface = paramInterfaceGenerator.new TauInterface(this);
+		mcmcMoves.add(new ContinuousPositiveParameterMove(this,tauInterface));
+		mcmcMoveWeights.add(10); // change to correct weight
+		
+		ParameterInterface epsilonInterface = paramInterfaceGenerator.new EpsilonInterface(this);
+		mcmcMoves.add(new ContinuousPositiveParameterMove(this,epsilonInterface));
+		mcmcMoveWeights.add(10); // change to correct weight
+		
+		if (!globalSigma) {
+			ParameterInterface sigma2HInterface = paramInterfaceGenerator.new Sigma2HInterface(this);
+			mcmcMoves.add(new ContinuousPositiveParameterMove(this,sigma2HInterface));
+			mcmcMoveWeights.add(10); // change to correct weight
+		}
+		
+		for (int j=0; j<sigma2.length; j++) {
+			ParameterInterface sigma2Interface = paramInterfaceGenerator.new Sigma2Interface(this,j);
+			mcmcMoves.add(new ContinuousPositiveParameterMove(this,sigma2Interface));
+			mcmcMoveWeights.add(10); // change to correct weight
+		}
 	}
 	
 	@Override
 	public void beforeSampling(Tree tree) {
-		initLSRotations(tree);
+		Funcs.initLSRotations(tree,coords,xlats,axes,angles);
 	}
 	
 	
@@ -618,117 +596,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 
 	@Override
 	public void proposeParamChange(Tree tree) {
-		int param = Utils.weightedChoose(paramPropWeights);
-		if(param == 0) {
-			writeRotationFiles(tree);
-			// proposing rotation/translation of a single sequence
-			int rotxlat = Utils.weightedChoose(rotXlatWeights);
-			if (rotxlat == 0) {
-				rotationMove.move();
-			}
-			else if (rotxlat == 1) {
-				translationMove.move();
-			}
-			else if (rotxlat == 2) {
-				libraryMove.move();
-			}
-			
-			// choose sequence to rotate/translate (never rotate 1st one)
-			int omit = (rotxlat != 1 ? 1 : 0);
-			int ind = Utils.generator.nextInt(coords.length - omit) + omit;
-			
-			double[] oldax = MathArrays.copyOf(axes[ind]);
-			double oldang = angles[ind];
-			double[] oldxlat = MathArrays.copyOf(xlats[ind]);
-			double[][] oldrots = rotCoords[ind];
-			rotCoords[ind] = null;	// so that calcRotation creates new array
-			double oldll = curLogLike;
-
-			double logProposalRatio = 0;
-
-			switch(rotxlat) {
-			case 0:
-				// rotation of a single sequence
-				rotProposed++;
-				// axes[ind] = vonMisesFisher.simulate(axisP, new ArrayRealVector(axes[ind])).toArray();
-				double smallAngle = vonMises.simulate(angleP, 0);
-				
-				RealVector randomAxis = new ArrayRealVector(3);
-				for(int i = 0; i < 3; i++)
-					randomAxis.setEntry(i, Utils.generator.nextGaussian());
-				randomAxis.unitize();
-				
-				Rotation Q = new Rotation(new Vector3D(randomAxis.toArray()), smallAngle);
-				Rotation R = new Rotation(new Vector3D(axes[ind]), angles[ind]);
-				
-				R = Q.applyTo(R);
-			
-				axes[ind] = R.getAxis().toArray();
-				angles[ind] = R.getAngle();
-				
-				// logProposalRatio is 0 because prior is uniform and proposal is symmetric
-				
-				break;
-			case 1:
-				// translation of a single sequence
-				xlatProposed++;
-				for(int i = 0; i < 3; i++)
-					xlats[ind][i] = Utils.generator.nextGaussian() * xlatP + xlats[ind][i];  
-				
-				// logProposalRatio is 0 because prior is uniform and proposal is symmetric
-				
-				break;
-			case 2:
-				// library proposal of a single sequence
-				libProposed++;
-				Transformation old = new Transformation(axes[ind], angles[ind], xlats[ind]);
-				// transformation should be relative to reference protein
-				old.xlat = old.xlat.subtract(new ArrayRealVector(xlats[0]));
-				Transformation prop = rotProp.propose(ind);
-				axes[ind] = prop.rotMatrix.getAxis().toArray();
-				angles[ind] = prop.rotMatrix.getAngle();
-				xlats[ind] = prop.xlat.toArray();
-
-				// library density 
-				logProposalRatio = rotProp.libraryLogDensity(ind, old) - 
-						  rotProp.libraryLogDensity(ind, prop);
-				
-				// proposed translation is relative to reference protein
-				for(int i = 0; i < 3; i++)
-					xlats[ind][i] += xlats[0][i];
-							
-				break;
-			}
-
-			calcRotation(ind);
-			curLogLike = calcAllColumnContrib();
-			if(isParamChangeAccepted(logProposalRatio)) {
-				// accepted, nothing to do
-				switch(rotxlat) {
-				case 0:
-					rotAccept++;
-					break;
-				case 1:
-					xlatAccept++;
-					break;
-				case 2:
-					libAccept++;
-					break;
-				}
-//				if(Utils.DEBUG)
-//					System.out.println(new String[] { "rot", "xlat", "library" }[rotxlat]+" accepted");
-			} else {
-				// rejected, restore
-//				if(Utils.DEBUG)
-//					System.out.println(new String[] { "rot", "xlat", "library" }[rotxlat]+" rejected");
-				axes[ind] = oldax;
-				angles[ind] = oldang;
-				xlats[ind] = oldxlat;
-				rotCoords[ind] = oldrots;
-				curLogLike = oldll;
-			}
-				
-		} else if(param == 1 || param == 2){
+		
 			
 			int sigmaInd = 0;
 			if(param == 1 && !globalSigma) {	// select sigma to propose if not global
@@ -736,7 +604,6 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				if(sigmaInd >= tree.root.index)
 					sigmaInd++;
 			}
-			
 			// proposing new sigma
 			double oldpar = param == 1 ? sigma2[sigmaInd] : tau;
 			double[][] oldcovar = fullCovar;
