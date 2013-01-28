@@ -5,12 +5,10 @@ import java.util.ArrayList;
 import statalign.base.Utils;
 import statalign.base.Vertex;
 import statalign.base.Tree;
-import statalign.model.ext.McmcMove;
 import statalign.model.ext.plugins.StructAlign;
 
-public class AlignmentMove extends McmcMove {
+public class AlignmentMove extends StructAlignMcmcMove {
 
-	StructAlign owner;
 	Tree tree;
 	
 	double[][] oldaxes = null;
@@ -28,6 +26,7 @@ public class AlignmentMove extends McmcMove {
 		owner = s;
 		name = n;
 	}
+	
 	public void copyState(Object externalState) {
 		if (externalState instanceof Tree) {
 			tree = (Tree) externalState;

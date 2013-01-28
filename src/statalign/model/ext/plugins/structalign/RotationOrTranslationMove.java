@@ -7,12 +7,9 @@ import org.apache.commons.math3.util.MathArrays;
 import statalign.base.Utils;
 import statalign.base.Vertex;
 import statalign.base.Tree;
-import statalign.model.ext.McmcMove;
-import statalign.model.ext.plugins.StructAlign;
 
-public abstract class RotationOrTranslationMove extends McmcMove {
+public abstract class RotationOrTranslationMove extends StructAlignMcmcMove {
 
-	StructAlign owner;
 	Tree tree;
 	
 	double[][] oldaxes = null;
@@ -25,7 +22,7 @@ public abstract class RotationOrTranslationMove extends McmcMove {
 	int nLeaves;
 	ArrayList<Integer> subtreeLeaves;
 	int index;
-	
+
 	public void copyState(Object externalState) {
 		if (externalState instanceof Tree) {
 			tree = (Tree) externalState;
@@ -47,8 +44,8 @@ public abstract class RotationOrTranslationMove extends McmcMove {
 			oldangles[j] = owner.angles[j];
 			oldxlats[j] = MathArrays.copyOf(owner.xlats[j]);
 			oldrots[j] = owner.rotCoords[j];
-			owner.rotCoords[j] = null;	// so that calcRotation creates new array
 		}
+		
 		oldll = owner.curLogLike;
 	}
 
@@ -61,6 +58,7 @@ public abstract class RotationOrTranslationMove extends McmcMove {
 	public void updateLikelihood(Object externalState) {
 		for(int i = 0; i < subtreeLeaves.size(); i++){
 			int j = subtreeLeaves.get(i);
+			owner.rotCoords[j] = null;	// so that calcRotation creates new array
 			owner.calcRotation(j);
 		}
 		owner.curLogLike = owner.calcAllColumnContrib();

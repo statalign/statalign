@@ -1,16 +1,14 @@
 package statalign.model.ext.plugins.structalign;
 
 import statalign.model.ext.GammaPrior;
-import statalign.model.ext.McmcMove;
 import statalign.model.ext.ParameterInterface;
 import statalign.base.Tree;
 import statalign.model.ext.plugins.StructAlign;
 import statalign.utils.GammaDistribution;
 import statalign.model.ext.plugins.structalign.StructAlignParameterInterface.*;
 
-public class ContinuousPositiveParameterMove extends McmcMove {
+public class ContinuousPositiveParameterMove extends StructAlignMcmcMove {
 
-	StructAlign owner;
 	Tree tree;
 	
 	/**

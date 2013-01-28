@@ -328,7 +328,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			ParameterInterface sigma2Interface = paramInterfaceGenerator.new Sigma2Interface(j);
 			ContinuousPositiveParameterMove m = new ContinuousPositiveParameterMove(
 														this,sigma2Interface,
-														sigma2Prior,"sigma2_"+i);
+														sigma2Prior,"sigma2_"+j);
 			addMcmcMove(m,10); // change to correct weight
 			if (!globalSigma) {
 				sigma2HMove.addChildMove(m);

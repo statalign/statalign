@@ -6,7 +6,6 @@ import statalign.model.ext.PriorDistribution;
 
 public abstract class McmcMove {
 
-	protected ModelExtension owner;
 	protected PriorDistribution<? extends Object> prior;
 	
 	protected ParameterInterface param;
@@ -33,16 +32,22 @@ public abstract class McmcMove {
 	public abstract double logPriorDensity(Object externalState);
 	public abstract void updateLikelihood(Object externalState); 
 	public abstract void restoreState(Object externalState);
+	public abstract ModelExtension getOwner();
+	
+	public boolean isParamChangeAccepted(double logProposalRatio) {
+		return getOwner().isParamChangeAccepted(logProposalRatio);
+	}
 	
 	public void move(Object externalState) {
 		
+		System.out.println("Executing move '"+name+"'.");
 		proposalCount++;
 		copyState(externalState);
 		double logProposalRatio = -logPriorDensity(externalState);
 		logProposalRatio = proposal(externalState); 
 		logProposalRatio += logPriorDensity(externalState);
 		updateLikelihood(externalState);
-		if(owner.isParamChangeAccepted(logProposalRatio)) {
+		if(isParamChangeAccepted(logProposalRatio)) {
 			acceptanceCount++;
 			lastMoveAccepted = true;
 		}

@@ -2,6 +2,7 @@ package statalign.model.ext;
 
 import java.io.File;
 import java.util.List;
+import java.util.ArrayList;
 
 import javax.swing.JComponent;
 
@@ -29,7 +30,8 @@ public abstract class ModelExtension {
 	
 	protected boolean active;
 	
-	private ArrayList<McmcMove> mcmcMoves;
+	private List<McmcMove> mcmcMoves = new ArrayList<McmcMove>();
+	protected List<Integer> mcmcMoveWeights = new ArrayList<Integer>();
 	protected void addMcmcMove(McmcMove m, int weight) {
 		mcmcMoves.add(m);
 		mcmcMoveWeights.add(weight);
@@ -45,7 +47,6 @@ public abstract class ModelExtension {
 		}
 		throw new RuntimeException("McmcMove "+name+" not found.");
 	}
-	protected List<Integer> mcmcMoveWeights;
 	
 //	public int[] proposalCounts;
 //	public int[] acceptanceCounts;
