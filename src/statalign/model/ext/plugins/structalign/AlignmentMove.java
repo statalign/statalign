@@ -32,7 +32,7 @@ public class AlignmentMove extends StructAlignMcmcMove {
 			tree = (Tree) externalState;
 		}
 		else {
-			throw new IllegalArgumentException("RotationOrTranslationMove.copyState must take an argument of type Tree.");
+			throw new IllegalArgumentException("AlignmentMove.copyState must take an argument of type Tree.");
 		}
 		subtreeRoot = Funcs.sampleVertex(tree);
 		nLeaves = owner.coords.length;
