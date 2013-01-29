@@ -92,7 +92,7 @@ public class InputGUI extends JPanel implements ActionListener, ListSelectionLis
 				String s1 = manager.inputData.seqs.sequences.get(i);
 				String seqTitle = "<font color=\"000099\">&gt; "+manager.inputData.seqs.seqNames.get(i)+"</font>";
 				for (DataType d : manager.inputData.auxData) {
-					if (d.perSequenceData()) {
+					if (d.perSequenceData() && !d.getSummaryAssociatedWith(manager.inputData.seqs.seqNames.get(i)).isEmpty()) {
 						seqTitle += "<font color=\"C80000\"> + "+d.getSummaryAssociatedWith(manager.inputData.seqs.seqNames.get(i))+"</font>";
 					}
 				}
