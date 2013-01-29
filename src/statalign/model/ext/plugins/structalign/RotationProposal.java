@@ -28,7 +28,7 @@ public class RotationProposal{
 	/* concentration parameters of proposal distribution */
 	double kvMF = 100;
 	double kvM = 100;
-	double sd = .1;
+	public double sd = .1;
 	
 	// TODO All of the values above this point should probably be chosen elsewhere
 	

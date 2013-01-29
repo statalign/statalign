@@ -14,6 +14,8 @@ public class LibraryMove extends RotationOrTranslationMove {
 	}
 
 	public double proposal(Object externalState) {
+		
+		owner.rotProp.sd = proposalWidthControlVariable;
 		Transformation oldSub = new Transformation(owner.axes[index], owner.angles[index], owner.xlats[index]);
 		// transformation should be relative to reference protein
 		oldSub.xlat = oldSub.xlat.subtract(new ArrayRealVector(owner.xlats[0]));

@@ -126,26 +126,26 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	 */
 	private final int pluginProposalWeight = 50; 
 	
-	int sigma2Weight = 5;
+	int sigma2Weight = 10;
 	int tauWeight = 3;
 	int sigma2HierWeight = 3;
 	int nuWeight = 3;
-	int epsilonWeight = 3;
+	int epsilonWeight = 1;
 	int rotationWeight = 2;
 	int translationWeight = 2;
-	int libraryWeight = 1;
+	int libraryWeight = 0;
 	int alignmentWeight = 2;
 	
 	int alignmentRotationWeight = 2;
 	int alignmentTranslationWeight = 2;
-	int alignmentLibraryWeight = 1;
+	int alignmentLibraryWeight = 0;
 	
 	
 	/** Proposal tuning parameters */
 	public static final double angleP = 1000;
 	public static final double xlatP = .1;
 	
-	public final double MIN_EPSILON = 0.1;
+	public final double MIN_EPSILON = 0.01;
 	
 	@Override
 	public List<JComponent> getToolBarItems() {

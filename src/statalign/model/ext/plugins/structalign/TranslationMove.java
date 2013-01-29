@@ -8,12 +8,13 @@ public class TranslationMove extends RotationOrTranslationMove {
 	public TranslationMove (StructAlign s, String n) {
 		owner = s;
 		name = n;
+		proposalWidthControlVariable = owner.xlatP;
 	}
 
 	public double proposal(Object externalState) {
 		double[] shift = new double[3];
 		for(int i = 0; i < 3; i++)
-			shift[i] = Utils.generator.nextGaussian() * owner.xlatP;
+			shift[i] = Utils.generator.nextGaussian() * proposalWidthControlVariable;
 		for(int l = 0; l < subtreeLeaves.size(); l++){
 			int j = subtreeLeaves.get(l);
 			for(int i = 0; i < 3; i++)

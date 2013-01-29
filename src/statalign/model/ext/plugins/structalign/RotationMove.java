@@ -14,10 +14,11 @@ public class RotationMove extends RotationOrTranslationMove {
 	public RotationMove (StructAlign s, String n) {
 		owner = s;
 		name = n;
+		proposalWidthControlVariable = 1.0/owner.angleP;
 	}
 
 	public double proposal(Object externalState) {
-		double smallAngle = vonMises.simulate(owner.angleP, 0);
+		double smallAngle = vonMises.simulate(1.0/proposalWidthControlVariable, 0);
 		
 		RealVector randomAxis = new ArrayRealVector(3);
 		for(int i = 0; i < 3; i++)

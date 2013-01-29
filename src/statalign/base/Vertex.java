@@ -1435,7 +1435,7 @@ public class Vertex {
         	double bppBack = doRecBackprop();
         	if(parent != null)
         		bppBack += hmm2BackProp();
-        	if(Math.abs(bppProp+bppBack) > 1e-5) {
+        	if(Math.abs(bppProp-bppBack) > 1e-5) {
         		System.out.println("Proposal - backproposal inconsistent! Prop: "+bppProp+" Back: "+bppBack);
         	}
         }

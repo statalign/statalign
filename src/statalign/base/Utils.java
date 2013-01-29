@@ -49,7 +49,10 @@ public class Utils{
 	 * specified by [MIN_ACCEPTANCE,MAX_ACCEPTANCE].
 	 */
 	public static final double SPAN_MULTIPLIER = 0.7;
-	public static final double MIN_ACCEPTANCE = 0.15;
+	public static final double MIN_ACCEPTANCE = 0.2;
+	// Put the minimum a bit higher than we want it to be
+	// because as the parameters converge the acceptance rate
+	// typically goes down
 	public static final double MAX_ACCEPTANCE = 0.4;
 	
 	public static final double WINDOW_CHANGE_FACTOR = 0.9;
