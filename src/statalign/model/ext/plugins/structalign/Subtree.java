@@ -2,6 +2,7 @@ package statalign.model.ext.plugins.structalign;
 
 import java.util.ArrayList;
 
+import statalign.base.Utils;
 import statalign.base.Vertex;
 import statalign.base.Tree;
 import statalign.model.ext.plugins.structalign.Funcs;
@@ -19,6 +20,17 @@ public class Subtree {
 			}
 			subtreeLeaves = complement;
 		}
+//		if (Utils.DEBUG) {
+//			System.out.print(" {");
+//			for(int i = 0; i < subtreeLeaves.size(); i++){
+//				int j = subtreeLeaves.get(i);
+//				System.out.print(j);
+//				if (i < (subtreeLeaves.size() - 1)) {
+//					System.out.print(",");
+//				}
+//			}
+//			System.out.println("} ");
+//		}
 		return subtreeLeaves;
 	}
 }

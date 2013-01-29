@@ -1,5 +1,6 @@
 package statalign.model.ext;
 
+import statalign.base.Utils;
 import statalign.model.ext.ModelExtension;
 import statalign.model.ext.ParameterInterface;
 import statalign.model.ext.PriorDistribution;
@@ -45,7 +46,9 @@ public abstract class McmcMove {
 	
 	public void move(Object externalState) {
 		
-		//System.out.println("Executing move '"+name+"'.");
+//		if (Utils.DEBUG) {
+//			System.out.println("Executing move '"+name+"'. ");
+//		}
 		proposalCount++;
 		copyState(externalState);
 		double logProposalRatio = -logPriorDensity(externalState);
