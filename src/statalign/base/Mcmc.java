@@ -41,8 +41,15 @@ public class Mcmc extends Stoppable {
 	double[] weights; // for selecting internal tree node
 	final static double LEAFCOUNT_POWER = 1.0;
 	final static double SELTRLEVPROB[] = { 0.9, 0.6, 0.4, 0.2, 0 };
+	
 	/** Default proposal weights in this order: align, topology, edge, indel param, subst param, modelext param */
 	final static int DEF_PROP_WEIGHTS[] = { 35, 20, 15, 15, 10, 0 };
+	/** Changes to make to the proposal weights after half the burnin is over. This
+	 *  may be useful when one parameter takes a while to converge, but mixes well, 
+	 *  or vice versa.
+	 */
+	final static int WEIGHT_CHANGE_AFTER_HALF_BURNIN[] = {0, 0, 10, 0, 0, 0};
+
 	
 //	final static int FIVECHOOSE[] = { 35, 5, 15, 35, 10 }; // edge, topology,
 //	// indel parameter, alignment, substitutionparameter
@@ -198,8 +205,20 @@ public class Mcmc extends Stoppable {
 			}
 
 			burnin = true;
+			boolean alreadyAddedWeightModifiers = false;
 			for (int i = 0; i < burnIn; i++) {
 				
+				if (i > burnIn / 2) {
+					if (!alreadyAddedWeightModifiers) {
+						alreadyAddedWeightModifiers = true;
+						for (int j=0; j<proposalWeights.length; j++) {
+							proposalWeights[j] += WEIGHT_CHANGE_AFTER_HALF_BURNIN[j];
+							// This should really be handled in a less hard-coded fashion,
+							// for example allowing each plugin to alter the relative 
+							// weights of the non-plugin moves.
+						}
+					}
+				}
 				sample(0);
 
 				// Triggers a /new step/ and a /new peek/ (if appropriate) of
@@ -336,6 +355,7 @@ public class Mcmc extends Stoppable {
 			
 			//both real burn-in and the one to determine the sampling rate have now been completed.
 			burnin = false;
+			
 			
 			alignmentSampled = 0;
 			alignmentAccepted = 0;

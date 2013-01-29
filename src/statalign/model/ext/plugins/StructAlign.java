@@ -122,7 +122,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	
 	/** Default proposal weights in this order: 
 	 *  align, topology, edge, indel param, subst param, modelext param 
-	 *  { 35, 20, 15, 15, 10, 0 };
+	 *  { 35, 20, 25, 15, 10, 0 };
 	 */
 	private final int pluginProposalWeight = 50; 
 	
@@ -130,7 +130,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	int tauWeight = 3;
 	int sigma2HierWeight = 3;
 	int nuWeight = 3;
-	int epsilonWeight = 3;
+	int epsilonWeight = 10;
 	int rotationWeight = 2;
 	int translationWeight = 2;
 	int libraryWeight = 0;
@@ -232,7 +232,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		sigma2Hier = 1;
 		nu = 1;
 		tau = 5;
-		epsilon = 5;
+		epsilon = 100;
 		
 		// alternative initializations
 		// actual initialization now occurs in beforeSampling()
