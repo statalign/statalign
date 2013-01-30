@@ -145,7 +145,7 @@ public class StructAlignTraceGUI extends JPanel {
 		gr.setFont(STR_FONT);
 		gr.drawString("" + String.format("%.1f",maxParam), (int) minX, 5 + (int)minY);
 		gr.drawString("" + String.format("%.1f",minParam), (int) minX, 5 + (int)maxY);
-		gr.setFont(new Font("Dialog", Font.BOLD, 10));
+		gr.setFont(new Font("Dialog", Font.BOLD, 12));
 		String paramName = parameterHistory.get(0).plottableParameters.get(parameterIndex).name;
 		gr.drawString(paramName, (int) minX + 3, (int)((minY+maxY)/2));
 		gr.setFont(STR_FONT);

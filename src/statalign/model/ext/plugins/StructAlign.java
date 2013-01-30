@@ -102,8 +102,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	/** Priors */
 	private double sigma2PriorShape = 0.001;
 	private double sigma2PriorRate = 0.001;
-	public InverseGammaPrior sigma2Prior = new InverseGammaPrior(sigma2PriorShape,sigma2PriorRate);
-//	public HyperbolicPrior sigma2Prior = new HyperbolicPrior();
+//	public InverseGammaPrior sigma2Prior = new InverseGammaPrior(sigma2PriorShape,sigma2PriorRate);
+	public HyperbolicPrior sigma2Prior = new HyperbolicPrior();
 	
 	private double tauPriorShape = 0.001;
 	private double tauPriorRate = 0.001;
@@ -132,8 +132,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	 */
 	private final int pluginProposalWeight = 50; 
 	
-	int sigma2Weight = 25;
-	int tauWeight = 15;
+	int sigma2Weight = 15;
+	int tauWeight = 10;
 	int sigma2HierWeight = 10;
 	int nuWeight = 10;
 	int epsilonWeight = 10;
@@ -366,8 +366,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			ParameterInterface sigma2Interface = paramInterfaceGenerator.new Sigma2Interface(j);
 			ContinuousPositiveParameterMove m = new ContinuousPositiveParameterMove(
 														this,sigma2Interface,
-														//sigma2Prior,nProp,sigmaName);
-														sigma2Prior,gProp,sigmaName);
+														sigma2Prior,nProp,sigmaName);
+														//sigma2Prior,gProp,sigmaName);
 			m.setPlottable();
 			m.setPlotSide(0);
 			addMcmcMove(m,sigma2Weight);

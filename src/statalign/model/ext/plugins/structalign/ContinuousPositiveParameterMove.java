@@ -65,7 +65,7 @@ public class ContinuousPositiveParameterMove extends StructAlignMcmcMove {
 		
 		proposalDistribution.updateProposal(proposalWidthControlVariable,param.get());
 		
-		/** + log p(new | old) */
+		/** + log p(old | new) */
 		logProposalDensity += proposalDistribution.logDensity(oldpar);
 		
 		return logProposalDensity;
