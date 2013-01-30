@@ -48,6 +48,7 @@ public abstract class ModelExtension {
 		throw new RuntimeException("McmcMove "+name+" not found.");
 	}
 	
+	public abstract double getLogLike();
 //	public int[] proposalCounts;
 //	public int[] acceptanceCounts;
 //	public double[] proposalWidthControlVariables;

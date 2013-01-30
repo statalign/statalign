@@ -1,6 +1,7 @@
 package statalign.model.ext;
 
 import statalign.base.Utils;
+import statalign.base.Tree;
 import statalign.model.ext.ModelExtension;
 import statalign.model.ext.ParameterInterface;
 import statalign.model.ext.PriorDistribution;
@@ -16,8 +17,7 @@ public abstract class McmcMove {
 	
 	public int proposalCount = 0;
 	public int acceptanceCount = 0;
-	public boolean lastMoveAccepted = false;
-	
+	public boolean lastMoveAccepted = false;	
 	
 	public double proposalWidthControlVariable = 1.0;
 	public boolean autoTune = true;
@@ -47,12 +47,12 @@ public abstract class McmcMove {
 	public void move(Object externalState) {
 		
 //		if (Utils.DEBUG) {
-//			System.out.println("Executing move '"+name+"'. ");
+//			System.out.println("\nExecuting move '"+name+"'. ");
 //		}
 		proposalCount++;
 		copyState(externalState);
 		double logProposalRatio = -logPriorDensity(externalState);
-		logProposalRatio = proposal(externalState); 
+		logProposalRatio += proposal(externalState); 
 		logProposalRatio += logPriorDensity(externalState);
 		updateLikelihood(externalState);
 		if(isParamChangeAccepted(logProposalRatio)) {

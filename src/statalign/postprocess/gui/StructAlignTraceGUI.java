@@ -132,6 +132,7 @@ public class StructAlignTraceGUI extends JPanel {
 		//gr.drawLine(maxX + 50, maxY, maxX + 40, maxY + 10);
 		// finding the maximum and minimum
 		double maxParam = 0.0, minParam = 10000000.0;
+		//for (int i = Math.min(owner.MAX_HISTORY_SIZE/4,parameterHistory.size() / 2); i < parameterHistory.size(); i++) {
 		for (int i = 0; i < parameterHistory.size(); i++) {
 			double param = (Double) parameterHistory.get(i).plottableParameters.get(parameterIndex).value;
 			if (param < minParam) {
@@ -167,10 +168,22 @@ public class StructAlignTraceGUI extends JPanel {
 //		}
 		double current;
 		double next = (Double) parameterHistory.get(startFrom).plottableParameters.get(parameterIndex).value;
+//		if (next < minParam) {
+//			next = minParam;
+//		}
+//		if (next > maxParam) {
+//			next = maxParam;
+//		}
 		boolean burnin = true;
 		for (int i = startFrom; i < parameterHistory.size() - 1; i++) {
 			current = next;
 			next = (Double) parameterHistory.get(i+1).plottableParameters.get(parameterIndex).value;
+//			if (next < minParam) {
+//				next = minParam;
+//			}
+//			if (next > maxParam) {
+//				next = maxParam;
+//			}
 			if (burnin) {
 				burnin = (parameterHistory.get(i + 1)).burnin;
 			}

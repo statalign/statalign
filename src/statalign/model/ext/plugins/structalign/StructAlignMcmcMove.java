@@ -23,6 +23,9 @@ public abstract class StructAlignMcmcMove extends McmcMove {
 	public void setPlottable() {
 		plottable = true;
 	}
+	public void unsetPlottable() {
+		plottable = false;
+	}
 	/** 
 	 * <tt>0</tt> if the trace plot should be plotted on the left side
 	 * of the panel, and <tt>1</tt> if it should be plotted on the right. 
