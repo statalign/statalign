@@ -4,22 +4,21 @@ import statalign.model.ext.PriorDistribution;
 import statalign.model.ext.plugins.structalign.Funcs;
 import statalign.utils.GammaDistribution;
 
-
-public class GammaPrior implements PriorDistribution<Double> {
+public class InverseGammaPrior implements PriorDistribution<Double> {
 	
 	private GammaDistribution g;
 	private double shape;
 	private double rate;
 	
-	public GammaPrior(double a, double b) {
+	public InverseGammaPrior(double a, double b) {
 		shape = a;
 		rate = b;
 		g = new GammaDistribution(shape,1.0/rate);
 	}
 	public double logDensity(Double x) {
-		return Math.log(g.density(x));
+		return Math.log(g.density(1.0/x));
 	}
 	public double logDensityUnnormalised(Double x) {
-		return Funcs.logGammaDensity(x, shape, rate);
+		return Funcs.logGammaDensity(1.0/x, shape, rate);
 	}
 }

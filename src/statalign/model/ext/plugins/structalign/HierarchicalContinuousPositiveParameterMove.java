@@ -1,29 +1,34 @@
 package statalign.model.ext.plugins.structalign;
 
 import java.util.List;
+import java.util.ArrayList;
 
-import statalign.base.Tree;
+import statalign.model.ext.McmcMove;
 import statalign.model.ext.GammaPrior;
 import statalign.model.ext.ParameterInterface;
+import statalign.model.ext.PriorDistribution;
+import statalign.model.ext.ProposalDistribution;
 import statalign.model.ext.plugins.StructAlign;
 
 public class HierarchicalContinuousPositiveParameterMove extends ContinuousPositiveParameterMove {
 
-	private List<ContinuousPositiveParameterMove> children;
+	private List<McmcMove> children = new ArrayList<McmcMove>();
+	public PriorDistribution<Double> hierarchicalPrior;
 	
 	public HierarchicalContinuousPositiveParameterMove (StructAlign s, 
-			ParameterInterface p, GammaPrior pr, 
-			String n, double a, double b) {
-		super(s,p,pr,n,a,b);
-	}
-	public HierarchicalContinuousPositiveParameterMove (StructAlign s, 
-			ParameterInterface p,  GammaPrior pr, 
-			String n) {
-		super(s,p,pr,n);
+			ParameterInterface p,  PriorDistribution<Double> pr,
+			ProposalDistribution<Double> prop, String n) {
+		super(s,p,pr,prop,n);
+		hierarchicalPrior = new GammaPrior(owner.nu * owner.sigma2Hier,owner.nu);;
+		// TODO Abstract this somewhat
 	}
 
 	public void addChildMove(ContinuousPositiveParameterMove child) {
 		children.add(child);
+		child.addParent(this);
+	}
+	public double getLogChildDensity(ContinuousPositiveParameterMove child) {
+		return hierarchicalPrior.logDensity(child.getParam().get());
 	}
 	
 	@Override
@@ -36,43 +41,23 @@ public class HierarchicalContinuousPositiveParameterMove extends ContinuousPosit
 			}
 			logProposalDensity -= children.get(i).logPriorDensity(externalState);
 		}
-		owner.sigma2Prior.updateDistribution(owner.nu * owner.sigma2Hier,owner.nu);
+		hierarchicalPrior = new GammaPrior(owner.nu * owner.sigma2Hier,owner.nu); 
+		// TODO Abstract this somewhat
 		for (int i=0; i<children.size(); i++) {
 			if(i == tree.root.index) {
+				//children.get(i).unsetPlottable();
 				continue;
 			}
+			//children.get(i).setPlottable();
 			logProposalDensity += children.get(i).logPriorDensity(externalState);
 		}
 		return logProposalDensity;
 	}
 	
 	@Override
-	public double logPriorDensity(Object externalState) {
-		if (param.get() < minValue) {
-			return(Double.NEGATIVE_INFINITY);
-		}
-		else {
-			return prior.logDensity(param.get());
-		}
-	}
-	
-	@Override
-	public void updateLikelihood(Object externalState) {
-		if (externalState instanceof Tree) {
-			tree = (Tree) externalState;
-		}
-		else {
-			throw new IllegalArgumentException("ContinuousPositiveParameterMove.updateLikelihood must take an argument of type Tree.");
-		}
-		owner.fullCovar = owner.calcFullCovar(tree);
-		owner.curLogLike = owner.calcAllColumnContrib();
-	}
-	
-	@Override
 	public void restoreState(Object externalState) {
-		param.set(oldpar);
-		owner.sigma2Prior.updateDistribution(owner.nu * owner.sigma2Hier,owner.nu);
-		owner.fullCovar = oldcovar;
-		owner.curLogLike = oldll;
+		super.restoreState(externalState);
+		hierarchicalPrior = new GammaPrior(owner.nu * owner.sigma2Hier,owner.nu);
+		// TODO Abstract this somewhat
 	}
 }

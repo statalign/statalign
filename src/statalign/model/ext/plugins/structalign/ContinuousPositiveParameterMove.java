@@ -1,7 +1,10 @@
 package statalign.model.ext.plugins.structalign;
 
-import statalign.model.ext.GammaPrior;
+import java.util.List;
+import java.util.ArrayList;
 import statalign.model.ext.ParameterInterface;
+import statalign.model.ext.PriorDistribution;
+import statalign.model.ext.ProposalDistribution;
 import statalign.base.Tree;
 import statalign.model.ext.plugins.StructAlign;
 import statalign.utils.GammaDistribution;
@@ -10,13 +13,16 @@ import statalign.model.ext.plugins.structalign.StructAlignParameterInterface.*;
 public class ContinuousPositiveParameterMove extends StructAlignMcmcMove {
 
 	Tree tree;
+	List<HierarchicalContinuousPositiveParameterMove> parentPriors = null;
 	
-	/**
-	 * Controls the shape of the proposal distribution, relative to
-	 * the current parameter value.
-	 */
-	private double proposalShape;
-	private double proposalRate;
+	public void addParent(HierarchicalContinuousPositiveParameterMove p) {
+		if (parentPriors == null) {
+			parentPriors = new ArrayList<HierarchicalContinuousPositiveParameterMove>();
+		}
+		parentPriors.add(p);
+	}
+
+	private ProposalDistribution<Double> proposalDistribution;
 
 	double oldpar;
 	double[][] oldcovar;
@@ -27,24 +33,13 @@ public class ContinuousPositiveParameterMove extends StructAlignMcmcMove {
 	// the move is rejected.
 	
 	public ContinuousPositiveParameterMove (StructAlign s, 
-			ParameterInterface p, GammaPrior pr, 
-			String n, double a, double b) {
+			ParameterInterface p, PriorDistribution<Double> pr, 
+			ProposalDistribution<Double> prop, String n) {
 		owner = s;
 		param = p;
 		prior = pr;
 		name = n;
-		proposalShape = a;
-		proposalRate = b;
-		autoTune = true;
-	}
-	public ContinuousPositiveParameterMove (StructAlign s, 
-			ParameterInterface p, GammaPrior pr, String n) {
-		owner = s;
-		param = p;
-		prior = pr;
-		name = n;
-		proposalShape = 0.001;
-		proposalRate = 0.001;
+		proposalDistribution = prop;
 		autoTune = true;
 	}
 	public void setMinValue(double x) {
@@ -57,39 +52,41 @@ public class ContinuousPositiveParameterMove extends StructAlignMcmcMove {
 	}
 
 	public double proposal(Object externalState) {
-		
-		if (externalState instanceof Tree) {
-			tree = (Tree) externalState;
-		}
-		else {
-			throw new IllegalArgumentException("ContinuousPositiveParameterMove.proposal must take an argument of type Tree.");
-		}
-		
-		if (param instanceof Sigma2Interface) {
-			if (((Sigma2Interface) param).getIndex() == tree.root.index) {
-				return(Double.NEGATIVE_INFINITY);
-			}
-		}
-		GammaDistribution proposal;
-		GammaDistribution reverse;
-		
-		double conc = 1.0d/proposalWidthControlVariable;
-		proposal = new GammaDistribution(conc + proposalShape, 
-				oldpar / (conc + proposalRate) );
-		param.set(proposal.sample());
-		reverse = new GammaDistribution(conc + proposalShape, 
-				param.get() / (conc + proposalRate) );
+
+		proposalDistribution.updateProposal(proposalWidthControlVariable,param.get());
+		param.set(proposalDistribution.sample());
 		
 		if (param.get() < minValue) {
 			return(Double.NEGATIVE_INFINITY);
 		}
-		else {
-			return(Math.log(reverse.density(oldpar)) 
-				- Math.log(proposal.density(param.get())));
-		}
+
+		/** - log p(new | old) */
+		double logProposalDensity = -proposalDistribution.logDensity(param.get());
+		
+		proposalDistribution.updateProposal(proposalWidthControlVariable,param.get());
+		
+		/** + log p(old | new) */
+		logProposalDensity += proposalDistribution.logDensity(oldpar);
+		
+		return logProposalDensity;
 	}
+	
 	public double logPriorDensity(Object externalState) {
-		return 0;
+		if (param.get() < minValue) {
+			return(Double.NEGATIVE_INFINITY);
+		}
+		else {
+			// return 0;
+			double logDensity = prior.logDensityUnnormalised(param.get());
+			// Since we're only using this in ratios, there's no
+			// need to compute the normalising constant.
+			if (parentPriors != null) {
+				for (HierarchicalContinuousPositiveParameterMove parent : parentPriors) {
+					logDensity += parent.getLogChildDensity(this);
+				}
+			}
+			return logDensity;
+		}
 	}
 	public void updateLikelihood(Object externalState) {
 		if (externalState instanceof Tree) {
@@ -98,8 +95,10 @@ public class ContinuousPositiveParameterMove extends StructAlignMcmcMove {
 		else {
 			throw new IllegalArgumentException("ContinuousPositiveParameterMove.updateLikelihood must take an argument of type Tree.");
 		}
-		((StructAlign) owner).fullCovar = owner.calcFullCovar(tree);
-		owner.curLogLike = owner.calcAllColumnContrib();
+		if (param.get() > minValue) {
+			((StructAlign) owner).fullCovar = owner.calcFullCovar(tree);
+			owner.curLogLike = owner.calcAllColumnContrib();
+		}
 	}
 	public void restoreState(Object externalState) {
 		param.set(oldpar);

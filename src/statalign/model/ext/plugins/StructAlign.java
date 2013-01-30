@@ -27,10 +27,14 @@ import statalign.base.Vertex;
 import statalign.base.hmm.Hmm;
 import statalign.io.DataType;
 import statalign.io.ProteinSkeletons;
+import statalign.model.ext.GammaProposal;
+import statalign.model.ext.GaussianProposal;
 import statalign.model.ext.ModelExtension;
 import statalign.model.ext.McmcMove;
 import statalign.model.ext.McmcCombinationMove;
+import statalign.model.ext.HyperbolicPrior;
 import statalign.model.ext.GammaPrior;
+import statalign.model.ext.InverseGammaPrior;
 import statalign.model.ext.plugins.structalign.*;
 import statalign.model.ext.ParameterInterface;
 
@@ -51,6 +55,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	JToggleButton myButton;
 	
 	public boolean globalSigma = true;
+	public boolean useLibrary = false;
 	double structTemp = 1;
 
 	
@@ -94,26 +99,27 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	// TODO change the above public variables to package visible and put 
 	// StructAlign.java in statalign.model.ext.plugins.structalign ?
 	
-	
 	/** Priors */
 	private double sigma2PriorShape = 0.001;
 	private double sigma2PriorRate = 0.001;
-	public GammaPrior sigma2Prior = new GammaPrior(sigma2PriorShape,sigma2PriorRate);
+//	public InverseGammaPrior sigma2Prior = new InverseGammaPrior(sigma2PriorShape,sigma2PriorRate);
+	public HyperbolicPrior sigma2Prior = new HyperbolicPrior();
 	
 	private double tauPriorShape = 0.001;
 	private double tauPriorRate = 0.001;
-	public GammaPrior tauPrior = new GammaPrior(tauPriorShape,tauPriorRate);
+	public InverseGammaPrior tauPrior = new InverseGammaPrior(tauPriorShape,tauPriorRate);
 	
-	private double epsilonPriorShape = 0.001;
-	private double epsilonPriorRate = 0.001;
+	private double epsilonPriorShape = 2;
+	private double epsilonPriorRate = 2;
 	public GammaPrior epsilonPrior = new GammaPrior(epsilonPriorShape,epsilonPriorRate);
 	
-	private double sigma2HPriorShape = 0.001;
-	private double sigma2HPriorRate = 0.001;
-	public GammaPrior sigma2HPrior = new GammaPrior(sigma2HPriorShape,sigma2HPriorRate);
-	
-	private double nuPriorShape = 0.001;
-	private double nuPriorRate = 0.001;
+//	private double sigma2HPriorShape = 0.001;
+//	private double sigma2HPriorRate = 0.001;
+//	public InverseGammaPrior sigma2HPrior = new InverseGammaPrior(sigma2HPriorShape,sigma2HPriorRate);
+	public HyperbolicPrior sigma2HPrior = new HyperbolicPrior();
+
+	private double nuPriorShape = 1;
+	private double nuPriorRate = 1;
 	public GammaPrior nuPrior = new GammaPrior(nuPriorShape,nuPriorRate);
 	
 	// priors for rotation and translation are uniform
@@ -126,26 +132,28 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	 */
 	private final int pluginProposalWeight = 50; 
 	
-	int sigma2Weight = 5;
-	int tauWeight = 3;
-	int sigma2HierWeight = 3;
-	int nuWeight = 3;
+	int sigma2Weight = 15;
+	int tauWeight = 10;
+	int sigma2HierWeight = 10;
+	int nuWeight = 10;
 	int epsilonWeight = 10;
 	int rotationWeight = 2;
 	int translationWeight = 2;
-	int libraryWeight = 0;
+	int libraryWeight = 2;
 	int alignmentWeight = 2;
 	
-	int alignmentRotationWeight = 4;
-	int alignmentTranslationWeight = 4;
-	int alignmentLibraryWeight = 0;
+	int alignmentRotationWeight = 8;
+	int alignmentTranslationWeight = 6;
+	int alignmentLibraryWeight = 6;
 	
 	
-	/** Proposal tuning parameters */
-	public static final double angleP = 1000;
-	public static final double xlatP = .1;
+	/** Starting value for rotation proposal tuning parameter. */
+	public final double angleP = 1000;
+	/** Starting value for translation proposal tuning parameter. */
+	public final double xlatP = .1;
 	
-	public final double MIN_EPSILON = 0.1;
+	/** Minimum value for epsilon, to prevent numerical errors. */
+	public final double MIN_EPSILON = 0.01;
 	
 	@Override
 	public List<JComponent> getToolBarItems() {
@@ -219,7 +227,11 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		if(seqMap.size() > 0)
 			throw new IllegalArgumentException("structalign: missing structure for sequence "+seqMap.keySet().iterator().next());
 		
-		rotProp = new RotationProposal(this);
+		if (useLibrary) {
+			rotProp = new RotationProposal(this);
+		}
+		
+		
 		rotCoords = new double[coords.length][][];
 		axes = new double[coords.length][];
 		angles = new double[coords.length];
@@ -231,7 +243,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 						
 		sigma2Hier = 1;
 		nu = 1;
-		tau = 5;
+		tau = 50;
 		epsilon = 100;
 		
 		// alternative initializations
@@ -260,86 +272,104 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		for(i = 0; i < sigma2.length; i++)
 			sigma2[i] = 1;
 		
-		// Probably remove the following
-		sigma2Weight *= coords.length;
-		tauWeight *= coords.length;
+		// Probably remove the following?
+//		sigma2Weight *= coords.length;
+//		tauWeight *= coords.length;
 		
-		/** Add alignment and rotation/translation moves */
+		/* Add alignment and rotation/translation moves */
 		RotationMove rotationMove = new RotationMove(this,"rotation"); 
-		addMcmcMove(rotationMove,rotationWeight); // change to correct weight
+		addMcmcMove(rotationMove,rotationWeight); 
 		
 		TranslationMove translationMove = new TranslationMove(this,"translation");
-		addMcmcMove(translationMove,translationWeight); // change to correct weight
+		addMcmcMove(translationMove,translationWeight); 
 		
-		LibraryMove libraryMove = new LibraryMove(this,"library");
-		addMcmcMove(libraryMove,libraryWeight); // change to correct weight
+		LibraryMove libraryMove = null;
+		if (useLibrary) {
+			libraryMove = new LibraryMove(this,"library");
+			addMcmcMove(libraryMove,libraryWeight);
+		}
 		
 		AlignmentMove alignmentMove = new AlignmentMove(this,"alignment");
-		addMcmcMove(alignmentMove,alignmentWeight); // change to correct weight
+		addMcmcMove(alignmentMove,alignmentWeight); 
 		
+		/* Combination moves */
 		ArrayList<McmcMove> alignmentRotation = new ArrayList<McmcMove>();
 		alignmentRotation.add(alignmentMove);
 		alignmentRotation.add(rotationMove);
 		McmcCombinationMove alignmentRotationMove = 
 			new McmcCombinationMove(alignmentRotation);
-		addMcmcMove(alignmentRotationMove,alignmentRotationWeight); // change to correct weight
+		addMcmcMove(alignmentRotationMove,alignmentRotationWeight); 
 		
 		ArrayList<McmcMove> alignmentTranslation = new ArrayList<McmcMove>(); 
 		alignmentTranslation.add(alignmentMove);
 		alignmentTranslation.add(translationMove);
 		McmcCombinationMove alignmentTranslationMove = 
 			new McmcCombinationMove(alignmentTranslation);
-		addMcmcMove(alignmentTranslationMove,alignmentTranslationWeight); // change to correct weight
+		addMcmcMove(alignmentTranslationMove,alignmentTranslationWeight); 
 		
-		ArrayList<McmcMove> alignmentLibrary = new ArrayList<McmcMove>();
-		alignmentLibrary.add(alignmentMove);
-		alignmentLibrary.add(libraryMove);
-		McmcCombinationMove alignmentLibraryMove = 
-			new McmcCombinationMove(alignmentLibrary);
-		addMcmcMove(alignmentLibraryMove,alignmentLibraryWeight); // change to correct weight
+		if (useLibrary) { 
+			ArrayList<McmcMove> alignmentLibrary = new ArrayList<McmcMove>();
+			alignmentLibrary.add(alignmentMove);
+			alignmentLibrary.add(libraryMove);
+			McmcCombinationMove alignmentLibraryMove = 
+				new McmcCombinationMove(alignmentLibrary);
+			addMcmcMove(alignmentLibraryMove,alignmentLibraryWeight);
+		}
 		
 		/** Add moves for scalar parameters */
 		StructAlignParameterInterface paramInterfaceGenerator = new StructAlignParameterInterface(this); 
 		
+		// Random walk proposals 
+		GammaProposal gProp = new GammaProposal(0.001,0.001);
+		GaussianProposal nProp = new GaussianProposal();
+
 		ParameterInterface tauInterface = paramInterfaceGenerator.new TauInterface();
 		ContinuousPositiveParameterMove tauMove = 
-			new ContinuousPositiveParameterMove(this,tauInterface,tauPrior,"τ");
+			new ContinuousPositiveParameterMove(this,tauInterface,tauPrior,gProp,"τ");
 		tauMove.setPlottable();
 		tauMove.setPlotSide(1);
-		addMcmcMove(tauMove,tauWeight); // change to correct weight
+		addMcmcMove(tauMove,tauWeight);
 		
 		ParameterInterface epsilonInterface = paramInterfaceGenerator.new EpsilonInterface();
 		ContinuousPositiveParameterMove epsilonMove = 
-			new ContinuousPositiveParameterMove(this,epsilonInterface,epsilonPrior,"ε");
+			new ContinuousPositiveParameterMove(this,epsilonInterface,epsilonPrior,gProp,"ε");
 		epsilonMove.setMinValue(MIN_EPSILON);
 		epsilonMove.setPlottable();
 		epsilonMove.setPlotSide(1);
-		addMcmcMove(epsilonMove,epsilonWeight); // change to correct weight
+		addMcmcMove(epsilonMove,epsilonWeight); 
 				
 		HierarchicalContinuousPositiveParameterMove sigma2HMove = null;
 		HierarchicalContinuousPositiveParameterMove nuMove = null;
 		if (!globalSigma) {
 			ParameterInterface sigma2HInterface = paramInterfaceGenerator.new Sigma2HInterface();
-			sigma2HMove = new HierarchicalContinuousPositiveParameterMove(this,sigma2HInterface,sigma2HPrior,"σ_g");
+			sigma2HMove = new HierarchicalContinuousPositiveParameterMove(this,sigma2HInterface,sigma2HPrior,gProp,"σ_g");
 			sigma2HMove.setPlottable();
 			sigma2HMove.setPlotSide(0);
-			addMcmcMove(sigma2HMove,sigma2HierWeight); // change to correct weight
+			addMcmcMove(sigma2HMove,sigma2HierWeight); 
 			
 			ParameterInterface nuInterface = paramInterfaceGenerator.new NuInterface();
-			nuMove = new HierarchicalContinuousPositiveParameterMove(this,nuInterface,nuPrior,"ν");
+			nuMove = new HierarchicalContinuousPositiveParameterMove(this,nuInterface,nuPrior,gProp,"ν");
 			nuMove.setPlottable();
 			nuMove.setPlotSide(1);
-			addMcmcMove(nuMove,nuWeight); // change to correct weight
+			addMcmcMove(nuMove,nuWeight); 
 		}
 		
 		for (int j=0; j<sigma2.length; j++) {
+			String sigmaName;
+			if (sigma2.length == 1) {
+				sigmaName = "σ";
+			}
+			else {
+				sigmaName = "σ_"+j;
+			}
 			ParameterInterface sigma2Interface = paramInterfaceGenerator.new Sigma2Interface(j);
 			ContinuousPositiveParameterMove m = new ContinuousPositiveParameterMove(
 														this,sigma2Interface,
-														sigma2Prior,"σ_"+j);
+														sigma2Prior,nProp,sigmaName);
+														//sigma2Prior,gProp,sigmaName);
 			m.setPlottable();
 			m.setPlotSide(0);
-			addMcmcMove(m,sigma2Weight); // change to correct weight
+			addMcmcMove(m,sigma2Weight);
 			if (!globalSigma) {
 				sigma2HMove.addChildMove(m);
 				nuMove.addChildMove(m);
@@ -352,7 +382,9 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		Funcs.initLSRotations(tree,coords,xlats,axes,angles);
 	}
 	
-	
+	public double getLogLike() {
+		return curLogLike;
+	}
 	@Override
 	public double logLikeFactor(Tree tree) {
 		String[] align = tree.getState().getLeafAlign();
@@ -705,42 +737,6 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			int ind) {
 		// does not affect log-likelihood
 		return curLogLike;
-	}
-
-	
-	/** Rotation Library
-	 * 
-	 * @author Challis
-	 *
-	 */
-	
-	
-	
-	
-	
-	
-	
-	
-	/**
-	 * 
-	 * @author Challis
-	 *
-	 */
-	
-	
-	/**
-	 * For storing helpful functions
-	 * @author Challis
-	 *
-	 */
-	
-	public double[][] getRowSub(double[][] coord, ArrayList<Integer> rows){
-		double[][] sub = new double[rows.size()][coord[0].length];
-		
-		for(int i = 0; i < sub.length; i++)
-			for(int j = 0; j < sub[0].length; j++)
-				sub[i][j] = coord[rows.get(i)][j];
-		return sub;
 	}
 
 	// </StructAlign>

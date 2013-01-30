@@ -9,6 +9,7 @@ import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
+import org.apache.commons.math3.util.FastMath;
 
 import statalign.base.Tree;
 import statalign.base.Utils;
@@ -17,6 +18,19 @@ import statalign.model.ext.plugins.structalign.Transformation;
 
 public class Funcs{
 
+	/** 
+	 * @param x
+	 * @param shape
+	 * @param rate
+	 * @return The unnormalised log density of Gamma(x | shape, rate)
+	 */
+	public static double logGammaDensity(double x, double shape, double rate) {
+       if (x < 0) {
+            return Double.NEGATIVE_INFINITY;
+       }
+       return (shape-1) * FastMath.log(x) - rate * x;
+    }
+	
 	public static double[][] getSubMatrix(double[][] matrix, int[] rows, int[] cols) {
 		double[][] submat = new double[rows.length][cols.length];
 		for(int i = 0; i < rows.length; i++)

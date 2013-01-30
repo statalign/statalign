@@ -121,7 +121,10 @@ public class StructTrace extends Postprocess {
 		parameterHistory = new ArrayList<StructAlignTraceParameters>();
 		burninLength = inputData.pars.burnIn;
 		current = 0;
-		refreshRate = inputData.pars.burnIn / (2*MAX_HISTORY_SIZE);
+		//refreshRate = inputData.pars.burnIn / (2*MAX_HISTORY_SIZE);
+		refreshRate = inputData.pars.burnIn / (MAX_HISTORY_SIZE);
+		// Means we will have the whole burnin in one window, but then it
+		// will start to shift.
 		count = 0;
 	}
 	

@@ -32,7 +32,7 @@ public class Utils{
 	/**
 	 * Debugging mode (various consistency checks done if on)
 	 */
-	public static boolean DEBUG = true;
+	public static boolean DEBUG = false;
 	
 	/**
 	 * The random number generator used throughout the program.
@@ -57,9 +57,14 @@ public class Utils{
 	
 	public static final double WINDOW_CHANGE_FACTOR = 0.9;
 	public static final double MIN_WINDOW_MULTIPLIER = 0.1;
-	public static final double MAX_WINDOW_MULTIPLIER = 1.5;
+	public static final double MAX_WINDOW_MULTIPLIER = 1.0;
 	public static double WINDOW_MULTIPLIER = 1.0;
 
+	/** 
+	 * Number of samples during burnin used to get a rough estimate
+	 * of the current acceptance rate, for the purposes of tuning the
+	 * proposal variance control parameters.
+	 */
 	public static final double MIN_SAMPLES_FOR_ACC_ESTIMATE = 10;
 
 	/**
