@@ -55,8 +55,10 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	
 	JToggleButton myButton;
 	
-	public boolean globalSigma = false;
-	public boolean useLibrary = false;
+	public final boolean globalSigma = true;
+	public final boolean useLibrary = false;
+	public final boolean fixedEpsilon = true;
+	
 	double structTemp = 1;
 
 	
@@ -158,6 +160,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	
 	/** Minimum value for epsilon, to prevent numerical errors. */
 	public final double MIN_EPSILON = 0.01;
+	/** Value to fix epsilon at if we're not estimating it. */
+	public final double FIXED_EPSILON = 1.0;
 	
 	@Override
 	public List<JComponent> getToolBarItems() {
@@ -248,7 +252,13 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		sigma2Hier = 1;
 		nu = 1;
 		tau = 50;
-		epsilon = 100;
+		if (fixedEpsilon) {
+			epsilon = FIXED_EPSILON;	
+		}
+		else {
+			epsilon = 100;
+		}
+		
 		
 		// alternative initializations
 		// actual initialization now occurs in beforeSampling()
@@ -279,7 +289,12 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		
 		
 		if (globalSigma) {
-			sigma2Prior = new HyperbolicPrior();
+			if (fixedEpsilon) {
+				sigma2Prior = new GammaPrior(2,2);
+			}
+			else {
+				sigma2Prior = new HyperbolicPrior();
+			}
 		}
 		else {
 			sigma2Prior = new InverseGammaPrior(sigma2PriorShape,sigma2PriorRate);
@@ -339,13 +354,15 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		tauMove.setPlotSide(1);
 		addMcmcMove(tauMove,tauWeight);
 		
-		ParameterInterface epsilonInterface = paramInterfaceGenerator.new EpsilonInterface();
-		ContinuousPositiveParameterMove epsilonMove = 
-			new ContinuousPositiveParameterMove(this,epsilonInterface,epsilonPrior,gProp,"ε");
-		epsilonMove.setMinValue(MIN_EPSILON);
-		epsilonMove.setPlottable();
-		epsilonMove.setPlotSide(1);
-		addMcmcMove(epsilonMove,epsilonWeight); 
+		if (!fixedEpsilon) {
+			ParameterInterface epsilonInterface = paramInterfaceGenerator.new EpsilonInterface();
+			ContinuousPositiveParameterMove epsilonMove = 
+				new ContinuousPositiveParameterMove(this,epsilonInterface,epsilonPrior,gProp,"ε");
+			epsilonMove.setMinValue(MIN_EPSILON);
+			epsilonMove.setPlottable();
+			epsilonMove.setPlotSide(1);
+			addMcmcMove(epsilonMove,epsilonWeight);
+		}
 				
 		HierarchicalContinuousPositiveParameterMove sigma2HMove = null;
 		HierarchicalContinuousPositiveParameterMove nuMove = null;
