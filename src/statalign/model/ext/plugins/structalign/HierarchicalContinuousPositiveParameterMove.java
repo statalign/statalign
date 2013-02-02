@@ -5,7 +5,6 @@ import java.util.ArrayList;
 
 import statalign.model.ext.McmcMove;
 import statalign.model.ext.GammaPrior;
-import statalign.model.ext.UniformPrior;
 import statalign.model.ext.ParameterInterface;
 import statalign.model.ext.PriorDistribution;
 import statalign.model.ext.ProposalDistribution;
