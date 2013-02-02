@@ -35,6 +35,7 @@ import statalign.model.ext.McmcCombinationMove;
 import statalign.model.ext.HyperbolicPrior;
 import statalign.model.ext.GammaPrior;
 import statalign.model.ext.InverseGammaPrior;
+import statalign.model.ext.PriorDistribution;
 import statalign.model.ext.plugins.structalign.*;
 import statalign.model.ext.ParameterInterface;
 
@@ -54,7 +55,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	
 	JToggleButton myButton;
 	
-	public boolean globalSigma = true;
+	public boolean globalSigma = false;
 	public boolean useLibrary = false;
 	double structTemp = 1;
 
@@ -102,8 +103,10 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	/** Priors */
 	private double sigma2PriorShape = 0.001;
 	private double sigma2PriorRate = 0.001;
-//	public InverseGammaPrior sigma2Prior = new InverseGammaPrior(sigma2PriorShape,sigma2PriorRate);
-	public HyperbolicPrior sigma2Prior = new HyperbolicPrior();
+	public PriorDistribution<Double> sigma2Prior;
+	// sigma2Prior will either be InverseGamma or Hyperbolic, depending
+	// on whether globalSigma is switched on. It is defined inside the initRun()
+	// method.
 	
 	private double tauPriorShape = 0.001;
 	private double tauPriorRate = 0.001;
@@ -113,10 +116,11 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	private double epsilonPriorRate = 2;
 	public GammaPrior epsilonPrior = new GammaPrior(epsilonPriorShape,epsilonPriorRate);
 	
-//	private double sigma2HPriorShape = 0.001;
-//	private double sigma2HPriorRate = 0.001;
+	private double sigma2HPriorShape = 2;
+	private double sigma2HPriorRate = 2;
 //	public InverseGammaPrior sigma2HPrior = new InverseGammaPrior(sigma2HPriorShape,sigma2HPriorRate);
-	public HyperbolicPrior sigma2HPrior = new HyperbolicPrior();
+	public GammaPrior sigma2HPrior = new GammaPrior(sigma2HPriorShape,sigma2HPriorRate);
+//	public HyperbolicPrior sigma2HPrior = new HyperbolicPrior();
 
 	private double nuPriorShape = 1;
 	private double nuPriorRate = 1;
@@ -272,9 +276,14 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		for(i = 0; i < sigma2.length; i++)
 			sigma2[i] = 1;
 		
-		// Probably remove the following?
-//		sigma2Weight *= coords.length;
-//		tauWeight *= coords.length;
+		
+		
+		if (globalSigma) {
+			sigma2Prior = new HyperbolicPrior();
+		}
+		else {
+			sigma2Prior = new InverseGammaPrior(sigma2PriorShape,sigma2PriorRate);
+		}
 		
 		/* Add alignment and rotation/translation moves */
 		RotationMove rotationMove = new RotationMove(this,"rotation"); 
@@ -346,12 +355,14 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			sigma2HMove.setPlottable();
 			sigma2HMove.setPlotSide(0);
 			addMcmcMove(sigma2HMove,sigma2HierWeight); 
+			//addMcmcMove(sigma2HMove,0);
 			
 			ParameterInterface nuInterface = paramInterfaceGenerator.new NuInterface();
 			nuMove = new HierarchicalContinuousPositiveParameterMove(this,nuInterface,nuPrior,gProp,"ν");
 			nuMove.setPlottable();
 			nuMove.setPlotSide(1);
-			addMcmcMove(nuMove,nuWeight); 
+			addMcmcMove(nuMove,nuWeight);
+			//addMcmcMove(nuMove,0);
 		}
 		
 		for (int j=0; j<sigma2.length; j++) {
@@ -367,6 +378,11 @@ public class StructAlign extends ModelExtension implements ActionListener {
 														this,sigma2Interface,
 														sigma2Prior,nProp,sigmaName);
 														//sigma2Prior,gProp,sigmaName);
+			if (!globalSigma && j == sigma2.length - 1) {
+				continue;
+				// i.e. don't add the last one if we have
+				// more than one
+			}
 			m.setPlottable();
 			m.setPlotSide(0);
 			addMcmcMove(m,sigma2Weight);
