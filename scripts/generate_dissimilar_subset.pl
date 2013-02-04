@@ -7,7 +7,7 @@ if (@ARGV) {
     $MAX_PERCENT_ID = shift;
 }
 my $MAX_ID = $MAX_PERCENT_ID/100;
-my $structalign_dir = "~/workspace/structalign/";
+my $structalign_dir = '~/private/workspace/statalign';
 
 my $nseqs = 0;
 my $n;
@@ -22,7 +22,7 @@ while(<PIR>) {
 
     $n = $nseqs - 1;
     if (/structureX:(\w{4}):\s+(\d+)\s*:([A-Z\s]):\s*(\d+)\s*:/) {
-	
+
 	$pdb[$n] = $1;
 	$chain[$n] = $3;
 	my $lower_chain = $chain[$n];
@@ -31,7 +31,7 @@ while(<PIR>) {
 	if ($lower_chain && $lower_chain ne " ") {
 	    $code[$n] .= $lower_chain;
 	}
-	if (exists $start{$code[$n]}) {
+	while (exists $start{$code[$n]}) {
 	    $code[$n] .= "x";
 	}
 	$start{$code[$n]} = $2;
@@ -39,7 +39,7 @@ while(<PIR>) {
 	push(@ids,$code[$n]);
 	next;
     }
-    elsif (/>P1;(\w+)/) {
+    elsif (/^>/) {
 	$nseqs++;
 	next;
     }
