@@ -40,7 +40,7 @@ public class CoorReader extends DataReader {
 			while((line = br.readLine()) != null) {
 				if(line.charAt(0) == '>') {		// new sequence
 					if(cur >= 0 && data.coords.get(cur).size() == 0)
-						throw new IllegalFormatException("CoorReader: sequence "+data.names.get(cur)+" is without a structure");
+						throw new IllegalFormatException("CoorReader: structure "+data.names.get(cur)+" contains no atoms.");
 					data.names.add(line.substring(1).trim());
 					data.coords.add(new ArrayList<double[]>());
 					cur++;
