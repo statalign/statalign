@@ -153,7 +153,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	public final double xlatP = .1;
 	
 	/** Minimum value for epsilon, to prevent numerical errors. */
-	public final double MIN_EPSILON = 0.01;
+	public final double MIN_EPSILON = 1;
 	
 	@Override
 	public List<JComponent> getToolBarItems() {
