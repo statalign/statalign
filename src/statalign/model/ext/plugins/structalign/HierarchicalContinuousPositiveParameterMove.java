@@ -19,7 +19,7 @@ public class HierarchicalContinuousPositiveParameterMove extends ContinuousPosit
 			ParameterInterface p,  PriorDistribution<Double> pr,
 			ProposalDistribution<Double> prop, String n) {
 		super(s,p,pr,prop,n);
-		hierarchicalPrior = new GammaPrior(owner.nu * owner.sigma2Hier,owner.nu);;
+		hierarchicalPrior = new GammaPrior(owner.nu,owner.nu / owner.sigma2Hier);
 		// TODO Abstract this somewhat
 	}
 
@@ -39,17 +39,16 @@ public class HierarchicalContinuousPositiveParameterMove extends ContinuousPosit
 			if(i == tree.root.index) {
 				continue;
 			}
-			logProposalDensity -= children.get(i).logPriorDensity(externalState);
+			logProposalDensity -= hierarchicalPrior.logDensity(children.get(i).getParam().get());
 		}
-		hierarchicalPrior = new GammaPrior(owner.nu * owner.sigma2Hier,owner.nu); 
+		hierarchicalPrior = new GammaPrior(owner.nu,owner.nu / owner.sigma2Hier); 
 		// TODO Abstract this somewhat
 		for (int i=0; i<children.size(); i++) {
 			if(i == tree.root.index) {
-				//children.get(i).unsetPlottable();
 				continue;
 			}
 			//children.get(i).setPlottable();
-			logProposalDensity += children.get(i).logPriorDensity(externalState);
+			logProposalDensity += hierarchicalPrior.logDensity(children.get(i).getParam().get());
 		}
 		return logProposalDensity;
 	}
@@ -57,7 +56,7 @@ public class HierarchicalContinuousPositiveParameterMove extends ContinuousPosit
 	@Override
 	public void restoreState(Object externalState) {
 		super.restoreState(externalState);
-		hierarchicalPrior = new GammaPrior(owner.nu * owner.sigma2Hier,owner.nu);
+		hierarchicalPrior = new GammaPrior(owner.nu,owner.nu / owner.sigma2Hier);
 		// TODO Abstract this somewhat
 	}
 }

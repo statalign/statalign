@@ -52,7 +52,12 @@ public class ContinuousPositiveParameterMove extends StructAlignMcmcMove {
 	}
 
 	public double proposal(Object externalState) {
-
+		if (externalState instanceof Tree) {
+			tree = (Tree) externalState;
+		}
+		else {
+			throw new IllegalArgumentException("ContinuousPositiveParameterMove.updateLikelihood must take an argument of type Tree.");
+		}
 		proposalDistribution.updateProposal(proposalWidthControlVariable,param.get());
 		param.set(proposalDistribution.sample());
 		
@@ -79,22 +84,21 @@ public class ContinuousPositiveParameterMove extends StructAlignMcmcMove {
 			// return 0;
 			double logDensity = prior.logDensityUnnormalised(param.get());
 			// Since we're only using this in ratios, there's no
-			// need to compute the normalising constant.
+			// need to compute the normalising constant, which is good, 
+			// because some priors may be improper.
+			// NB be careful with this though -- an improper prior should
+			// only be used if the posterior can be shown to be proper.
 			if (parentPriors != null) {
 				for (HierarchicalContinuousPositiveParameterMove parent : parentPriors) {
 					logDensity += parent.getLogChildDensity(this);
+					// The normalising constant of this density will depend
+					// on the parent, so we may need the normalised density here.
 				}
 			}
 			return logDensity;
 		}
 	}
 	public void updateLikelihood(Object externalState) {
-		if (externalState instanceof Tree) {
-			tree = (Tree) externalState;
-		}
-		else {
-			throw new IllegalArgumentException("ContinuousPositiveParameterMove.updateLikelihood must take an argument of type Tree.");
-		}
 		if (param.get() > minValue) {
 			((StructAlign) owner).fullCovar = owner.calcFullCovar(tree);
 			owner.curLogLike = owner.calcAllColumnContrib();
