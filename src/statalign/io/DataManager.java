@@ -31,6 +31,7 @@ public class DataManager {
 					System.out.println("Successfully read "+file.getName()+" using "+reader.toString());
 					return data;
 				} catch (IOException e) {
+					System.out.println(e.getMessage());
 				}
 			}
 		}
@@ -41,6 +42,7 @@ public class DataManager {
 					System.out.println("Successfully read "+file.getName()+" using "+reader.toString());
 					return data;
 				} catch (IOException e) {
+					System.out.println(e.getMessage());
 				}
 			}
 		}
