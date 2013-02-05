@@ -159,6 +159,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	public final double xlatP = .1;
 	
 	/** Minimum value for epsilon, to prevent numerical errors. */
+
 	public final double MIN_EPSILON = 0.01;
 	/** Value to fix epsilon at if we're not estimating it. */
 	public final double FIXED_EPSILON = 1.0;
