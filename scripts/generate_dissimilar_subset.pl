@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-my $MAX_SET_SIZE = 10;
+my $MAX_SET_SIZE = 30;
 
 my $pir = shift;
 my $MAX_PERCENT_ID = 25;
@@ -22,7 +22,7 @@ while(<PIR>) {
 
     $n = $nseqs - 1;
     if (/structureX:(\w{4}):\s+(\d+)\s*:([A-Z\s]):\s*(\d+)\s*:/) {
-
+	#print;
 	$pdb[$n] = $1;
 	$chain[$n] = $3;
 	my $lower_chain = $chain[$n];
@@ -48,6 +48,8 @@ while(<PIR>) {
     $seq{$code[$n]} .= $_; 
 }
 close PIR;
+
+#print "Number of sequences = $nseqs.\n";
 
 my @average_ids = compute_average_identity(\@ids);
 
@@ -150,34 +152,50 @@ sub print_alignment {
     open(FASTA, "> $filename.fasta");
     open(COOR, "> $filename.coor");
     for (my $i=0; $i<$n; $i++) {
+	#print $i."\n";
 	my $chain = "";
 	if (length($id_list->[$i]) == 5) {
 	    $chain = substr($id_list->[$i],4,1);
 	    $chain =~ tr/[a-z]/[A-Z]/;
 	}
-	print FASTA ">$id_list->[$i]\n";	
-	print COOR ">$id_list->[$i]\n";	
-	print FASTA $seq{$id_list->[$i]}."\n";
-
 	my $coorfile = $id_list->[$i].".coor";
 
 	my $pdb_id = substr($id_list->[$i],0,4);
+	print STDERR $pdb_id."\n";
 	`wget http://www.rcsb.org/pdb/files/$pdb_id.pdb 2> /dev/null`;
-	if ($chain && $chain ne " ") {
-	    `$structalign_dir/scripts/selecta.pl miss[]b[A]c[$chain]coor[]r[$start{$id_list->[$i]}-$end{$id_list->[$i]}]o[$coorfile]a[] $pdb_id.pdb`;
+	my $selecta_string = "$structalign_dir/scripts/selecta.pl miss[]b[A]coor[]o[$coorfile]a[]";
+	if ($start{$id_list->[$i]}) {
+	    $selecta_string .= "r[$start{$id_list->[$i]}-$end{$id_list->[$i]}]";
 	}
 	else {
-	    `$structalign_dir/scripts/selecta.pl miss[]b[A]coor[]r[$start{$id_list->[$i]}-$end{$id_list->[$i]}]o[$coorfile]a[] $pdb_id.pdb`;
+	    my $sequence = $seq{$id_list->[$i]};
+	    $sequence =~ s/-//g;
+	    open(SEQ, "> tmp.fasta");
+	    print SEQ $sequence."\n";
+	    close SEQ;
+	    $selecta_string .= "seq[tmp.fasta]";
 	}
+	if ($chain && $chain ne " ") {
+	    $selecta_string .= "c[$chain]";
+	}
+	my $errors = `$selecta_string $pdb_id.pdb`;
 	`rm $pdb_id.pdb`;
-
-	open(THIS_COOR, "< $coorfile");
-	my $this_coor = "";
-	while(<THIS_COOR>) {
-	    $this_coor .= $_;
+	if ($errors) {
+	    print STDERR $errors;
+	    print STDERR "Skipping this sequence.\n";
 	}
-	close THIS_COOR;
+	else {
+	    print FASTA ">$id_list->[$i]\n";	
+	    print COOR ">$id_list->[$i]\n";	
+	    print FASTA $seq{$id_list->[$i]}."\n";
+	    open(THIS_COOR, "< $coorfile");
+	    my $this_coor = "";
+	    while(<THIS_COOR>) {
+		$this_coor .= $_;
+	    }
+	    close THIS_COOR;
+	    print COOR $this_coor;
+	}
 	`rm $coorfile`;
-	print COOR $this_coor;
     }
 }

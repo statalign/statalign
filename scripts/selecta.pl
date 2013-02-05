@@ -10,12 +10,14 @@ my $NOMISSING = 0; # Flags if there are any missing residues
 my $MODEL = 0;
 my $range = 0;
 my @range = [1,100];
+my $sequence_file;
 
 my $options = shift @ARGV;
 
 #print STDERR $options."\n";
 
 my $output = "";
+my $index = 0;
 
 if ($options =~ /a\[\]/) {
 
@@ -66,6 +68,15 @@ if ($options =~ /r\[(\d+)-(\d+)\]/) {
     $range[0] = $1;
     $range[1] = $2;
 }
+if ($options =~ /seq\[(\w+\.?\w+)\]/) {
+    $sequence_file = $1;
+}
+else { $index = 1; }
+
+
+my %AA = (ALA=>'A',TYR=>'Y',MET=>'M',LEU=>'L',CYS=>'C',GLY=>'G',
+         ARG=>'R',ASN=>'N',ASP=>'D',GLN=>'Q',GLU=>'E',HIS=>'H',TRP=>'W',
+         LYS=>'K',PHE=>'F',PRO=>'P',SER=>'S',THR=>'T',ILE=>'I',VAL=>'V');
 
 #print STDERR $output."\n";
 
@@ -83,6 +94,16 @@ my $model = 0;
 
 my $line_num = 0;
 
+my $sequence = "";
+if ($sequence_file) {
+    open(SEQ, "< $sequence_file") or die "$!: Cannot open file $sequence_file.\n";
+    while(<SEQ>) {
+	chomp;
+	$sequence .= $_;
+    }
+}
+close SEQ;
+
 open(PDB, "< $pdb");
 open(OUTPUT, "> $output");
 # if ($COOR_ONLY) {
@@ -90,6 +111,9 @@ open(OUTPUT, "> $output");
 #     $code =~ s/\.pdb//;
 #     print OUTPUT ">$code\n";
 # }
+my $no_print = 0;
+my $nmissing = 0;
+my $output_string = "";
 while (<PDB>) {
 
     my $line = $_;
@@ -195,31 +219,52 @@ while (<PDB>) {
 	}
 	#print "6:\n";
 	#print;
+
 	if ($NOMISSING) {
 
 	    if ((($res_n - $prev_res)>1)||(($line_num == 1)&&($res_n>$prev_res))) {
-		print "Missing residues detected. Gap between $prev_res and $res_n\n";
+		#$nmissing++;
+		print STDERR "Gap between $prev_res and $res_n.\n";
 	    }
 	}
-	#print "7:\n";
-	#print;
-	if (($res_n - $prev_res)==1) {
-
-	    $res_printed++;
+	if ($sequence_file) {
+	    #print STDERR $_;
+	    #print STDERR $index."\n";
+	    if ($index == (length($sequence)-1)) {
+		last;
+	    }
+	    else {
+		my $short_res = $AA{$res_name};
+		my $target_res = substr($sequence,$index,1);
+		#print STDERR "$target_res\t$short_res\n";
+		if ($short_res eq $target_res) {
+		    $index++;
+		}
+		else {
+		    $index = 0;
+		    $output_string = "";
+		    #$nmissing = 0;
+		}
+	    }
 	}
+
+	    if (($res_n - $prev_res)==1) {
+
+		$res_printed++;
+	    }
+
+	    if ($COOR_ONLY) {
+		$output_string .= ($x+0.0)."\t".($y+0.0)."\t".($z+0.0)."\n";
+		#print ($x+0.0)."\t".($y+0.0)."\t".($z+0.0)."\n";
+	    }
+	    else {
+		$output_string .= $line;
+	    }
+	    $atoms_printed++;
 
 	$prev_atom = $atom_n;
 	$prev_res = $res_n;
-	
-	if ($COOR_ONLY) {
-	    print OUTPUT ($x+0.0)."\t".($y+0.0)."\t".($z+0.0)."\n";
-	    #print ($x+0.0)."\t".($y+0.0)."\t".($z+0.0)."\n";
-	}
-	else {
-	    print OUTPUT $line;
-	}
-	$atoms_printed++;
-
+	$no_print = 0;
     }
     else {
 
@@ -230,9 +275,13 @@ while (<PDB>) {
 	    #print STDERR "HETATM skipped\n";
 	    next if ($line =~ /^HETATM/);
 	}
-	print OUTPUT $line;
+	$output_string .= $line;
     }
 }
+if ($index < length($sequence)-1) {
+    print "Missing residues detected.\n";
+}
+print OUTPUT $output_string;
 close PDB;
 close OUTPUT;
 
@@ -242,4 +291,4 @@ if ($range && ($prev_res != $range[1])) {
 }
 
 #print STDERR "Number of atoms printed = ".$atoms_printed."\n";
-print "Number of residues printed =               ".$res_printed."\n\n";
+#print "Number of residues printed =               ".$res_printed."\n\n";
