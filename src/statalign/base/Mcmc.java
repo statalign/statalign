@@ -854,6 +854,9 @@ public class Mcmc extends Stoppable {
 			// accepted
 			// System.out.println("accepted (old: "+oldLogLi+" new: "+newLogLi+")");
 			topologyAccepted++;
+			if (Utils.DEBUG) {
+				System.out.println("Topology move accepted: "+vertId+" <--> "+rnd);
+			}
 			totalLogLike = newLogLi;
 			modelExtMan.afterTreeChange(tree, uncle, true);
 		} else {
