@@ -859,61 +859,65 @@ public class Mcmc extends Stoppable {
 		} else {
 			// rejected
 			// System.out.println("Checking pointer integrity before changing back topology: ");
-			for (int i = 0; i < tree.vertex.length; i++) {
-				if (tree.vertex[i].left != null && tree.vertex[i].right != null) {
-					tree.vertex[i].checkPointers();
-					AlignColumn p;
-					// checking pointer integrity
-					for (AlignColumn c = tree.vertex[i].left.first; c != null; c = c.next) {
-						p = tree.vertex[i].first;
-						while (c.parent != p && p != null)
-							p = p.next;
-						if (p == null)
-							throw new Error(
-									"children does not have a parent!!!"
-											+ tree.vertex[i] + " "
-											+ tree.vertex[i].print());
+			if (Utils.DEBUG) {
+				for (int i = 0; i < tree.vertex.length; i++) {
+					if (tree.vertex[i].left != null && tree.vertex[i].right != null) {
+						tree.vertex[i].checkPointers();
+						AlignColumn p;
+						// checking pointer integrity
+						for (AlignColumn c = tree.vertex[i].left.first; c != null; c = c.next) {
+							p = tree.vertex[i].first;
+							while (c.parent != p && p != null)
+								p = p.next;
+							if (p == null)
+								throw new Error(
+										"children does not have a parent!!!"
+												+ tree.vertex[i] + " "
+												+ tree.vertex[i].print());
+						}
+						for (AlignColumn c = tree.vertex[i].right.first; c != null; c = c.next) {
+							p = tree.vertex[i].first;
+							while (c.parent != p && p != null)
+								p = p.next;
+							if (p == null)
+								throw new Error(
+										"children does not have a parent!!!"
+												+ tree.vertex[i] + " "
+												+ tree.vertex[i].print());
+						}
+		
 					}
-					for (AlignColumn c = tree.vertex[i].right.first; c != null; c = c.next) {
-						p = tree.vertex[i].first;
-						while (c.parent != p && p != null)
-							p = p.next;
-						if (p == null)
-							throw new Error(
-									"children does not have a parent!!!"
-											+ tree.vertex[i] + " "
-											+ tree.vertex[i].print());
-					}
-	
 				}
 			}
 	
 			uncle.fastSwapBackUncle();
 			// System.out.println("Checking pointer integrity after changing back topology: ");
-			for (int i = 0; i < tree.vertex.length; i++) {
-				if (tree.vertex[i].left != null && tree.vertex[i].right != null) {
-					tree.vertex[i].checkPointers();
-					AlignColumn p;
-					// checking pointer integrity
-					for (AlignColumn c = tree.vertex[i].left.first; c != null; c = c.next) {
-						p = tree.vertex[i].first;
-						while (c.parent != p && p != null)
-							p = p.next;
-						if (p == null)
-							throw new Error(
-									"children does not have a parent!!!"
-											+ tree.vertex[i] + " "
-											+ tree.vertex[i].print());
-					}
-					for (AlignColumn c = tree.vertex[i].right.first; c != null; c = c.next) {
-						p = tree.vertex[i].first;
-						while (c.parent != p && p != null)
-							p = p.next;
-						if (p == null)
-							throw new Error(
-									"children does not have a parent!!!"
-											+ tree.vertex[i] + " "
-											+ tree.vertex[i].print());
+			if (Utils.DEBUG) {
+				for (int i = 0; i < tree.vertex.length; i++) {
+					if (tree.vertex[i].left != null && tree.vertex[i].right != null) {
+						tree.vertex[i].checkPointers();
+						AlignColumn p;
+						// checking pointer integrity
+						for (AlignColumn c = tree.vertex[i].left.first; c != null; c = c.next) {
+							p = tree.vertex[i].first;
+							while (c.parent != p && p != null)
+								p = p.next;
+							if (p == null)
+								throw new Error(
+										"children does not have a parent!!!"
+												+ tree.vertex[i] + " "
+												+ tree.vertex[i].print());
+						}
+						for (AlignColumn c = tree.vertex[i].right.first; c != null; c = c.next) {
+							p = tree.vertex[i].first;
+							while (c.parent != p && p != null)
+								p = p.next;
+							if (p == null)
+								throw new Error(
+										"children does not have a parent!!!"
+												+ tree.vertex[i] + " "
+												+ tree.vertex[i].print());
+						}
 					}
 				}
 			}
@@ -929,8 +933,14 @@ public class Mcmc extends Stoppable {
 	
 		// tree.printAllPointers();
 		// System.out.println("\n\n\t***\t***\t***\n\n\n");
-		tree.root.calcFelsRecursivelyWithCheck();
-		tree.root.calcIndelRecursivelyWithCheck();
+		if (Utils.DEBUG) {
+			tree.root.calcFelsRecursivelyWithCheck();
+			tree.root.calcIndelRecursivelyWithCheck();
+		}
+		else {
+			tree.root.calcFelsRecursively();
+			tree.root.calcIndelLikeRecursively();
+		}
 	}
 
 	private void sampleEdge() {
