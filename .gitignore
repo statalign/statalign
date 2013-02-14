@@ -3,7 +3,6 @@
 *.fas*
 bin/
 doc/*
-*.txt
 *.matrix
 *.bp
 /README

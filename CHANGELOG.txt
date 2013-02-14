@@ -1,0 +1,68 @@
+This file lists major changes between StatAlign releases.
+
+- - - - - - - - - - - - - - - - - - - - - - - - 
+
+StatAlign v2.0.1 on 14 Feb 2013
+
+	Improvements:
+		* GUI update: launching an analysis requires less clicks
+		* New welcome message and About box
+
+	Bugfixes:
+		* RNA mode automatically disabled for non-RNA input in console mode
+		* Plugins that do not produce output will not create files
+		* Fix to allow RNAalifold plugin to run in console mode as well
+		* Removed error message for input files that don't end in .fas or .fasta
+		* PPFold fix for non-UK/US locales
+		* Fixed long-standing bug in Tamura-Nei model
+
+- - - - - - - - - - - - - - - - - - - - - - - - 
+
+StatAlign v2.0 on 28 Sep 2012
+
+	New features:
+		* Integration of RNA secondary structure prediction tools
+		  (PPfold and RNAalifold) and consensus structure calculation
+		* RNA visualisation with VARNA
+		* Automation of MCMC parameter setup
+		* Consensus tree and network plugins with visualisation
+		* Metropolis-coupled MCMC with parallelisation (currently unavailable)
+		* GUI update including toolbar and buttons
+
+	Improvements and bugfixes:
+		* New command line options
+		* Postprocessing API revised
+		* Postprocessing output defaults changed
+		* Fixed a bug in GTR model that caused StatAlign to freeze in some cases -
+		  we thank William Majoros for reporting and providing a fix
+		* Fixed a bug that caused U characters in RNA sequences to be removed
+
+- - - - - - - - - - - - - - - - - - - - - - - -
+ 
+StatAlign v1.21a on 14 July 2011
+
+	New features:
+		* Ambiguous nucleotide/amino acid support
+
+	Improvements and bugfixes:
+		* Improved command line interface
+		* Output files are named automatically
+		* Alignment visualisation revised
+		* Postprocessing panel updates improved
+		* Various minor fixes and additions
+
+- - - - - - - - - - - - - - - - - - - - - - - -
+ 
+StatAlign v1.1 on 18 July 2008
+
+	New features:
+		* Basic command line interface added
+
+	Improvements:
+		* Various minor fixes
+
+- - - - - - - - - - - - - - - - - - - - - - - -
+
+StatAlign v1.0 in June 2008
+
+	The initial StatAlign release.
