@@ -3,6 +3,7 @@ package statalign.ui;
 import java.awt.BorderLayout;
 import java.awt.Container;
 import java.awt.Cursor;
+import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
@@ -51,7 +52,6 @@ import statalign.model.subst.SubstitutionModel;
 import statalign.model.subst.plugins.Dayhoff;
 import statalign.model.subst.plugins.Kimura3;
 import statalign.postprocess.Postprocess;
-import statalign.postprocess.PostprocessManager;
 
 /**
  * The main frame of the program.
@@ -61,9 +61,19 @@ import statalign.postprocess.PostprocessManager;
 public class MainFrame extends JFrame implements ActionListener {
 
     // Constants
-
-    public static final String IDLE_STATUS_MESSAGE = " Phylogeny Cafe :: Statistical Alignment";
+    public static final String IDLE_STATUS_MESSAGE = " StatAlign :: Ready";
     private static final long serialVersionUID = 1L;
+    
+    public static final String WELCOME_MSG = 
+    		"<html><div style='padding: 20px 20px 20px 20px; font-family: Arial; font-size: 12px'>" +
+			"<h2>Welcome to StatAlign!</h2><br>" +
+			"<p>To get started, please <a href='http://add'>add sequences</a> to analyse." +
+			"<p>If you need any help along the way, please refer to the <a href='http://doc'>manual</a> that is also available from the <b>Help menu.</b>" +
+			"<br><br>" +
+			"<p>Happy StatAligning!" +
+//			"<div style='padding: 20px 100px 0px 0px' align=right>" +
+//			"<p><i>The StatAlign team</i>" +
+			"</div></html>";
 
     // Variables
 
@@ -97,7 +107,6 @@ public class MainFrame extends JFrame implements ActionListener {
     public MainManager manager;
 
     McmcSettingsDlg mcmcSettingsDlg;
-    McmcSettingsOnRun mcmcSettingsRun;
     
     private File inFile;
     private Class<? extends SubstitutionModel>[] substModels;
@@ -130,14 +139,12 @@ public class MainFrame extends JFrame implements ActionListener {
                         SubstitutionModel.class.isAssignableFrom(cl))
                     substModList.add(cl);
             } catch (Exception ex) {
-                ErrorMessage.showPane(null, ex, true);
             }
         }
 
         substModels = (Class<? extends SubstitutionModel>[]) substModList.toArray(new Class<?>[substModList.size()]);
         manager = new MainManager(this);
         mcmcSettingsDlg = new McmcSettingsDlg(this);
-        mcmcSettingsRun = new McmcSettingsOnRun(this);
         
         setMinimumSize(new Dimension(500, 250));
 
@@ -155,13 +162,15 @@ public class MainFrame extends JFrame implements ActionListener {
         JMenuItem item;
 
         String openText = "Add sequence(s)...";
+        ImageIcon icon = new ImageIcon(ClassLoader.
+        		getSystemResource("icons/open.png"));
         openItem = createMenuItem(openText, true);
         openItem.setAccelerator(KeyStroke.getKeyStroke("control O"));
         openItem.setMnemonic(KeyEvent.VK_A);
+        openItem.setIcon(icon);
         menu.add(openItem);
 
-        openButton = createButton(new ImageIcon(ClassLoader.
-        		getSystemResource("icons/open.png")), "Add sequence(s)...");
+        openButton = createButton(icon, "Add sequence(s)...");
         toolBar.add(openButton);
 
         toolBar.addSeparator();
@@ -196,52 +205,61 @@ public class MainFrame extends JFrame implements ActionListener {
 //		menubar.add(menu);
 
 
-        menu = new JMenu("MCMC");
+        menu = new JMenu("Analysis");
         menu.setMnemonic(KeyEvent.VK_M);
 
-        item = createMenuItem("Settings", true);
-        item.setAccelerator(KeyStroke.getKeyStroke("control M"));
-        item.setMnemonic(KeyEvent.VK_S);
-        menu.add(item);
+//        item = createMenuItem("Settings", true);
+//        item.setAccelerator(KeyStroke.getKeyStroke("control M"));
+//        item.setMnemonic(KeyEvent.VK_S);
+//        menu.add(item);
 
 
-        String runText = "Run";
+        String runText = "Set up and run";
+        icon = new ImageIcon(ClassLoader.
+        		getSystemResource("icons/play.png"));
         runItem = createMenuItem(runText, false);
         runItem.setAccelerator(KeyStroke.getKeyStroke("control ENTER"));
+        runItem.setIcon(icon);
         menu.add(runItem);
-
-        runButton = createButton(new ImageIcon(ClassLoader.
-        		getSystemResource("icons/play.png")), runText);
+        menu.addSeparator();
+        
+        runButton = createButton(icon, runText);
         runButton.setEnabled(false);
         toolBar.add(runButton);
 
         String pauseText = "Pause";
+        icon = new ImageIcon(ClassLoader.
+        		getSystemResource("icons/pause.png"));
         pauseItem = createMenuItem("Pause", false);
+        pauseItem.setIcon(icon);
         menu.add(pauseItem);
 
-        pauseButton = createButton(new ImageIcon(ClassLoader.
-        		getSystemResource("icons/pause.png")), pauseText);
+        pauseButton = createButton(icon, pauseText);
         pauseButton.setEnabled(false);
         toolBar.add(pauseButton);
 
 
         String resumeText = "Resume";
+        icon = new ImageIcon(ClassLoader.
+        		getSystemResource("icons/resume.png"));
         resumeItem = createMenuItem(resumeText, false);
+        resumeItem.setIcon(icon);
         menu.add(resumeItem);
 
-        resumeButton = createButton(new ImageIcon(ClassLoader.
-        		getSystemResource("icons/resume.png")), resumeText);
+        resumeButton = createButton(icon, resumeText);
         resumeButton.setEnabled(false);
         toolBar.add(resumeButton);
 
 
         String stopText = "Stop";
+        icon = new ImageIcon(ClassLoader.
+        		getSystemResource("icons/stop.png"));
         stopItem = createMenuItem("Stop", false);
+        stopItem.setIcon(icon);
         menu.add(stopItem);
         menubar.add(menu);
 
-        stopButton = createButton(new ImageIcon(ClassLoader.
-        		getSystemResource("icons/stop.png")), stopText);
+        stopButton = createButton(icon, stopText);
         stopButton.setEnabled(false);
         toolBar.add(stopButton);
         
@@ -251,10 +269,10 @@ public class MainFrame extends JFrame implements ActionListener {
         rnaButton.setSelected(false);
         toolBar.add(rnaButton);
         
-        String settingsText = "Settings";
-        JButton settingsButton = createButton(new ImageIcon(ClassLoader.
-        		getSystemResource("icons/settings.png")), settingsText);
-        toolBar.add(settingsButton);
+//        String settingsText = "Settings";
+//        JButton settingsButton = createButton(new ImageIcon(ClassLoader.
+//        		getSystemResource("icons/settings.png")), settingsText);
+//        toolBar.add(settingsButton);
 
         menu = new JMenu("Model");
         menu.setMnemonic(KeyEvent.VK_L);
@@ -372,7 +390,8 @@ public class MainFrame extends JFrame implements ActionListener {
         }
 
         tab.addChangeListener(new ChangeListener() {
-            public void stateChanged(ChangeEvent changeEvent) {
+            @Override
+			public void stateChanged(ChangeEvent changeEvent) {
                 JTabbedPane pane = (JTabbedPane) changeEvent.getSource();
                 Integer i = pane.getSelectedIndex();
 
@@ -440,58 +459,12 @@ public class MainFrame extends JFrame implements ActionListener {
     	button.setActionCommand(text);
     	return button;
     }
-
+    
     /** An ActioListener is implemented, so we have to implement this function. It handles actions on the menu bar. */
-    public void actionPerformed(ActionEvent ev) {
+    @Override
+	public void actionPerformed(ActionEvent ev) {
         if (ev.getActionCommand() == "Add sequence(s)...") {
-            JFileChooser choose = new JFileChooser("Add sequence(s)...");
-            choose.setCurrentDirectory(new File(System.getProperty("user.dir")));
-            if (choose.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-                inFile = choose.getSelectedFile();
-                //System.out.println(inFile.toString().substring(inFile.toString().length()-3,inFile.toString().length()));
-                
-                
-                if(!(inFile.toString().endsWith(".fasta") || inFile.toString().endsWith(".fas"))) {
-                	//ErrorMessage.showPane(this, "File is not a valid Fasta file.", true);
-                	//return;
-                }
-                
-                FileFormatReader reader = new FastaReader();
-                try {
-                	manager.inputData.seqs.alphabet = "";
-                    manager.inputData.seqs.add(reader.read(inFile));
-                    manager.inputgui.updateSequences();
-                    manager.fullPath = inFile.getAbsolutePath();
-                    if (manager.inputData.model != null) {
-                        try {
-                            manager.inputData.model.acceptable(manager.inputData.seqs);
-                        } catch (RecognitionError e) {
-                            tryModels();
-                        }
-                    } else {
-                        tryModels();
-                    }
-                    if (manager.inputData.model != null) {
-                        runItem.setEnabled(true);
-                        runButton.setEnabled(true);
-                        
-                        if(!manager.inputData.seqs.isRNA()) {
-                        	rnaButton.setEnabled(false);
-                        }
-                        
-                        else { 
-                        	rnaButton.setEnabled(true);
-                        	RNAPopup.showPane(this);	
-                        }
-                    }
-                } catch (IOException e) {
-                    JOptionPane.showMessageDialog(this, e.getLocalizedMessage(), "Error reading input file", JOptionPane.ERROR_MESSAGE);
-                } catch (ExceptionNonFasta e) {
-					// TODO Auto-generated catch block
-					ErrorMessage.showPane(this, "Input sequences are not valid!", true);
-				} 
-            }
-            
+        	addSequences();
         } else if (ev.getActionCommand() == "Exit") {
             System.exit(0);
         } else if (ev.getActionCommand() == "Preferences...") {
@@ -499,7 +472,7 @@ public class MainFrame extends JFrame implements ActionListener {
             op = new OutputPreferences(this);
         } else if (ev.getActionCommand() == "Settings") {
             mcmcSettingsDlg.display(this);
-        } else if (ev.getActionCommand() == "Run") {
+        } else if (ev.getActionCommand() == "Set up and run") {
         	if (manager.inputData.seqs.sequences.size() < 2) {
                 JOptionPane.showMessageDialog(this, "At least two sequences are needed!!!",
                         "Not enough sequences", JOptionPane.ERROR_MESSAGE);
@@ -507,9 +480,8 @@ public class MainFrame extends JFrame implements ActionListener {
                 return;
             }
         	//disableAllButtons();
-        	mcmcSettingsRun.display(this);
+        	mcmcSettingsDlg.display(this);
         	//start();
-            
             
         } else if (ev.getActionCommand() == "Pause") {
             pauseItem.setEnabled(false);
@@ -601,8 +573,7 @@ public class MainFrame extends JFrame implements ActionListener {
                     ClassLoader.getSystemResource("doc/plugin_description/index.html"), true);
 
         } else if (ev.getActionCommand() == "Help for users") {
-            new HelpWindow(this, "Help for users",
-                    ClassLoader.getSystemResource("doc/help/index.html"), true);
+        	helpUsers();
         } else {        // new substitution model selected
             for (Class<? extends SubstitutionModel> cl : substModels) {
                 try {
@@ -619,14 +590,72 @@ public class MainFrame extends JFrame implements ActionListener {
                         }
                     }
                 } catch (Exception e) {
-                    new ErrorMessage(this, e.getLocalizedMessage(), true);
+                	ErrorMessage.showPane(this, e, true);
                 }
             }
 
         }
     }
 
-    private String tryModels() {
+    public void addSequences() {
+	    JFileChooser choose = new JFileChooser("Add sequence(s)...");
+	    choose.setCurrentDirectory(new File(System.getProperty("user.dir")));
+	    if (choose.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+	        inFile = choose.getSelectedFile();
+	        //System.out.println(inFile.toString().substring(inFile.toString().length()-3,inFile.toString().length()));
+	        
+	        if(!(inFile.toString().endsWith(".fasta") || inFile.toString().endsWith(".fas"))) {
+	        	//ErrorMessage.showPane(this, "File is not a valid Fasta file.", true);
+	        	//return;
+	        }
+	        
+	        FileFormatReader reader = new FastaReader();
+	        try {
+	        	manager.inputData.seqs.alphabet = "";
+	            manager.inputData.seqs.add(reader.read(inFile));
+	            manager.inputgui.updateSequences();
+	            manager.fullPath = inFile.getAbsolutePath();
+	            if (manager.inputData.model != null) {
+	                try {
+	                    manager.inputData.model.acceptable(manager.inputData.seqs);
+	                } catch (RecognitionError e) {
+	                    tryModels();
+	                }
+	            } else {
+	                tryModels();
+	            }
+	            if (manager.inputData.model != null) {
+	                runItem.setEnabled(true);
+	                runButton.setEnabled(true);
+	                
+	                if(!manager.inputData.seqs.isRNA()) {
+	                	rnaButton.setEnabled(false);
+	                }
+	                
+	                else { 
+	                	rnaButton.setEnabled(true);
+	                	RNAPopup.showPane(this);	
+	                }
+	            }
+	        } catch (IOException e) {
+	        	ErrorMessage.showPane(this, "An I/O error occured while reading input file.", true);
+	        } catch (ExceptionNonFasta e) {
+				ErrorMessage.showPane(this, "The input sequences do not appear to be in Fasta format.", true);
+			} 
+	    }
+	}
+
+	public void helpUsers() {
+		try {
+			File dir = new File(System.getProperty("user.dir")+"/doc/help/index.html");
+			Desktop.getDesktop().browse(dir.toURI());
+		} catch (Exception e) {
+			new HelpWindow(this, "Help for users",
+					ClassLoader.getSystemResource("doc/help/index.html"), true);		
+		}
+	}
+
+	private String tryModels() {
         String message = "";
         try {
             SubstitutionModel[] defaultSubstList = {
@@ -692,6 +721,7 @@ public class MainFrame extends JFrame implements ActionListener {
         stopItem.setEnabled(false);
         stopButton.setEnabled(false);
         
+		statusText.setText(MainFrame.IDLE_STATUS_MESSAGE);
         //SavedFilesPopup.showPane(this);
 		
     }

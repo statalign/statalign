@@ -155,8 +155,8 @@ public class PPFold extends statalign.postprocess.Postprocess {
 		
 		screenable = true;
 		outputable = true;
-		postprocessable = true; // TODO might need to change to false
-		postprocessWrite = true;; // TODO might need to change to false
+//		postprocessable = true; // TODO might need to change to false
+//		postprocessWrite = true;; // TODO might need to change to false
 		rnaAssociated = true;
 		Entropy.allowed = true;
 	}

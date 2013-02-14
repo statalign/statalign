@@ -95,7 +95,7 @@ public class ConsensusNetwork extends statalign.postprocess.Postprocess{
 			JScrollPane scroll = new JScrollPane();
 			scroll.setViewportView(gui = new CNetworkView(scroll));//, mcmc.tree.printedAlignment()));
 			pan.add(scroll, BorderLayout.CENTER);
-			System.out.println("Consensus network parent: " + pan.getParent());
+//			System.out.println("Consensus network parent: " + pan.getParent());
 			pan.getParent().validate();
 		}
 		updateCnt = 0;

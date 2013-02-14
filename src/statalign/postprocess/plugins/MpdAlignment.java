@@ -95,6 +95,7 @@ public class MpdAlignment extends statalign.postprocess.Postprocess {
 	}
 
 	static Comparator<String[]> compStringArr = new Comparator<String[]>() {
+		@Override
 		public int compare(String[] a1, String[] a2) {
 			return a1[0].compareTo(a2[0]);
 		}};
@@ -107,7 +108,7 @@ public class MpdAlignment extends statalign.postprocess.Postprocess {
 			JScrollPane scroll = new JScrollPane();
 			scroll.setViewportView(gui = new AlignmentGUI(title,input.model));//, mcmc.tree.printedAlignment()));
 			pan.add(scroll, BorderLayout.CENTER);
-			System.out.println("Mpd Alignment parent: " + pan.getParent());
+//			System.out.println("Mpd Alignment parent: " + pan.getParent());
 			pan.getParent().validate();
 		}
 

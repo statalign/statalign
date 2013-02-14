@@ -16,7 +16,6 @@ import statalign.base.McmcStep;
 import statalign.base.State;
 import statalign.postprocess.gui.LogLikelihoodTraceGUI;
 import statalign.postprocess.utils.LogLikelihoodTraceContainer;
-import statalign.ui.ErrorMessage;
 
 /**
  * This is the implementation of the postprocess that handles loglikelihoods.
@@ -109,7 +108,6 @@ public class LogLikelihoodTrace extends statalign.postprocess.Postprocess{
 			try {
 				file.write("Sample "+no+"\tLoglikelihood:\t"+logLike+"\n");
 			} catch (IOException e) {
-				new ErrorMessage(null," "+e.getLocalizedMessage(),true);
 			}
 		}
 		else{

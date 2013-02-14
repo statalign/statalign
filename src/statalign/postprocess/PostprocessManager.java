@@ -10,7 +10,6 @@ import statalign.base.Mcmc;
 import statalign.base.McmcStep;
 import statalign.base.State;
 import statalign.base.Utils;
-import statalign.ui.ErrorMessage;
 
 /**
  * This class manages the postprocesses.
@@ -224,7 +223,6 @@ public class PostprocessManager {
 		try {
 			logFile.close();
 		} catch (IOException e) {
-			new ErrorMessage(mainManager.frame, " "+e.getLocalizedMessage(), true);
 		}
 	}
 	

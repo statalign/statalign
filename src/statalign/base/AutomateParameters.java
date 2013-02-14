@@ -1,9 +1,6 @@
 package statalign.base;
 
-import java.io.File;
 import java.util.ArrayList;
-
-import statalign.postprocess.utils.RNAFoldingTools;
 
 /**
  * A class that contains the logic when to stop the burn-in, sampling, or 
@@ -16,13 +13,6 @@ import statalign.postprocess.utils.RNAFoldingTools;
 
 
 public class AutomateParameters {
-	
-
-
-
-	private static boolean automateSamplingRate = true;
-	private static boolean automateNumberOfSamplesToTake = false;
-	private static boolean automateBurnIn = true;
 	
 	//steprate
 	final static double decline = 0.0001;
@@ -37,32 +27,6 @@ public class AutomateParameters {
 	//burn-in
 	final static int DECLINE = 30;
 	final static int NUTR_SIZE = 100;
-	
-	
-	public static boolean shouldAutomateBurnIn() {
-		return automateBurnIn;
-	}
-	
-	public static void setAutomateBurnIn(boolean set) {
-		automateBurnIn = set;
-	}
-
-	
-	public static boolean shouldAutomateStepRate() {
-		return automateSamplingRate;
-	}
-
-	public static void setAutomateStepRate(boolean set) {
-		automateSamplingRate = set;
-	}
-	
-	public static boolean shouldAutomateNumberOfSamples() {
-		return automateNumberOfSamplesToTake;
-	}
-
-	public static void setAutomateNumberOfSamples(boolean set) {
-		automateNumberOfSamplesToTake = set;
-	}
 	
 	/**
 	 * Looks either for major decline in theSpace or if we get very close to the average line. Then we break.

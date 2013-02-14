@@ -9,15 +9,19 @@ import java.util.Collections;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
+import javax.swing.JEditorPane;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.border.EtchedBorder;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
 import statalign.base.Input;
 import statalign.base.MainManager;
+import statalign.ui.MainFrame;
 
 /**
  * This is the graphical interface for showing the input data
@@ -31,37 +35,40 @@ public class InputGUI extends JPanel implements ActionListener, ListSelectionLis
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	JPanel pan;
 	Input owner;
 	TextArea text;
 	MainManager manager;
+
+	JPanel seqPan;
 	
 	private JList sequences;
 	DefaultListModel dlmSequences;
 	JButton jbDelete;
 	JButton jbDeleteAll;
 	
+	boolean showWelcome = true;
+	private JScrollPane spSeq;
+	
 	/**
 	 * This constructor makes an initial GUI for showing the input sequences and their names.
 	 * @param manager The MainManager that handles the MCMC run.
 	 */
-	public InputGUI(MainManager manager){
+	public InputGUI(final MainManager manager){
 		super(new BorderLayout());
 		this.manager = manager;
+		
+		seqPan = new JPanel(new BorderLayout());
+		
 		dlmSequences = new DefaultListModel();
 		sequences = new JList(dlmSequences);
 		sequences.setBorder(new EtchedBorder());
 		sequences.setToolTipText("Input sequences - click on them to view or remove");
 		sequences.addListSelectionListener(this);
-//		JPanel intermediatePanel = new JPanel(new BorderLayout());
-//		intermediatePanel.add(sequences);
-//		intermediatePanel.setSize(this.getSize());
-//		intermediatePanel.setMaximumSize(this.getSize());
-		JScrollPane spSzoveg = new JScrollPane(sequences);//intermediatePanel, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+		spSeq = new JScrollPane(sequences);
 		//setPreferredSize(new Dimension(500,300));
 //		spSzoveg.getViewport().add(sequences);
 //		spSzoveg.setMaximumSize(this.getSize());
-		add(spSzoveg,BorderLayout.CENTER);
+		seqPan.add(spSeq,BorderLayout.CENTER);
 		
 		JPanel actionPanel = new JPanel(new BorderLayout());
 		jbDelete = new JButton("Remove");
@@ -72,8 +79,35 @@ public class InputGUI extends JPanel implements ActionListener, ListSelectionLis
 		jbDeleteAll.addActionListener(this);
 		actionPanel.add(jbDeleteAll, BorderLayout.EAST);
 		
-		add(actionPanel,BorderLayout.SOUTH);
+		seqPan.add(actionPanel,BorderLayout.SOUTH);
 
+//		g.setFont(new Font("Times", Font.BOLD+Font.TRUETYPE_FONT, 16));
+//		g.drawString("Welcome to StatAlign!", 30, 50);
+//		g.setFont(new Font("Times", Font.BOLD, 14));
+//		g.drawString("To get started, add sequences to analyse using the <b>toolbar button</b> or the File menu.", 30, 90);
+//		g.drawString("If you need any more help, please refer to the documentation in the Help menu.", 30, 110);
+
+//		JLabel welcome = new JLabel(MainFrame.WELCOME_MSG);
+//		JEditorPane welcome = new JEditorPane();
+//		welcome.setText(MainFrame.WELCOME_MSG);
+		
+		JEditorPane jep = new JEditorPane("text/html", MainFrame.WELCOME_MSG);  
+		jep.setEditable(false);  
+		jep.setOpaque(false);  
+		jep.addHyperlinkListener(new HyperlinkListener() {  
+			@Override
+			public void hyperlinkUpdate(HyperlinkEvent hle) {  
+				if (HyperlinkEvent.EventType.ACTIVATED.equals(hle.getEventType())) {
+					String url = hle.getURL().toString();
+					if(url.endsWith("add")) {
+						manager.frame.addSequences();
+					} else if(url.endsWith("doc"))
+						manager.frame.helpUsers();
+				}  
+			}  
+		});  
+		add(jep, BorderLayout.NORTH);
+		
 		updateSequences();
 	}
 	
@@ -84,7 +118,13 @@ public class InputGUI extends JPanel implements ActionListener, ListSelectionLis
 		if(dlmSequences.size() > 0){
 			dlmSequences.removeAllElements();
 		}
-		if(manager.inputData.seqs != null){
+		if(manager.inputData.seqs != null) {
+			if(showWelcome && manager.inputData.seqs.size() > 0) {
+				showWelcome = false;
+				removeAll();
+				add(seqPan);
+				validate();
+			}
 //			System.out.println("sequences size: "+manager.seqs.sequences.size()+
 //					" names size: "+manager.seqs.seqNames.size());		    
 			for(int i = 0; i < manager.inputData.seqs.sequences.size(); i++){
@@ -144,6 +184,7 @@ public class InputGUI extends JPanel implements ActionListener, ListSelectionLis
 	/**
 	 * Handles removing sequences.
 	 */
+	@Override
 	public void actionPerformed(ActionEvent e) {
 		int index = sequences.getSelectedIndex();
 
@@ -187,6 +228,7 @@ public class InputGUI extends JPanel implements ActionListener, ListSelectionLis
 	/**
 	 * It invokes the list listener when a value changed.
 	 */
+	@Override
 	public void valueChanged(ListSelectionEvent arg0) {
 		listListener();
 		

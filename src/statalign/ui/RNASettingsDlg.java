@@ -1,7 +1,6 @@
 package statalign.ui;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
@@ -13,12 +12,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
@@ -27,7 +21,6 @@ import javax.swing.Box;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
-import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -42,7 +35,6 @@ import javax.swing.SwingConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import statalign.base.MCMCPars;
 import statalign.postprocess.Postprocess;
 import statalign.postprocess.utils.RNAalifold;
 
@@ -343,6 +335,7 @@ public class RNASettingsDlg extends JDialog implements ActionListener, ChangeLis
 	 * When we close the dialog, it updates the MCMC parameters.
 	 * 
 	 */
+	@Override
 	public void actionPerformed(ActionEvent ev) {
 		try{
 			if(ev.getSource().equals(executableButton))
@@ -385,9 +378,8 @@ public class RNASettingsDlg extends JDialog implements ActionListener, ChangeLis
 				//setVisible(false);
 				this.dispose();
 			}
-		}
-		catch(NumberFormatException e){
-			new ErrorMessage(owner,"Wrong format, "+e.getLocalizedMessage(),false);
+		} catch(NumberFormatException e){
+			ErrorMessage.showPane(owner, "Wrong format, "+e.getLocalizedMessage(), false);
 		}
 	}
 	
@@ -421,9 +413,12 @@ public class RNASettingsDlg extends JDialog implements ActionListener, ChangeLis
 		dlg.display(main);
 	}
 
+	@Override
 	public void keyPressed(KeyEvent e) {}
+	@Override
 	public void keyTyped(KeyEvent e) {}
 
+	@Override
 	public void keyReleased(KeyEvent e) {
 		if(e.getKeyCode() == KeyEvent.VK_ESCAPE) {
 			setVisible(false);

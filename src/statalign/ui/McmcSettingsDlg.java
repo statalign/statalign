@@ -18,9 +18,8 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 
-import statalign.base.AutomateParameters;
+import statalign.base.AutomateParamSettings;
 import statalign.base.MCMCPars;
-import statalign.base.AutomateParameters;
 
 /**
  * 
@@ -39,9 +38,9 @@ public class McmcSettingsDlg extends JDialog implements ActionListener, KeyListe
 	JTextField cycles = new JTextField(10);
 	JTextField sampRate = new JTextField(10);
 	JTextField seed = new JTextField(10);
-	JCheckBox automateStepRate = new JCheckBox("Automate (Slow)",true);
-	JCheckBox automateNumberOfSamples = new JCheckBox("Automate (RNA only)",false);
-	JCheckBox automateBurnIn = new JCheckBox("Automate",true);
+	JCheckBox automateStepRate = new JCheckBox("Automate (Slow)");
+	JCheckBox automateNumberOfSamples = new JCheckBox("Automate (RNA only)");
+	JCheckBox automateBurnIn = new JCheckBox("Automate");
 //	private JTextField outFile = new JTextField(15)
 	private MainFrame owner;
 	
@@ -103,12 +102,13 @@ public class McmcSettingsDlg extends JDialog implements ActionListener, KeyListe
 		bigBox.add(pan);
 		Box box = Box.createHorizontalBox();
 		JButton butt;
-		box.add(butt=new JButton("OK"));
+		box.add(butt=new JButton("Run!"));
 		butt.addActionListener(this);
 		getRootPane().setDefaultButton(butt);
 		box.add(Box.createHorizontalStrut(100));
 		box.add(butt=new JButton("Cancel"));
 		butt.addActionListener(this);
+		bigBox.add(Box.createVerticalStrut(20));
 		bigBox.add(box);
 		cp.add(bigBox, SwingConstants.CENTER);
 		cp.add(Box.createHorizontalStrut(20), BorderLayout.LINE_START);
@@ -126,9 +126,13 @@ public class McmcSettingsDlg extends JDialog implements ActionListener, KeyListe
 		cycles.setText(Integer.toString(pars.cycles));
 		sampRate.setText(Integer.toString(pars.sampRate));
 		seed.setText(Integer.toString((int) pars.seed));
-//		outFile.setText(sp.outFile);
+		AutomateParamSettings autoPars = pars.autoParamSettings;
+		automateBurnIn.setSelected(autoPars.automateBurnIn);
+		automateNumberOfSamples.setSelected(autoPars.automateNumberOfSamplesToTake);
+		automateStepRate.setSelected(autoPars.automateSamplingRate);
+		
+		updateEnabled();
 		setLocationRelativeTo(c);
-//		pack();
 		setVisible(true);
 	}
 
@@ -138,78 +142,51 @@ public class McmcSettingsDlg extends JDialog implements ActionListener, KeyListe
 	 * When we close the dialog, it updates the MCMC parameters.
 	 * 
 	 */
+	@Override
 	public void actionPerformed(ActionEvent ev) {
-		if(ev.getActionCommand() == "numsam"){
-			if(automateNumberOfSamples.isSelected()){
-				cycles.setEnabled(false);
-				
-				owner.mcmcSettingsRun.automateNumberOfSamples.setSelected(true);
-				owner.mcmcSettingsRun.cycles.setEnabled(false);
-			}
-			else{
-				cycles.setEnabled(true);
-				
-				owner.mcmcSettingsRun.automateNumberOfSamples.setSelected(false);
-				owner.mcmcSettingsRun.cycles.setEnabled(true);
-			}
-		}
-		if(ev.getActionCommand() == "steprate"){
-			if(automateStepRate.isSelected()){
-				sampRate.setEnabled(false);
-				
-				owner.mcmcSettingsRun.automateStepRate.setSelected(true);
-				owner.mcmcSettingsRun.sampRate.setEnabled(false);
-			}
-			else{
-				sampRate.setEnabled(true);
-				
-				owner.mcmcSettingsRun.automateStepRate.setSelected(false);
-				owner.mcmcSettingsRun.sampRate.setEnabled(true);
-			}
-		}
-		if(ev.getActionCommand() == "burnin"){
-			if(automateBurnIn.isSelected()){
-				burnIn.setEnabled(false);
-				
-				owner.mcmcSettingsRun.automateBurnIn.setSelected(true);
-				owner.mcmcSettingsRun.burnIn.setEnabled(false);
-			}
-			else{
-				burnIn.setEnabled(true);
-				
-				owner.mcmcSettingsRun.automateBurnIn.setSelected(false);
-				owner.mcmcSettingsRun.burnIn.setEnabled(true);
-			}
-		}
-		
-		try{
-			if(ev.getActionCommand() == "OK") {
+		if(ev.getActionCommand() == "numsam" || ev.getActionCommand() == "steprate" ||
+				ev.getActionCommand() == "burnin") {
+					
+			updateEnabled();
+			
+		} else if(ev.getActionCommand() == "Run!") {
+			try {
 				pars.burnIn = Integer.parseInt(burnIn.getText());
 				pars.cycles = Integer.parseInt(cycles.getText());
 				pars.sampRate = Integer.parseInt(sampRate.getText());
 				pars.seed = Integer.parseInt(seed.getText());
-				AutomateParameters.setAutomateStepRate(automateStepRate.isSelected());
-				AutomateParameters.setAutomateNumberOfSamples(automateNumberOfSamples.isSelected());
-				AutomateParameters.setAutomateBurnIn(automateBurnIn.isSelected());
+				AutomateParamSettings autoPar = pars.autoParamSettings;
+				autoPar.automateSamplingRate = automateStepRate.isSelected();
+				autoPar.automateNumberOfSamplesToTake = automateNumberOfSamples.isSelected();
+				autoPar.automateBurnIn = automateBurnIn.isSelected();
 //				sp.outFile = outFile.getText();
 //				toRun = true;
 				setVisible(false);
+				
+				owner.disableAllButtons();
+				owner.start();
+			} catch(NumberFormatException e){
+				ErrorMessage.showPane(owner, "Wrong format, "+e.getLocalizedMessage(), false);
 			}
-			if(ev.getActionCommand() == "Cancel") {
-				setVisible(false);
-			}
-//				toRun = false;
 			
+		} else if(ev.getActionCommand() == "Cancel") {
+			setVisible(false);
+		}
 			
-		}
-		catch(NumberFormatException e){
-			new ErrorMessage(owner,"Wrong format, "+e.getLocalizedMessage(),false);
-		}
 	}
 
+	private void updateEnabled() {
+		cycles.setEnabled(!automateNumberOfSamples.isSelected());
+		sampRate.setEnabled(!automateStepRate.isSelected());
+		burnIn.setEnabled(!automateBurnIn.isSelected());
+	}
+
+	@Override
 	public void keyPressed(KeyEvent e) {}
+	@Override
 	public void keyTyped(KeyEvent e) {}
 
+	@Override
 	public void keyReleased(KeyEvent e) {
 		if(e.getKeyCode() == KeyEvent.VK_ESCAPE) {
 			setVisible(false);

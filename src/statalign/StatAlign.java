@@ -28,7 +28,7 @@ public class StatAlign{
 	 */
 	public static final int majorVersion = 2;
 	public static final int minorVersion = 0;
-	public static final String version = "v2.0";
+	public static final String version = "v2.0.1";
 	
 	public static final boolean allowVersionCheck = false;
 
@@ -85,7 +85,7 @@ public class StatAlign{
 					} catch(Exception e) {}
 				}
 			} catch(Exception e) {
-				new ErrorMessage(mf,e,true);
+				ErrorMessage.showPane(mf, e, true);
 			}
 		}
 	}

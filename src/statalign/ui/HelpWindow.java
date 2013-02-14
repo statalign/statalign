@@ -3,13 +3,24 @@
  */
 package statalign.ui;
 
-import java.io.*;
-import javax.swing.event.*;
-import javax.swing.*;
-import java.net.*;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.WindowEvent;
+import java.io.IOException;
+import java.net.URL;
 import java.util.ArrayList;
-import java.awt.event.*;
-import java.awt.*;
+
+import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JEditorPane;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 
 /**
  * This is a help window for displaying html pages.
@@ -47,14 +58,15 @@ public HelpWindow(JFrame owner, String title, URL hlpURL, boolean buttons) {
     try {
         editorpane.setPage(homeURL);
     } catch (Exception ex) {
-        new ErrorMessage(null,"name: "+homeURL+"\n"+ex.getMessage(),true);
+        ErrorMessage.showPane(null,"name: "+homeURL+"\n"+ex.getMessage(),true);
     }
     visitedPages = new ArrayList<URL>();
     visitedIndex = 0;
     visitedPages.add(homeURL);
     //anonymous inner listener
     editorpane.addHyperlinkListener(new HyperlinkListener() {
-        public void hyperlinkUpdate(HyperlinkEvent ev) {
+        @Override
+		public void hyperlinkUpdate(HyperlinkEvent ev) {
             try {
                 if (ev.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
                 	for(int i = visitedIndex + 1; i < visitedPages.size(); ){
@@ -71,7 +83,7 @@ public HelpWindow(JFrame owner, String title, URL hlpURL, boolean buttons) {
                 }
             } catch (IOException ex) {
                 //put message in window
-            	new ErrorMessage(null,"name: "+homeURL+"\n"+ex.getMessage(),true);
+            	ErrorMessage.showPane(null,"name: "+homeURL+"\n"+ex.getMessage(),true);
             }
         }
     });
@@ -90,6 +102,7 @@ public HelpWindow(JFrame owner, String title, URL hlpURL, boolean buttons) {
  * An Actionlistener is implemented, so must implement this method
  *
  */
+@Override
 public void actionPerformed(ActionEvent e) {
     String strAction = e.getActionCommand();
    // URL tempURL;
@@ -133,7 +146,7 @@ public void actionPerformed(ActionEvent e) {
                 WindowEvent.WINDOW_CLOSING));
         }
     } catch (IOException ex) {
-        new ErrorMessage(null,"name: "+homeURL+"\n"+ex.getMessage(),true);
+        ErrorMessage.showPane(null,"name: "+homeURL+"\n"+ex.getMessage(),true);
     }
 }
 /**

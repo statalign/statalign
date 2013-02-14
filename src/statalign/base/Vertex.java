@@ -4,8 +4,6 @@ import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.FieldPosition;
 
-import statalign.ui.ErrorMessage;
-
 /**
  * This is a vertex of the tree.
  * The 'hardcore' functions are implemented in this class, developers are suggested
@@ -447,7 +445,7 @@ public class Vertex {
                 }
                 boolean match = Utils.calcFelsenWithCheck(p.seq, fel1, left.charTransMatrix, fel2, right.charTransMatrix);
                 if (!match) {
-                    new ErrorMessage(null, "Felsenstein does not match! ", true);
+                    throw new Error("Felsensteins do not match!");
                 }
             }
         }
@@ -499,11 +497,8 @@ public class Vertex {
             orphanLogLike += left.orphanLogLike + right.orphanLogLike;
 
         if (oldorphanLogLike != orphanLogLike) {
-            new ErrorMessage(null, "Problem with orphan loglike: fast: " + oldorphanLogLike + " slow: " + orphanLogLike, true);
-            int index = 0;
-            while (owner.vertex[index] != this) {
-                index++;
-            }
+            throw new Error("Problem with orphan loglike: fast: " + oldorphanLogLike + " slow: " + orphanLogLike);
+
             //System.out.println("We are in vertex "+index+(name == null ? print(0) : "("+name+")"));
             //System.out.print("Selected vertices: ");
             //for(int i = 0; i < owner.vertex.length; i++){
@@ -563,7 +558,7 @@ public class Vertex {
             newindelLogLike += right.calcIndelLogUpWithCheck();
         }
         if (Math.abs(indelLogLike - newindelLogLike) > 1e-5) {
-            new ErrorMessage(null, "problem: fast indel: " + indelLogLike + " slow indel: " + newindelLogLike, true);
+            throw new Error("problem: fast indel: " + indelLogLike + " slow indel: " + newindelLogLike);
         }
     }
 

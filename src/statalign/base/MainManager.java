@@ -153,7 +153,8 @@ public class MainManager {
 					.size()]), inputData.seqs.seqNames.toArray(new String[inputData.seqs.seqNames
 					.size()]), inputData.model, inputData.model.attachedScoringScheme, new File(
 					fullPath).getName());
-			Mcmc mcmc = new Mcmc(tree, inputData.pars, postProcMan, noOfProcesses, rank, heat);
+			Mcmc mcmc = new Mcmc(tree, inputData.pars,
+					postProcMan, noOfProcesses, rank, heat);
 			mcmc.doMCMC();
 
 			// Sets up a barrier.
@@ -176,11 +177,12 @@ public class MainManager {
 
 			System.out.println(mcmc.getInfoString() + " Heat: " + mcmc.tree.heat);
 
-			finished();
+			finished(false);
 			System.out.println("Ready.");
 
 		} catch (StoppedException stex) {
 			stex.printStackTrace(System.err);
+			finished(true);
 		}
 	}
 
@@ -188,9 +190,10 @@ public class MainManager {
 	 * Called when the MCMC thread terminates, signals end of the process back
 	 * to MainFrame.
 	 */
-	public void finished() {
+	public void finished(boolean withErrors) {
 		if (frame != null) {
 			SwingUtilities.invokeLater(new Runnable() {
+				@Override
 				public void run() {
 					frame.finished();
 					SavedFilesPopup.showPane(frame);

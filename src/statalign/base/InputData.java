@@ -14,8 +14,9 @@ public class InputData {
 	 * This class stores the parameters (number of burn-in cycles, number of
 	 * steps, number of samplings) of the MCMC
 	 */
-	public MCMCPars pars = new MCMCPars(10000, 50000, 100, 1, 1, 100); // TODO:
-																		// this.
+	public MCMCPars pars = new MCMCPars(10000, 50000, 100, 1, 1, 100,
+			new AutomateParamSettings());
+	
 	/**
 	 * Are we using the parallel version?
 	 */

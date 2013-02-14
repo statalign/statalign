@@ -14,7 +14,7 @@ import ml.options.OptionSet;
 import ml.options.Options;
 import ml.options.Options.Multiplicity;
 import ml.options.Options.Separator;
-import statalign.base.AutomateParameters;
+import statalign.base.AutomateParamSettings;
 import statalign.base.MainManager;
 import statalign.base.Utils;
 import statalign.io.RawSequences;
@@ -250,10 +250,8 @@ public class CommandLine {
 				System.out.println("RNA mode activated.");
 			}
 
-			AutomateParameters.setAutomateBurnIn(false);
-			AutomateParameters.setAutomateStepRate(false);
-			AutomateParameters.setAutomateNumberOfSamples(false);
-
+			AutomateParamSettings autoPars = manager.inputData.pars.autoParamSettings;
+			
 			OptionData automation = set.getOption("automate");
 			if (automation != null) {
 				if (automation.getResultCount() > 0) {
@@ -264,13 +262,13 @@ public class CommandLine {
 					}
 					//System.out.println(values);
 					if (values.contains("burn")) {
-						AutomateParameters.setAutomateBurnIn(true);
+						autoPars.automateBurnIn = true;
 					}
 					if (values.contains("rate")) {
-						AutomateParameters.setAutomateStepRate(true);
+						autoPars.automateSamplingRate = true;
 					}
 					if (values.contains("cycl")) {
-						AutomateParameters.setAutomateNumberOfSamples(true);
+						autoPars.automateNumberOfSamplesToTake = true;
 					}
 				}
 				/*

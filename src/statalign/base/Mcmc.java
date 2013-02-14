@@ -1,28 +1,23 @@
 package statalign.base;
 
-import java.awt.Cursor;
-import java.io.File;
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Random;
-
-import com.ppfold.algo.AlignmentData;
-import com.ppfold.algo.FuzzyAlignment;
 
 import mpi.MPI;
 import statalign.MPIUtils;
 import statalign.base.thread.Stoppable;
 import statalign.base.thread.StoppedException;
-import statalign.distance.AlignmentSample;
 import statalign.distance.Distance;
 import statalign.postprocess.PostprocessManager;
 import statalign.postprocess.plugins.contree.CNetwork;
-import statalign.postprocess.utils.RNAFoldingTools;
 import statalign.ui.ErrorMessage;
 import statalign.ui.MainFrame;
 import statalign.utils.SimpleStats;
+
+import com.ppfold.algo.AlignmentData;
+import com.ppfold.algo.FuzzyAlignment;
 
 /**
  * 
@@ -81,6 +76,8 @@ public class Mcmc extends Stoppable {
 	 * of steps in the MCMC and the sampling rate.
 	 */
 	public MCMCPars mcmcpars;
+	
+	public AutomateParamSettings autoPar;
 
 	public McmcStep mcmcStep = new McmcStep();
 
@@ -90,18 +87,19 @@ public class Mcmc extends Stoppable {
 	/** True while the MCMC is in the burn-in phase. */
 	public boolean burnin;
 
-	public Mcmc(Tree tree, MCMCPars pars, PostprocessManager ppm) {
+	public Mcmc(Tree tree, MCMCPars mcmcpars, PostprocessManager ppm) {
 		postprocMan = ppm;
 		ppm.mcmc = this;
 		this.tree = tree;
 		weights = new double[tree.vertex.length];
-		mcmcpars = pars;
+		this.mcmcpars = mcmcpars;
+		this.autoPar = mcmcpars.autoParamSettings;
 		this.tree.heat = 1.0d;
 	}
 
-	public Mcmc(Tree tree, MCMCPars pars, PostprocessManager ppm,
+	public Mcmc(Tree tree, MCMCPars mcmcpars, PostprocessManager ppm,
 			int noOfProcesses, int rank, double heat) {
-		this(tree, pars, ppm);
+		this(tree, mcmcpars, ppm);
 		this.noOfProcesses = noOfProcesses;
 		this.rank = rank;
 		this.tree.heat = heat;
@@ -161,11 +159,11 @@ public class Mcmc extends Stoppable {
 			boolean stopBurnIn = false;
 
 
-			if(AutomateParameters.shouldAutomateBurnIn()){
+			if(autoPar.automateBurnIn){
 				burnIn = 10000000;
 			} 
 
-			if(AutomateParameters.shouldAutomateStepRate()){
+			if(autoPar.automateSamplingRate){
 				burnIn += BURNIN_TO_CALCULATE_THE_SPACE;
 			}
 
@@ -188,11 +186,11 @@ public class Mcmc extends Stoppable {
 				
 				//every 50 steps, add the current loglikelihood to a list
 				// and check if we find a major decline in that list 
-				if(AutomateParameters.shouldAutomateBurnIn() && i % 50 == 0){
+				if(autoPar.automateBurnIn && i % 50 == 0){
 					logLikeList.add(getState().logLike);
 					if(!stopBurnIn){
 						stopBurnIn = AutomateParameters.shouldStopBurnIn(logLikeList);
-						if(AutomateParameters.shouldAutomateStepRate() && stopBurnIn){
+						if(autoPar.automateSamplingRate && stopBurnIn){
 							burnIn = i + BURNIN_TO_CALCULATE_THE_SPACE;
 						}else if (stopBurnIn){
 							burnIn = i;
@@ -203,10 +201,14 @@ public class Mcmc extends Stoppable {
 				int realBurnIn = burnIn - BURNIN_TO_CALCULATE_THE_SPACE;
 				if (frame != null) {
 					String text = "";
-					if((i > realBurnIn ) && AutomateParameters.shouldAutomateStepRate()){
-						text = "Burn-in to aid automation of MCMC parameters: " + (i-realBurnIn + 1) ;
+					if((i > realBurnIn ) && autoPar.automateSamplingRate){
+						text = " Burn-in to aid automation of MCMC parameters: " + (i-realBurnIn + 1) ;
 					}else{
-						text = "Burn-in: " + (i + 1);
+						text = " Burn-in: " + (i + 1);
+						if(autoPar.automateBurnIn)
+							text += " -- total length will be determined automatically";
+						else
+							text += " out of "+burnIn;
 					}
 					frame.statusText.setText(text);
 				} else if (i % 1000 == 999) {
@@ -214,7 +216,7 @@ public class Mcmc extends Stoppable {
 				}
 
 
-				if( AutomateParameters.shouldAutomateStepRate() && (i >= realBurnIn) && i % SAMPLE_RATE_WHEN_DETERMINING_THE_SPACE == 0)   {
+				if( autoPar.automateSamplingRate && (i >= realBurnIn) && i % SAMPLE_RATE_WHEN_DETERMINING_THE_SPACE == 0)   {
 					String[] align = getState().getLeafAlign();
 					alignmentsFromSamples.add(align);
 				}	
@@ -224,21 +226,21 @@ public class Mcmc extends Stoppable {
 			burnin = false;
 
 			int period;
-			if(AutomateParameters.shouldAutomateNumberOfSamples()){
+			if(autoPar.automateNumberOfSamplesToTake){
 				period = 1000000;
 			}else{
 				period = mcmcpars.cycles / mcmcpars.sampRate;
 			}
 
 			int sampRate;
-			if(AutomateParameters.shouldAutomateStepRate()){
+			if(autoPar.automateSamplingRate){
 				if(frame != null)
 				{
-					frame.statusText.setText("Calculating the sample rate");
+					frame.statusText.setText(" Calculating the sample rate");
 				}
 				else
 				{
-					System.out.println("Calculating the sample rate");
+					System.out.println(" Calculating the sample rate");
 				}
 				ArrayList<Double> theSpace = Distance.spaceAMA(alignmentsFromSamples);
 				sampRate = AutomateParameters.getSampleRateOfTheSpace(theSpace,SAMPLE_RATE_WHEN_DETERMINING_THE_SPACE);
@@ -287,14 +289,18 @@ public class Mcmc extends Stoppable {
 
 					currentTime = System.currentTimeMillis();
 					if (frame != null) {
-						String text = "Samples taken: " + Integer.toString(i);
+						String text = " Samples taken: " + Integer.toString(i);
 						//remainingTime((currentTime - start)
 						//		* ((period - i - 1) * sampRate
 						//				+ sampRate - j - 1)
 						//				/ (burnIn + i * sampRate + j + 1))
+						if(autoPar.automateNumberOfSamplesToTake)
+							text += " -- total number will be determined automatically";
+						else
+							text += " out of "+period;
 
-						text += "   The sampling rate: " + sampRate;
-						if(AutomateParameters.shouldAutomateNumberOfSamples()){
+						text += "   Sampling rate: " + sampRate;
+						if(autoPar.automateNumberOfSamplesToTake){
 							text +=  ",  Similarity(alignment n-1, alignment n): " + df.format(currScore) + " < " + df.format(AutomateParameters.PERCENT_CONST);
 						}
 						frame.statusText.setText(text );
@@ -303,7 +309,7 @@ public class Mcmc extends Stoppable {
 				if (frame == null && !isParallel) {
 					System.out.println("Sample: " + (i + 1));
 				}
-				if(AutomateParameters.shouldAutomateNumberOfSamples()){
+				if(autoPar.automateNumberOfSamplesToTake){
 					alignment = new AlignmentData(getState().getLeafAlign());
 					allAlignments.add(alignment);
 					if (allAlignments.size() >1){
@@ -1133,7 +1139,7 @@ public class Mcmc extends Stoppable {
 			}
 		} catch (IOException e) {
 			if (postprocMan.mainManager.frame != null) {
-				new ErrorMessage(null, e.getLocalizedMessage(), true);
+				ErrorMessage.showPane(postprocMan.mainManager.frame, e, true);
 			} else {
 				e.printStackTrace(System.out);
 			}

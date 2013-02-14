@@ -1,5 +1,6 @@
 package statalign.base;
 
+
 /**
  * 
  * This is a container class containing the MCMC parameters described below.
@@ -36,9 +37,14 @@ public class MCMCPars {
 	public long swapSeed;
 	
 	/**
-	 * How often to propose swaps between chains (per cycle). 
+	 * How often to propose swaps between chains (per cycle).
 	 */
 	public int swapRate;
+	
+	/**
+	 * MCMC parameter automation settings
+	 */
+	public AutomateParamSettings autoParamSettings;
 	
 	/**
 	 * This constructor sets the values in the class
@@ -47,13 +53,14 @@ public class MCMCPars {
 	 * @param cycles this.cycles is set to this value.
 	 * @param sampRate this.sampRate is set to this value.
 	 */
-	public MCMCPars(int burnIn, int cycles, int sampRate, long seed, long swapSeed, int swapRate) {
+	public MCMCPars(int burnIn, int cycles, int sampRate, long seed, long swapSeed, int swapRate, AutomateParamSettings autoParamSettings) {
 		this.burnIn = burnIn;
 		this.cycles = cycles;
 		this.sampRate = sampRate;
 		this.swapRate = swapRate;
 		this.seed = seed;
 		this.swapSeed = swapSeed;
+		this.autoParamSettings = autoParamSettings;
 	}
 	
 	/*public MCMCPars(int burnIn, int cycles, int sampRate, long seed) {
