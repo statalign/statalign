@@ -137,7 +137,7 @@ public class StructTrace extends Postprocess {
 				for (McmcMove mcmcMove : structAlign.getMcmcMoves()) {
 					if (mcmcMove.getParam() != null) {
 						outputFile.write(mcmcMove.getParam().get()+"\t");
-						if (mcmcMove.lastMoveAccepted) {
+						if (mcmcMove.moveProposed) {
 							outputFile.write(mcmcMove.getParam().get()+"\t");
 						}
 						else {
@@ -149,6 +149,7 @@ public class StructTrace extends Postprocess {
 			} catch (IOException e) {
 				e.printStackTrace(); 
 			}
+			structAlign.setAllMovesNotProposed();
 		}
 	}
 	

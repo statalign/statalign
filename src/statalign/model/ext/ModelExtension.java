@@ -39,6 +39,11 @@ public abstract class ModelExtension {
 	public List<McmcMove> getMcmcMoves() {
 		return mcmcMoves;
 	}
+	public void setAllMovesNotProposed() {
+		for (McmcMove mcmcMove : mcmcMoves) {
+			mcmcMove.moveProposed = false;
+		}
+	}
 	public McmcMove getMcmcMove(String name) {
 		for (McmcMove mcmcMove : mcmcMoves) {
 			if (mcmcMove.name.equals(name)) {

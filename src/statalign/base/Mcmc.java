@@ -836,8 +836,8 @@ public class Mcmc extends Stoppable {
 		// for(int i = 0; i < s.length; i++){
 		// System.out.println(s[i]);
 		// }
-		double bpp = nephew.fastSwapWithUncle();
-		// double bpp = nephew.swapWithUncle();
+		//double bpp = nephew.fastSwapWithUncle();
+		double bpp = nephew.swapWithUncle1();
 		// s = tree.root.printedMultipleAlignment();
 		// System.out.println("Alignment after topology changing: ");
 		// for(int i = 0; i < s.length; i++){
@@ -855,12 +855,15 @@ public class Mcmc extends Stoppable {
 			// System.out.println("accepted (old: "+oldLogLi+" new: "+newLogLi+")");
 			topologyAccepted++;
 			if (Utils.DEBUG) {
-				System.out.println("Topology move accepted: "+vertId+" <--> "+rnd);
+				System.out.println("Topology move accepted: "+nephew.index+" <--> "+uncle.index);
 			}
 			totalLogLike = newLogLi;
 			modelExtMan.afterTreeChange(tree, uncle, true);
 		} else {
 			// rejected
+//			if (Utils.DEBUG) {
+//				System.out.println("Topology move rejected: "+nephew.index+" <--> "+uncle.index);
+//			}
 			// System.out.println("Checking pointer integrity before changing back topology: ");
 			if (Utils.DEBUG) {
 				for (int i = 0; i < tree.vertex.length; i++) {
@@ -893,7 +896,8 @@ public class Mcmc extends Stoppable {
 				}
 			}
 	
-			uncle.fastSwapBackUncle();
+			//uncle.fastSwapBackUncle();
+			uncle.swapBackUncle1();
 			// System.out.println("Checking pointer integrity after changing back topology: ");
 			if (Utils.DEBUG) {
 				for (int i = 0; i < tree.vertex.length; i++) {
@@ -924,7 +928,7 @@ public class Mcmc extends Stoppable {
 					}
 				}
 			}
-			// uncle.swapBackUncle();
+			
 			// s = tree.root.printedMultipleAlignment();
 			// System.out.println("Alignment after changing back the topology: ");
 			// for(int i = 0; i < s.length; i++){
