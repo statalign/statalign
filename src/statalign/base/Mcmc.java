@@ -836,8 +836,8 @@ public class Mcmc extends Stoppable {
 		// for(int i = 0; i < s.length; i++){
 		// System.out.println(s[i]);
 		// }
-		//double bpp = nephew.fastSwapWithUncle();
-		double bpp = nephew.swapWithUncle1();
+		double bpp = nephew.fastSwapWithUncle();
+		//double bpp = nephew.swapWithUncle1();
 		// s = tree.root.printedMultipleAlignment();
 		// System.out.println("Alignment after topology changing: ");
 		// for(int i = 0; i < s.length; i++){
@@ -896,8 +896,8 @@ public class Mcmc extends Stoppable {
 				}
 			}
 	
-			//uncle.fastSwapBackUncle();
-			uncle.swapBackUncle1();
+			uncle.fastSwapBackUncle();
+			//uncle.swapBackUncle1();
 			// System.out.println("Checking pointer integrity after changing back topology: ");
 			if (Utils.DEBUG) {
 				for (int i = 0; i < tree.vertex.length; i++) {
