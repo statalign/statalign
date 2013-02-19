@@ -204,6 +204,9 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			extension += "eps_"+fixedEpsilonValue;
 			System.out.println("Fixing epsilon to "+fixedEpsilonValue+".");
 		}
+		else {
+			super.setParam(paramName,paramValue);
+		}
 	}
 	@Override
 	public void setParam(String paramName, Number paramValue) {
@@ -213,6 +216,9 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			extension += "eps_"+fixedEpsilonValue;
 			System.out.println("Fixing epsilon to "+fixedEpsilonValue+".");
 		}
+		else {
+			super.setParam(paramName,paramValue);
+		}
 	}
 	@Override
 	public void setParam(String paramName, boolean paramValue) {
@@ -221,6 +227,9 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		}
 		else if (paramName.equals("useLibrary")) {
 			useLibrary = true;
+		}
+		else {
+			super.setParam(paramName,paramValue);
 		}
 	}
 	@Override
