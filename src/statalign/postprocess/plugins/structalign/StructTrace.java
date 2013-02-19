@@ -200,7 +200,7 @@ public class StructTrace extends Postprocess {
 	
 	@Override
 	public void newStep(McmcStep mcmcStep) {
-		if(!active)
+		if(!active || !show)
 			return;
 		if (count % refreshRate == 0) {
 			StructAlignTraceParameters currentParameters = 
@@ -216,9 +216,9 @@ public class StructTrace extends Postprocess {
 				parameterHistory.remove(0);
 				parameterHistory.add(currentParameters);				
 			}
-			if(show) {
+			//if(show) {
 				gui.repaint();
-			}
+			//}
 		}
 		++count;
 	}
