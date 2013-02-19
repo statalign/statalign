@@ -58,7 +58,6 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	public boolean globalSigma = true;
 	public boolean useLibrary = false;
 	public boolean fixedEpsilon = false;
-	public String extension = "";
 	
 	double structTemp = 1;
 
@@ -201,7 +200,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		if (paramName.equals("epsilon")) {
 			fixedEpsilon = true;
 			fixedEpsilonValue = Double.parseDouble(paramValue);
-			extension += "eps_"+fixedEpsilonValue;
+			addToFilenameExtension("eps_"+fixedEpsilonValue);
 			System.out.println("Fixing epsilon to "+fixedEpsilonValue+".");
 		}
 		else {
@@ -213,7 +212,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		if (paramName.equals("epsilon")) {
 			fixedEpsilon = true;
 			fixedEpsilonValue = (Double) paramValue;
-			extension += "eps_"+fixedEpsilonValue;
+			addToFilenameExtension("eps_"+fixedEpsilonValue);
 			System.out.println("Fixing epsilon to "+fixedEpsilonValue+".");
 		}
 		else {

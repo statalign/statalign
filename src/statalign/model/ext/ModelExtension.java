@@ -29,6 +29,13 @@ public abstract class ModelExtension {
 	
 	protected boolean active;
 	
+	public void addToFilenameExtension(String s) {
+		manager.addToFilenameExtension(s);
+	}
+	public String getFilenameExtension() {
+		return manager.getFilenameExtension();
+	}
+	
 	private List<McmcMove> mcmcMoves = new ArrayList<McmcMove>();
 	protected List<Integer> mcmcMoveWeights = new ArrayList<Integer>();
 	protected void addMcmcMove(McmcMove m, int weight) {

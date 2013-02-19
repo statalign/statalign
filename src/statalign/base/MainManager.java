@@ -128,7 +128,11 @@ public class MainManager {
 
 			for (Postprocess p : postProcMan.getPlugins()) {
 				if (p.postprocessWrite) {
-					String name = fullPath + "." + p.getFileExtension();
+					String filenameExtension = modelExtMan.getFilenameExtension();
+					if (!filenameExtension.isEmpty()) {
+						filenameExtension += ".";
+					}
+					String name = fullPath + "." + filenameExtension + p.getFileExtension();
 					System.out.println("Output file for " + p.getTabName()
 							+ ": " + name);
 					p.outputFile = new FileWriter(name);

@@ -27,7 +27,16 @@ public class ModelExtManager {
 	
 	private List<ModelExtension> pluginList;
 	private List<ModelExtension> activeList;
+	
+	private String filenameExtensionBase = "";
 
+	public void addToFilenameExtension(String s) {
+		filenameExtensionBase += s;
+	}
+	public String getFilenameExtension() {
+		return filenameExtensionBase;
+	}
+	
 	private int[] propWeights;
 	/** Plugin selected for proposing parameter change */
 	ModelExtension selectedPlugin;
@@ -45,32 +54,34 @@ public class ModelExtManager {
 		for(ModelExtension plugin : pluginList) {
 			plugin.setManager(this);
 		}
-		ARG: for(int i = 0 ; i < args.size() ; i++) {
-			String [] pluginPair = args.get(i).split("\\[",2);
-			for(ModelExtension plugin : pluginList) {
-				if (plugin.getPluginID().equals(pluginPair[0])) {
-					plugin.init();
-					plugin.setActive(true);
-					if (pluginPair.length == 2) { // Then we have some parameters
-						if (pluginPair[1].endsWith("]")) {
-							String paramString = pluginPair[1].substring(0,pluginPair[1].length()-1);
-							String [] paramList = paramString.split(",", -1);
-							for (String param : paramList) {
-								String [] paramPair = param.split("=", 2);
-								if (paramPair.length == 2) {
-									plugin.setParam(paramPair[0],paramPair[1]);
-								}
-								else {
-									plugin.setParam(paramPair[0],true);
+		if (args != null) {
+			ARG: for(int i = 0 ; i < args.size() ; i++) {
+				String [] pluginPair = args.get(i).split("\\[",2);
+				for(ModelExtension plugin : pluginList) {
+					if (plugin.getPluginID().equals(pluginPair[0])) {
+						plugin.init();
+						plugin.setActive(true);
+						if (pluginPair.length == 2) { // Then we have some parameters
+							if (pluginPair[1].endsWith("]")) {
+								String paramString = pluginPair[1].substring(0,pluginPair[1].length()-1);
+								String [] paramList = paramString.split(",", -1);
+								for (String param : paramList) {
+									String [] paramPair = param.split("=", 2);
+									if (paramPair.length == 2) {
+										plugin.setParam(paramPair[0],paramPair[1]);
+									}
+									else {
+										plugin.setParam(paramPair[0],true);
+									}
 								}
 							}
+							else {
+								throw new IllegalArgumentException(
+										"Plugin parameters must be specifed in the form\n-plugin:pluginName[par1=x,par2=y]\n");
+							}
 						}
-						else {
-							throw new IllegalArgumentException(
-									"Plugin parameters must be specifed in the form\n-plugin:pluginName[par1=x,par2=y]\n");
-						}
+						break ARG;
 					}
-					break ARG;
 				}
 			}
 		}
