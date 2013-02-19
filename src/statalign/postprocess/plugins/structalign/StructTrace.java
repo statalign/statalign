@@ -14,9 +14,11 @@ import org.apache.commons.math3.geometry.euclidean.threed.Rotation;
 import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
 
 import statalign.base.InputData;
+import statalign.base.Mcmc;
 import statalign.base.McmcStep;
 import statalign.base.State;
 import statalign.base.Utils;
+import statalign.model.ext.ModelExtManager;
 import statalign.model.ext.ModelExtension;
 import statalign.model.ext.McmcMove;
 import statalign.model.ext.plugins.StructAlign;
@@ -83,7 +85,8 @@ public class StructTrace extends Postprocess {
 	
 	@Override
 	public String getFileExtension() {
-		return "struct";
+		return structAlign.extension+".struct";
+		//return "struct";
 	}
 
 	@Override
@@ -91,13 +94,23 @@ public class StructTrace extends Postprocess {
 	}
 	
 	@Override
-	public void beforeFirstSample(InputData inputData) {
-		for(ModelExtension modExt : getModExtPlugins()) {
+	public void init(ModelExtManager modelExtMan) {
+		for(ModelExtension modExt : modelExtMan.getPluginList()) {
 			if(modExt instanceof StructAlign) {
 				structAlign = (StructAlign) modExt;
 			}
 		}
 		active = structAlign.isActive();
+	}
+	
+	@Override
+	public void beforeFirstSample(InputData inputData) {
+//		for(ModelExtension modExt : getModExtPlugins()) {
+//			if(modExt instanceof StructAlign) {
+//				structAlign = (StructAlign) modExt;
+//			}
+//		}
+//		active = structAlign.isActive();
 		if(!active)
 			return;
 		try {
@@ -149,7 +162,7 @@ public class StructTrace extends Postprocess {
 			} catch (IOException e) {
 				e.printStackTrace(); 
 			}
-			structAlign.setAllMovesNotProposed();
+			//structAlign.setAllMovesNotProposed();
 		}
 	}
 	

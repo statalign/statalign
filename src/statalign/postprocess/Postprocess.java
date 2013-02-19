@@ -12,6 +12,7 @@ import statalign.base.InputData;
 import statalign.base.Mcmc;
 import statalign.base.McmcStep;
 import statalign.base.State;
+import statalign.model.ext.ModelExtManager;
 import statalign.model.ext.ModelExtension;
 
 /**
@@ -121,6 +122,9 @@ public abstract class Postprocess {
 	 * possibly involving GUI (toolbar etc.) 
 	 */
 	public void init() {
+	}
+
+	public void init(ModelExtManager modelExtMan) {
 	}
 	
 
@@ -259,5 +263,7 @@ public abstract class Postprocess {
     public List<ModelExtension> getModExtPlugins() {
     	return mcmc.modelExtMan.getPluginList();
     }
+
+
 
 }

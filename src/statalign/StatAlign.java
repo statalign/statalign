@@ -58,7 +58,7 @@ public class StatAlign{
 			if(cl.fillParams(args, manager) > 0)
 				System.exit(1);
 			// TODO add pluginParameters as a param to fillParams, remove from Postprocess
-			manager.init(Postprocess.pluginParameters);
+			manager.init(cl.pluginParameters);
 			
 			manager.start();
 

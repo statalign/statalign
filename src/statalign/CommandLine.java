@@ -40,6 +40,7 @@ public class CommandLine {
 
 	private List<String> substModNames = new ArrayList<String>();
 	private Map<String, Integer> postprocAbbr = new HashMap<String, Integer>();
+	public ArrayList<String> pluginParameters;
 
 	// Functions
 
@@ -283,8 +284,11 @@ public class CommandLine {
 			for (int i = 0; i < plugins.getResultCount(); i++) {
 				argsVector.add(plugins.getResultValue(i));
 			}
-			Postprocess.pluginParameters = new PluginParameters(argsVector);
 			
+			//Postprocess.pluginParameters = new PluginParameters(argsVector);
+			pluginParameters = argsVector;
+			//parsePluginParameters(argsVector,manager);
+
 			// TODO allow rnaMode to be switched off even for RNA sequences (plugin param)
 			// TODO move rnaMode to a "RNA container" plugin
 			if(manager.inputData.seqs.isRNA()) {
@@ -447,6 +451,31 @@ public class CommandLine {
 		}
 		return sb.toString();
 	}
+	
+//	private void parsePluginParameters(ArrayList<String> args,MainManager man) {
+//		for(int i = 0 ; i < args.size() ; i++) {
+//			String [] pluginPair = args.get(i).split("\\[",2);
+//			if (pluginPair.length == 2) {
+//				if (pluginPair[1].endsWith("\\]")) {
+//					String paramString = pluginPair[1].substring(0,pluginPair[1].length()-1);
+//					String [] paramList = paramString.split(",", -1);
+//						for (String param : paramList) {
+//							String [] paramPair = param.split("=", 2);
+//							if (paramPair.length == 2) {
+//								man.modelExtMan.findPlugin(pluginPair[0]).setParam(paramPair[0],paramPair[1]);
+//							}
+//							else {
+//								man.modelExtMan.findPlugin(pluginPair[0]).setParam(paramPair[0],true);
+//							}
+//						}
+//					}
+//					else {
+//						throw new IllegalArgumentException(
+//								"Plugin parameters must be specifed in the form\n-plugin:pluginName[par1=x,par2=y]\n");
+//					}
+//				}
+//			}
+//	}
 
 	private static int parseValue(String string) {
 		if (string.isEmpty())

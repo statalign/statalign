@@ -1,6 +1,7 @@
 package statalign.model.ext;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.List;
 import java.util.ArrayList;
 
@@ -53,6 +54,15 @@ public abstract class ModelExtension {
 		throw new RuntimeException("McmcMove "+name+" not found.");
 	}
 	
+	public void setParam(String paramName, String paramValue) {
+		throw new IllegalArgumentException("Unable to set parameter "+paramName+" for plugin "+this.getPluginID()+".");
+	}
+	public void setParam(String paramName, boolean paramValue) {
+		throw new IllegalArgumentException("Unable to set parameter "+paramName+" for plugin "+this.getPluginID()+".");
+	}
+	public void setParam(String paramName, Number paramValue) {
+		throw new IllegalArgumentException("Unable to set parameter "+paramName+" for plugin "+this.getPluginID()+".");
+	}
 	public abstract double getLogLike();
 //	public int[] proposalCounts;
 //	public int[] acceptanceCounts;
@@ -114,7 +124,7 @@ public abstract class ModelExtension {
 	 * 
 	 * @param params reference to plugin command line parameters or null when StatAlign was run with a GUI
 	 */
-	public void init(PluginParameters params) {}
+	public void init() {}
 	
 	/**
 	 * Called during the initialisation of a run if plugin is active. Override to process input data.

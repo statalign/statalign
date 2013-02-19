@@ -15,6 +15,7 @@ import java.util.Hashtable;
 public class PluginParameters {
 	
 	Hashtable<String, String> parameters = new Hashtable<String, String>();
+	ArrayList<String> args;
 	
 	public PluginParameters()
 	{
@@ -25,21 +26,23 @@ public class PluginParameters {
 	 * An alternative way to initialise this class.
 	 * @param args a list of parameters and values of the form "parameter=value".
 	 */
-	public PluginParameters(ArrayList<String> args)
+	public PluginParameters(ArrayList<String> argsVector)
 	{
-		for(int i = 0 ; i < args.size() ; i++)
-		{
-			String [] split = args.get(i).split("=", 2);
-			String param = split[0];
-			if(split.length == 1)
-			{
-				parameters.put(param, "");
-			}
-			else
-			{
-				parameters.put(param, split[1]);
-			}
-		}
+		args = argsVector;
+//		for(int i = 0 ; i < args.size() ; i++)
+//		{
+//			
+//			String [] split = args.get(i).split("=", 2);
+//			String param = split[0];
+//			if(split.length == 1)
+//			{
+//				parameters.put(param, "");
+//			}
+//			else
+//			{
+//				parameters.put(param, split[1]);
+//			}
+//		}
 	}
 	
 	/**

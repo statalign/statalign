@@ -55,9 +55,10 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	
 	JToggleButton myButton;
 	
-	public final boolean globalSigma = true;
-	public final boolean useLibrary = false;
-	public final boolean fixedEpsilon = true;
+	public boolean globalSigma = true;
+	public boolean useLibrary = false;
+	public boolean fixedEpsilon = false;
+	public String extension = "";
 	
 	double structTemp = 1;
 
@@ -162,7 +163,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 
 	public final double MIN_EPSILON = 0.01;
 	/** Value to fix epsilon at if we're not estimating it. */
-	public final double FIXED_EPSILON = 1.0;
+	public double fixedEpsilonValue = 0.0;
 	
 	@Override
 	public List<JComponent> getToolBarItems() {
@@ -184,7 +185,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	public String getUsageInfo() {
 		StringBuilder usage = new StringBuilder();
 		usage.append("StructAlign version 1.0\n\n");
-		usage.append("java -jar statalign.jar -plugin:structal=[OPTIONS]\n");
+		usage.append("java -jar statalign.jar -plugin:structal[=OPTIONS]\n");
 		
 		return usage.toString();
 	}
@@ -196,11 +197,38 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	}
 	
 	@Override
-	public void init(PluginParameters params) {
-		if(params != null && params.getParameter(pluginID) != null) {
-			// TODO parse plugin parameters
-			setActive(true);
+	public void setParam(String paramName, String paramValue) {
+		if (paramName.equals("epsilon")) {
+			fixedEpsilon = true;
+			fixedEpsilonValue = Double.parseDouble(paramValue);
+			extension += "eps_"+fixedEpsilonValue;
+			System.out.println("Fixing epsilon to "+fixedEpsilonValue+".");
 		}
+	}
+	@Override
+	public void setParam(String paramName, Number paramValue) {
+		if (paramName.equals("epsilon")) {
+			fixedEpsilon = true;
+			fixedEpsilonValue = (Double) paramValue;
+			extension += "eps_"+fixedEpsilonValue;
+			System.out.println("Fixing epsilon to "+fixedEpsilonValue+".");
+		}
+	}
+	@Override
+	public void setParam(String paramName, boolean paramValue) {
+		if (paramName.equals("globalSigma")) {
+			globalSigma = true;
+		}
+		else if (paramName.equals("useLibrary")) {
+			useLibrary = true;
+		}
+	}
+	@Override
+	public void init() {
+//		if(params != null && params.getParameter(pluginID) != null) {
+//			// TODO parse plugin parameters
+//			setActive(true);
+//		}
 	}
 	
 	@Override
@@ -254,7 +282,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		nu = 1;
 		tau = 50;
 		if (fixedEpsilon) {
-			epsilon = FIXED_EPSILON;	
+			epsilon = fixedEpsilonValue;
 		}
 		else {
 			epsilon = 100;

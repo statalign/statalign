@@ -3,6 +3,7 @@ package statalign.base;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 
 import javax.swing.SwingUtilities;
 
@@ -108,9 +109,10 @@ public class MainManager {
 	 * the constructor as some plugins require input from the command line.
 	 * @param params plugin parameters 
 	 */
-	public void init(PluginParameters params) {
+	public void init(ArrayList<String> args) {
 		// TODO add postProcMan here and an init() for postprocess plugins
-		modelExtMan.init(params);
+		modelExtMan.init(args);
+		postProcMan.init(modelExtMan);
 	}
 
 	/**

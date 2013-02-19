@@ -12,6 +12,7 @@ import statalign.base.Mcmc;
 import statalign.base.McmcStep;
 import statalign.base.State;
 import statalign.base.Utils;
+import statalign.model.ext.ModelExtManager;
 import statalign.ui.ErrorMessage;
 
 /**
@@ -117,6 +118,11 @@ public class PostprocessManager {
 		return false;
 	}
 	
+	public void init(ModelExtManager modelExtMan) {
+		for(Postprocess plugin : plugins){
+			plugin.init(modelExtMan);
+		}
+	}
 	/**
 	 * This function invoked before the first sample.
 	 * It opens information chanels towards postrocessing plug-ins.
