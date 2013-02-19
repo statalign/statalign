@@ -49,7 +49,8 @@ public class StatAlignParallel {
         }
         
         // TODO cf. comment in StatAlign
-		manager.init(Postprocess.pluginParameters);
+		manager.init(cl.pluginParameters);
+		//manager.init(Postprocess.pluginParameters);
 
         // Sets up a barrier to synchronize the processes here.
         MPI.COMM_WORLD.Barrier();
