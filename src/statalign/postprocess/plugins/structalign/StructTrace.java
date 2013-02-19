@@ -85,8 +85,12 @@ public class StructTrace extends Postprocess {
 	
 	@Override
 	public String getFileExtension() {
-		return structAlign.extension+".struct";
-		//return "struct";
+		if (!structAlign.extension.isEmpty()) {
+			return structAlign.extension+".struct";
+		}
+		else {
+			return "struct";
+		}
 	}
 
 	@Override
