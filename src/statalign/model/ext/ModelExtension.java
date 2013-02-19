@@ -1,7 +1,6 @@
 package statalign.model.ext;
 
 import java.io.File;
-import java.util.HashMap;
 import java.util.List;
 import java.util.ArrayList;
 
@@ -15,7 +14,6 @@ import statalign.base.Vertex;
 import statalign.base.hmm.Hmm;
 import statalign.io.DataType;
 import statalign.model.subst.SubstitutionModel;
-import statalign.postprocess.PluginParameters;
 import statalign.model.ext.McmcMove;
 
 
@@ -64,10 +62,7 @@ public abstract class ModelExtension {
 		throw new IllegalArgumentException("Unable to set parameter "+paramName+" for plugin "+this.getPluginID()+".");
 	}
 	public abstract double getLogLike();
-//	public int[] proposalCounts;
-//	public int[] acceptanceCounts;
-//	public double[] proposalWidthControlVariables;
-	
+
 	public void setManager(ModelExtManager manager) {
 		this.manager = manager;
 	}
