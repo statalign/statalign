@@ -2,6 +2,7 @@ package statalign.postprocess;
 
 import java.io.FileWriter;
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.Icon;
 import javax.swing.JComponent;
@@ -175,7 +176,32 @@ public abstract class Postprocess {
 	public String getFileExtension() {
 		return null;
 	}
+    
+    /**
+     * The list of files (paths relative to {@link InputData#outputPath}) created
+     * by this plugin. Called by the framework after each analysis (after {@link #afterLastSample()})
+     * to assemble the list of output files which will then be reported to the user.
+     * <p>
+     * This will be managed automatically for plugins that override {@link #getFileExtension()}
+     * and rely on {@link #outputFile}, other plugins should override this method.
+     * @see #getCreatedFileDescriptions()
+     */
+    public List<String> getCreatedFileNames() {
+    	return null;
+    }
 	
+    /**
+     * Short description for each file created by this plugin. Descriptions should come
+     * in the order matching the list of file names reported by {@link #getCreatedFileNames()}.
+     * Will be called after each analysis and the descriptions will be reported along
+     * with the file names to the user.
+     * <p>
+     * Any element can be left null in which case a default description will be provided.
+     */
+    public List<String> getCreatedFileDescriptions() {
+    	return null;
+    }
+    
 	/**
 	 * Override this and return an array of full-qualified class names of the plugins
 	 * this plugin depends on.

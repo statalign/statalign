@@ -1,15 +1,20 @@
 package statalign.postprocess;
 
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 
+import statalign.base.InputData;
 import statalign.base.MainManager;
 import statalign.base.Mcmc;
 import statalign.base.McmcStep;
 import statalign.base.State;
 import statalign.base.Utils;
+import statalign.distance.Pair;
 
 /**
  * This class manages the postprocesses.
@@ -203,27 +208,65 @@ public class PostprocessManager {
 	 */
 	public void afterLastSample() {
 		if(rnaMode) {
-			for(Postprocess plugin : plugins){
-				if(plugin.postprocessWrite){
+			for(Postprocess plugin : plugins)
+				if(plugin.rnaAssociated)
 					plugin.afterLastSample();
-				}
-			}
-		}
-		
-		else {
-			for(Postprocess plugin : plugins){
-				if(!plugin.rnaAssociated) {
-					if(plugin.postprocessWrite){
-						plugin.afterLastSample();
-					}
-				}
-			}
+		} else {
+			for(Postprocess plugin : plugins)
+				if(!plugin.rnaAssociated)
+					plugin.afterLastSample();
 		}
 
+	}
+	
+	public void initRun(InputData inputData) throws IOException {
+		logFile = new FileWriter(new File(inputData.outputPath, inputData.title + ".log"));
+
+		for (Postprocess p : plugins) {
+			if (p.postprocessWrite && p.getFileExtension() != null) {
+				String name = new File(inputData.outputPath, inputData.title + "." + p.getFileExtension()).getPath();
+				System.out.println("Output file for " + p.getTabName()
+						+ ": " + name);
+				p.outputFile = new FileWriter(name);
+			}
+		}
+	}
+	
+	public void finalizeRun() {
 		try {
 			logFile.close();
 		} catch (IOException e) {
 		}
+		for (Postprocess p : plugins) {
+			if (p.postprocessWrite && p.getFileExtension() != null) {
+				try {
+					p.outputFile.close();
+				} catch (IOException e) {
+				}
+			}
+		}
+
+	}
+	
+	public List<Pair<String, String>> getFilesCreated() {
+		List<Pair<String, String>> retList = new ArrayList<Pair<String, String>>();
+		retList.add(new Pair<String, String>(mainManager.inputData.title+".log", "Log file with the MCMC samples"));
+		for(Postprocess plugin : plugins) {
+			List<String> files = plugin.getCreatedFileNames();
+			List<String> dsc = plugin.getCreatedFileDescriptions();
+			if(files == null) {
+				String ext = plugin.getFileExtension();
+				if(!plugin.postprocessWrite || ext == null)
+					continue;
+				files = Arrays.asList(mainManager.inputData.title + "." + ext);
+			}
+			for(int i = 0; i < files.size(); i++) {
+				retList.add(new Pair<String, String>(files.get(i), 
+						dsc != null && i < dsc.size() && dsc.get(i) != null ? 
+						dsc.get(i) : "Output file for the '"+plugin.getTabName()+"' plugin"));
+			}
+		}
+		return retList;
 	}
 	
 }

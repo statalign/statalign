@@ -73,6 +73,8 @@ public class RNASettingsDlg extends JDialog implements ActionListener, ChangeLis
 	
 	private Preferences prefs;
 	
+	private boolean wasCancelled;
+	
 	RNASettingsDlg(JFrame owner) {
 		super(owner, "RNA options", true);
 		this.owner = owner;
@@ -256,7 +258,8 @@ public class RNASettingsDlg extends JDialog implements ActionListener, ChangeLis
 					defaultExec = execFile.getAbsolutePath();
 				}
 			}
-			executableField.setText(prefs.get("RNAALIFOLD_EXECUTABLE", defaultExec));
+			String exec = prefs.get("RNAALIFOLD_EXECUTABLE", defaultExec);
+			executableField.setText(exec.isEmpty() ? defaultExec : exec);
 			temperatureSpinner.setValue(prefs.getDouble("RNAALIFOLD_TEMPERATURE", 37.0));
 			boolean linear = prefs.getBoolean("IS_LINEAR", true);
 			linearButton.setSelected(linear);
@@ -322,11 +325,12 @@ public class RNASettingsDlg extends JDialog implements ActionListener, ChangeLis
 	
 	
 	
-	void display(Component c) {
+	boolean display(Component c) {
 //		outFile.setText(sp.outFile);
 		setLocationRelativeTo(c);
 //		pack();
 		setVisible(true);
+		return !wasCancelled;
 	}
 
 	/**
@@ -370,12 +374,14 @@ public class RNASettingsDlg extends JDialog implements ActionListener, ChangeLis
 			if(ev.getActionCommand() == "OK") {	
 
 				updateFoldingParametersAndTest();
+				wasCancelled = false;
 				this.dispose();
 			}
 			else
 			if(ev.getActionCommand() == "Cancel")
 			{
 				//setVisible(false);
+				wasCancelled = true;
 				this.dispose();
 			}
 		} catch(NumberFormatException e){

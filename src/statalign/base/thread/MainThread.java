@@ -1,12 +1,9 @@
 package statalign.base.thread;
 
-import java.io.File;
-
 import statalign.base.MainManager;
 import statalign.base.Mcmc;
 import statalign.base.Tree;
 import statalign.io.RawSequences;
-import statalign.ui.ErrorMessage;
 
 /**
  * The main (suspendable) thread for background MCMC calculation.
@@ -35,6 +32,9 @@ public class MainThread extends StoppableThread {
 	@Override
 	public synchronized void run() {
 		try {
+
+			owner.postProcMan.initRun(owner.inputData);
+			
 			RawSequences seqs = owner.inputData.seqs;
 			
 			if(owner.frame != null) {
@@ -44,14 +44,13 @@ public class MainThread extends StoppableThread {
 			System.out.println("\nPreparing initial tree and alignment...\n");
 
 			// remove gaps and whitespace
-			owner.inputData.title = new File(owner.fullPath).getName();
-			String[] nongapped = new String[seqs.sequences.size()];
+			String[] nongapped = new String[seqs.size()];
 			StringBuilder builder = new StringBuilder();
 			int i, j;
 			char ch;
 			for(i = 0; i < nongapped.length; i++) {
 				builder.setLength(0);
-				String seq = seqs.sequences.get(i);
+				String seq = seqs.getSequence(i);
 				for(j = 0; j < seq.length(); j++) {
 					ch = seq.charAt(j);
 					if(Character.isWhitespace(ch) || ch == '-')
@@ -61,23 +60,24 @@ public class MainThread extends StoppableThread {
 				nongapped[i] = builder.toString();
 			}
 			
-			Tree tree = new Tree(nongapped, seqs.seqNames.toArray(new String[seqs.seqNames.size()]), 	
+			Tree tree = new Tree(nongapped, seqs.getSeqnames().toArray(new String[seqs.size()]), 	
 					owner.inputData.model,
-					owner.inputData.model.attachedScoringScheme,
-					new File(owner.fullPath).getName());
+					owner.inputData.model.attachedScoringScheme);
 			Mcmc mcmc = new Mcmc(tree, owner.inputData.pars, owner.postProcMan);
-			mcmc.doMCMC();
-			owner.finished(false);
-			System.out.println("Ready.");
-		} catch(StoppedException e) {
-			owner.finished(true);
-			System.out.println("Interrupted.");
+			int errorCode = mcmc.doMCMC();
+			owner.postProcMan.finalizeRun();
+			owner.finished(errorCode, null);
+			System.out.println(errorCode == 0 ? "Ready." : "Stopped.");
+		} catch (StoppedException e) {
+			// stopped during initial alignment
+			owner.postProcMan.finalizeRun();
+			owner.finished(2, null);
+			System.out.println("Stopped.");
 		} catch(Exception e) {
+			owner.postProcMan.finalizeRun();
 			e.printStackTrace();
-			if(owner.frame != null) {
-				ErrorMessage.showPane(owner.frame, e, true);
-			}
-			owner.finished(true);
+			owner.finished(-1, e);
 		}
+		
 	}
 }

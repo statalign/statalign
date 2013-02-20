@@ -44,6 +44,7 @@ import statalign.StatAlign;
 import statalign.base.Input;
 import statalign.base.MainManager;
 import statalign.base.Utils;
+import statalign.distance.Pair;
 import statalign.exceptions.ExceptionNonFasta;
 import statalign.io.input.FileFormatReader;
 import statalign.io.input.plugins.FastaReader;
@@ -61,9 +62,9 @@ import statalign.postprocess.Postprocess;
 public class MainFrame extends JFrame implements ActionListener {
 
     // Constants
+	private static final long serialVersionUID = 1L;
+	
     public static final String IDLE_STATUS_MESSAGE = " StatAlign :: Ready";
-    private static final long serialVersionUID = 1L;
-    
     public static final String WELCOME_MSG = 
     		"<html><div style='padding: 20px 20px 20px 20px; font-family: Arial; font-size: 12px'>" +
 			"<h2>Welcome to StatAlign!</h2><br>" +
@@ -427,6 +428,8 @@ public class MainFrame extends JFrame implements ActionListener {
         statusText = new JLabel(IDLE_STATUS_MESSAGE);
         statusBar.add(statusText, BorderLayout.CENTER);
         cp.add(statusBar, BorderLayout.SOUTH);
+        
+        manager.inputgui.grabFocus();
 
 //		setSize(300, 200);
 //		setLocationByPlatform(true);
@@ -473,7 +476,7 @@ public class MainFrame extends JFrame implements ActionListener {
         } else if (ev.getActionCommand() == "Settings") {
             mcmcSettingsDlg.display(this);
         } else if (ev.getActionCommand() == "Set up and run") {
-        	if (manager.inputData.seqs.sequences.size() < 2) {
+        	if (manager.inputData.seqs.size() < 2) {
                 JOptionPane.showMessageDialog(this, "At least two sequences are needed!!!",
                         "Not enough sequences", JOptionPane.ERROR_MESSAGE);
 //    			manager.finished();
@@ -506,13 +509,17 @@ public class MainFrame extends JFrame implements ActionListener {
             final String savTit = getTitle();
             setTitle("Stopping...");
             manager.thread.stopSoft();
-            finished();
+//            finished();
             setTitle(savTit);
             setCursor(Cursor.getDefaultCursor());
         } else if (ev.getActionCommand() == "RNA mode") {
         	if(rnaButton.isSelected()) {
            		dlg = new RNASettingsDlg (this);
-        		dlg.display(this);
+        		if(!dlg.display(this)) {
+        			rnaButton.setSelected(false);
+        			manager.inputgui.grabFocus();	// transfer focus
+        			return;
+        		}
         		
         		//manager.inputgui = input.inputgui;
 				//manager.inputgui.updateSequences();
@@ -532,14 +539,10 @@ public class MainFrame extends JFrame implements ActionListener {
 						tab.addTab(plugin.getTabName(), plugin.getIcon(), plugin.getJPanel(), plugin.getTip());
 						count++;
 					}
-					
 					//manager.postProcMan.init();
 				}
-        		
-        		}
-        	
-        	
-        	else {
+				
+        	} else {
         		
         		manager.postProcMan.rnaMode = false;
         		//System.out.println("NOT SELECTED!!!");
@@ -554,14 +557,11 @@ public class MainFrame extends JFrame implements ActionListener {
         				tab.remove(count + 1);
         				count--;
         			}
-        			
         			count++;
-        			
-        				
         		}
-        		
-        		
         	}
+			manager.inputgui.grabFocus();	// transfer focus
+
     
         	
         } else if (ev.getActionCommand() == "About...") {
@@ -611,10 +611,10 @@ public class MainFrame extends JFrame implements ActionListener {
 	        
 	        FileFormatReader reader = new FastaReader();
 	        try {
-	        	manager.inputData.seqs.alphabet = "";
+	        	if(manager.inputData.seqs.size() == 0)
+	        		manager.inputData.setBaseFile(inFile);
 	            manager.inputData.seqs.add(reader.read(inFile));
 	            manager.inputgui.updateSequences();
-	            manager.fullPath = inFile.getAbsolutePath();
 	            if (manager.inputData.model != null) {
 	                try {
 	                    manager.inputData.model.acceptable(manager.inputData.seqs);
@@ -628,13 +628,18 @@ public class MainFrame extends JFrame implements ActionListener {
 	                runItem.setEnabled(true);
 	                runButton.setEnabled(true);
 	                
-	                if(!manager.inputData.seqs.isRNA()) {
-	                	rnaButton.setEnabled(false);
-	                }
-	                
-	                else { 
+	                if(manager.inputData.seqs.isRNA()) {
 	                	rnaButton.setEnabled(true);
-	                	RNAPopup.showPane(this);	
+	                	if(manager.inputData.seqs.getAlphabet().indexOf("U") != -1) {
+	                		// only pop up if it looks very much like RNA (and not DNA)
+	                		String text = "<html><div style='padding: 0 10px 10px 10px'>StatAlign has detected that these are RNA sequences.<br>" +
+	                				"To enable RNA secondary structure prediction,<br>" +
+	                				"please toggle the RNA icon on the toolbar.</div></html>";
+	                		ErrorMessage.showPane(this, text, "RNA sequences found", false);
+	                	}
+	                	
+	                } else { 
+	                	rnaButton.setEnabled(false);
 	                }
 	            }
 	        } catch (IOException e) {
@@ -705,13 +710,17 @@ public class MainFrame extends JFrame implements ActionListener {
         }
     }
 
-    /** Enables several menu items that were kept disabled during the run. */
-    public void finished() {
+    /**
+     * Enables several menu items that were kept disabled during the run.
+	 * @param errorCode -1: error 0: completed 1: stopped after sampling 2: stopped before sampling
+	 * @param ex the exception that was thrown when <tt>errorCode = -1</tt>
+     */
+    public void finished(int errorCode, Exception ex) {
         openItem.setEnabled(true);
         openButton.setEnabled(true);
         runItem.setEnabled(true);
         runButton.setEnabled(true);
-        rnaButton.setEnabled(true);
+        rnaButton.setEnabled(manager.inputData.seqs.isRNA());
         
         //rnaButton.setSelected(false);
         pauseItem.setEnabled(false);
@@ -722,11 +731,32 @@ public class MainFrame extends JFrame implements ActionListener {
         stopButton.setEnabled(false);
         
 		statusText.setText(MainFrame.IDLE_STATUS_MESSAGE);
-        //SavedFilesPopup.showPane(this);
 		
+		if(errorCode >= 0)
+			showOutput(errorCode);
+		else
+			ErrorMessage.showPane(this, ex, true);
+        //SavedFilesPopup.showPane(this);
     }
     
-    public void deactivateRNA() {
+    private void showOutput(int errorCode) {
+		StringBuilder msg = new StringBuilder();
+		msg.append("<html><p>All output was written into the directory:<br>")
+			.append(manager.inputData.outputPath).append("<br><br>")
+			.append("<p>The following files were created:<br>")
+			.append("<table>");
+		for(Pair<String, String> elem : manager.postProcMan.getFilesCreated()) {
+			msg.append("<tr><td>");
+			msg.append(elem.getLeft());
+			msg.append("<td>&nbsp;<td>");
+			msg.append(elem.getRight());
+			msg.append("<td>&emsp;");
+		}
+		msg.append("</table></html>");
+		ErrorMessage.showPane(this, msg.toString(), "Analysis "+(errorCode == 0 ? "completed" : "stopped"), false);
+	}
+
+	public void deactivateRNA() {
     	
     	int count = 0;
     	if(manager.postProcMan.rnaMode) {

@@ -7,7 +7,6 @@ import java.io.Reader;
 import statalign.exceptions.ExceptionNonFasta;
 import statalign.io.RawSequences;
 import statalign.io.input.FileFormatReader;
-import statalign.postprocess.utils.RNAFoldingTools;
 
 /**
  * 
@@ -36,6 +35,7 @@ public class FastaReader extends FileFormatReader {
 		BufferedReader br = new BufferedReader(reader);
 
 		String line;
+		String name = null;
 		boolean inSeq = false;
 		StringBuilder actSeq = new StringBuilder();
 		int errors = 0;
@@ -47,9 +47,8 @@ public class FastaReader extends FileFormatReader {
 				if(inSeq) {
 					if(actSeq.length() == 0) {
 						errors++;
-						result.seqNames.remove(result.seqNames.size()-1);
 					} else {
-						result.sequences.add(actSeq.toString());
+						result.add(name, actSeq.toString());
 					}
 				}
 				if(line == null)
@@ -72,7 +71,7 @@ public class FastaReader extends FileFormatReader {
 				line = line.replaceAll("\\(", "{");
 				line = line.replaceAll("\\)", "}");
 //				System.out.println("new name: "+line);
-				result.seqNames.add(line);
+				name = line;
 			} else if(inSeq) {
 				
 				
@@ -82,9 +81,6 @@ public class FastaReader extends FileFormatReader {
 					if(!Character.isWhitespace(ch = line.charAt(i))) {
 						if(Character.isLetter(ch) || ch == '-') {
 							actSeq.append(ch);
-							if(ch != '-') {
-								result.alphabet += ch;
-							}
 						}
 							
 						else

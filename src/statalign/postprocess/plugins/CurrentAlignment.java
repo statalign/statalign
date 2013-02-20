@@ -127,15 +127,15 @@ public class CurrentAlignment extends statalign.postprocess.Postprocess{
 			gui.title = input.title;
 			pan.add(scroll, BorderLayout.CENTER);
 		}
-		leafAlignment = new String[input.seqs.sequences.size()];
+		leafAlignment = new String[input.seqs.size()];
 		this.input = input;
 		
 		// seqNames
-		int nl = input.seqs.sequences.size();
+		int nl = input.seqs.size();
 		int nn = nl*2-1, i;
 		seqNames = new String[nn];
 		for(i = 0; i < nl; i++)
-			seqNames[i] = input.seqs.seqNames.get(i);
+			seqNames[i] = input.seqs.getSeqNamePadded(i);
 		StringBuilder b = new StringBuilder();
 		for(int j = 0; j < seqNames[0].length(); j++)
 			b.append(' ');

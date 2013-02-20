@@ -78,8 +78,8 @@ public abstract class AminoAcidModel extends SubstitutionModel {
 	public double acceptable(RawSequences r) {
 		int[] count = new int[alphabet.length];
 		String accept = new String(alphabet).toUpperCase()+"BZJX";	// accept ambiguous amino acids
-		for(int i = 0; i < r.sequences.size(); i++){
-			String sequence = r.sequences.get(i);
+		for(int i = 0; i < r.size(); i++){
+			String sequence = r.getSequence(i);
 			for(int j = 0; j < sequence.length(); j++){
 				char ch = sequence.charAt(j);
 				if(ch != '-' && ch != ' ') {

@@ -24,8 +24,12 @@ public class ErrorMessage  {
     	showPane(owner, except2String(ex), error);
     }
 
+    public static void showPane(JFrame owner, String message, String title, boolean error) {
+    	JOptionPane.showMessageDialog(owner, message, title == null ? (error ? "Error" : "Message") : title, error ? JOptionPane.ERROR_MESSAGE : JOptionPane.INFORMATION_MESSAGE);
+    }
+    
     public static void showPane(JFrame owner, String message, boolean error) {
-    	JOptionPane.showMessageDialog(owner, message, error ? "Error" : "Message", error ? JOptionPane.ERROR_MESSAGE : JOptionPane.INFORMATION_MESSAGE);
+    	showPane(owner, message, null, error);
     }
     
 }

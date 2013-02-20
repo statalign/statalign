@@ -36,9 +36,4 @@ public class Pair<L,R>  {
 		  return "(" + this.getLeft() + "," + this.getRight() + ")";
 	  }
 	  
-	  public int compareTo(Pair<String,Integer> s1, Pair< String,Integer> s2) {
-		    return s1.getLeft().compareToIgnoreCase(s2.getLeft());
-		  }
-	  
-
 	}

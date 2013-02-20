@@ -1,5 +1,6 @@
 package statalign;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
@@ -106,9 +107,7 @@ public class CommandLine {
 				}
 			}
 			
-			// TODO: Change? If dealing with merged datasets this does not make
-			// any sense.
-			manager.fullPath = set.getData().get(0);
+			manager.inputData.setBaseFile(new File(set.getData().get(0)));
 
 			if (set.isSet("subst")) {
 				String modelName = set.getOption("subst").getResultValue(0);

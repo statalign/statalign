@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
@@ -114,7 +115,7 @@ public class MpdAlignment extends statalign.postprocess.Postprocess {
 
 		this.input = input;
 
-		sizeOfAlignments = input.seqs.sequences.size();
+		sizeOfAlignments = input.seqs.size();
 		alignment = new String[sizeOfAlignments];
 		if(show)
 			gui.alignment = alignment;
@@ -279,9 +280,7 @@ public class MpdAlignment extends statalign.postprocess.Postprocess {
 				} else {
 					outputFile.write("No posterior values so far\n");
 				}
-				outputFile.close();
 			} catch (IOException e) {
-				e.printStackTrace();
 			}
 			/*
 			appendAlignment("mpd", alignment, new File(input.title+".samples"), true);
@@ -303,6 +302,11 @@ public class MpdAlignment extends statalign.postprocess.Postprocess {
 				ex.printStackTrace();
 			}*/
 		}
+	}
+	
+	@Override
+	public List<String> getCreatedFileDescriptions() {
+		return Arrays.asList("The MPD (consensus) alignment");
 	}
 
 	/* (non-Javadoc)

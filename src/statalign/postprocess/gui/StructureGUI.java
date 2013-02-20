@@ -74,6 +74,7 @@ public class StructureGUI extends VARNAPanel{
 		
 	}
 	
+	@Override
 	public void paintComponent(Graphics g) {
 		//setBackground(Color.PINK);
 		//setBaseInnerColor(Color.GREEN);
@@ -94,7 +95,7 @@ public class StructureGUI extends VARNAPanel{
 		
 		g2.setFont(new Font("SANS_SERIF", Font.BOLD, 12));
 		
-		if(!probMode) g2.drawString("Normal Mode", 10, 40);
+		if(!probMode) g2.drawString("Nucleotide Mode", 10, 40);
 		else g2.drawString("Probability Mode", 10, 40);
 		
 		g2.setFont(new Font("MONOSPACED", Font.PLAIN, 12));

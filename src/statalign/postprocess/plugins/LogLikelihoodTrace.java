@@ -5,6 +5,7 @@ package statalign.postprocess.plugins;
 import java.awt.BorderLayout;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import javax.swing.Icon;
@@ -171,11 +172,14 @@ public class LogLikelihoodTrace extends statalign.postprocess.Postprocess{
 				for (double ll : loglikelihoods) {
 					outputFile.write(ll + "\n");
 				}
-				outputFile.close();
 			} catch (IOException e) {
-				e.printStackTrace();
 			}
 		}
+	}
+	
+	@Override
+	public List<String> getCreatedFileDescriptions() {
+		return Arrays.asList("Log-likelihood trace of the samples");
 	}
 
 	/**

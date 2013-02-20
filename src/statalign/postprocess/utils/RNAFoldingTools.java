@@ -12,6 +12,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Stack;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -703,7 +704,8 @@ public class RNAFoldingTools {
                 this.y = y;
             }
 
-            public void run() {
+            @Override
+			public void run() {
                 RNAFoldingTools.recursePosteriorDecoding(basePairProb, singleBaseProb, eMatrix, S, this.x, this.y);
                 computeNextSection();
 
@@ -870,7 +872,7 @@ public class RNAFoldingTools {
     	return RNAFoldingTools.getDotBracketStringFromPairedSites(RNAFoldingTools.getPairedSitesFromCtFile(ctFile));
     }
     
-    public static String getSequenceByName(String seqName, ArrayList<String> sequences, ArrayList<String> sequenceNames)
+    public static String getSequenceByName(String seqName, List<String> sequences, List<String> sequenceNames)
     {
     	for(int i = 0 ; i < sequences.size() ; i++)
     	{

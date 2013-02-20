@@ -2,6 +2,8 @@ package statalign.postprocess.plugins;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
@@ -127,10 +129,10 @@ public class CurrentTreeVisualizer extends TreeVisualizer {
     @Override
     public void afterLastSample() {
 		if (postprocessWrite) {
-			String[] names = new String[input.seqs.seqNames.size()];
+			String[] names = new String[input.seqs.size()];
 			
 			for (int i = 0; i < names.length; i++) {
-				names[i] = input.seqs.seqNames.get(i).replaceAll(" ", "");
+				names[i] = input.seqs.getSeqName(i).replaceAll(" ", "");
 			}
 			
 			try {
@@ -149,11 +151,15 @@ public class CurrentTreeVisualizer extends TreeVisualizer {
 						+ "\tsplitstransform=EqualAngle;\n"
 						+ "\tSplitsPostProcess filter=dimension value=4;\n"
 						+ "\tautolayoutnodelabels;\nEND; [st_Assumptions]");
-				outputFile.close();
 			} catch (IOException ioex) {
 				ioex.printStackTrace();
 			}
 		}
+    }
+    
+    @Override
+    public List<String> getCreatedFileDescriptions() {
+    	return Arrays.asList("All tree samples in Nexus format");
     }
 
 }

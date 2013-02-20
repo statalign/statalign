@@ -100,15 +100,15 @@ public class RNAalifold {
 		try
 		{	
 			
-			System.out.println(arguments);
+//			System.out.println(arguments);
 			
-			System.out.println(tempClustalFile);
+//			System.out.println(tempClustalFile);
 			String args = executable + " " + "-p "+arguments;
 			String file = tempClustalFile.getAbsolutePath();
-			if(useOldParams)
-			{
-				args = executable + " " + "-p "+arguments;
-			}
+//			if(useOldParams)
+//			{
+//				args = executable + " " + "-p "+arguments;
+//			}
 			
 			
 			// create a process builder to execute in temporary directory
@@ -123,17 +123,18 @@ public class RNAalifold {
 			commands.add(file);
 			//System.out.println(commands);
 			processBuilder.command(commands);
+			processBuilder.redirectErrorStream(true);
 			
 			Process p = processBuilder.start();
 			
-			InputStream is = p.getErrorStream();
+			InputStream is = p.getInputStream();
 			BufferedReader buffer = new BufferedReader(new InputStreamReader(is));
 			String textline = null;
 			String errorString = "";
 			boolean first = true;
 			while ((textline = buffer.readLine()) != null) {
 
-				System.out.println(textline);
+//				System.out.println(textline);
 				if(first)
 				{
 					first = false;
@@ -264,22 +265,27 @@ public class RNAalifold {
 	
 	public static void main(String[] args)
 	{
-		try
-		{
-		ArrayList<String> sequences = new ArrayList<String>();
-		ArrayList<String> sequenceNames = new ArrayList<String>();
-		RNAFoldingTools.loadFastaSequences(new File("/home/michael/Dropbox/RNA and StatAlign/Distance/Datasets2/TestRNAData1_5seqs.dat.fas"), sequences, sequenceNames);
-		RNAalifold.executable="/home/michael/Downloads/ViennaRNA-2.0.7/Progs/RNAalifold";
-		RNAalifoldResult res = RNAalifold.fold(sequences, sequenceNames,"-T 10");
-		System.out.println(RNAFoldingTools.getDotBracketStringFromPairedSites(res.pairedSites));
-		
-		res = RNAalifold.fold(sequences, sequenceNames,"-T 60");
-		System.out.println(RNAFoldingTools.getDotBracketStringFromPairedSites(res.pairedSites));
-		//RNAalifold.saveClustalW(sequences, sequenceNames, new File("/home/michael/Desktop/temp.clustalw"));
-		}
-		catch(Exception ex)
-		{
-			
+//		try
+//		{
+//		ArrayList<String> sequences = new ArrayList<String>();
+//		ArrayList<String> sequenceNames = new ArrayList<String>();
+//		RNAFoldingTools.loadFastaSequences(new File("/home/michael/Dropbox/RNA and StatAlign/Distance/Datasets2/TestRNAData1_5seqs.dat.fas"), sequences, sequenceNames);
+//		RNAalifold.executable="/home/michael/Downloads/ViennaRNA-2.0.7/Progs/RNAalifold";
+//		RNAalifoldResult res = RNAalifold.fold(sequences, sequenceNames,"-T 10");
+//		System.out.println(RNAFoldingTools.getDotBracketStringFromPairedSites(res.pairedSites));
+//		
+//		res = RNAalifold.fold(sequences, sequenceNames,"-T 60");
+//		System.out.println(RNAFoldingTools.getDotBracketStringFromPairedSites(res.pairedSites));
+//		//RNAalifold.saveClustalW(sequences, sequenceNames, new File("/home/michael/Desktop/temp.clustalw"));
+//		}
+//		catch(Exception ex)
+//		{
+//			
+//		}
+		try {
+			System.out.println(checkRNAalifold());
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 	}
 }

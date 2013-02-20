@@ -1,7 +1,5 @@
 package statalign.base;
 
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 
 import javax.swing.SwingUtilities;
@@ -11,11 +9,9 @@ import statalign.MPIUtils;
 import statalign.base.thread.MainThread;
 import statalign.base.thread.StoppedException;
 import statalign.model.subst.SubstitutionModel;
-import statalign.postprocess.Postprocess;
 import statalign.postprocess.PostprocessManager;
 import statalign.postprocess.gui.InputGUI;
 import statalign.ui.MainFrame;
-import statalign.ui.SavedFilesPopup;
 
 /**
  * 
@@ -60,11 +56,6 @@ public class MainManager {
 	public MainThread thread;
 
 	/**
-	 * The full path of the input file from which we read the sequences.
-	 */
-	public String fullPath;
-
-	/**
 	 * Alignment formats in which StatAlign can generate output
 	 * 
 	 * Implemented formats currently are <tt>StatAlign</tt> (our own format),
@@ -96,24 +87,8 @@ public class MainManager {
 	 */
 	public void start() {
 
-		try {
-			postProcMan.logFile = new FileWriter(fullPath + ".log");
-
-			for (Postprocess p : postProcMan.plugins) {
-				if (p.postprocessWrite) {
-					String name = fullPath + "." + p.getFileExtension();
-					System.out.println("Output file for " + p.getTabName()
-							+ ": " + name);
-					p.outputFile = new FileWriter(name);
-				}
-			}
-
-			thread = new MainThread(this);
-			thread.start();
-			
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		thread = new MainThread(this);
+		thread.start();
 
 	}
 
@@ -128,16 +103,7 @@ public class MainManager {
 		if (MPIUtils.isMaster(rank)) {
 			MPIUtils.println(rank, "Setting up log files for the plugins:");
 			try {
-				postProcMan.logFile = new FileWriter(fullPath + ".log");
-
-				for (Postprocess p : postProcMan.plugins) {
-					if (p.postprocessWrite) {
-						String name = fullPath + "." + p.getFileExtension();
-						MPIUtils.println(rank, 
-								"Output file for " + p.getTabName() + ": " + name);
-						p.outputFile = new FileWriter(name);
-					}
-				}
+				postProcMan.initRun(inputData);
 			} catch (IOException ioex) {
 				ioex.printStackTrace();
 			}
@@ -148,11 +114,9 @@ public class MainManager {
 		double heat = 1.0d / (1.0d + ((double) rank / noOfProcesses));;
 		
 		try {
-			inputData.title = new File(fullPath).getName();
-			Tree tree = new Tree(inputData.seqs.sequences.toArray(new String[inputData.seqs.sequences
-					.size()]), inputData.seqs.seqNames.toArray(new String[inputData.seqs.seqNames
-					.size()]), inputData.model, inputData.model.attachedScoringScheme, new File(
-					fullPath).getName());
+			Tree tree = new Tree(inputData.seqs.getSequences().toArray(new String[inputData.seqs.size()]),
+					inputData.seqs.getSeqnames().toArray(new String[inputData.seqs.size()]),
+					inputData.model, inputData.model.attachedScoringScheme);
 			Mcmc mcmc = new Mcmc(tree, inputData.pars,
 					postProcMan, noOfProcesses, rank, heat);
 			mcmc.doMCMC();
@@ -177,26 +141,27 @@ public class MainManager {
 
 			System.out.println(mcmc.getInfoString() + " Heat: " + mcmc.tree.heat);
 
-			finished(false);
+			finished(0, null);
 			System.out.println("Ready.");
 
 		} catch (StoppedException stex) {
 			stex.printStackTrace(System.err);
-			finished(true);
+			finished(1, null);
 		}
 	}
 
 	/**
 	 * Called when the MCMC thread terminates, signals end of the process back
 	 * to MainFrame.
+	 * @param errorCode -1: error 0: completed 1: stopped after sampling 2: stopped before sampling
 	 */
-	public void finished(boolean withErrors) {
+	public void finished(final int errorCode, final Exception ex) {
 		if (frame != null) {
 			SwingUtilities.invokeLater(new Runnable() {
 				@Override
 				public void run() {
-					frame.finished();
-					SavedFilesPopup.showPane(frame);
+					frame.finished(errorCode, ex);
+//					SavedFilesPopup.showPane(frame);
 				}
 			});
 			

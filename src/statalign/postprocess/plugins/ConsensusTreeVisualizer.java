@@ -2,6 +2,8 @@ package statalign.postprocess.plugins;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
@@ -120,17 +122,21 @@ public class ConsensusTreeVisualizer extends TreeVisualizer {
         
 		if (postprocessWrite) {
 			try {
-				for (String tree : consensusTrees) {
-					outputFile.write(tree + "\n");
-				}
+//				for (String tree : consensusTrees) {
+//					outputFile.write(tree + "\n");
+//				}
+				// save the final consensus tree (only)
+				if(consensusTrees != null && consensusTrees.size() > 0)
+					outputFile.write(consensusTrees.get(consensusTrees.size()-1) + "\n");
 				
-				// TODO: should be handled in the PostprocessManager 
-				//       in my opinion.
-				outputFile.close();
 			} catch (IOException ioex) {
-				ioex.printStackTrace();
 			}
 		}
+    }
+    
+    @Override
+    public List<String> getCreatedFileDescriptions() {
+    	return Arrays.asList("The consensus tree based on all samples");
     }
 
 }

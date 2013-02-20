@@ -1,9 +1,9 @@
 package statalign.postprocess.plugins;
 
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 
 public class TreeNode {
 
@@ -109,12 +109,11 @@ public class TreeNode {
             for (int i = 1; i < children.size(); i++)
                 sb.append(',').append(children.get(i));
             sb.append(')');
+        } else {
+        	sb.append(name);
         }
-
-        if (name != null) sb.append(name);
-        if (edgeLength != 0.0d) {
-            DecimalFormat format = new DecimalFormat("0.######");
-            sb.append(":").append(format.format(edgeLength));
+        if (parent != null) {
+            sb.append(":").append(String.format(Locale.US, "%.5f", edgeLength));
         } else {
         	sb.append(";");
         }

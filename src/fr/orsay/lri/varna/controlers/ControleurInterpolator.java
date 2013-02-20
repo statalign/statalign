@@ -141,6 +141,7 @@ public class ControleurInterpolator extends Thread {
 	
 	
 
+	@Override
 	public void run() {
 		while (true)
 		{
@@ -505,11 +506,11 @@ public class ControleurInterpolator extends Thread {
 				sleep(_timeDelay);
 			}
 		} catch (InterruptedException e) {
-			e.printStackTrace();
+//			e.printStackTrace();
 		} catch (MappingException e) {
-			e.printStackTrace();
+//			e.printStackTrace();
 		}catch (Exception e) {
-			e.printStackTrace();
+//			e.printStackTrace();
 		}
 		_vpn.showRNA(_target);
 		_vpn.repaint();

@@ -49,9 +49,6 @@ public class Tree extends Stoppable {
     /** The root of the tree */
     public Vertex root;
 
-    /** The name of the tree */
-    public String title;
-
     /** The name of the sequences */
     public String[] names;
 
@@ -329,10 +326,9 @@ public class Tree extends Stoppable {
      * @param filename  The name of the file that contained the sequences. This will be the name of
      *                  the tree, appearing in the graphical interface showing multiple alignments.
      */
-    public Tree(String[] sequences, String[] names, SubstitutionModel model, SubstitutionScore ss, String filename) throws StoppedException {
+    public Tree(String[] sequences, String[] names, SubstitutionModel model, SubstitutionScore ss) throws StoppedException {
         this.names = names;
         substitutionModel = model;
-        title = filename;
         hmm2 = new HmmTkf92(null);
         hmm3 = new HmmNonParam();
 
