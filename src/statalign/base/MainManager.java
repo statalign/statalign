@@ -124,14 +124,14 @@ public class MainManager {
 	public void start() {
 
 		try {
-			postProcMan.logFile = new FileWriter(fullPath + ".log");
+			String filenameExtension = modelExtMan.getFilenameExtension();
+			if (!filenameExtension.isEmpty()) {
+				filenameExtension += ".";
+			}
+			postProcMan.logFile = new FileWriter(fullPath + filenameExtension + ".log");
 
 			for (Postprocess p : postProcMan.getPlugins()) {
-				if (p.postprocessWrite) {
-					String filenameExtension = modelExtMan.getFilenameExtension();
-					if (!filenameExtension.isEmpty()) {
-						filenameExtension += ".";
-					}
+				if (p.postprocessWrite) {		
 					String name = fullPath + "." + filenameExtension + p.getFileExtension();
 					System.out.println("Output file for " + p.getTabName()
 							+ ": " + name);
