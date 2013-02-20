@@ -184,8 +184,11 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	public String getUsageInfo() {
 		StringBuilder usage = new StringBuilder();
 		usage.append("StructAlign version 1.0\n\n");
-		usage.append("java -jar statalign.jar -plugin:structal[=OPTIONS]\n");
-		
+		usage.append("java -jar statalign.jar -plugin:structal[OPTIONS]\n");
+		usage.append("OPTIONS: \n");
+		usage.append("\tepsilon=X\t(Fixes epsilon at X)\n");
+		usage.append("\tuseLibrary\t(Allows rotation library moves to be used)\n");
+	     
 		return usage.toString();
 	}
 

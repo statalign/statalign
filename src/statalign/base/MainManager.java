@@ -128,7 +128,7 @@ public class MainManager {
 			if (!filenameExtension.isEmpty()) {
 				filenameExtension += ".";
 			}
-			postProcMan.logFile = new FileWriter(fullPath + filenameExtension + ".log");
+			postProcMan.logFile = new FileWriter(fullPath + "." + filenameExtension + "log");
 
 			for (Postprocess p : postProcMan.getPlugins()) {
 				if (p.postprocessWrite) {		
