@@ -191,9 +191,9 @@ public class CommandLine {
 							manager.inputData.model
 									.acceptable(manager.inputData.seqs);
 						} catch (RecognitionError e) {
-							return error("Substitution model "
+							return error("The substitution model "
 									+ modelName
-									+ " does not accept the given input sequences!");
+									+ " cannot be used with the given input sequences!");
 						}
 						break;
 					}

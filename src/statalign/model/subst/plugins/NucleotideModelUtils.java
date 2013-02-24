@@ -1,8 +1,8 @@
 package statalign.model.subst.plugins;
 
-import statalign.model.subst.plugins.NucleotideModel;
-import statalign.base.*;
-import statalign.Jama.*; 
+import statalign.base.Utils;
+import Jama.EigenvalueDecomposition;
+import Jama.Matrix;
 
 /**
  * This class implements various utility methods for nucleotide models.

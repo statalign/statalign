@@ -248,6 +248,7 @@ public class PostprocessManager {
 				if(plugin.rnaAssociated) {
 					plugin.afterLastSample();
 				}
+
 			}
 		}
 		else {

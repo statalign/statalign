@@ -19,7 +19,6 @@ import statalign.postprocess.Postprocess;
 import statalign.postprocess.PostprocessManager;
 import statalign.postprocess.gui.InputGUI;
 import statalign.ui.MainFrame;
-import statalign.ui.SavedFilesPopup;
 
 /**
  * 
@@ -198,7 +197,7 @@ public class MainManager {
 				}
 				nongapped[i] = builder.toString();
 			}
-			String[] names = seqs.seqNames.toArray(new String[seqs.seqNames.size()]);
+			String[] names = seqs.getSeqnames().toArray(new String[seqs.size()]);
 
 			TreeAlgo treeAlgo = new TreeAlgo();
 			Tree tree;
@@ -207,7 +206,7 @@ public class MainManager {
 				treeAlgo.addAlignSeqsToTree(tree, nongapped, names,
 						inputData.model, new File(fullPath).getName());
 			} else {
-				tree = treeAlgo.buildNJTree(nongapped, seqs.seqNames.toArray(new String[seqs.seqNames.size()]), 	
+				tree = treeAlgo.buildNJTree(nongapped, seqs.getSeqnames().toArray(new String[seqs.size()]), 	
 						inputData.model, new File(fullPath).getName());
 			}
 			Mcmc mcmc = new Mcmc(tree, inputData.pars, postProcMan, modelExtMan, noOfProcesses, rank, heat);
@@ -253,7 +252,6 @@ public class MainManager {
 				@Override
 				public void run() {
 					frame.finished(errorCode, ex);
-					SavedFilesPopup.showPane(frame);
 				}
 			});
 			

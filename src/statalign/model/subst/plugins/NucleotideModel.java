@@ -112,7 +112,7 @@ public abstract class NucleotideModel extends SubstitutionModel{
 					ch = Character.toLowerCase(ch);
 					int ind = acceptableCharacters.indexOf(ch);
 					if(ind == -1){
-						throw new RecognitionError(getMenuName()+" cannot accept the sequences because it contains character '"+ch+"'!\n");
+						throw new RecognitionError(getMenuName()+" cannot be used with the current sequences because they contain the character '"+ch+"'!\n");
 					} else if(ind < count.length){
 						count[ind]++;
 					}

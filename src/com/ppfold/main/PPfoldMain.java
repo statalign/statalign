@@ -7,12 +7,10 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import com.ppfold.algo.AsynchronousJobExecutor;
 import com.ppfold.algo.AsynchronousJobExecutorThreadPool;
-import com.ppfold.algo.ExportTools;
 import com.ppfold.algo.FoldingProject;
 import com.ppfold.algo.FuzzyAlignment;
 import com.ppfold.algo.FuzzyNucleotide;
@@ -23,14 +21,10 @@ import com.ppfold.algo.Parameters;
 import com.ppfold.algo.Progress;
 import com.ppfold.algo.ResultBundle;
 import com.ppfold.algo.Tree;
-import com.ppfold.algo.extradata.BinaryStringData;
-import com.ppfold.algo.extradata.BinaryStringDataDiffBp;
 import com.ppfold.algo.extradata.ExtraData;
 import com.ppfold.algo.extradata.ExtraDataBars;
 import com.ppfold.algo.extradata.ExtraDataProbMapping;
 import com.ppfold.algo.extradata.ForcedConstraints;
-import com.ppfold.algo.extradata.SHAPEData;
-import com.ppfold.algo.extradata.SHAPEDataFctDiffBp;
 
 
 public class PPfoldMain implements Runnable {	
@@ -41,9 +35,9 @@ public class PPfoldMain implements Runnable {
 	static String exportfilehandle;	
 	static String seqexportname = null; //if not null, export stuff specific to this sequence.
 	static String paramfilename;
-	static String paramresname = "matrices.in";
+	static String paramresname = "data/ppfold-matrices.dat";
 	static String outputdir;
-	static String defaultDataDistfile = "dist.dat"; //Default data file
+	static String defaultDataDistfile = "data/ppfold-dist.dat"; //Default data file
 
 	static boolean auxdata = false;
 	static List<DataInfo> datainfo = new ArrayList<DataInfo>();	
@@ -77,6 +71,7 @@ public class PPfoldMain implements Runnable {
 		errormessage = null;
 	}
 
+	@Override
 	public void run() {
 		try{
 			System.out.println("Attempting to read and parse files...");

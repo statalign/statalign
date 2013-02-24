@@ -48,10 +48,6 @@ import com.ppfold.main.NewickReader;
 import com.ppfold.main.PPfoldMain;
 
 public class PPFold extends statalign.postprocess.Postprocess {
-
-	
-	
-	
 	
 	public static ArrayList < ArrayList< ArrayList<String> > > readAllSamples(String path){
 		try {
@@ -336,7 +332,7 @@ public class PPFold extends statalign.postprocess.Postprocess {
 			{
 				//File file = new File);
 				
-				paramFileReader = new BufferedReader(new InputStreamReader(getClass().getResourceAsStream("/res/matrices.in")));
+				paramFileReader = new BufferedReader(new InputStreamReader(ClassLoader.getSystemResourceAsStream("data/ppfold-matrices.dat")));
 				param = Parameters.readParam(paramFileReader);				
 			}
 		} catch (IOException e) {
@@ -1092,9 +1088,9 @@ public class PPFold extends statalign.postprocess.Postprocess {
 			char [] structure = fuzzyResultObs.getStructure();
 			
 			RNAFoldingTools.saveCtFile(new File(outDir, name=title+".fuzzy.ct"), fuzzyPairedSitesObs, title, refSeq);
-			fileList.add(name); fileDesc.add("Fuzzy alignment RNA structure using PPfold in CT format");
+			fileList.add(name); fileDesc.add("Fuzzy alignment RNA structure using PPfold in Connect format");
 			RNAFoldingTools.saveDotBracketFile(new File(outDir, name=title+".fuzzy.dbn"), fuzzyPairedSitesObs, title, refSeq);
-			fileList.add(name); fileDesc.add("Fuzzy alignment RNA structure using PPfold in DBN format");
+			fileList.add(name); fileDesc.add("Fuzzy alignment RNA structure using PPfold in Vienna format");
 			RNAFoldingTools.writeMatrix(RNAFoldingTools.getDoubleMatrix(fuzzyResultObs.finalmatrix), new File(outDir, name=title+".fuzzy.bp"));
 			fileList.add(name); fileDesc.add("Fuzzy alignment RNA base-pairing matrix using PPfold");
 			
@@ -1164,9 +1160,9 @@ public class PPFold extends statalign.postprocess.Postprocess {
 			dataset.pairsOnlyReliabilityScoreRNAalifold =  RNAFoldingTools.calculatePairsOnlyReliabilityScore(dataset.pairedSitesRNAalifold, doubleSummedArrayRNAalifold);		
 			
 			RNAFoldingTools.saveCtFile(new File(outDir, name=title+".rnaalifold.ct"), pairedSitesRNAalifold, title, refSeq);
-			fileList.add(name); fileDesc.add("Consensus (MPD) RNA structure using RNAalifold in CT format");
+			fileList.add(name); fileDesc.add("Consensus RNA structure using RNAalifold in Connect format");
 			RNAFoldingTools.saveDotBracketFile(new File(outDir, name=title+".rnaalifold.dbn"), pairedSitesRNAalifold, title, refSeq);
-			fileList.add(name); fileDesc.add("Consensus (MPD) RNA structure using RNAalifold in DBN format");
+			fileList.add(name); fileDesc.add("Consensus RNA structure using RNAalifold in Vienna format");
 			RNAFoldingTools.writeMatrix(doubleSummedArrayRNAalifold, new File(outDir, name=title+".rnaalifold.bp"));
 			fileList.add(name); fileDesc.add("Consensus RNA base-pairing matrix using RNAalifold");
 		}
@@ -1186,9 +1182,9 @@ public class PPFold extends statalign.postprocess.Postprocess {
 			int[] pairedSites = rnaTools.getPosteriorDecodingConsensusStructureMultiThreaded(doubleSummedArrayPPfold);
 			double statalignPpfoldReliablityScore = RNAFoldingTools.calculatePPfoldReliabilityScore(pairedSites, doubleSummedArrayPPfold);
 			RNAFoldingTools.saveCtFile(new File(outDir, name=title+".ppfold.ct"), pairedSites, title, refSeq);
-			fileList.add(name); fileDesc.add("Consensus (MPD) RNA structure using PPfold in CT format");
+			fileList.add(name); fileDesc.add("Consensus RNA structure using PPfold in Connect format");
 			RNAFoldingTools.saveDotBracketFile(new File(outDir, name=title+".ppfold.dbn"), pairedSites, title, refSeq);
-			fileList.add(name); fileDesc.add("Consensus (MPD) RNA structure using PPfold in DBN format");
+			fileList.add(name); fileDesc.add("Consensus RNA structure using PPfold in Vienna format");
 			RNAFoldingTools.writeMatrix(doubleSummedArrayPPfold, new File(outDir, name=title+".ppfold.bp"));
 			fileList.add(name); fileDesc.add("Consensus RNA base-pairing matrix using PPfold");
 			
@@ -1253,9 +1249,9 @@ public class PPFold extends statalign.postprocess.Postprocess {
 				
 				ResultBundle consensusEvolutionPrediction = performConsensusEvolutionPrediction();
 				RNAFoldingTools.saveCtFile(new File(outDir, name=title+".cons_evol.ct"), dataset.pairedSitesMatrix, title, refSeq);
-				fileList.add(name); fileDesc.add("Consensus evolution RNA structure in CT format");
+				fileList.add(name); fileDesc.add("Consensus evolution RNA structure in Connect format");
 				RNAFoldingTools.saveDotBracketFile(new File(outDir, name=title+".cons_evol.dbn"),  dataset.pairedSitesMatrix, title, refSeq);
-				fileList.add(name); fileDesc.add("Consensus evolution RNA structure in DBN format");
+				fileList.add(name); fileDesc.add("Consensus evolution RNA structure in Vienna format");
 				RNAFoldingTools.writeMatrix(RNAFoldingTools.getDoubleMatrix(consensusEvolutionPrediction.finalmatrix), new File(outDir, name=title+".cons_evol.bp"));
 				fileList.add(name); fileDesc.add("Consensus evolution RNA base-pairing matrix");
 		}	
@@ -1278,9 +1274,9 @@ public class PPFold extends statalign.postprocess.Postprocess {
 			dataset.pairsOnlyReliabilityScoreCombined = RNAFoldingTools.calculatePairsOnlyReliabilityScore(combinedPairedSites, combinedBasePairProb);
 			
 			RNAFoldingTools.saveCtFile(new File(outDir, name=title+".rnaalifold_and_ppfold.ct"), combinedPairedSites, title, refSeq);
-			fileList.add(name); fileDesc.add("Consensus (MPD) RNA structure using RNAalifold and PPfold combined, in CT format");
+			fileList.add(name); fileDesc.add("Consensus RNA structure using RNAalifold and PPfold combined, in Connect format");
 			RNAFoldingTools.saveDotBracketFile(new File(outDir, name=title+".rnaalifold_and_ppfold.dbn"), combinedPairedSites, title, refSeq);
-			fileList.add(name); fileDesc.add("Consensus (MPD) RNA structure using RNAalifold and PPfold combined, in DBN format");
+			fileList.add(name); fileDesc.add("Consensus RNA structure using RNAalifold and PPfold combined, in Vienna format");
 			RNAFoldingTools.writeMatrix(combinedBasePairProb, new File(outDir, name=title+".rnaalifold_and_ppfold.bp"));
 			fileList.add(name); fileDesc.add("Consensus RNA base-pairing matrix using RNAalifold and PPfold combined");
 		}

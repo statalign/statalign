@@ -27,11 +27,14 @@ public class StatAlign{
 	/**
 	 * StatAlign version data.
 	 */
+
 	public static final int majorVersion = 3;
 	public static final int minorVersion = 0;
 	public static final String version = "v3.0 (a1)";
 	
 	public static final boolean allowVersionCheck = false;
+	
+	public static final String webPageURL = "http://statalign.github.com/";
 
 	/**
 	 * Only method of the class.
@@ -48,10 +51,10 @@ public class StatAlign{
 //			System.out.println("args: " + s);
 //		}
 		
+		System.out.println("StatAlign "+version);
+		
 		if(args.length != 0) {
 			// console mode
-
-			System.out.println("StatAlign "+version+"\n");
 			MainManager manager = new MainManager(null);
 			CommandLine cl = new CommandLine(false);
 			cl.setVerbose(true);
@@ -67,14 +70,12 @@ public class StatAlign{
 			
 			MainFrame mf = null;
 			try {
-				System.out.println("StatAlign "+version+"\n");
 				mf = new MainFrame();
 				
 				if(allowVersionCheck) {
 					URL urlVersion = new URL("http://raw.github.com/statalign/statalign/master/version.txt");
 					try {
 						URLConnection connection = urlVersion.openConnection();
-						//System.out.println("Connection letrehozva");
 						connection.setConnectTimeout(2000);
 						String s = new BufferedReader(new InputStreamReader(connection.getInputStream())).readLine();
 						if(!s.equals(version)) {

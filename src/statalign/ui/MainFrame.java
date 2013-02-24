@@ -10,7 +10,12 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Modifier;
+import java.net.URI;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -22,6 +27,7 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComponent;
+import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -60,21 +66,30 @@ import statalign.postprocess.Postprocess;
  */
 public class MainFrame extends JFrame implements ActionListener {
 
-    // Constants
 
-	public static final String IDLE_STATUS_MESSAGE = " StatAlign :: Ready";
+	// Constants
 	private static final long serialVersionUID = 1L;
+	
+    public static final String IDLE_STATUS_MESSAGE = " StatAlign :: Ready";
+    public static final String WELCOME_MSG = 
+    		"<html><div style='padding: 20px 20px 20px 20px; font-family: Arial; font-size: 12px'>" +
+			"<h2>Welcome to StatAlign!</h2><br>" +
+			"<p>To get started, please <a href='http://add'>add sequences</a> to analyse." +
+			"<p>If you need any help along the way, please refer to the <a href='http://doc'>manual</a>, which is available from the <b>Help menu.</b>" +
+			"<br><br>" +
+			"<p>Happy StatAligning!" +
+//			"<div style='padding: 20px 100px 0px 0px' align=right>" +
+//			"<p><i>The StatAlign team</i>" +
+			"</div></html>";
+    
+    /** Set to true if StatAlign is allowed to open the online documentation */
+    private static final boolean ALLOW_ONLINE_DOCS = true;
+    private static final int CONNECT_TIMEOUT = 200;
+    
+    public static final String USER_MANUAL = "doc/user_manual.html";
+    public static final String DEV_MANUAL = "doc/developer_manual.html";
+    public static final String JAVADOCS = "doc/javadoc/index.html";
 
-	  public static final String WELCOME_MSG = 
-		          "<html><div style='padding: 20px 20px 20px 20px; font-family: Arial; font-size: 12px'>" +
-		        "<h2>Welcome to StatAlign!</h2><br>" +
-		        "<p>To get started, please add sequences to analyse." +
-		        "<p>If you need any help along the way, please refer to the <a href='http://doc'>manual</a> that is also available from the <b>Help menu.</b>" +
-		        "<br><br>" +
-		        "<p>Happy StatAligning!" +
-		  //      "<div style='padding: 20px 100px 0px 0px' align=right>" +
-		  //      "<p><i>The StatAlign team</i>" +
-		        "</div></html>";
     // Variables
 
     private JTabbedPane tab;
@@ -129,7 +144,8 @@ public class MainFrame extends JFrame implements ActionListener {
                 SwingUtilities.updateComponentTreeUI(this);
             }
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, ex);
+        	ex.printStackTrace();
+//            JOptionPane.showMessageDialog(this, ex);
         }
 
         ArrayList<Class<?>> substModList = new ArrayList<Class<?>>();
@@ -197,9 +213,9 @@ public class MainFrame extends JFrame implements ActionListener {
         
         toolBar.addSeparator();
 
-        JMenuItem ioPreferencesItem = createMenuItem("Preferences...", true);
+        JMenuItem ioPreferencesItem = createMenuItem("Output settings...", true);
         ioPreferencesItem.setAccelerator(KeyStroke.getKeyStroke("control 1"));
-        ioPreferencesItem.setMnemonic(KeyEvent.VK_P);
+        ioPreferencesItem.setMnemonic(KeyEvent.VK_O);
         menu.add(ioPreferencesItem);
 
         menu.addSeparator();
@@ -228,7 +244,7 @@ public class MainFrame extends JFrame implements ActionListener {
 
 
         menu = new JMenu("Analysis");
-        menu.setMnemonic(KeyEvent.VK_M);
+        menu.setMnemonic(KeyEvent.VK_A);
 
 //        item = createMenuItem("Settings", true);
 //        item.setAccelerator(KeyStroke.getKeyStroke("control M"));
@@ -240,6 +256,7 @@ public class MainFrame extends JFrame implements ActionListener {
         icon = new ImageIcon(ClassLoader.getSystemResource("icons/play.png"));
         runItem = createMenuItem(runText, false);
         runItem.setAccelerator(KeyStroke.getKeyStroke("control ENTER"));
+        runItem.setMnemonic(KeyEvent.VK_E);
         runItem.setIcon(icon);
         menu.add(runItem);
         
@@ -251,6 +268,7 @@ public class MainFrame extends JFrame implements ActionListener {
         String pauseText = "Pause";
         icon = new ImageIcon(ClassLoader.getSystemResource("icons/pause.png"));
         pauseItem = createMenuItem("Pause", false);
+        pauseItem.setMnemonic(KeyEvent.VK_P);
         pauseItem.setIcon(icon);
         menu.add(pauseItem);
 
@@ -262,6 +280,7 @@ public class MainFrame extends JFrame implements ActionListener {
         String resumeText = "Resume";
         icon = new ImageIcon(ClassLoader.getSystemResource("icons/resume.png"));
         resumeItem = createMenuItem(resumeText, false);
+        resumeItem.setMnemonic(KeyEvent.VK_R);
         resumeItem.setIcon(icon);
         menu.add(resumeItem);
 
@@ -273,6 +292,7 @@ public class MainFrame extends JFrame implements ActionListener {
         String stopText = "Stop";
         icon = new ImageIcon(ClassLoader.getSystemResource("icons/stop.png"));
         stopItem = createMenuItem("Stop", false);
+        stopItem.setMnemonic(KeyEvent.VK_S);
         stopItem.setIcon(icon);
         menu.add(stopItem);
         menubar.add(menu);
@@ -287,7 +307,7 @@ public class MainFrame extends JFrame implements ActionListener {
         toolBar.add(settingsButton);
 
         menu = new JMenu("Substitution models");
-        menu.setMnemonic(KeyEvent.VK_L);
+        menu.setMnemonic(KeyEvent.VK_M);
 
         modelButtons = new JMenuItem[substModels.length];
         ButtonGroup modelGroup = new ButtonGroup();
@@ -347,17 +367,21 @@ public class MainFrame extends JFrame implements ActionListener {
         menu = new JMenu("Help");
         menu.setMnemonic(KeyEvent.VK_H);
         item = new JMenuItem("About...");
+        item.setMnemonic(KeyEvent.VK_A);
         item.addActionListener(this);
         menu.add(item);
         menu.addSeparator();
-        item = new JMenuItem("Help for users");
+        item = new JMenuItem("User's manual");
+        item.setMnemonic(KeyEvent.VK_U);
         item.addActionListener(this);
         menu.add(item);
         menu.addSeparator();
-        item = new JMenuItem("Html doc for developers");
+        item = new JMenuItem("Developer's manual");
+        item.setMnemonic(KeyEvent.VK_D);
         item.addActionListener(this);
         menu.add(item);
-        item = new JMenuItem("Description of plugins");
+        item = new JMenuItem("Javadocs for StatAlign");
+        item.setMnemonic(KeyEvent.VK_J);
         item.addActionListener(this);
         menu.add(item);
 
@@ -562,7 +586,7 @@ public class MainFrame extends JFrame implements ActionListener {
             
         } else if (ev.getActionCommand() == "Exit") {
             System.exit(0);
-        } else if (ev.getActionCommand() == "Preferences...") {
+        } else if (ev.getActionCommand() == "Output settings...") {
             //System.out.println("here!!!");
             op = new OutputPreferences(this);
         } else if (ev.getActionCommand() == "Settings") {
@@ -661,18 +685,23 @@ public class MainFrame extends JFrame implements ActionListener {
         		
         		
         	}
-        	 manager.inputgui.grabFocus();  
+
+			manager.inputgui.grabFocus();	// transfer focus
         	
         } else if (ev.getActionCommand() == "About...") {
-            new HelpWindow(this, "About", getClass().getClassLoader().getResource("doc/about/index.html"), false);
-        } else if (ev.getActionCommand() == "Html doc for developers") {
-            new HelpWindow(this, "Html doc for Developers", ClassLoader.getSystemResource("doc/index.html"), true);
-        } else if (ev.getActionCommand() == "Description of plugins") {
-            new HelpWindow(this, "Description of plugins",
-                    ClassLoader.getSystemResource("doc/plugin_description/index.html"), true);
+//            new HelpWindow(this, "About", getClass().getClassLoader().getResource("doc/about/index.html"), false);
+        	JDialog dlg = new AboutDlg(this);
+        	dlg.setVisible(true);
+        	
+        } else if (ev.getActionCommand() == "User's manual") {
+        	helpUsers();
+        	
+        } else if (ev.getActionCommand() == "Developer's manual") {
+        	helpDevs();
+            
+        } else if (ev.getActionCommand() == "Javadocs for StatAlign") {
+        	helpJavadocs();
 
-        } else if (ev.getActionCommand() == "Help for users") {
-        	 helpUsers();
         } else {        // new substitution model selected
             for (Class<? extends SubstitutionModel> cl : substModels) {
                 try {
@@ -684,7 +713,7 @@ public class MainFrame extends JFrame implements ActionListener {
                             break;
                         } catch (RecognitionError e) {
                             selectModel(manager.inputData.model);
-                            JOptionPane.showMessageDialog(this, e.message, "Cannot apply this model...", JOptionPane.ERROR_MESSAGE);
+                            JOptionPane.showMessageDialog(this, e.message, "Cannot apply this model", JOptionPane.ERROR_MESSAGE);
                             break;
                         }
                     }
@@ -696,16 +725,57 @@ public class MainFrame extends JFrame implements ActionListener {
         }
     }
 
-    public void helpUsers() {
-    	try {	
-    		File dir = new File(System.getProperty("user.dir")+"/doc/help/index.html");
-    		Desktop.getDesktop().browse(dir.toURI());
+    
+    public boolean checkPage() {
+    	try {
+    		URLConnection conn = new URL(StatAlign.webPageURL).openConnection();
+    		conn.setReadTimeout(CONNECT_TIMEOUT);
+    		InputStream stream = conn.getInputStream();
+    		stream.close();
+    		return true;
     	} catch (Exception e) {
-    		new HelpWindow(this, "Help for users",
-    				ClassLoader.getSystemResource("doc/help/index.html"), true);    
-    	    }
-    }	
-    private String tryModels() {
+    		return false;
+		}
+    }
+    
+    public void browseManual(String path, String description) {
+		try {
+			if(ALLOW_ONLINE_DOCS && checkPage()) {
+				Desktop.getDesktop().browse(new URI(StatAlign.webPageURL+path));
+				return;
+			}
+		} catch (Exception e) {}
+		try {
+			File dir = new File(System.getProperty("user.dir")+"/"+path);
+			System.out.println(dir);
+			Desktop.getDesktop().browse(dir.toURI());
+			return;
+		} catch (Exception e) {
+		}
+		URL url = ClassLoader.getSystemResource(path);
+		if(url != null) {
+			try {
+				new HelpWindow(this, description, url, true);
+				return;
+			} catch (Exception e) {
+			}
+		}
+		ErrorMessage.showPane(this, "<html>The documentation is not available, please<br>check StatAlign's web page directly at<br><br>"+StatAlign.webPageURL+"</html>", true);
+    }
+
+	public void helpUsers() {
+		browseManual(USER_MANUAL, "User's manual");
+	}
+
+	public void helpDevs() {
+		browseManual(DEV_MANUAL, "Developer's manual");
+	}
+
+	public void helpJavadocs() {
+		browseManual(JAVADOCS, "Javadocs for StatAlign");
+	}
+
+	private String tryModels() {
         String message = "";
         try {
             SubstitutionModel[] defaultSubstList = {
@@ -779,7 +849,7 @@ public class MainFrame extends JFrame implements ActionListener {
         //SavedFilesPopup.showPane(this);
         
         if(errorCode < 0) ErrorMessage.showPane(this, ex, true);        	
-		
+
     }
      
     public void deactivateRNA() {

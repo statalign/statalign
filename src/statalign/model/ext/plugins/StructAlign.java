@@ -428,10 +428,10 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	public void initRun(InputData inputData) throws IllegalArgumentException {
 		HashMap<String, Integer> seqMap = new HashMap<String, Integer>();
 		int i = 0;
-		for(String name : inputData.seqs.seqNames)
+		for(String name : inputData.seqs.getSeqnames())
 			seqMap.put(name.toUpperCase(), i++);
-		coords = new double[inputData.seqs.seqNames.size()][][];
-		if (localEpsilon) bFactors = new double[inputData.seqs.seqNames.size()][];
+		coords = new double[inputData.seqs.size()][][];
+		if (localEpsilon) bFactors = new double[inputData.seqs.size()][];
 		for(DataType data : inputData.auxData) {
 			if(!(data instanceof ProteinSkeletons))
 				continue;
@@ -444,7 +444,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				if(!seqMap.containsKey(name))
 					throw new IllegalArgumentException("structalign: missing sequence or duplicate structure for "+name);
 				int ind = seqMap.get(name);
-				int len = inputData.seqs.sequences.get(ind).replaceAll("-", "").length();
+				int len = inputData.seqs.getSequence(ind).replaceAll("-", "").length();
 				List<double[]> cl = ps.coords.get(i);
 				List<Double> bF = ps.bFactors.get(i);
 				if (localEpsilon && bF.size() == 0) {
