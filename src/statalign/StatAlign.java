@@ -27,10 +27,12 @@ public class StatAlign{
 	 * StatAlign version data.
 	 */
 	public static final int majorVersion = 2;
-	public static final int minorVersion = 0;
-	public static final String version = "v2.0.1";
+	public static final int minorVersion = 1;
+	public static final String version = "v2.1";
 	
 	public static final boolean allowVersionCheck = false;
+	
+	public static final String webPageURL = "http://statalign.github.com/";
 
 	/**
 	 * Only method of the class.
@@ -47,10 +49,10 @@ public class StatAlign{
 //			System.out.println("args: " + s);
 //		}
 		
+		System.out.println("StatAlign "+version);
+		
 		if(args.length != 0) {
 			// console mode
-
-			System.out.println("StatAlign "+version+"\n");
 			MainManager manager = new MainManager(null);
 			CommandLine cl = new CommandLine(false);
 			cl.setVerbose(true);
@@ -64,21 +66,19 @@ public class StatAlign{
 			
 			MainFrame mf = null;
 			try {
-				System.out.println("StatAlign "+version+"\n");
 				mf = new MainFrame();
 				
 				if(allowVersionCheck) {
-					URL urlVersion = new URL("http://phylogeny-cafe.elte.hu/StatAlign/version.txt");
+					URL urlVersion = new URL(webPageURL+"version.txt");
 					try {
 						URLConnection connection = urlVersion.openConnection();
-						//System.out.println("Connection letrehozva");
 						connection.setConnectTimeout(2000);
 						String s = new BufferedReader(new InputStreamReader(connection.getInputStream())).readLine();
 						if(!s.equals(version)) {
 							JOptionPane.showMessageDialog(mf, "You are using StatAlign "+version+
 															". StatAlign "+s+" is now available!\n"+
-															"To download the new version, please visit" +
-															" http://phylogeny-cafe.elte.hu/StatAlign/",
+															"To download the new version, please visit " +
+															webPageURL,
 															"New version available!",
 															JOptionPane.INFORMATION_MESSAGE);
 						}

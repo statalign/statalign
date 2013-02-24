@@ -222,6 +222,7 @@ public class PostprocessManager {
 	public void initRun(InputData inputData) throws IOException {
 		logFile = new FileWriter(new File(inputData.outputPath, inputData.title + ".log"));
 
+		System.out.println();
 		for (Postprocess p : plugins) {
 			if (p.postprocessWrite && p.getFileExtension() != null) {
 				String name = new File(inputData.outputPath, inputData.title + "." + p.getFileExtension()).getPath();

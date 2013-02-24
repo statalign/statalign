@@ -715,6 +715,13 @@ public class Utils{
 		return copy;
 	}
 
+	public static int minMax(int value, int min, int max) {
+		if(value < min)
+			value = min;
+		else if(value > max)
+			value = max;
+		return value;
+	}
 
 	/**
 	 * Merely for testing purposes....

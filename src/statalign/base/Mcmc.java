@@ -3,6 +3,7 @@ package statalign.base;
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Locale;
 import java.util.Random;
 
 import mpi.MPI;
@@ -288,27 +289,27 @@ public class Mcmc extends Stoppable {
 						}
 					}
 
-					currentTime = System.currentTimeMillis();
-					if (frame != null) {
-						String text = " Samples taken: " + Integer.toString(i);
-						//remainingTime((currentTime - start)
-						//		* ((period - i - 1) * sampRate
-						//				+ sampRate - j - 1)
-						//				/ (burnIn + i * sampRate + j + 1))
-						if(autoPar.automateNumberOfSamplesToTake)
-							text += " -- total number will be determined automatically";
-						else
-							text += " out of "+period;
-
-						text += "   Sampling rate: " + sampRate;
-						if(autoPar.automateNumberOfSamplesToTake){
-							text +=  ",  Similarity(alignment n-1, alignment n): " + df.format(currScore) + " < " + df.format(AutomateParameters.PERCENT_CONST);
-						}
-						frame.statusText.setText(text );
-					}
 				}
+				currentTime = System.currentTimeMillis();
 				if (frame == null && !isParallel) {
 					System.out.println("Sample: " + (i + 1));
+				}
+				if (frame != null) {
+					String text = " Samples taken: " + (i+1);
+					//remainingTime((currentTime - start)
+					//		* ((period - i - 1) * sampRate
+					//				+ sampRate - j - 1)
+					//				/ (burnIn + i * sampRate + j + 1))
+					if(autoPar.automateNumberOfSamplesToTake)
+						text += " -- total number will be determined automatically";
+					else
+						text += " out of "+period;
+
+					text += "   Sampling rate: " + sampRate;
+					if(autoPar.automateNumberOfSamplesToTake){
+						text +=  ",  Similarity(alignment n-1, alignment n): " + df.format(currScore) + " < " + df.format(AutomateParameters.PERCENT_CONST);
+					}
+					frame.statusText.setText(text );
 				}
 				if(autoPar.automateNumberOfSamplesToTake){
 					alignment = new AlignmentData(getState().getLeafAlign());
@@ -941,7 +942,7 @@ public class Mcmc extends Stoppable {
 	 * @return a string describing the acceptance ratios.
 	 */
 	public String getInfoString() {
-		return String.format("Acceptances: [Alignment: %f, Edge: %f, Topology: %f, Indel: %f, Substitution: %f]",
+		return String.format(Locale.US, "Acceptances: [Alignment: %f, Edge: %f, Topology: %f, Indel: %f, Substitution: %f]",
 				(alignmentSampled == 0 ? 0 : (double) alignmentAccepted
 						/ (double) alignmentSampled),
 						(edgeSampled == 0 ? 0 : (double) edgeAccepted

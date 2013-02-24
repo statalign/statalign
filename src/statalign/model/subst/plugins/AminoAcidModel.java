@@ -85,7 +85,7 @@ public abstract class AminoAcidModel extends SubstitutionModel {
 				if(ch != '-' && ch != ' ') {
 					int k = accept.indexOf(Character.toUpperCase(ch));
 					if(k == -1) {
-						throw new RecognitionError(getMenuName()+" cannot accept the sequences because it contains character '"+ch+"'!\n");
+						throw new RecognitionError(getMenuName()+" cannot be used with the current sequences because they contain the character '"+ch+"'!\n");
 					} else if(k < alphabet.length) {
 						count[k] = 1;
 					}
