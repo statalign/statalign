@@ -23,7 +23,7 @@ import statalign.postprocess.plugins.RNAalifoldResult;
  */
 public class RNAalifold {
 	
-	public static String executable = "RNAalifold.exe";
+	public static String executable = "lib/RNAalifold.exe";
 	
 	static boolean useOldParams = false;
 	

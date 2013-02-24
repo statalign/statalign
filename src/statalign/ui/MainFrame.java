@@ -746,9 +746,8 @@ public class MainFrame extends JFrame implements ActionListener {
 			}
 		} catch (Exception e) {}
 		try {
-			File dir = new File(System.getProperty("user.dir")+"/"+path);
-			System.out.println(dir);
-			Desktop.getDesktop().browse(dir.toURI());
+//			File dir = new File(System.getProperty("user.dir")+"/"+path);
+			Desktop.getDesktop().browse(ClassLoader.getSystemResource(path).toURI());
 			return;
 		} catch (Exception e) {
 		}
