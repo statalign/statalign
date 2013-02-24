@@ -8,7 +8,7 @@ StatAlign v2.1 on 24 Feb 2013
   Improvements:
     * GUI update: launching an analysis requires less clicks
     * New welcome message and About box
-	* Output files are summarised after the analysis
+    * Output files are summarised after the analysis
 
   Bugfixes:
     * RNA mode automatically disabled for non-RNA input in console mode
