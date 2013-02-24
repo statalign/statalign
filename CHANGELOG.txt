@@ -8,11 +8,12 @@ StatAlign v2.1 on 24 Feb 2013
   Improvements:
     * GUI update: launching an analysis requires less clicks
     * New welcome message and About box
+	* Output files are summarised after the analysis
 
   Bugfixes:
     * RNA mode automatically disabled for non-RNA input in console mode
     * Plugins that do not produce output will not create files
-    * Fix to allow RNAalifold plugin to run in console mode as well
+    * Fix to allow the RNAalifold plugin to run in console mode as well
     * Removed error message for input files that don't end in .fas(ta)
     * PPFold fix for non-UK/US locales
     * Fixed long-standing bug in Tamura-Nei model
