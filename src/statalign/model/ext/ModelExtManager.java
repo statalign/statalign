@@ -31,7 +31,12 @@ public class ModelExtManager {
 	private String filenameExtensionBase = "";
 
 	public void addToFilenameExtension(String s) {
-		filenameExtensionBase += s;
+		if (filenameExtensionBase.isEmpty()) {
+			filenameExtensionBase += s;
+		}
+		else {
+			filenameExtensionBase += "_"+s;
+		}
 	}
 	public String getFilenameExtension() {
 		return filenameExtensionBase;

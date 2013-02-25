@@ -106,6 +106,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	private double sigma2PriorShape = 0.001;
 	private double sigma2PriorRate = 0.001;
 	public PriorDistribution<Double> sigma2Prior;
+	boolean sigma2PriorInitialised = false;
 	// sigma2Prior will either be InverseGamma or Hyperbolic, depending
 	// on whether globalSigma is switched on. It is defined inside the initRun()
 	// method.
@@ -186,6 +187,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		usage.append("StructAlign version 1.0\n\n");
 		usage.append("java -jar statalign.jar -plugin:structal[OPTIONS]\n");
 		usage.append("OPTIONS: \n");
+		usage.append("\tsigma2Prior=[hyp|g(a;b)|invg(a;b)]\t(Sets the prior and hyperparameters for sigma2)\n");
 		usage.append("\tepsilon=X\t(Fixes epsilon at X)\n");
 		usage.append("\tuseLibrary\t(Allows rotation library moves to be used)\n");
 	     
@@ -205,6 +207,57 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			fixedEpsilonValue = Double.parseDouble(paramValue);
 			addToFilenameExtension("eps_"+fixedEpsilonValue);
 			System.out.println("Fixing epsilon to "+fixedEpsilonValue+".");
+		}
+		else if (paramName.equals("sigma2Prior")) {
+			if (paramValue.startsWith("hyp")) {
+				sigma2Prior = new HyperbolicPrior();
+				sigma2PriorInitialised = true;
+			}
+			else if (paramValue.startsWith("g(")) {
+				String[] argString = paramValue.split("\\(",2);
+				if (argString[1].endsWith(")")) {
+					String [] args = argString[1].substring(0,argString[1].length()-1).split(";",2);
+					if (args.length == 2) {
+						sigma2Prior = new GammaPrior(Double.parseDouble(args[0]),Double.parseDouble(args[1]));
+						sigma2PriorInitialised = true;
+						addToFilenameExtension("sigma2Prior_g_"+args[0]+"_"+args[1]);
+						System.out.println("Using Gamma("+Double.parseDouble(args[0])+","+Double.parseDouble(args[1])+
+								") prior for sigma2.");
+					}
+					else {
+						throw new IllegalArgumentException(
+								"Prior parameters must be specifed in the form\n-plugin:structal[sigma2Prior=g(a;b)]\n");
+					}
+				}
+				else {
+					throw new IllegalArgumentException(
+						"Prior parameters must be specifed in the form\n-plugin:structal[sigma2Prior=g(a;b)]\n");
+				}
+			}
+			else if (paramValue.startsWith("invg(")) {
+				String[] argString = paramValue.split("\\(",2);
+				if (argString[1].endsWith(")")) {
+					String [] args = argString[1].split(";",2);
+					if (args.length == 2) {
+						sigma2Prior = new InverseGammaPrior(Double.parseDouble(args[0]),Double.parseDouble(args[1]));
+						sigma2PriorInitialised = true;
+						addToFilenameExtension("sigma2Prior_invg_"+args[0]+"_"+args[1]);
+						System.out.println("Using InvGamma("+Double.parseDouble(args[0])+","+Double.parseDouble(args[1])+
+								") prior for sigma2.");
+					}
+					else {
+						throw new IllegalArgumentException(
+								"Prior parameters must be specifed in the form\n-plugin:structal[sigma2Prior=g(a,b)]\n");
+					}
+				}
+				else {
+					throw new IllegalArgumentException(
+						"Prior parameters must be specifed in the form\n-plugin:structal[sigma2Prior=g(a,b)]\n");
+				}
+			}
+			else {
+				throw new IllegalArgumentException("Unrecognised prior specification "+paramName+".");
+			}
 		}
 		else {
 			super.setParam(paramName,paramValue);
@@ -326,19 +379,21 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		for(i = 0; i < sigma2.length; i++)
 			sigma2[i] = 1;
 		
-		
-		
-		if (globalSigma) {
-			if (fixedEpsilon) {
-				sigma2Prior = new GammaPrior(2,2);
+		if (!sigma2PriorInitialised) {
+			if (globalSigma) {
+				if (fixedEpsilon) {
+					sigma2Prior = new GammaPrior(2,2);
+				}
+				else {
+					sigma2Prior = new HyperbolicPrior();
+				}
 			}
 			else {
-				sigma2Prior = new HyperbolicPrior();
+				sigma2Prior = new InverseGammaPrior(sigma2PriorShape,sigma2PriorRate);
 			}
+			sigma2PriorInitialised = true;
 		}
-		else {
-			sigma2Prior = new InverseGammaPrior(sigma2PriorShape,sigma2PriorRate);
-		}
+		
 		
 		/* Add alignment and rotation/translation moves */
 		RotationMove rotationMove = new RotationMove(this,"rotation"); 
