@@ -127,7 +127,7 @@ public class CommandLine {
 				}
 				else if (list.getResultValue(i).equals("plugin") || list.getResultValue(i).equals("plugins")) {
 					System.out.println("Available plugins:\n");
-					List<ModelExtension> pluginList = Utils.findPlugins(ModelExtension.class);
+					List<ModelExtension> pluginList = manager.modelExtMan.getPluginList();
 					for (ModelExtension plugin : pluginList) {
 						System.out.println(plugin.getPluginID()+" ("+(plugin.isActive() ? "active" : "inactive")+")\n");
 					}

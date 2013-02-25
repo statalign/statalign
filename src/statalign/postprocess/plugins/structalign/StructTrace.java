@@ -99,7 +99,6 @@ public class StructTrace extends Postprocess {
 				structAlign = (StructAlign) modExt;
 			}
 		}
-		active = structAlign.isActive();
 	}
 	
 	@Override
@@ -109,7 +108,7 @@ public class StructTrace extends Postprocess {
 //				structAlign = (StructAlign) modExt;
 //			}
 //		}
-//		active = structAlign.isActive();
+		active = structAlign.isActive();
 		if(!active)
 			return;
 		try {
@@ -200,7 +199,7 @@ public class StructTrace extends Postprocess {
 	
 	@Override
 	public void newStep(McmcStep mcmcStep) {
-		if(!active || !show)
+		if(!active)
 			return;
 		if (count % refreshRate == 0) {
 			StructAlignTraceParameters currentParameters = 
@@ -216,9 +215,9 @@ public class StructTrace extends Postprocess {
 				parameterHistory.remove(0);
 				parameterHistory.add(currentParameters);				
 			}
-			//if(show) {
+			if(show) {
 				gui.repaint();
-			//}
+			}
 		}
 		++count;
 	}

@@ -58,13 +58,13 @@ public class ModelExtManager {
 		pluginList = Utils.findPlugins(ModelExtension.class);
 		for(ModelExtension plugin : pluginList) {
 			plugin.setManager(this);
+			plugin.init();
 		}
 		if (args != null) {
 			ARG: for(int i = 0 ; i < args.size() ; i++) {
 				String [] pluginPair = args.get(i).split("\\[",2);
 				for(ModelExtension plugin : pluginList) {
 					if (plugin.getPluginID().equals(pluginPair[0])) {
-						plugin.init();
 						plugin.setActive(true);
 						if (pluginPair.length == 2) { // Then we have some parameters
 							if (pluginPair[1].endsWith("]")) {
