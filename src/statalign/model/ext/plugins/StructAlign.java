@@ -187,10 +187,12 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		usage.append("StructAlign version 1.0\n\n");
 		usage.append("java -jar statalign.jar -plugin:structal[OPTIONS]\n");
 		usage.append("OPTIONS: \n");
-		usage.append("\tsigma2Prior=[hyp|g(a;b)|invg(a;b)]\t(Sets the prior and hyperparameters for sigma2)\n");
 		usage.append("\tepsilon=X\t(Fixes epsilon at X)\n");
 		usage.append("\tuseLibrary\t(Allows rotation library moves to be used)\n");
-	     
+		usage.append("\tsigma2Prior=PRIOR\t(Sets the prior and hyperparameters for sigma2)\n");
+		usage.append("PRIOR: \n");
+		usage.append("\t\t[hyp|g{a_b)|invg{a_b}]\n");
+		
 		return usage.toString();
 	}
 
@@ -213,10 +215,10 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				sigma2Prior = new HyperbolicPrior();
 				sigma2PriorInitialised = true;
 			}
-			else if (paramValue.startsWith("g(")) {
-				String[] argString = paramValue.split("\\(",2);
-				if (argString[1].endsWith(")")) {
-					String [] args = argString[1].substring(0,argString[1].length()-1).split(";",2);
+			else if (paramValue.startsWith("g{")) {
+				String[] argString = paramValue.split("\\{",2);
+				if (argString[1].endsWith("}")) {				
+					String [] args = argString[1].substring(0,argString[1].length()-1).split("_",2);
 					if (args.length == 2) {
 						sigma2Prior = new GammaPrior(Double.parseDouble(args[0]),Double.parseDouble(args[1]));
 						sigma2PriorInitialised = true;
@@ -234,10 +236,10 @@ public class StructAlign extends ModelExtension implements ActionListener {
 						"Prior parameters must be specifed in the form\n-plugin:structal[sigma2Prior=g(a;b)]\n");
 				}
 			}
-			else if (paramValue.startsWith("invg(")) {
-				String[] argString = paramValue.split("\\(",2);
-				if (argString[1].endsWith(")")) {
-					String [] args = argString[1].split(";",2);
+			else if (paramValue.startsWith("invg{")) {
+				String[] argString = paramValue.split("\\{",2);
+				if (argString[1].endsWith("}")) {
+					String [] args = argString[1].substring(0,argString[1].length()-1).split("_",2);
 					if (args.length == 2) {
 						sigma2Prior = new InverseGammaPrior(Double.parseDouble(args[0]),Double.parseDouble(args[1]));
 						sigma2PriorInitialised = true;
@@ -256,7 +258,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				}
 			}
 			else {
-				throw new IllegalArgumentException("Unrecognised prior specification "+paramName+".");
+				throw new IllegalArgumentException("Unrecognised prior specification "+paramName+"="+paramValue+".");
 			}
 		}
 		else {
