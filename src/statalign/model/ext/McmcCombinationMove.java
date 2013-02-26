@@ -27,7 +27,10 @@ public class McmcCombinationMove extends McmcMove {
 		double logProposalRatio = 0;
 		for (McmcMove mcmcMove : mcmcMoves) {
 			mcmcMove.copyState(externalState);
+			double oldProposalWidthControlVariable = mcmcMove.proposalWidthControlVariable;
+			mcmcMove.proposalWidthControlVariable *= proposalWidthControlVariable;
 			logProposalRatio += mcmcMove.proposal(externalState); 
+			mcmcMove.proposalWidthControlVariable = oldProposalWidthControlVariable;
 		}
 		// We implicitly assume here that the order of the proposals
 		// does not matter.

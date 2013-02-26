@@ -145,7 +145,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	int sigma2HierWeight = 10;
 	int nuWeight = 10;
 	//int epsilonWeight = 2;//10;
-	int epsilonWeight = 8; //
+	int epsilonWeight = 10; //
 	int rotationWeight = 2;
 	int translationWeight = 2;
 	int libraryWeight = 2;
@@ -481,23 +481,21 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			sigma2HMove.setPlottable();
 			sigma2HMove.setPlotSide(0);
 			addMcmcMove(sigma2HMove,sigma2HierWeight); 
-			//addMcmcMove(sigma2HMove,0);
 			
 			ParameterInterface nuInterface = paramInterfaceGenerator.new NuInterface();
 			nuMove = new HierarchicalContinuousPositiveParameterMove(this,nuInterface,nuPrior,gProp,"ν");
 			nuMove.setPlottable();
 			nuMove.setPlotSide(1);
 			addMcmcMove(nuMove,nuWeight);
-			//addMcmcMove(nuMove,0);
 		}
 		
 		for (int j=0; j<sigma2.length; j++) {
 			String sigmaName;
 			if (sigma2.length == 1) {
-				sigmaName = "σ";
+				sigmaName = "σ2";
 			}
 			else {
-				sigmaName = "σ_"+j;
+				sigmaName = "σ2_"+j;
 			}
 			ParameterInterface sigma2Interface = paramInterfaceGenerator.new Sigma2Interface(j);
 			ContinuousPositiveParameterMove m = new ContinuousPositiveParameterMove(
