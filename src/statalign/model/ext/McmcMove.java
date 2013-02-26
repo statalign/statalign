@@ -51,7 +51,9 @@ public abstract class McmcMove {
 		double logProposalRatio = -logPriorDensity(externalState);
 		logProposalRatio += proposal(externalState); 
 		logProposalRatio += logPriorDensity(externalState);
-		updateLikelihood(externalState);
+		if (logProposalRatio != Double.NEGATIVE_INFINITY) {
+			updateLikelihood(externalState);
+		}
 		if(isParamChangeAccepted(logProposalRatio)) {
 			acceptanceCount++;
 			lastMoveAccepted = true;

@@ -139,19 +139,24 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	 */
 	private final int pluginProposalWeight = 50; 
 	
-	int sigma2Weight = 15;
+	//int sigma2Weight = 5; //15;
+	int sigma2Weight = 13; //
 	int tauWeight = 10;
 	int sigma2HierWeight = 10;
 	int nuWeight = 10;
-	int epsilonWeight = 10;
+	//int epsilonWeight = 2;//10;
+	int epsilonWeight = 8; //
 	int rotationWeight = 2;
 	int translationWeight = 2;
 	int libraryWeight = 2;
 	int alignmentWeight = 2;
 	
+	/* Weights for combination moves */
 	int alignmentRotationWeight = 8;
 	int alignmentTranslationWeight = 6;
 	int alignmentLibraryWeight = 6;
+	int sigmaEpsilonWeight = 4; //
+	// This is reallocated to sigma2Weight if epsilon is being fixed 
 	
 	
 	/** Starting value for rotation proposal tuning parameter. */
@@ -193,9 +198,9 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		usage.append("\tuseLibrary\t\t(Allows rotation library moves to be used)\n");
 		usage.append("\tsigma2Prior=PRIOR\t(Sets the prior and hyperparameters for sigma2)\n");
 		usage.append("\tPRIOR can be one of:\n");
-		usage.append("\t\thyp\t\tUses a hyperbolic prior on sigma\n");
-		usage.append("\t\tg{a_b)\t\tUses a Gamma(a,b) prior on sigma\n");
-		usage.append("\t\tinvg{a_b)\tUses an InverseGamma(a,b) prior on sigma\n");
+		usage.append("\t\thyp\t\tUses a hyperbolic prior on sigma (default)\n");
+		usage.append("\t\tg{a_b)\t\tUses a Gamma(a,b) prior on sigma2\n");
+		usage.append("\t\tinvg{a_b)\tUses an InverseGamma(a,b) prior on sigma2\n");
 		
 		return usage.toString();
 	}
@@ -353,9 +358,11 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		tau = 50;
 		if (fixedEpsilon) {
 			epsilon = fixedEpsilonValue;
+			sigma2Weight += sigmaEpsilonWeight;
 		}
 		else {
-			epsilon = 100;
+			//epsilon = 100;
+			epsilon = 50;
 		}
 		
 		
@@ -455,10 +462,11 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		tauMove.setPlotSide(1);
 		addMcmcMove(tauMove,tauWeight);
 		
+		ContinuousPositiveParameterMove epsilonMove = null;
 		if (!fixedEpsilon) {
 			ParameterInterface epsilonInterface = paramInterfaceGenerator.new EpsilonInterface();
-			ContinuousPositiveParameterMove epsilonMove = 
-				new ContinuousPositiveParameterMove(this,epsilonInterface,epsilonPrior,gProp,"ε");
+			epsilonMove = 
+				new ContinuousPositiveParameterMove(this,epsilonInterface,epsilonPrior,nProp,"ε");
 			epsilonMove.setMinValue(MIN_EPSILON);
 			epsilonMove.setPlottable();
 			epsilonMove.setPlotSide(1);
@@ -508,7 +516,17 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				sigma2HMove.addChildMove(m);
 				nuMove.addChildMove(m);
 			}
+			if (sigma2.length == 1 && !fixedEpsilon) {
+				ArrayList<McmcMove> sigmaEpsilon = new ArrayList<McmcMove>();
+				sigmaEpsilon.add(m);
+				sigmaEpsilon.add(epsilonMove);
+				McmcCombinationMove sigmaEpsilonMove = 
+					new McmcCombinationMove(sigmaEpsilon);
+				addMcmcMove(sigmaEpsilonMove,sigmaEpsilonWeight);
+			}
 		}
+		
+	
 	}
 	
 	@Override
