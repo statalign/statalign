@@ -184,14 +184,18 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	@Override
 	public String getUsageInfo() {
 		StringBuilder usage = new StringBuilder();
-		usage.append("StructAlign version 1.0\n\n");
+		usage.append("___________________________\n\n");
+		usage.append("  StructAlign version 1.0\n\n");
+		usage.append("^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\n");
 		usage.append("java -jar statalign.jar -plugin:structal[OPTIONS]\n");
 		usage.append("OPTIONS: \n");
-		usage.append("\tepsilon=X\t(Fixes epsilon at X)\n");
-		usage.append("\tuseLibrary\t(Allows rotation library moves to be used)\n");
+		usage.append("\tepsilon=X\t\t(Fixes epsilon at X)\n");
+		usage.append("\tuseLibrary\t\t(Allows rotation library moves to be used)\n");
 		usage.append("\tsigma2Prior=PRIOR\t(Sets the prior and hyperparameters for sigma2)\n");
-		usage.append("PRIOR: \n");
-		usage.append("\t\t[hyp|g{a_b)|invg{a_b}]\n");
+		usage.append("\tPRIOR can be one of:\n");
+		usage.append("\t\thyp\t\tUses a hyperbolic prior on sigma\n");
+		usage.append("\t\tg{a_b)\t\tUses a Gamma(a,b) prior on sigma\n");
+		usage.append("\t\tinvg{a_b)\tUses an InverseGamma(a,b) prior on sigma\n");
 		
 		return usage.toString();
 	}
