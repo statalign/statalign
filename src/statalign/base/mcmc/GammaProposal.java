@@ -1,4 +1,4 @@
-package statalign.model.ext;
+package statalign.base.mcmc;
 
 import statalign.utils.GammaDistribution;
 public class GammaProposal extends ProposalDistribution<Double> {
@@ -20,9 +20,10 @@ public class GammaProposal extends ProposalDistribution<Double> {
 	}
 	public void updateProposal(double proposalWidthControlVariable, 
 			Double currentParam) {
+		double scale = currentParam < 1e-6 ? 1e-6 : currentParam;
 		double conc = 1.0/proposalWidthControlVariable;
 		g = new GammaDistribution(conc + proposalShape, 
-		currentParam / (conc + proposalRate));
+		scale / (conc + proposalRate));
 	}
 	
 }

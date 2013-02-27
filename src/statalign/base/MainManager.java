@@ -3,6 +3,7 @@ package statalign.base;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 
 import javax.swing.SwingUtilities;
 
@@ -108,9 +109,10 @@ public class MainManager {
 	 * the constructor as some plugins require input from the command line.
 	 * @param params plugin parameters 
 	 */
-	public void init(PluginParameters params) {
+	public void init(ArrayList<String> args) {
 		// TODO add postProcMan here and an init() for postprocess plugins
-		modelExtMan.init(params);
+		modelExtMan.init(args);
+		postProcMan.init(modelExtMan);
 	}
 
 	/**
@@ -122,11 +124,15 @@ public class MainManager {
 	public void start() {
 
 		try {
-			postProcMan.logFile = new FileWriter(fullPath + ".log");
+			String filenameExtension = modelExtMan.getFilenameExtension();
+			if (!filenameExtension.isEmpty()) {
+				filenameExtension += ".";
+			}
+			postProcMan.logFile = new FileWriter(fullPath + "." + filenameExtension + "log");
 
 			for (Postprocess p : postProcMan.getPlugins()) {
-				if (p.postprocessWrite) {
-					String name = fullPath + "." + p.getFileExtension();
+				if (p.postprocessWrite) {		
+					String name = fullPath + "." + filenameExtension + p.getFileExtension();
 					System.out.println("Output file for " + p.getTabName()
 							+ ": " + name);
 					p.outputFile = new FileWriter(name);

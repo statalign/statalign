@@ -1,4 +1,4 @@
-package statalign.model.ext;
+package statalign.base.mcmc;
 
 public interface ParameterInterface {
 	abstract double get();

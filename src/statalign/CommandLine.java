@@ -40,6 +40,7 @@ public class CommandLine {
 
 	private List<String> substModNames = new ArrayList<String>();
 	private Map<String, Integer> postprocAbbr = new HashMap<String, Integer>();
+	public ArrayList<String> pluginParameters;
 
 	// Functions
 
@@ -126,7 +127,7 @@ public class CommandLine {
 				}
 				else if (list.getResultValue(i).equals("plugin") || list.getResultValue(i).equals("plugins")) {
 					System.out.println("Available plugins:\n");
-					List<ModelExtension> pluginList = Utils.findPlugins(ModelExtension.class);
+					List<ModelExtension> pluginList = manager.modelExtMan.getPluginList();
 					for (ModelExtension plugin : pluginList) {
 						System.out.println(plugin.getPluginID()+" ("+(plugin.isActive() ? "active" : "inactive")+")\n");
 					}
@@ -283,8 +284,11 @@ public class CommandLine {
 			for (int i = 0; i < plugins.getResultCount(); i++) {
 				argsVector.add(plugins.getResultValue(i));
 			}
-			Postprocess.pluginParameters = new PluginParameters(argsVector);
 			
+			//Postprocess.pluginParameters = new PluginParameters(argsVector);
+			pluginParameters = argsVector;
+			//parsePluginParameters(argsVector,manager);
+
 			// TODO allow rnaMode to be switched off even for RNA sequences (plugin param)
 			// TODO move rnaMode to a "RNA container" plugin
 			if(manager.inputData.seqs.isRNA()) {

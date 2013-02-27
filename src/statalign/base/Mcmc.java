@@ -10,6 +10,7 @@ import mpi.MPI;
 import org.apache.commons.math3.random.Well19937c;
 
 import statalign.MPIUtils;
+import statalign.base.mcmc.McmcModule;
 import statalign.base.thread.Stoppable;
 import statalign.base.thread.StoppedException;
 import statalign.distance.Distance;
@@ -103,6 +104,8 @@ public class Mcmc extends Stoppable {
 
 	/** Manager that handles model extension plugins */
 	public ModelExtManager modelExtMan;
+	
+	private McmcModule coreModel;
 
 	/** True while the MCMC is in the burn-in phase. */
 	public boolean burnin;
@@ -838,6 +841,7 @@ public class Mcmc extends Stoppable {
 		
 			
 		double bpp = nephew.fastSwapWithUncle();
+
 		// double bpp = nephew.swapWithUncle();
 	
 		double newLogLi = modelExtMan.logLikeTreeChange(tree, nephew);
@@ -848,6 +852,9 @@ public class Mcmc extends Stoppable {
 			// accepted
 //			System.out.println("accepted (old: "+oldLogLi+" new: "+newLogLi+")");
 			topologyAccepted++;
+			if (Utils.DEBUG) {
+				System.out.println("Topology move accepted: "+nephew.index+" <--> "+uncle.index);
+			}
 			totalLogLike = newLogLi;
 			modelExtMan.afterTreeChange(tree, uncle, true);
 		} else {

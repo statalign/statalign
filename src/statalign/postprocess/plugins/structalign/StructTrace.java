@@ -14,11 +14,13 @@ import org.apache.commons.math3.geometry.euclidean.threed.Rotation;
 import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
 
 import statalign.base.InputData;
+import statalign.base.Mcmc;
 import statalign.base.McmcStep;
 import statalign.base.State;
 import statalign.base.Utils;
+import statalign.base.mcmc.McmcMove;
+import statalign.model.ext.ModelExtManager;
 import statalign.model.ext.ModelExtension;
-import statalign.model.ext.McmcMove;
 import statalign.model.ext.plugins.StructAlign;
 import statalign.postprocess.Postprocess;
 import statalign.postprocess.gui.StructAlignTraceGUI;
@@ -91,12 +93,21 @@ public class StructTrace extends Postprocess {
 	}
 	
 	@Override
-	public void beforeFirstSample(InputData inputData) {
-		for(ModelExtension modExt : getModExtPlugins()) {
+	public void init(ModelExtManager modelExtMan) {
+		for(ModelExtension modExt : modelExtMan.getPluginList()) {
 			if(modExt instanceof StructAlign) {
 				structAlign = (StructAlign) modExt;
 			}
 		}
+	}
+	
+	@Override
+	public void beforeFirstSample(InputData inputData) {
+//		for(ModelExtension modExt : getModExtPlugins()) {
+//			if(modExt instanceof StructAlign) {
+//				structAlign = (StructAlign) modExt;
+//			}
+//		}
 		active = structAlign.isActive();
 		if(!active)
 			return;
@@ -137,7 +148,7 @@ public class StructTrace extends Postprocess {
 				for (McmcMove mcmcMove : structAlign.getMcmcMoves()) {
 					if (mcmcMove.getParam() != null) {
 						outputFile.write(mcmcMove.getParam().get()+"\t");
-						if (mcmcMove.lastMoveAccepted) {
+						if (mcmcMove.moveProposed) {
 							outputFile.write(mcmcMove.getParam().get()+"\t");
 						}
 						else {
@@ -149,6 +160,7 @@ public class StructTrace extends Postprocess {
 			} catch (IOException e) {
 				e.printStackTrace(); 
 			}
+			//structAlign.setAllMovesNotProposed();
 		}
 	}
 	

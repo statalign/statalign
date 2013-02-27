@@ -1,7 +1,7 @@
 package statalign.model.ext.plugins.structalign;
 
+import statalign.base.mcmc.ParameterInterface;
 import statalign.model.ext.plugins.StructAlign;
-import statalign.model.ext.ParameterInterface;
 
 // I wish Java allowed pointers and proper functors...
 

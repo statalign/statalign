@@ -5,11 +5,13 @@ import java.util.ArrayList;
 import statalign.base.Utils;
 import statalign.base.Vertex;
 import statalign.base.Tree;
+import statalign.base.mcmc.McmcMove;
 import statalign.model.ext.plugins.StructAlign;
 
-public class AlignmentMove extends StructAlignMcmcMove {
+public class AlignmentMove extends McmcMove {
 
 	Tree tree;
+	public StructAlignMoveParams moveParams = new StructAlignMoveParams();
 	
 	double[][] oldaxes = null;
 	double[] oldangles = null;
@@ -35,16 +37,16 @@ public class AlignmentMove extends StructAlignMcmcMove {
 			throw new IllegalArgumentException("AlignmentMove.copyState must take an argument of type Tree.");
 		}
 		subtreeRoot = Funcs.sampleVertex(tree);
-		nLeaves = owner.coords.length;
+		nLeaves = ((StructAlign) owner).coords.length;
 		subtreeLeaves = Subtree.getSubtreeLeaves(tree, subtreeRoot, nLeaves);
 		index = subtreeLeaves.get(Utils.generator.nextInt(subtreeLeaves.size()));
-		owner.oldAlign = owner.curAlign;
-		oldll = owner.curLogLike;
+		((StructAlign) owner).oldAlign = ((StructAlign) owner).curAlign;
+		oldll = owner.getLogLike();
 	}
 
 	public double proposal(Object externalState) {
 		double logProposalRatio = subtreeRoot.realignToParent();
-		owner.curAlign = tree.getState().getLeafAlign();
+		((StructAlign) owner).curAlign = tree.getState().getLeafAlign();
 		return logProposalRatio;
 	}
 	
@@ -53,11 +55,11 @@ public class AlignmentMove extends StructAlignMcmcMove {
 	}
 
 	public void updateLikelihood(Object externalState) {		
-		owner.curLogLike = owner.calcAllColumnContrib();
+		owner.setLogLike( ((StructAlign) owner).calcAllColumnContrib() );
 	}
 	public void restoreState(Object externalState) {
 		subtreeRoot.alignRestore();
-		owner.curAlign = owner.oldAlign;
-		owner.curLogLike = oldll;
+		((StructAlign) owner).curAlign = ((StructAlign) owner).oldAlign;
+		owner.setLogLike(oldll);
 	}
 }

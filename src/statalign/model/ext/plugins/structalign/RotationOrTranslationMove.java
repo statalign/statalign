@@ -7,11 +7,15 @@ import org.apache.commons.math3.util.MathArrays;
 import statalign.base.Utils;
 import statalign.base.Vertex;
 import statalign.base.Tree;
+import statalign.base.mcmc.McmcMove;
+import statalign.model.ext.plugins.StructAlign;
 
-public abstract class RotationOrTranslationMove extends StructAlignMcmcMove {
+public abstract class RotationOrTranslationMove extends McmcMove {
 
 	Tree tree;
-	
+	protected StructAlign structAlign;
+	public StructAlignMoveParams moveParams = new StructAlignMoveParams(); 
+
 	double[][] oldaxes = null;
 	double[] oldangles = null;
 	double[][] oldxlats = null;
@@ -31,22 +35,22 @@ public abstract class RotationOrTranslationMove extends StructAlignMcmcMove {
 			throw new IllegalArgumentException("RotationOrTranslationMove.copyState must take an argument of type Tree.");
 		}
 		subtreeRoot = Funcs.sampleVertex(tree);
-		nLeaves = owner.coords.length;
+		nLeaves = structAlign.coords.length;
 		subtreeLeaves = Subtree.getSubtreeLeaves(tree, subtreeRoot, nLeaves);
 		index = subtreeLeaves.get(Utils.generator.nextInt(subtreeLeaves.size()));
-		oldaxes = new double[owner.axes.length][owner.axes[0].length];
-		oldangles = new double[owner.angles.length];
-		oldxlats = new double[owner.xlats.length][owner.xlats.length];
-		oldrots = new double[owner.rotCoords.length][owner.rotCoords[0].length][owner.rotCoords[0][0].length];
+		oldaxes = new double[structAlign.axes.length][structAlign.axes[0].length];
+		oldangles = new double[structAlign.angles.length];
+		oldxlats = new double[structAlign.xlats.length][structAlign.xlats.length];
+		oldrots = new double[structAlign.rotCoords.length][structAlign.rotCoords[0].length][structAlign.rotCoords[0][0].length];
 		for(int i = 0; i < subtreeLeaves.size(); i++){
 			int j = subtreeLeaves.get(i);
-			oldaxes[j] = MathArrays.copyOf(owner.axes[j]);
-			oldangles[j] = owner.angles[j];
-			oldxlats[j] = MathArrays.copyOf(owner.xlats[j]);
-			oldrots[j] = owner.rotCoords[j];
+			oldaxes[j] = MathArrays.copyOf(structAlign.axes[j]);
+			oldangles[j] = structAlign.angles[j];
+			oldxlats[j] = MathArrays.copyOf(structAlign.xlats[j]);
+			oldrots[j] = structAlign.rotCoords[j];
 		}
 		
-		oldll = owner.curLogLike;
+		oldll = owner.getLogLike();
 	}
 
 	public abstract double proposal(Object externalState);
@@ -58,19 +62,19 @@ public abstract class RotationOrTranslationMove extends StructAlignMcmcMove {
 	public void updateLikelihood(Object externalState) {
 		for(int i = 0; i < subtreeLeaves.size(); i++){
 			int j = subtreeLeaves.get(i);
-			owner.rotCoords[j] = null;	// so that calcRotation creates new array
-			owner.calcRotation(j);
+			structAlign.rotCoords[j] = null;	// so that calcRotation creates new array
+			structAlign.calcRotation(j);
 		}
-		owner.curLogLike = owner.calcAllColumnContrib();
+		owner.setLogLike( structAlign.calcAllColumnContrib() );
 	}
 	public void restoreState(Object externalState) {
 		for(int i = 0; i < subtreeLeaves.size(); i++){
 			int j = subtreeLeaves.get(i);
-			owner.axes[j] = oldaxes[j];
-			owner.angles[j] = oldangles[j];
-			owner.xlats[j] = oldxlats[j];
-			owner.rotCoords[j] = oldrots[j];
+			structAlign.axes[j] = oldaxes[j];
+			structAlign.angles[j] = oldangles[j];
+			structAlign.xlats[j] = oldxlats[j];
+			structAlign.rotCoords[j] = oldrots[j];
 		}
-		owner.curLogLike = oldll;
+		owner.setLogLike(oldll);
 	}
 }

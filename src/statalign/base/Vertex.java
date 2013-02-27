@@ -1851,7 +1851,9 @@ public class Vertex {
 
         //new parent sequence
         ret += uncle.parent.alignAllWindows();
-        uncle.parent.checkPointers();
+        if (Utils.DEBUG) {
+        	uncle.parent.checkPointers();
+        }
 
         // 	System.out.println("Aligned uncle.parent, pointers:");
         // 	System.out.println("Left:");
@@ -1864,7 +1866,9 @@ public class Vertex {
         //new grandpa
         ret += grandpa.alignAllWindows();
 
-        grandpa.checkPointers();
+        if (Utils.DEBUG) {
+        	grandpa.checkPointers();
+        }
         // 	System.out.println("aligned grandpa, RET: "+ret);
 
         // 	System.out.println("Aligned grandpa, pointers:");
@@ -1909,7 +1913,9 @@ public class Vertex {
             //	    System.out.println("RET after aligning everything: "+ret);
             //System.out.println("Calculating Felsenstein, called from fastSwap");
             grandpa.parent.calcFelsen();
-            grandpa.parent.checkPointers();
+            if (Utils.DEBUG) {
+	            grandpa.parent.checkPointers();
+            }
             //System.out.println("Aligned greatgrandpa, pointers:");
             //System.out.println("Left:");
             //grandpa.parent.left.printPointers();
@@ -2008,7 +2014,9 @@ public class Vertex {
             //}
             // System.out.println();
 
-            checkPointers();
+        	if (Utils.DEBUG) {
+        		checkPointers();
+        	}
         }
 
         p = last; //pf = last;
@@ -2107,26 +2115,29 @@ public class Vertex {
             //}
             //System.out.println();
 
-            checkPointers();
-            //checking pointer integrity
-            for (AlignColumn c = left.first; c != null; c = c.next) {
-                p = first;
-                while (c.parent != p && p != null) {
-                    p = p.next;
-                }
-                if (p == null) {
-                    throw new Error("children does not have a parent!!!" + this + " " + this.print());
-                }
-            }
-            for (AlignColumn c = right.first; c != null; c = c.next) {
-                p = first;
-                while (c.parent != p && p != null) {
-                    p = p.next;
-                }
-                if (p == null) {
-                    throw new Error("children does not have a parent!!!" + this + " " + this.print());
-                }
-            }
+        	if (Utils.DEBUG) {
+        		checkPointers();
+        	
+	            //checking pointer integrity
+	            for (AlignColumn c = left.first; c != null; c = c.next) {
+	                p = first;
+	                while (c.parent != p && p != null) {
+	                    p = p.next;
+	                }
+	                if (p == null) {
+	                    throw new Error("children does not have a parent!!!" + this + " " + this.print());
+	                }
+	            }
+	            for (AlignColumn c = right.first; c != null; c = c.next) {
+	                p = first;
+	                while (c.parent != p && p != null) {
+	                    p = p.next;
+	                }
+	                if (p == null) {
+	                    throw new Error("children does not have a parent!!!" + this + " " + this.print());
+	                }
+	            }
+        	}
 
 
         }

@@ -1,4 +1,4 @@
-package statalign.model.ext;
+package statalign.base.mcmc;
 
 public abstract class ProposalDistribution <T> {
 

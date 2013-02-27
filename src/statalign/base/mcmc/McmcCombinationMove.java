@@ -1,7 +1,9 @@
-package statalign.model.ext;
+package statalign.base.mcmc;
 
 import java.util.List;
 import java.util.ArrayList;
+
+import statalign.model.ext.ModelExtension;
 
 public class McmcCombinationMove extends McmcMove {
 
@@ -27,7 +29,10 @@ public class McmcCombinationMove extends McmcMove {
 		double logProposalRatio = 0;
 		for (McmcMove mcmcMove : mcmcMoves) {
 			mcmcMove.copyState(externalState);
+			double oldProposalWidthControlVariable = mcmcMove.proposalWidthControlVariable;
+			mcmcMove.proposalWidthControlVariable *= proposalWidthControlVariable;
 			logProposalRatio += mcmcMove.proposal(externalState); 
+			mcmcMove.proposalWidthControlVariable = oldProposalWidthControlVariable;
 		}
 		// We implicitly assume here that the order of the proposals
 		// does not matter.
@@ -35,7 +40,7 @@ public class McmcCombinationMove extends McmcMove {
 	}
 	
 	@Override
-	public ModelExtension getOwner() { 
+	public McmcModule getOwner() { 
 		return mcmcMoves.get(0).getOwner();
 		// NB it doesn't matter which McmcMove we use here, since it is
 		// only used to call back to the Mcmc object running

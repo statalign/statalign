@@ -3,31 +3,31 @@ package statalign.model.ext.plugins.structalign;
 import java.util.List;
 import java.util.ArrayList;
 
-import statalign.model.ext.McmcMove;
-import statalign.model.ext.GammaPrior;
-import statalign.model.ext.ParameterInterface;
-import statalign.model.ext.PriorDistribution;
-import statalign.model.ext.ProposalDistribution;
+import statalign.base.mcmc.GammaPrior;
+import statalign.base.mcmc.McmcMove;
+import statalign.base.mcmc.ParameterInterface;
+import statalign.base.mcmc.PriorDistribution;
+import statalign.base.mcmc.ProposalDistribution;
 import statalign.model.ext.plugins.StructAlign;
 
-public class HierarchicalContinuousPositiveParameterMove extends ContinuousPositiveParameterMove {
+public class HierarchicalContinuousPositiveStructAlignMove extends ContinuousPositiveStructAlignMove {
 
 	private List<McmcMove> children = new ArrayList<McmcMove>();
 	public PriorDistribution<Double> hierarchicalPrior;
 	
-	public HierarchicalContinuousPositiveParameterMove (StructAlign s, 
+	public HierarchicalContinuousPositiveStructAlignMove (StructAlign s, 
 			ParameterInterface p,  PriorDistribution<Double> pr,
 			ProposalDistribution<Double> prop, String n) {
 		super(s,p,pr,prop,n);
-		hierarchicalPrior = new GammaPrior(owner.nu,owner.nu / owner.sigma2Hier);
+		hierarchicalPrior = new GammaPrior(((StructAlign) owner).nu,((StructAlign) owner).nu / ((StructAlign) owner).sigma2Hier);
 		// TODO Abstract this somewhat
 	}
 
-	public void addChildMove(ContinuousPositiveParameterMove child) {
+	public void addChildMove(ContinuousPositiveStructAlignMove child) {
 		children.add(child);
 		child.addParent(this);
 	}
-	public double getLogChildDensity(ContinuousPositiveParameterMove child) {
+	public double getLogChildDensity(ContinuousPositiveStructAlignMove child) {
 		return hierarchicalPrior.logDensity(child.getParam().get());
 	}
 	
@@ -41,7 +41,7 @@ public class HierarchicalContinuousPositiveParameterMove extends ContinuousPosit
 			}
 			logProposalDensity -= hierarchicalPrior.logDensity(children.get(i).getParam().get());
 		}
-		hierarchicalPrior = new GammaPrior(owner.nu,owner.nu / owner.sigma2Hier); 
+		hierarchicalPrior = new GammaPrior(((StructAlign) owner).nu,((StructAlign) owner).nu / ((StructAlign) owner).sigma2Hier); 
 		// TODO Abstract this somewhat
 		for (int i=0; i<children.size(); i++) {
 			if(i == tree.root.index) {
@@ -56,7 +56,7 @@ public class HierarchicalContinuousPositiveParameterMove extends ContinuousPosit
 	@Override
 	public void restoreState(Object externalState) {
 		super.restoreState(externalState);
-		hierarchicalPrior = new GammaPrior(owner.nu,owner.nu / owner.sigma2Hier);
+		hierarchicalPrior = new GammaPrior(((StructAlign) owner).nu,((StructAlign) owner).nu / ((StructAlign) owner).sigma2Hier);
 		// TODO Abstract this somewhat
 	}
 }

@@ -13,8 +13,9 @@ public class RotationMove extends RotationOrTranslationMove {
 	
 	public RotationMove (StructAlign s, String n) {
 		owner = s;
+		structAlign = s;
 		name = n;
-		proposalWidthControlVariable = 1.0/owner.angleP;
+		proposalWidthControlVariable = 1.0/structAlign.angleP;
 	}
 
 	public double proposal(Object externalState) {
@@ -28,12 +29,12 @@ public class RotationMove extends RotationOrTranslationMove {
 		Rotation Q = new Rotation(new Vector3D(randomAxis.toArray()), smallAngle);
 		for(int i = 0; i < subtreeLeaves.size(); i++){
 			int j = subtreeLeaves.get(i);
-			Rotation R = new Rotation(new Vector3D(owner.axes[j]), owner.angles[j]);
+			Rotation R = new Rotation(new Vector3D(structAlign.axes[j]), structAlign.angles[j]);
 		
 			R = Q.applyTo(R);
 			
-			owner.axes[j] = R.getAxis().toArray();
-			owner.angles[j] = R.getAngle();
+			structAlign.axes[j] = R.getAxis().toArray();
+			structAlign.angles[j] = R.getAngle();
 		}
 					
 		return 0;

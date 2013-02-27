@@ -25,19 +25,19 @@ import statalign.base.Tree;
 import statalign.base.Utils;
 import statalign.base.Vertex;
 import statalign.base.hmm.Hmm;
+import statalign.base.mcmc.GammaPrior;
+import statalign.base.mcmc.GammaProposal;
+import statalign.base.mcmc.GaussianProposal;
+import statalign.base.mcmc.HyperbolicPrior;
+import statalign.base.mcmc.InverseGammaPrior;
+import statalign.base.mcmc.McmcCombinationMove;
+import statalign.base.mcmc.McmcMove;
+import statalign.base.mcmc.ParameterInterface;
+import statalign.base.mcmc.PriorDistribution;
 import statalign.io.DataType;
 import statalign.io.ProteinSkeletons;
-import statalign.model.ext.GammaProposal;
-import statalign.model.ext.GaussianProposal;
 import statalign.model.ext.ModelExtension;
-import statalign.model.ext.McmcMove;
-import statalign.model.ext.McmcCombinationMove;
-import statalign.model.ext.HyperbolicPrior;
-import statalign.model.ext.GammaPrior;
-import statalign.model.ext.InverseGammaPrior;
-import statalign.model.ext.PriorDistribution;
 import statalign.model.ext.plugins.structalign.*;
-import statalign.model.ext.ParameterInterface;
 
 import statalign.model.subst.SubstitutionModel;
 import statalign.postprocess.PluginParameters;
@@ -55,9 +55,9 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	
 	JToggleButton myButton;
 	
-	public final boolean globalSigma = true;
-	public final boolean useLibrary = false;
-	public final boolean fixedEpsilon = true;
+	public boolean globalSigma = true;
+	public boolean useLibrary = false;
+	public boolean fixedEpsilon = false;
 	
 	double structTemp = 1;
 
@@ -106,6 +106,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	private double sigma2PriorShape = 0.001;
 	private double sigma2PriorRate = 0.001;
 	public PriorDistribution<Double> sigma2Prior;
+	boolean sigma2PriorInitialised = false;
 	// sigma2Prior will either be InverseGamma or Hyperbolic, depending
 	// on whether globalSigma is switched on. It is defined inside the initRun()
 	// method.
@@ -130,7 +131,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	
 	// priors for rotation and translation are uniform
 	// so do not need to be included in M-H ratio
-	
+	 
 	
 	/** Default proposal weights in this order: 
 	 *  align, topology, edge, indel param, subst param, modelext param 
@@ -138,19 +139,24 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	 */
 	private final int pluginProposalWeight = 50; 
 	
-	int sigma2Weight = 15;
+	//int sigma2Weight = 5; //15;
+	int sigma2Weight = 13; //
 	int tauWeight = 10;
 	int sigma2HierWeight = 10;
 	int nuWeight = 10;
-	int epsilonWeight = 10;
+	//int epsilonWeight = 2;//10;
+	int epsilonWeight = 10; //
 	int rotationWeight = 2;
 	int translationWeight = 2;
 	int libraryWeight = 2;
 	int alignmentWeight = 2;
 	
+	/* Weights for combination moves */
 	int alignmentRotationWeight = 8;
 	int alignmentTranslationWeight = 6;
 	int alignmentLibraryWeight = 6;
+	int sigmaEpsilonWeight = 4; //
+	// This is reallocated to sigma2Weight if epsilon is being fixed 
 	
 	
 	/** Starting value for rotation proposal tuning parameter. */
@@ -162,7 +168,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 
 	public final double MIN_EPSILON = 0.01;
 	/** Value to fix epsilon at if we're not estimating it. */
-	public final double FIXED_EPSILON = 1.0;
+	public double fixedEpsilonValue = 0.0;
 	
 	@Override
 	public List<JComponent> getToolBarItems() {
@@ -183,8 +189,18 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	@Override
 	public String getUsageInfo() {
 		StringBuilder usage = new StringBuilder();
-		usage.append("StructAlign version 1.0\n\n");
-		usage.append("java -jar statalign.jar -plugin:structal=[OPTIONS]\n");
+		usage.append("___________________________\n\n");
+		usage.append("  StructAlign version 1.0\n\n");
+		usage.append("^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\n");
+		usage.append("java -jar statalign.jar -plugin:structal[OPTIONS]\n");
+		usage.append("OPTIONS: \n");
+		usage.append("\tepsilon=X\t\t(Fixes epsilon at X)\n");
+		usage.append("\tuseLibrary\t\t(Allows rotation library moves to be used)\n");
+		usage.append("\tsigma2Prior=PRIOR\t(Sets the prior and hyperparameters for sigma2)\n");
+		usage.append("\tPRIOR can be one of:\n");
+		usage.append("\t\thyp\t\tUses a hyperbolic prior on sigma (default)\n");
+		usage.append("\t\tg{a_b)\t\tUses a Gamma(a,b) prior on sigma2\n");
+		usage.append("\t\tinvg{a_b)\tUses an InverseGamma(a,b) prior on sigma2\n");
 		
 		return usage.toString();
 	}
@@ -196,11 +212,95 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	}
 	
 	@Override
-	public void init(PluginParameters params) {
-		if(params != null && params.getParameter(pluginID) != null) {
-			// TODO parse plugin parameters
-			setActive(true);
+	public void setParam(String paramName, String paramValue) {
+		if (paramName.equals("epsilon")) {
+			fixedEpsilon = true;
+			fixedEpsilonValue = Double.parseDouble(paramValue);
+			addToFilenameExtension("eps_"+fixedEpsilonValue);
+			System.out.println("Fixing epsilon to "+fixedEpsilonValue+".");
 		}
+		else if (paramName.equals("sigma2Prior")) {
+			if (paramValue.startsWith("hyp")) {
+				sigma2Prior = new HyperbolicPrior();
+				sigma2PriorInitialised = true;
+			}
+			else if (paramValue.startsWith("g{")) {
+				String[] argString = paramValue.split("\\{",2);
+				if (argString[1].endsWith("}")) {				
+					String [] args = argString[1].substring(0,argString[1].length()-1).split("_",2);
+					if (args.length == 2) {
+						sigma2Prior = new GammaPrior(Double.parseDouble(args[0]),Double.parseDouble(args[1]));
+						sigma2PriorInitialised = true;
+						addToFilenameExtension("sigma2Prior_g_"+args[0]+"_"+args[1]);
+						System.out.println("Using Gamma("+Double.parseDouble(args[0])+","+Double.parseDouble(args[1])+
+								") prior for sigma2.");
+					}
+					else {
+						throw new IllegalArgumentException(
+								"Prior parameters must be specifed in the form\n-plugin:structal[sigma2Prior=g(a;b)]\n");
+					}
+				}
+				else {
+					throw new IllegalArgumentException(
+						"Prior parameters must be specifed in the form\n-plugin:structal[sigma2Prior=g(a;b)]\n");
+				}
+			}
+			else if (paramValue.startsWith("invg{")) {
+				String[] argString = paramValue.split("\\{",2);
+				if (argString[1].endsWith("}")) {
+					String [] args = argString[1].substring(0,argString[1].length()-1).split("_",2);
+					if (args.length == 2) {
+						sigma2Prior = new InverseGammaPrior(Double.parseDouble(args[0]),Double.parseDouble(args[1]));
+						sigma2PriorInitialised = true;
+						addToFilenameExtension("sigma2Prior_invg_"+args[0]+"_"+args[1]);
+						System.out.println("Using InvGamma("+Double.parseDouble(args[0])+","+Double.parseDouble(args[1])+
+								") prior for sigma2.");
+					}
+					else {
+						throw new IllegalArgumentException(
+								"Prior parameters must be specifed in the form\n-plugin:structal[sigma2Prior=g(a,b)]\n");
+					}
+				}
+				else {
+					throw new IllegalArgumentException(
+						"Prior parameters must be specifed in the form\n-plugin:structal[sigma2Prior=g(a,b)]\n");
+				}
+			}
+			else {
+				throw new IllegalArgumentException("Unrecognised prior specification "+paramName+"="+paramValue+".");
+			}
+		}
+		else {
+			super.setParam(paramName,paramValue);
+		}
+	}
+	@Override
+	public void setParam(String paramName, Number paramValue) {
+		if (paramName.equals("epsilon")) {
+			fixedEpsilon = true;
+			fixedEpsilonValue = (Double) paramValue;
+			addToFilenameExtension("eps_"+fixedEpsilonValue);
+			System.out.println("Fixing epsilon to "+fixedEpsilonValue+".");
+		}
+		else {
+			super.setParam(paramName,paramValue);
+		}
+	}
+	@Override
+	public void setParam(String paramName, boolean paramValue) {
+		if (paramName.equals("globalSigma")) {
+			globalSigma = true;
+		}
+		else if (paramName.equals("useLibrary")) {
+			useLibrary = true;
+		}
+		else {
+			super.setParam(paramName,paramValue);
+		}
+	}
+	@Override
+	public void init() {
+
 	}
 	
 	@Override
@@ -254,10 +354,12 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		nu = 1;
 		tau = 50;
 		if (fixedEpsilon) {
-			epsilon = FIXED_EPSILON;	
+			epsilon = fixedEpsilonValue;
+			sigma2Weight += sigmaEpsilonWeight;
 		}
 		else {
-			epsilon = 100;
+			//epsilon = 100;
+			epsilon = 50;
 		}
 		
 		
@@ -287,19 +389,21 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		for(i = 0; i < sigma2.length; i++)
 			sigma2[i] = 1;
 		
-		
-		
-		if (globalSigma) {
-			if (fixedEpsilon) {
-				sigma2Prior = new GammaPrior(2,2);
+		if (!sigma2PriorInitialised) {
+			if (globalSigma) {
+				if (fixedEpsilon) {
+					sigma2Prior = new GammaPrior(2,2);
+				}
+				else {
+					sigma2Prior = new HyperbolicPrior();
+				}
 			}
 			else {
-				sigma2Prior = new HyperbolicPrior();
+				sigma2Prior = new InverseGammaPrior(sigma2PriorShape,sigma2PriorRate);
 			}
+			sigma2PriorInitialised = true;
 		}
-		else {
-			sigma2Prior = new InverseGammaPrior(sigma2PriorShape,sigma2PriorRate);
-		}
+		
 		
 		/* Add alignment and rotation/translation moves */
 		RotationMove rotationMove = new RotationMove(this,"rotation"); 
@@ -349,50 +453,49 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		GaussianProposal nProp = new GaussianProposal();
 
 		ParameterInterface tauInterface = paramInterfaceGenerator.new TauInterface();
-		ContinuousPositiveParameterMove tauMove = 
-			new ContinuousPositiveParameterMove(this,tauInterface,tauPrior,gProp,"τ");
-		tauMove.setPlottable();
-		tauMove.setPlotSide(1);
+		ContinuousPositiveStructAlignMove tauMove = 
+			new ContinuousPositiveStructAlignMove(this,tauInterface,tauPrior,gProp,"τ");
+		tauMove.moveParams.setPlottable();
+		tauMove.moveParams.setPlotSide(1);
 		addMcmcMove(tauMove,tauWeight);
 		
+		ContinuousPositiveStructAlignMove epsilonMove = null;
 		if (!fixedEpsilon) {
 			ParameterInterface epsilonInterface = paramInterfaceGenerator.new EpsilonInterface();
-			ContinuousPositiveParameterMove epsilonMove = 
-				new ContinuousPositiveParameterMove(this,epsilonInterface,epsilonPrior,gProp,"ε");
+			epsilonMove = 
+				new ContinuousPositiveStructAlignMove(this,epsilonInterface,epsilonPrior,nProp,"ε");
 			epsilonMove.setMinValue(MIN_EPSILON);
-			epsilonMove.setPlottable();
-			epsilonMove.setPlotSide(1);
+			epsilonMove.moveParams.setPlottable();
+			epsilonMove.moveParams.setPlotSide(1);
 			addMcmcMove(epsilonMove,epsilonWeight);
 		}
 				
-		HierarchicalContinuousPositiveParameterMove sigma2HMove = null;
-		HierarchicalContinuousPositiveParameterMove nuMove = null;
+		HierarchicalContinuousPositiveStructAlignMove sigma2HMove = null;
+		HierarchicalContinuousPositiveStructAlignMove nuMove = null;
 		if (!globalSigma) {
 			ParameterInterface sigma2HInterface = paramInterfaceGenerator.new Sigma2HInterface();
-			sigma2HMove = new HierarchicalContinuousPositiveParameterMove(this,sigma2HInterface,sigma2HPrior,gProp,"σ_g");
-			sigma2HMove.setPlottable();
-			sigma2HMove.setPlotSide(0);
+			sigma2HMove = new HierarchicalContinuousPositiveStructAlignMove(this,sigma2HInterface,sigma2HPrior,gProp,"σ_g");
+			sigma2HMove.moveParams.setPlottable();
+			sigma2HMove.moveParams.setPlotSide(0);
 			addMcmcMove(sigma2HMove,sigma2HierWeight); 
-			//addMcmcMove(sigma2HMove,0);
 			
 			ParameterInterface nuInterface = paramInterfaceGenerator.new NuInterface();
-			nuMove = new HierarchicalContinuousPositiveParameterMove(this,nuInterface,nuPrior,gProp,"ν");
-			nuMove.setPlottable();
-			nuMove.setPlotSide(1);
+			nuMove = new HierarchicalContinuousPositiveStructAlignMove(this,nuInterface,nuPrior,gProp,"ν");
+			nuMove.moveParams.setPlottable();
+			nuMove.moveParams.setPlotSide(1);
 			addMcmcMove(nuMove,nuWeight);
-			//addMcmcMove(nuMove,0);
 		}
 		
 		for (int j=0; j<sigma2.length; j++) {
 			String sigmaName;
 			if (sigma2.length == 1) {
-				sigmaName = "σ";
+				sigmaName = "σ2";
 			}
 			else {
-				sigmaName = "σ_"+j;
+				sigmaName = "σ2_"+j;
 			}
 			ParameterInterface sigma2Interface = paramInterfaceGenerator.new Sigma2Interface(j);
-			ContinuousPositiveParameterMove m = new ContinuousPositiveParameterMove(
+			ContinuousPositiveStructAlignMove m = new ContinuousPositiveStructAlignMove(
 														this,sigma2Interface,
 														sigma2Prior,nProp,sigmaName);
 														//sigma2Prior,gProp,sigmaName);
@@ -401,14 +504,24 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				// i.e. don't add the last one if we have
 				// more than one
 			}
-			m.setPlottable();
-			m.setPlotSide(0);
+			m.moveParams.setPlottable();
+			m.moveParams.setPlotSide(0);
 			addMcmcMove(m,sigma2Weight);
 			if (!globalSigma) {
 				sigma2HMove.addChildMove(m);
 				nuMove.addChildMove(m);
 			}
+			if (sigma2.length == 1 && !fixedEpsilon) {
+				ArrayList<McmcMove> sigmaEpsilon = new ArrayList<McmcMove>();
+				sigmaEpsilon.add(m);
+				sigmaEpsilon.add(epsilonMove);
+				McmcCombinationMove sigmaEpsilonMove = 
+					new McmcCombinationMove(sigmaEpsilon);
+				addMcmcMove(sigmaEpsilonMove,sigmaEpsilonWeight);
+			}
 		}
+		
+	
 	}
 	
 	@Override
@@ -418,6 +531,9 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	
 	public double getLogLike() {
 		return curLogLike;
+	}
+	public void setLogLike(double ll) {
+		curLogLike = ll;
 	}
 	@Override
 	public double logLikeFactor(Tree tree) {
