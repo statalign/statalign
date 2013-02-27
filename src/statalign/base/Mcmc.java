@@ -841,6 +841,7 @@ public class Mcmc extends Stoppable {
 		
 			
 		double bpp = nephew.fastSwapWithUncle();
+//		double bpp = nephew.swapWithUncleAlignToParent();
 
 		// double bpp = nephew.swapWithUncle();
 	
@@ -901,6 +902,7 @@ public class Mcmc extends Stoppable {
 			}
 	
 			uncle.fastSwapBackUncle();
+//			uncle.swapBackUncleAlignToParent();
 			// uncle.swapBackUncle();
 			
 			if(Utils.DEBUG) {

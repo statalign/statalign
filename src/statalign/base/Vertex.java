@@ -1406,32 +1406,43 @@ public class Vertex {
         return bpp;
     }
     
+    public double realignToParent() {
+    	return realignToParent(false);
+    }
+    
     /**
      * Samples a new alignment between the subtree rooted at this vertex and the rest of the sequences.
      * Only the alignment between this vertex and its parent is changed.
+     * @param useCurrentWin if true then keeps the current window selection for this node
+     * 		(backproposal and proposal for window selection must be computed by the caller)
      * @return the ratio between backproposal and proposal probabilities
      */
-    public double realignToParent() {
+    public double realignToParent(boolean useCurrentWin) {
     	if(parent == null)
     		throw new Error("realignToParent was called on the root vertex");
-        MuDouble p = new MuDouble(1.0);
-        winLength = Utils.linearizerWeight(length, p, Utils.WINDOW_MULTIPLIER*Math.sqrt(length));
-        //System.out.print("Length: "+length+"\t");
-        //System.out.print("Window length: "+winLength+"\t");
-        int b = (length - winLength == 0 ? 0 : Utils.generator.nextInt(length - winLength));
-        //System.out.print("b: "+b+"\t");
-        AlignColumn actualAC = first;
-        for (int i = 0; i < b; i++) {
-            actualAC = actualAC.next;
+    	
+    	double bpp = 0;
+    	
+        if(!useCurrentWin) {
+        	MuDouble p = new MuDouble(1.0);
+	        winLength = Utils.linearizerWeight(length, p, Utils.WINDOW_MULTIPLIER*Math.sqrt(length));
+	        //System.out.print("Length: "+length+"\t");
+	        //System.out.print("Window length: "+winLength+"\t");
+	        int b = (length - winLength == 0 ? 0 : Utils.generator.nextInt(length - winLength));
+	        //System.out.print("b: "+b+"\t");
+	        AlignColumn actualAC = first;
+	        for (int i = 0; i < b; i++) {
+	            actualAC = actualAC.next;
+	        }
+	        winFirst = actualAC;
+	        for (int i = 0; i < winLength; i++) {
+	            actualAC = actualAC.next;
+	        }
+	        winLast = actualAC;
+	        
+	        //double bpp = -Math.log(p.value * (length - winLength == 0 ? 1 : length - winLength));
+	        bpp -= Math.log(p.value / (length - winLength + 1));
         }
-        winFirst = actualAC;
-        for (int i = 0; i < winLength; i++) {
-            actualAC = actualAC.next;
-        }
-        winLast = actualAC;
-
-        //double bpp = -Math.log(p.value * (length - winLength == 0 ? 1 : length - winLength));
-        double bpp = -Math.log(p.value / (length - winLength + 1));
 
         // nothing is selected for realignment below this vertex
         lastSelected();
@@ -1601,8 +1612,9 @@ public class Vertex {
     }
 
     /**
-     * Swaps `this' with its uncle, hmm3Align'ing parent and grandparent, the latter is hmm2Align'ed as well.
-     * Assumes `this' has a non-null grandparent.
+     * Swaps {@code this} with its uncle, {@link #hmm3Align()}'ing parent and grandparent,
+     * the latter is {@link #hmm2Align()}'ed as well.
+     * Assumes {@code this} has a non-null grandparent.
      * @return log-quotient of backproposal and proposal
      */
     double swapWithUncle1() {
@@ -1646,8 +1658,9 @@ public class Vertex {
     }
 
     /**
-     * Restores the exact state just before the call of `swapWithUncle'. Must be called on ex-uncle.
-     * Assumes `this' has a non-null grandparent.
+     * Restores the exact state just before the call of {@link #swapWithUncle1()}.
+     * Must be called on ex-uncle node.
+     * Assumes {@code this} has a non-null grandparent.
      */
     void swapBackUncle1() {
         Vertex uncle = parent.brother(), grandpa = parent.parent;
@@ -1662,8 +1675,78 @@ public class Vertex {
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
-     * Swaps `this' with its uncle, hmm3Align'ing parent and grandparent, the latter is hmm2Align'ed as well.
-     * Assumes `this' has a non-null grandparent.
+     * Swaps {@code this} with its uncle, but proposes new alignments only between this node and its parent, and
+     * the uncle node and its parent, every other alignment is kept fixed. Slow because full sequence
+     * alignment is done.
+     * Assumes {@code this} has a non-null grandparent.
+     * @return log-quotient of backproposal and proposal
+     */
+    public double swapWithUncleAlignToParent() {
+        Vertex uncle = parent.brother(), grandpa = parent.parent;
+        double ret = 0.0;
+
+        // make node and window selection
+        lastSelected();
+        uncle.lastSelected();
+        
+        fullWin();
+        parent.fullWin();
+        uncle.fullWin();
+        grandpa.fullWin();
+        
+        // compute alignment backproposal
+        ret += hmm2BackProp();
+        ret += uncle.hmm2BackProp();
+
+        // do the swap
+        parentNewChild(uncle);			// order is important here
+        uncle.parentNewChild(this);
+        uncle.parent = parent;
+        parent = grandpa;
+
+        // align the sequences (uncle first, that's now below!)
+        double bppProp = uncle.hmm2AlignWithSave();
+        bppProp += hmm2AlignWithSave();
+        ret += bppProp;
+        parent.calcAllUp();
+
+        if(Utils.DEBUG) {
+        	// check proposal - backproposal consistency
+        	double bppBack = uncle.hmm2BackProp();
+        	bppBack += hmm2BackProp();
+        	if(Math.abs(bppProp+bppBack) > 1e-5) {
+        	  System.out.println("Proposal - backproposal inconsistent in swapWithUncleAlignToParent! Prop: "+bppProp+" Back: "+bppBack);
+        	}
+        }
+
+        return ret;
+	}
+
+    /**
+     * Restores the exact state just before the call to {@link #swapWithUncleAlignToParent()}.
+     * Must be called on ex-uncle node.
+     * Assumes {@code this} has a non-null grandparent.
+     */
+   void swapBackUncleAlignToParent() {
+        Vertex uncle = parent.brother(), grandpa = parent.parent;
+
+        // swap back
+        parentNewChild(uncle);                    // order is important!
+        uncle.parentNewChild(this);
+        uncle.parent = parent;
+        parent = grandpa;
+
+        // restore alignment
+        alignRestore();
+        uncle.alignRestore();
+    }
+
+	/**
+     * Swaps {@code this} with its uncle, but keeps alignment columns where {@code this}, its parent,
+     * the uncle node and its parent are all aligned unchanged with a given probability, and only
+     * proposes new alignments between these selected alignment anchors columns. Alignments between
+     * other sequences than the above mentioned four are kept unchanged.
+     * Assumes {@code this} has a non-null grandparent.
      * @return log-quotient of backproposal and proposal
      */
     double fastSwapWithUncle() {
@@ -2159,8 +2242,9 @@ public class Vertex {
     }
 
     /**
-     * Restores the exact state just before the call of `swapWithUncle'. Must be called on ex-uncle.
-     * Assumes `this' has a non-null grandparent.
+     * Restores the exact state just before the call of {@link #fastSwapWithUncle()}.
+     * Must be called on ex-uncle node.
+     * Assumes {@code this} has a non-null grandparent.
      */
     void fastSwapBackUncle() {
         Vertex uncle = parent.brother(), grandpa = parent.parent;
