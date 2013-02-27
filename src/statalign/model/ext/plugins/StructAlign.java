@@ -131,7 +131,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	
 	// priors for rotation and translation are uniform
 	// so do not need to be included in M-H ratio
-	
+	 
 	
 	/** Default proposal weights in this order: 
 	 *  align, topology, edge, indel param, subst param, modelext param 
