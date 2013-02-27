@@ -300,10 +300,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	}
 	@Override
 	public void init() {
-//		if(params != null && params.getParameter(pluginID) != null) {
-//			// TODO parse plugin parameters
-//			setActive(true);
-//		}
+
 	}
 	
 	@Override
