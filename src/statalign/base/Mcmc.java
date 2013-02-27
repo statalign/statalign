@@ -495,6 +495,8 @@ public class Mcmc extends Stoppable {
 		// notifies model extension plugins of the end of sampling
 		modelExtMan.afterSampling();
 		
+		System.out.println(getInfoString());
+		
 		if (frame != null) {
 			frame.statusText.setText(MainFrame.IDLE_STATUS_MESSAGE);
 		}
@@ -685,6 +687,7 @@ public class Mcmc extends Stoppable {
 		
 		// check log-likelihood consistency if debugging on
 		if(Utils.DEBUG) {
+			tree.recomputeCheckLogLike();
 			if(Math.abs(modelExtMan.totalLogLike(tree)-totalLogLike) > 1e-5)
 				throw new Error("Log-likelihood inconsistency in MCMC");
 		}
@@ -822,115 +825,115 @@ public class Mcmc extends Stoppable {
 		Vertex uncle = nephew.parent.brother();
 		
 		modelExtMan.beforeTreeChange(tree, nephew);
-	
-		// for(vertId = 0; vertId < vnum; vertId++) {
-		// if(tree.getTopVertexId(vertId) == -1) { // vertex eligible
-		// if(rnd-- == 0)
-		// break;
-		// }
-		// }
-		// Vertex nephew = tree.vertex[vertId];
-	
-		// String[] s = tree.root.printedMultipleAlignment();
-		// System.out.println("Alignment before topology changing: ");
-		// for(int i = 0; i < s.length; i++){
-		// System.out.println(s[i]);
-		// }
+
+//		// alignment and tree before
+//		System.out.println("Before:");
+//		int nn = 0;
+//		for(String a : getState().getFullAlign())
+//			System.out.println((nn<tree.names.length?tree.names[nn++]:nn++)+"\t"+a);
+//		System.out.println(tree.printedTree());
+//		
+//		System.out.println("nephew: "+nephew.index+" parent: "+nephew.parent.index+
+//				" uncle: "+uncle.index+" grandpa: "+nephew.parent.parent.index);
+		
+			
 		double bpp = nephew.fastSwapWithUncle();
 		// double bpp = nephew.swapWithUncle();
-		// s = tree.root.printedMultipleAlignment();
-		// System.out.println("Alignment after topology changing: ");
-		// for(int i = 0; i < s.length; i++){
-		// System.out.println(s[i]);
-		// }
 	
 		double newLogLi = modelExtMan.logLikeTreeChange(tree, nephew);
 	
-		// tree.root.calcFelsRecursivelyWithCheck();
-		// tree.root.calcIndelRecursivelyWithCheck();
-	
+//		System.out.println("p="+(Math.exp(bpp + (newLogLi - oldLogLi) * tree.heat)));
 		if (Math.log(Utils.generator.nextDouble()) < bpp
 				+ (newLogLi - oldLogLi) * tree.heat) {
 			// accepted
-			// System.out.println("accepted (old: "+oldLogLi+" new: "+newLogLi+")");
+//			System.out.println("accepted (old: "+oldLogLi+" new: "+newLogLi+")");
 			topologyAccepted++;
 			totalLogLike = newLogLi;
 			modelExtMan.afterTreeChange(tree, uncle, true);
 		} else {
 			// rejected
-			// System.out.println("Checking pointer integrity before changing back topology: ");
-			for (int i = 0; i < tree.vertex.length; i++) {
-				if (tree.vertex[i].left != null && tree.vertex[i].right != null) {
-					tree.vertex[i].checkPointers();
-					AlignColumn p;
-					// checking pointer integrity
-					for (AlignColumn c = tree.vertex[i].left.first; c != null; c = c.next) {
-						p = tree.vertex[i].first;
-						while (c.parent != p && p != null)
-							p = p.next;
-						if (p == null)
-							throw new Error(
-									"children does not have a parent!!!"
-											+ tree.vertex[i] + " "
-											+ tree.vertex[i].print());
+
+//			// proposed and rejected alignment and tree 
+//			System.out.println("Proposed:");
+//			nn = 0;
+//			for(String a : getState().getFullAlign())
+//				System.out.println((nn<tree.names.length?tree.names[nn++]:nn++)+"\t"+a);
+//			System.out.println(tree.printedTree());
+//			System.out.println("R, L, M: "+Arrays.toString(tree.hmm2.params));
+			
+			if(Utils.DEBUG) {
+				// Checking pointer integrity before changing back topology
+				for (int i = 0; i < tree.vertex.length; i++) {
+					if (tree.vertex[i].left != null && tree.vertex[i].right != null) {
+						tree.vertex[i].checkPointers();
+						AlignColumn p;
+						// checking pointer integrity
+						for (AlignColumn c = tree.vertex[i].left.first; c != null; c = c.next) {
+							p = tree.vertex[i].first;
+							while (c.parent != p && p != null)
+								p = p.next;
+							if (p == null)
+								throw new Error(
+										"children does not have a parent!!!"
+												+ tree.vertex[i] + " "
+												+ tree.vertex[i].print());
+						}
+						for (AlignColumn c = tree.vertex[i].right.first; c != null; c = c.next) {
+							p = tree.vertex[i].first;
+							while (c.parent != p && p != null)
+								p = p.next;
+							if (p == null)
+								throw new Error(
+										"children does not have a parent!!!"
+												+ tree.vertex[i] + " "
+												+ tree.vertex[i].print());
+						}
+		
 					}
-					for (AlignColumn c = tree.vertex[i].right.first; c != null; c = c.next) {
-						p = tree.vertex[i].first;
-						while (c.parent != p && p != null)
-							p = p.next;
-						if (p == null)
-							throw new Error(
-									"children does not have a parent!!!"
-											+ tree.vertex[i] + " "
-											+ tree.vertex[i].print());
-					}
-	
 				}
 			}
 	
 			uncle.fastSwapBackUncle();
-			// System.out.println("Checking pointer integrity after changing back topology: ");
-			for (int i = 0; i < tree.vertex.length; i++) {
-				if (tree.vertex[i].left != null && tree.vertex[i].right != null) {
-					tree.vertex[i].checkPointers();
-					AlignColumn p;
-					// checking pointer integrity
-					for (AlignColumn c = tree.vertex[i].left.first; c != null; c = c.next) {
-						p = tree.vertex[i].first;
-						while (c.parent != p && p != null)
-							p = p.next;
-						if (p == null)
-							throw new Error(
-									"children does not have a parent!!!"
-											+ tree.vertex[i] + " "
-											+ tree.vertex[i].print());
-					}
-					for (AlignColumn c = tree.vertex[i].right.first; c != null; c = c.next) {
-						p = tree.vertex[i].first;
-						while (c.parent != p && p != null)
-							p = p.next;
-						if (p == null)
-							throw new Error(
-									"children does not have a parent!!!"
-											+ tree.vertex[i] + " "
-											+ tree.vertex[i].print());
+			// uncle.swapBackUncle();
+			
+			if(Utils.DEBUG) {
+				// Checking pointer integrity after changing back topology
+				for (int i = 0; i < tree.vertex.length; i++) {
+					if (tree.vertex[i].left != null && tree.vertex[i].right != null) {
+						tree.vertex[i].checkPointers();
+						AlignColumn p;
+						// checking pointer integrity
+						for (AlignColumn c = tree.vertex[i].left.first; c != null; c = c.next) {
+							p = tree.vertex[i].first;
+							while (c.parent != p && p != null)
+								p = p.next;
+							if (p == null)
+								throw new Error(
+										"children does not have a parent!!!"
+												+ tree.vertex[i] + " "
+												+ tree.vertex[i].print());
+						}
+						for (AlignColumn c = tree.vertex[i].right.first; c != null; c = c.next) {
+							p = tree.vertex[i].first;
+							while (c.parent != p && p != null)
+								p = p.next;
+							if (p == null)
+								throw new Error(
+										"children does not have a parent!!!"
+												+ tree.vertex[i] + " "
+												+ tree.vertex[i].print());
+						}
 					}
 				}
 			}
-			// uncle.swapBackUncle();
-			// s = tree.root.printedMultipleAlignment();
-			// System.out.println("Alignment after changing back the topology: ");
-			// for(int i = 0; i < s.length; i++){
-			// System.out.println(s[i]);
-			// }
-			// System.out.println("rejected (old: "+oldLogLi+" new: "+newLogLi+")");
+			
+//			System.out.println("rejected (old: "+oldLogLi+" new: "+newLogLi+" bpp: "+bpp+")");
+			
 			modelExtMan.afterTreeChange(tree, nephew, false);
 		}
 	
 		// tree.printAllPointers();
 		// System.out.println("\n\n\t***\t***\t***\n\n\n");
-		tree.root.calcFelsRecursivelyWithCheck();
-		tree.root.calcIndelRecursivelyWithCheck();
 	}
 
 	private void sampleEdge() {

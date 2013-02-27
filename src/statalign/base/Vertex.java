@@ -388,15 +388,16 @@ public class Vertex {
     }
 
 
-    void calcFelsRecursivelyWithCheck() {
+    void recomputeCheckLogLike() {
         if (left != null && right != null) {
             // System.out.println("calling the left child");
-            left.calcFelsRecursivelyWithCheck();
+            left.recomputeCheckLogLike();
             //System.out.println("calling the right child");
-            right.calcFelsRecursivelyWithCheck();
+            right.recomputeCheckLogLike();
         }
         calcFelsenWithCheck();
         calcOrphanWithCheck();
+        calcIndelLogLike(true);
     }
 
 
@@ -533,15 +534,7 @@ public class Vertex {
             left.calcIndelLikeRecursively();
             right.calcIndelLikeRecursively();
         }
-        calcIndelLogLike();
-    }
-
-    void calcIndelRecursivelyWithCheck() {
-        if (left != null && right != null) {
-            left.calcIndelRecursivelyWithCheck();
-            right.calcIndelRecursivelyWithCheck();
-        }
-        calcIndelLikeWithCheck();
+        calcIndelLogLike(false);
     }
 
     /**
@@ -550,25 +543,20 @@ public class Vertex {
      * Saves previous logLikelihood into `old' Vertex, so it shouldn't be called twice in a row.
      * Assumes it has been called previously on both `left' and `right'.
      * Result is stored in `this'.
+     * @param withCheck if true likelihood is re-calculated and checked against the already stored value
      */
-    void calcIndelLogLike() {
-        old.indelLogLike = indelLogLike;
-        indelLogLike = 0.0;
+    void calcIndelLogLike(boolean withCheck) {
+    	if(!withCheck)
+    		old.indelLogLike = indelLogLike;
+        double newIndelLogLike = 0.0;
         if (left != null && right != null) {
-            indelLogLike += left.calcIndelLogLikeUp();
-            indelLogLike += right.calcIndelLogLikeUp();
+            newIndelLogLike += left.calcIndelLogLikeUp();
+            newIndelLogLike += right.calcIndelLogLikeUp();
         }
-    }
-
-    void calcIndelLikeWithCheck() {
-        double newindelLogLike = 0.0;
-        if (left != null && right != null) {
-            newindelLogLike += left.calcIndelLogUpWithCheck();
-            newindelLogLike += right.calcIndelLogUpWithCheck();
-        }
-        if (Math.abs(indelLogLike - newindelLogLike) > 1e-5) {
-            new ErrorMessage(null, "problem: fast indel: " + indelLogLike + " slow indel: " + newindelLogLike, true);
-        }
+        if(!withCheck)
+        	indelLogLike = newIndelLogLike;
+        else if(Math.abs(indelLogLike - newIndelLogLike) > 1e-5)
+        	throw new Error("likelihood inconsistency in calcIndelLogLike - stored likelihood: "+indelLogLike+" recomputed: "+newIndelLogLike);
     }
 
     /**
@@ -586,39 +574,6 @@ public class Vertex {
 
         //System.out.println("--------------------------------------------------");
         //printPointers();
-
-        if (parent != null) {
-            AlignColumn c = first, p = parent.first;
-            int prevk = START, k;
-
-            while (c != last || p != parent.last) {
-                if (c.parent != p) {                            // deletion (* -), pattern code 2
-                    k = emitPatt2State[2];
-                    p = p.next;
-                } else if (c.orphan) {                        // insertion (- *), pattern code 1
-                    k = emitPatt2State[1];
-                    c = c.next;
-                } else {                                                // substitution (* *), pattern code 3
-                    k = emitPatt2State[3];
-                    p = p.next;
-                    c = c.next;
-                }
-                indelLogLikeUp += hmm2TransMatrix[prevk][k];
-                prevk = k;
-            }
-
-            indelLogLikeUp += hmm2TransMatrix[prevk][END];
-        }
-
-        return indelLogLikeUp;
-    }
-
-    double calcIndelLogUpWithCheck() {
-        final int START = owner.hmm2.getStart();
-        final int END = owner.hmm2.getEnd();
-        final int emitPatt2State[] = owner.hmm2.getEmitPatt2State();
-
-        double indelLogLikeUp = indelLogLike;
 
         if (parent != null) {
             AlignColumn c = first, p = parent.first;
@@ -1046,7 +1001,7 @@ public class Vertex {
         left.calcOrphan();
         right.calcOrphan();
         calcFelsen();
-        calcIndelLogLike();
+        calcIndelLogLike(false);
         //		System.out.println("printing the alignments at the root of this subtree: "+print());
         //		System.out.println("pointers");
         //	String[] s = left.printedAlignment();
@@ -1335,7 +1290,7 @@ public class Vertex {
         calcOrphan();
         parent.calcFelsen();
         parent.calcOrphan();
-        parent.calcIndelLogLike();
+        parent.calcIndelLogLike(false);
 
         return retVal.value;
     }
@@ -2389,7 +2344,7 @@ public class Vertex {
         for (Vertex v = parent; v != null; v = v.parent) {
             v.calcFelsen();
             v.calcOrphan();
-            v.calcIndelLogLike();
+            v.calcIndelLogLike(false);
         }
     }
 
