@@ -25,19 +25,19 @@ import statalign.base.Tree;
 import statalign.base.Utils;
 import statalign.base.Vertex;
 import statalign.base.hmm.Hmm;
+import statalign.base.mcmc.GammaPrior;
+import statalign.base.mcmc.GammaProposal;
+import statalign.base.mcmc.GaussianProposal;
+import statalign.base.mcmc.HyperbolicPrior;
+import statalign.base.mcmc.InverseGammaPrior;
+import statalign.base.mcmc.McmcCombinationMove;
+import statalign.base.mcmc.McmcMove;
+import statalign.base.mcmc.ParameterInterface;
+import statalign.base.mcmc.PriorDistribution;
 import statalign.io.DataType;
 import statalign.io.ProteinSkeletons;
-import statalign.model.ext.GammaProposal;
-import statalign.model.ext.GaussianProposal;
 import statalign.model.ext.ModelExtension;
-import statalign.model.ext.McmcMove;
-import statalign.model.ext.McmcCombinationMove;
-import statalign.model.ext.HyperbolicPrior;
-import statalign.model.ext.GammaPrior;
-import statalign.model.ext.InverseGammaPrior;
-import statalign.model.ext.PriorDistribution;
 import statalign.model.ext.plugins.structalign.*;
-import statalign.model.ext.ParameterInterface;
 
 import statalign.model.subst.SubstitutionModel;
 import statalign.postprocess.PluginParameters;
@@ -453,36 +453,36 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		GaussianProposal nProp = new GaussianProposal();
 
 		ParameterInterface tauInterface = paramInterfaceGenerator.new TauInterface();
-		ContinuousPositiveParameterMove tauMove = 
-			new ContinuousPositiveParameterMove(this,tauInterface,tauPrior,gProp,"τ");
-		tauMove.setPlottable();
-		tauMove.setPlotSide(1);
+		ContinuousPositiveStructAlignMove tauMove = 
+			new ContinuousPositiveStructAlignMove(this,tauInterface,tauPrior,gProp,"τ");
+		tauMove.moveParams.setPlottable();
+		tauMove.moveParams.setPlotSide(1);
 		addMcmcMove(tauMove,tauWeight);
 		
-		ContinuousPositiveParameterMove epsilonMove = null;
+		ContinuousPositiveStructAlignMove epsilonMove = null;
 		if (!fixedEpsilon) {
 			ParameterInterface epsilonInterface = paramInterfaceGenerator.new EpsilonInterface();
 			epsilonMove = 
-				new ContinuousPositiveParameterMove(this,epsilonInterface,epsilonPrior,nProp,"ε");
+				new ContinuousPositiveStructAlignMove(this,epsilonInterface,epsilonPrior,nProp,"ε");
 			epsilonMove.setMinValue(MIN_EPSILON);
-			epsilonMove.setPlottable();
-			epsilonMove.setPlotSide(1);
+			epsilonMove.moveParams.setPlottable();
+			epsilonMove.moveParams.setPlotSide(1);
 			addMcmcMove(epsilonMove,epsilonWeight);
 		}
 				
-		HierarchicalContinuousPositiveParameterMove sigma2HMove = null;
-		HierarchicalContinuousPositiveParameterMove nuMove = null;
+		HierarchicalContinuousPositiveStructAlignMove sigma2HMove = null;
+		HierarchicalContinuousPositiveStructAlignMove nuMove = null;
 		if (!globalSigma) {
 			ParameterInterface sigma2HInterface = paramInterfaceGenerator.new Sigma2HInterface();
-			sigma2HMove = new HierarchicalContinuousPositiveParameterMove(this,sigma2HInterface,sigma2HPrior,gProp,"σ_g");
-			sigma2HMove.setPlottable();
-			sigma2HMove.setPlotSide(0);
+			sigma2HMove = new HierarchicalContinuousPositiveStructAlignMove(this,sigma2HInterface,sigma2HPrior,gProp,"σ_g");
+			sigma2HMove.moveParams.setPlottable();
+			sigma2HMove.moveParams.setPlotSide(0);
 			addMcmcMove(sigma2HMove,sigma2HierWeight); 
 			
 			ParameterInterface nuInterface = paramInterfaceGenerator.new NuInterface();
-			nuMove = new HierarchicalContinuousPositiveParameterMove(this,nuInterface,nuPrior,gProp,"ν");
-			nuMove.setPlottable();
-			nuMove.setPlotSide(1);
+			nuMove = new HierarchicalContinuousPositiveStructAlignMove(this,nuInterface,nuPrior,gProp,"ν");
+			nuMove.moveParams.setPlottable();
+			nuMove.moveParams.setPlotSide(1);
 			addMcmcMove(nuMove,nuWeight);
 		}
 		
@@ -495,7 +495,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				sigmaName = "σ2_"+j;
 			}
 			ParameterInterface sigma2Interface = paramInterfaceGenerator.new Sigma2Interface(j);
-			ContinuousPositiveParameterMove m = new ContinuousPositiveParameterMove(
+			ContinuousPositiveStructAlignMove m = new ContinuousPositiveStructAlignMove(
 														this,sigma2Interface,
 														sigma2Prior,nProp,sigmaName);
 														//sigma2Prior,gProp,sigmaName);
@@ -504,8 +504,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				// i.e. don't add the last one if we have
 				// more than one
 			}
-			m.setPlottable();
-			m.setPlotSide(0);
+			m.moveParams.setPlottable();
+			m.moveParams.setPlotSide(0);
 			addMcmcMove(m,sigma2Weight);
 			if (!globalSigma) {
 				sigma2HMove.addChildMove(m);
@@ -531,6 +531,9 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	
 	public double getLogLike() {
 		return curLogLike;
+	}
+	public void setLogLike(double ll) {
+		curLogLike = ll;
 	}
 	@Override
 	public double logLikeFactor(Tree tree) {

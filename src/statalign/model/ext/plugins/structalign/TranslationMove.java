@@ -7,8 +7,9 @@ public class TranslationMove extends RotationOrTranslationMove {
 	
 	public TranslationMove (StructAlign s, String n) {
 		owner = s;
+		structAlign = s;
 		name = n;
-		proposalWidthControlVariable = owner.xlatP;
+		proposalWidthControlVariable = structAlign.xlatP;
 	}
 
 	public double proposal(Object externalState) {
@@ -18,7 +19,7 @@ public class TranslationMove extends RotationOrTranslationMove {
 		for(int l = 0; l < subtreeLeaves.size(); l++){
 			int j = subtreeLeaves.get(l);
 			for(int i = 0; i < 3; i++)
-				owner.xlats[j][i] += shift[i];  
+				structAlign.xlats[j][i] += shift[i];  
 		}	
 		return 0;
 		// logProposalRatio is 0 because prior is uniform and proposal is symmetric

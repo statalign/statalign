@@ -1,7 +1,9 @@
-package statalign.model.ext;
+package statalign.base.mcmc;
 
 import java.util.List;
 import java.util.ArrayList;
+
+import statalign.model.ext.ModelExtension;
 
 public class McmcCombinationMove extends McmcMove {
 
@@ -38,7 +40,7 @@ public class McmcCombinationMove extends McmcMove {
 	}
 	
 	@Override
-	public ModelExtension getOwner() { 
+	public McmcModule getOwner() { 
 		return mcmcMoves.get(0).getOwner();
 		// NB it doesn't matter which McmcMove we use here, since it is
 		// only used to call back to the Mcmc object running

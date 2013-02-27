@@ -1,4 +1,4 @@
-package statalign.model.ext;
+package statalign.base.mcmc;
 
 import statalign.utils.GammaDistribution;
 public class GammaProposal extends ProposalDistribution<Double> {

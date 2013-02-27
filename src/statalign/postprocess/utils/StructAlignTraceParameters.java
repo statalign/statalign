@@ -2,8 +2,9 @@ package statalign.postprocess.utils;
 
 import java.util.List;
 import java.util.ArrayList;
-import statalign.model.ext.McmcMove;
-import statalign.model.ext.plugins.structalign.StructAlignMcmcMove;
+
+import statalign.base.mcmc.McmcMove;
+import statalign.model.ext.plugins.structalign.ContinuousPositiveStructAlignMove;
 import statalign.model.ext.plugins.StructAlign;
 import statalign.postprocess.plugins.structalign.StructTrace;
 
@@ -40,15 +41,15 @@ public class StructAlignTraceParameters {
 		burnin = isBurnin;
 		globalSigma = s.structAlign.globalSigma;
 		for (McmcMove mcmcMove : s.structAlign.getMcmcMoves()) {
-			if (mcmcMove instanceof StructAlignMcmcMove) {
-				if (((StructAlignMcmcMove) mcmcMove).isPlottable()) {
+			if (mcmcMove instanceof ContinuousPositiveStructAlignMove) {
+				if (((ContinuousPositiveStructAlignMove) mcmcMove).moveParams.isPlottable()) {
 					plottableParameters.add(
 							new PlottableParameter(
 									mcmcMove.name,
 									mcmcMove.getParam().get(),
 									mcmcMove.acceptanceRate(),
 									mcmcMove.proposalCount,
-									((StructAlignMcmcMove) mcmcMove).plotSide()));
+									((ContinuousPositiveStructAlignMove) mcmcMove).moveParams.plotSide()));
 									
 				}
 			}

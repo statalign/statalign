@@ -1,11 +1,11 @@
-package statalign.model.ext;
-
-import statalign.model.ext.ModelExtension;
-import statalign.model.ext.ParameterInterface;
-import statalign.model.ext.PriorDistribution;
+package statalign.base.mcmc;
 
 public abstract class McmcMove {
 
+	protected McmcModule owner;
+	public McmcModule getOwner() {
+		return owner;
+	}
 	protected PriorDistribution<? extends Object> prior;
 	
 	protected ParameterInterface param;
@@ -37,7 +37,6 @@ public abstract class McmcMove {
 	public abstract double logPriorDensity(Object externalState);
 	public abstract void updateLikelihood(Object externalState); 
 	public abstract void restoreState(Object externalState);
-	public abstract ModelExtension getOwner();
 	
 	public boolean isParamChangeAccepted(double logProposalRatio) {
 		return getOwner().isParamChangeAccepted(logProposalRatio);

@@ -10,6 +10,7 @@ import mpi.MPI;
 import org.apache.commons.math3.random.Well19937c;
 
 import statalign.MPIUtils;
+import statalign.base.mcmc.McmcModule;
 import statalign.base.thread.Stoppable;
 import statalign.base.thread.StoppedException;
 import statalign.distance.Distance;
@@ -103,6 +104,8 @@ public class Mcmc extends Stoppable {
 
 	/** Manager that handles model extension plugins */
 	public ModelExtManager modelExtMan;
+	
+	private McmcModule coreModel;
 
 	/** True while the MCMC is in the burn-in phase. */
 	public boolean burnin;
