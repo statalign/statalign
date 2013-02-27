@@ -1,6 +1,6 @@
-package statalign.base.mcmc;
+package statalign.mcmc;
 
-import statalign.base.mcmc.PriorDistribution;
+import statalign.mcmc.PriorDistribution;
 import statalign.model.ext.plugins.structalign.Funcs;
 import statalign.utils.GammaDistribution;
 

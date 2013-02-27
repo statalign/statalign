@@ -3,7 +3,7 @@ package statalign.postprocess.utils;
 import java.util.List;
 import java.util.ArrayList;
 
-import statalign.base.mcmc.McmcMove;
+import statalign.mcmc.McmcMove;
 import statalign.model.ext.plugins.structalign.ContinuousPositiveStructAlignMove;
 import statalign.model.ext.plugins.StructAlign;
 import statalign.postprocess.plugins.structalign.StructTrace;

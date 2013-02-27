@@ -10,10 +10,17 @@ import mpi.MPI;
 import org.apache.commons.math3.random.Well19937c;
 
 import statalign.MPIUtils;
-import statalign.base.mcmc.McmcModule;
+import statalign.base.mcmc.*;
 import statalign.base.thread.Stoppable;
 import statalign.base.thread.StoppedException;
 import statalign.distance.Distance;
+import statalign.mcmc.GammaPrior;
+import statalign.mcmc.GaussianProposal;
+import statalign.mcmc.LogisticProposal;
+import statalign.mcmc.McmcModule;
+import statalign.mcmc.McmcMove;
+import statalign.mcmc.PriorDistribution;
+import statalign.mcmc.ProposalDistribution;
 import statalign.model.ext.ModelExtManager;
 import statalign.postprocess.PostprocessManager;
 import statalign.postprocess.plugins.contree.CNetwork;
@@ -106,6 +113,16 @@ public class Mcmc extends Stoppable {
 	public ModelExtManager modelExtMan;
 	
 	private McmcModule coreModel;
+	
+	private boolean lambdaMuMove = false;
+	private boolean lambdaPhiMove = true;
+	private boolean rhoThetaMove = false;
+	private int rWeight = 5;
+	private int lambdaWeight = 5;
+	private int muWeight = 5;
+	private int phiWeight = 5;
+	private int rhoWeight = 5;
+	private int thetaWeight = 5;
 
 	/** True while the MCMC is in the burn-in phase. */
 	public boolean burnin;
@@ -119,6 +136,8 @@ public class Mcmc extends Stoppable {
 		weights = new double[tree.vertex.length];
 		mcmcpars = pars;
 		this.tree.heat = 1.0d;
+		
+		initCoreModel();
 	}
 
 	public Mcmc(Tree tree, MCMCPars pars, PostprocessManager ppm, ModelExtManager modelExtMan,
@@ -130,6 +149,36 @@ public class Mcmc extends Stoppable {
 
 		// Is parallel!
 		isParallel = true;
+		
+		initCoreModel();
+	}
+	
+	private void initCoreModel() {
+		
+		McmcMove rMove = new RMove(coreModel,new GammaPrior(2,2),new GaussianProposal(),"R");
+		coreModel.addMcmcMove(rMove,rWeight);
+		
+		if (lambdaMuMove) {
+			McmcMove lambdaMove = new LambdaMove(coreModel,new GammaPrior(1,1),new GaussianProposal(),"Lambda");
+			coreModel.addMcmcMove(lambdaMove,lambdaWeight);
+			McmcMove muMove = new MuMove(coreModel,new GammaPrior(1,1),new GaussianProposal(),"Mu");
+			coreModel.addMcmcMove(muMove,muWeight);
+		}
+		else if (lambdaPhiMove) {
+			McmcMove lambdaMove = new LambdaMove(coreModel,new GammaPrior(1,1),new GaussianProposal(),"Lambda");
+			coreModel.addMcmcMove(lambdaMove,lambdaWeight);
+			McmcMove phiMove = new PhiMove(coreModel,new GammaPrior(1,1),new LogisticProposal(),"Phi");
+			coreModel.addMcmcMove(phiMove,phiWeight);
+		}
+		else if (rhoThetaMove) {
+			McmcMove rhoMove = new RhoMove(coreModel,new GammaPrior(1,1),new GaussianProposal(),"Rho");
+			coreModel.addMcmcMove(rhoMove,rhoWeight);
+			McmcMove thetaMove = new ThetaMove(coreModel,new GammaPrior(1,1),new LogisticProposal(),"Theta");
+			coreModel.addMcmcMove(thetaMove,thetaWeight);
+		}
+		else {
+			throw new IllegalArgumentException("Invalid proposal scheme selected for indel parameters.");
+		}
 	}
 
 	private int alignmentSampled = 0;
@@ -138,12 +187,12 @@ public class Mcmc extends Stoppable {
 	private int edgeAccepted = 0;
 	private int topologySampled = 0;
 	private int topologyAccepted = 0;
-	private int RSampled = 0;
-	private int RAccepted = 0;
-	private int lambdaSampled = 0;
-	private int lambdaAccepted = 0;
-	private int muSampled = 0;
-	private int muAccepted = 0;
+//	private int RSampled = 0;
+//	private int RAccepted = 0;
+//	private int lambdaSampled = 0;
+//	private int lambdaAccepted = 0;
+//	private int muSampled = 0;
+//	private int muAccepted = 0;
 	private int substSampled = 0;
 	private int substAccepted = 0;
 	
@@ -187,7 +236,7 @@ public class Mcmc extends Stoppable {
 
 		long currentTime, start = System.currentTimeMillis();
 
-		// calculates initial log-likelihood
+		// calculates initial log-likelihood (includes coreModel likelihood)
 		totalLogLike = modelExtMan.totalLogLike(tree);
 		
 		ArrayList<Double> logLikeList = new ArrayList<Double>();
@@ -268,7 +317,7 @@ public class Mcmc extends Stoppable {
 					String[] align = getState().getLeafAlign();
 					alignmentsFromSamples.add(align);
 				}	
-				
+				/*
 				if (AutomateParameters.shouldAutomateProposalVariances() && i % mcmcpars.sampRate == 0) {
 					if (alignmentSampled > Utils.MIN_SAMPLES_FOR_ACC_ESTIMATE) {
 						double alignmentAccRate = (double) alignmentAccepted / (double) alignmentSampled;
@@ -352,8 +401,10 @@ public class Mcmc extends Stoppable {
 							muAccepted = 0;
 						}
 					}
+					*/
+					coreModel.modifyProposalWidths();
 					modelExtMan.modifyProposalWidths();
-				}
+//				}
 			}
 			
 			//both real burn-in and the one to determine the sampling rate have now been completed.
@@ -366,12 +417,12 @@ public class Mcmc extends Stoppable {
 			edgeAccepted = 0;
 			topologySampled = 0;
 			topologyAccepted = 0;
-			RSampled = 0;
-			RAccepted = 0;
-			lambdaSampled = 0;
-			lambdaAccepted = 0;
-			muSampled = 0;
-			muAccepted = 0;
+//			RSampled = 0;
+//			RAccepted = 0;
+//			lambdaSampled = 0;
+//			lambdaAccepted = 0;
+//			muSampled = 0;
+//			muAccepted = 0;
 			substSampled = 0;
 			substAccepted = 0;
 
@@ -402,6 +453,8 @@ public class Mcmc extends Stoppable {
 
 			int swapNo = 0; // TODO: delete?
 			swapCounter = mcmcpars.swapRate;
+			
+			
 			AlignmentData alignment = new AlignmentData(getState().getLeafAlign());
 			ArrayList<AlignmentData> allAlignments = new ArrayList<AlignmentData>();
 			ArrayList<Double> distances = new ArrayList<Double>();
@@ -412,8 +465,6 @@ public class Mcmc extends Stoppable {
 				for (int j = 0; j < sampRate; j++) {
 					// Samples.
 					sample(0);
-
-					//FuzzyAlignment fuzzyAlignment2 = FuzzyAlignment.getFuzzyAlignmentAndProject(alignments, "");
 
 					// Proposes a swap.
 					if (isParallel) {
@@ -1010,6 +1061,11 @@ public class Mcmc extends Stoppable {
 		}
 	}
 
+//	private void sampleIndelParameter() {
+//	modelExtMan.beforeParamChange(tree, tree.hmm2, ind);
+//		coreModel.proposeParamChange(tree);
+//	modelExtMan.afterParamChange(tree, tree.hmm2, ind, accepted);
+//	}
 	private void sampleIndelParameter() {		
 		// select indel param
 		int ind = Utils.generator.nextInt(3);
@@ -1169,6 +1225,8 @@ public class Mcmc extends Stoppable {
 		}
 	}
 
+	private boolean modExtParamChangeAccepted;
+
 	private void sampleModelExtParam() {
 //		modextSampled++;
 		modelExtMan.beforeModExtParamChange(tree);
@@ -1179,7 +1237,6 @@ public class Mcmc extends Stoppable {
 		modelExtMan.afterModExtParamChange(tree, modExtParamChangeAccepted);
 	}
 	
-	private boolean modExtParamChangeAccepted;
 	
 	public boolean modExtParamChangeCallback(double logProposalRatio) {
 		double oldLogLikelihood = totalLogLike;
@@ -1390,7 +1447,7 @@ public class Mcmc extends Stoppable {
 				postprocMan.logFile.write(getInfoString() + "\n");
 				postprocMan.logFile.write("Report\tLogLikelihood\t"
 						+ (modelExtMan.totalLogLike(tree))
-						+ "\tR\t" + tree.hmm2.params[0] + "\tLamda\t"
+						+ "\tR\t" + tree.hmm2.params[0] + "\tLambda\t"
 						+ tree.hmm2.params[1] + "\tMu\t" + tree.hmm2.params[2]
 								+ "\t" + tree.substitutionModel.print() + "\n");
 				if (isParallel) {

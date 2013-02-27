@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import statalign.base.Utils;
 import statalign.base.Vertex;
 import statalign.base.Tree;
-import statalign.base.mcmc.McmcMove;
+import statalign.mcmc.McmcMove;
 import statalign.model.ext.plugins.StructAlign;
 
 public class AlignmentMove extends McmcMove {

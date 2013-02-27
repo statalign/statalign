@@ -1,4 +1,4 @@
-package statalign.base.mcmc;
+package statalign.mcmc;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -7,9 +7,13 @@ import statalign.base.Tree;
 import statalign.base.Utils;
 
 public abstract class McmcModule {
+	
+	/** Current log-likelihood contribution */
+	public double curLogLike = 0;
+	
 	protected List<McmcMove> mcmcMoves = new ArrayList<McmcMove>();
 	protected List<Integer> mcmcMoveWeights = new ArrayList<Integer>();
-	protected void addMcmcMove(McmcMove m, int weight) {
+	public void addMcmcMove(McmcMove m, int weight) {
 		mcmcMoves.add(m);
 		mcmcMoveWeights.add(weight);
 	}
@@ -48,9 +52,13 @@ public abstract class McmcModule {
 	 * @return log of model extension likelihood, conditional on current tree, alignment and params
 	 */
 	public abstract double logLikeFactor(Tree tree);
-
-	public abstract double getLogLike();
-	public abstract void setLogLike(double ll);
+	
+	public double getLogLike() {
+		return curLogLike;
+	}
+	public void setLogLike(double ll) {
+		curLogLike = ll;
+	}
 
 	/**
 	 * This should return the log of the total prior calculated for the model parameters. It is only used

@@ -25,17 +25,17 @@ import statalign.base.Tree;
 import statalign.base.Utils;
 import statalign.base.Vertex;
 import statalign.base.hmm.Hmm;
-import statalign.base.mcmc.GammaPrior;
-import statalign.base.mcmc.GammaProposal;
-import statalign.base.mcmc.GaussianProposal;
-import statalign.base.mcmc.HyperbolicPrior;
-import statalign.base.mcmc.InverseGammaPrior;
-import statalign.base.mcmc.McmcCombinationMove;
-import statalign.base.mcmc.McmcMove;
-import statalign.base.mcmc.ParameterInterface;
-import statalign.base.mcmc.PriorDistribution;
 import statalign.io.DataType;
 import statalign.io.ProteinSkeletons;
+import statalign.mcmc.GammaPrior;
+import statalign.mcmc.GammaProposal;
+import statalign.mcmc.GaussianProposal;
+import statalign.mcmc.HyperbolicPrior;
+import statalign.mcmc.InverseGammaPrior;
+import statalign.mcmc.McmcCombinationMove;
+import statalign.mcmc.McmcMove;
+import statalign.mcmc.ParameterInterface;
+import statalign.mcmc.PriorDistribution;
 import statalign.model.ext.ModelExtension;
 import statalign.model.ext.plugins.structalign.*;
 
@@ -87,9 +87,6 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	public double[][] fullCovar;
 	/** Current alignment between all leaf sequences */
 	public String[] curAlign;
-	
-	/** Current log-likelihood contribution */
-	public double curLogLike = 0;
 	
 	/** independence rotation proposal distribution */
 	public RotationProposal rotProp;
@@ -362,22 +359,6 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			epsilon = 50;
 		}
 		
-		
-		// alternative initializations
-		// actual initialization now occurs in beforeSampling()
-		/*
-		for(i = 1; i < axes.length; i++) {
-			Transformation initial = rotProp.propose(i);
-			axes[i] = initial.axis.toArray();
-			angles[i] = initial.rot;
-			xlats[i] = initial.xlat.toArray();
-		}
-		for(i = 0; i < axes.length; i++) {
-			axes[i] = new double[] { 1, 0, 0 };
-			angles[i] = 0;
-			xlats[i] = new double[] { 0, 0, 0 };
-		} */
-		
 		// number of branches in the tree is 2*leaves - 1
 		if (globalSigma) {
 			sigma2 = new double[1];
@@ -448,13 +429,9 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		/** Add moves for scalar parameters */
 		StructAlignParameterInterface paramInterfaceGenerator = new StructAlignParameterInterface(this); 
 		
-		// Random walk proposals 
-		GammaProposal gProp = new GammaProposal(0.001,0.001);
-		GaussianProposal nProp = new GaussianProposal();
-
 		ParameterInterface tauInterface = paramInterfaceGenerator.new TauInterface();
 		ContinuousPositiveStructAlignMove tauMove = 
-			new ContinuousPositiveStructAlignMove(this,tauInterface,tauPrior,gProp,"τ");
+			new ContinuousPositiveStructAlignMove(this,tauInterface,tauPrior,new GammaProposal(0.001,0.001),"τ");
 		tauMove.moveParams.setPlottable();
 		tauMove.moveParams.setPlotSide(1);
 		addMcmcMove(tauMove,tauWeight);
@@ -463,7 +440,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		if (!fixedEpsilon) {
 			ParameterInterface epsilonInterface = paramInterfaceGenerator.new EpsilonInterface();
 			epsilonMove = 
-				new ContinuousPositiveStructAlignMove(this,epsilonInterface,epsilonPrior,nProp,"ε");
+				new ContinuousPositiveStructAlignMove(this,epsilonInterface,epsilonPrior,new GaussianProposal(),"ε");
 			epsilonMove.setMinValue(MIN_EPSILON);
 			epsilonMove.moveParams.setPlottable();
 			epsilonMove.moveParams.setPlotSide(1);
@@ -474,13 +451,13 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		HierarchicalContinuousPositiveStructAlignMove nuMove = null;
 		if (!globalSigma) {
 			ParameterInterface sigma2HInterface = paramInterfaceGenerator.new Sigma2HInterface();
-			sigma2HMove = new HierarchicalContinuousPositiveStructAlignMove(this,sigma2HInterface,sigma2HPrior,gProp,"σ_g");
+			sigma2HMove = new HierarchicalContinuousPositiveStructAlignMove(this,sigma2HInterface,sigma2HPrior,new GammaProposal(0.001,0.001),"σ_g");
 			sigma2HMove.moveParams.setPlottable();
 			sigma2HMove.moveParams.setPlotSide(0);
 			addMcmcMove(sigma2HMove,sigma2HierWeight); 
 			
 			ParameterInterface nuInterface = paramInterfaceGenerator.new NuInterface();
-			nuMove = new HierarchicalContinuousPositiveStructAlignMove(this,nuInterface,nuPrior,gProp,"ν");
+			nuMove = new HierarchicalContinuousPositiveStructAlignMove(this,nuInterface,nuPrior,new GammaProposal(0.001,0.001),"ν");
 			nuMove.moveParams.setPlottable();
 			nuMove.moveParams.setPlotSide(1);
 			addMcmcMove(nuMove,nuWeight);
@@ -497,8 +474,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			ParameterInterface sigma2Interface = paramInterfaceGenerator.new Sigma2Interface(j);
 			ContinuousPositiveStructAlignMove m = new ContinuousPositiveStructAlignMove(
 														this,sigma2Interface,
-														sigma2Prior,nProp,sigmaName);
-														//sigma2Prior,gProp,sigmaName);
+														sigma2Prior,new GaussianProposal(),sigmaName);
+														//sigma2Prior,new GammaProposal(0.001,0.001),sigmaName);
 			if (!globalSigma && j == sigma2.length - 1) {
 				continue;
 				// i.e. don't add the last one if we have
@@ -529,12 +506,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		Funcs.initLSRotations(tree,coords,xlats,axes,angles);
 	}
 	
-	public double getLogLike() {
-		return curLogLike;
-	}
-	public void setLogLike(double ll) {
-		curLogLike = ll;
-	}
+	
 	@Override
 	public double logLikeFactor(Tree tree) {
 		String[] align = tree.getState().getLeafAlign();
@@ -877,7 +849,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	}
 	
 	@Override
-	public double logLikeIndelParamChange(Tree tree, Hmm hmm, int ind) {
+	public double logLikeIndelParamChange(Tree tree, Hmm hmm, McmcMove m) {
 		// does not affect log-likelihood
 		return curLogLike;
 	}

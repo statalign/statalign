@@ -1,4 +1,4 @@
-package statalign.base.mcmc;
+package statalign.mcmc;
 
 public abstract class McmcMove {
 

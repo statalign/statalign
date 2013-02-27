@@ -302,7 +302,7 @@ public class Vertex {
         }
     }
 
-    void updateHmmMatrices() {
+    public void updateHmmMatrices() {
         if (parent != null)
             updateHmm2Matrix();
         updateHmm3Matrix();
@@ -528,7 +528,7 @@ public class Vertex {
     }
 
 
-    void calcIndelLikeRecursively() {
+    public void calcIndelLikeRecursively() {
         if (left != null && right != null) {
             left.calcIndelLikeRecursively();
             right.calcIndelLikeRecursively();

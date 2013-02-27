@@ -1,4 +1,4 @@
-package statalign.base.mcmc;
+package statalign.mcmc;
 
 import java.util.List;
 import java.util.ArrayList;

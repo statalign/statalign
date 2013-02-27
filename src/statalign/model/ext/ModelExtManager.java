@@ -11,6 +11,7 @@ import statalign.base.Tree;
 import statalign.base.Utils;
 import statalign.base.Vertex;
 import statalign.base.hmm.Hmm;
+import statalign.mcmc.McmcMove;
 import statalign.model.subst.SubstitutionModel;
 import statalign.postprocess.PluginParameters;
 
@@ -152,7 +153,8 @@ public class ModelExtManager {
 	 * @return the log of total prior probability 
 	 */
 	public double totalLogPrior(Tree tree) {
-		double ll = tree.getLogPrior();
+		//double ll = tree.getLogPrior();
+		double ll = 0.0;
 		for(ModelExtension plugin : activeList)
 			ll += plugin.logPrior();
 		return ll;
@@ -219,7 +221,8 @@ public class ModelExtManager {
 //	 * @return the total log-likelihood
 //	 */
 	public double logLikeModExtParamChange(Tree tree) {
-		double ll = tree.getLogLike();
+		//double ll = tree.getLogLike();
+		double ll = 0.0;
 		for(ModelExtension plugin : activeList)
 			ll += plugin.logLikeModExtParamChange(tree, selectedPlugin);
 		return ll;
@@ -244,7 +247,8 @@ public class ModelExtManager {
 //	 * @return the total log-likelihood
 //	 */
 	public double logLikeAlignChange(Tree tree, Vertex selectRoot) {
-		double ll = tree.getLogLike();
+//		double ll = tree.getLogLike();
+		double ll = 0.0;
 		for(ModelExtension plugin : activeList)
 			ll += plugin.logLikeAlignChange(tree, selectRoot);
 		return ll;
@@ -267,7 +271,8 @@ public class ModelExtManager {
 //	 * @return the total log-likelihood
 //	 */
 	public double logLikeTreeChange(Tree tree, Vertex nephew) {
-		double ll = tree.getLogLike();
+		//double ll = tree.getLogLike();
+		double ll = 0.0;
 		for(ModelExtension plugin : activeList)
 			ll += plugin.logLikeTreeChange(tree, nephew);
 		return ll;
@@ -290,7 +295,8 @@ public class ModelExtManager {
 //	 * @return the total log-likelihood
 //	 */
 	public double logLikeEdgeLenChange(Tree tree, Vertex vertex) {
-		double ll = tree.getLogLike();
+		//double ll = tree.getLogLike();
+		double ll = 0.0;
 		for(ModelExtension plugin : activeList)
 			ll += plugin.logLikeEdgeLenChange(tree, vertex);
 		return ll;
@@ -301,9 +307,9 @@ public class ModelExtManager {
 			plugin.afterEdgeLenChange(tree, vertex, accepted);
 	}
 	
-	public void beforeIndelParamChange(Tree tree, Hmm hmm, int ind) {
+	public void beforeIndelParamChange(Tree tree, Hmm hmm, McmcMove m) {
 		for(ModelExtension plugin : activeList)
-			plugin.beforeIndelParamChange(tree, hmm, ind);
+			plugin.beforeIndelParamChange(tree, hmm, m);
 	}
 	
 //	/**
@@ -312,17 +318,18 @@ public class ModelExtManager {
 //	 * @param tree the current tree
 //	 * @return the total log-likelihood
 //	 */
-	public double logLikeIndelParamChange(Tree tree, Hmm hmm, int ind) {
-		double ll = tree.getLogLike();
+	public double logLikeIndelParamChange(Tree tree, Hmm hmm, McmcMove m) {
+		//double ll = tree.getLogLike();
+		double ll = 0.0;
 		for(ModelExtension plugin : activeList)
-			ll += plugin.logLikeIndelParamChange(tree, hmm, ind);
+			ll += plugin.logLikeIndelParamChange(tree, hmm, m);
 		return ll;
 	}
 
 	
-	public void afterIndelParamChange(Tree tree, Hmm hmm, int ind, boolean accepted) {
+	public void afterIndelParamChange(Tree tree, Hmm hmm, McmcMove m, boolean accepted) {
 		for(ModelExtension plugin : activeList)
-			plugin.afterIndelParamChange(tree, hmm, ind, accepted);
+			plugin.afterIndelParamChange(tree, hmm, m, accepted);
 	}
 	
 	public void beforeSubstParamChange(Tree tree, SubstitutionModel model, int ind) {
@@ -337,7 +344,8 @@ public class ModelExtManager {
 //	 * @return the total log-likelihood
 //	 */
 	public double logLikeSubstParamChange(Tree tree, SubstitutionModel model, int ind) {
-		double ll = tree.getLogLike();
+		//double ll = tree.getLogLike();
+		double ll = 0.0;
 		for(ModelExtension plugin : activeList)
 			ll += plugin.logLikeSubstParamChange(tree, model, ind);
 		return ll;

@@ -1,11 +1,11 @@
-package statalign.base.mcmc;
+package statalign.mcmc;
 
 import java.util.List;
 import java.util.ArrayList;
 import statalign.base.Tree;
-import statalign.base.mcmc.ParameterInterface;
-import statalign.base.mcmc.PriorDistribution;
-import statalign.base.mcmc.ProposalDistribution;
+import statalign.mcmc.ParameterInterface;
+import statalign.mcmc.PriorDistribution;
+import statalign.mcmc.ProposalDistribution;
 import statalign.model.ext.plugins.StructAlign;
 import statalign.utils.GammaDistribution;
 import statalign.model.ext.plugins.structalign.StructAlignParameterInterface.*;
@@ -20,7 +20,8 @@ public abstract class ContinuousPositiveParameterMove extends McmcMove {
 	protected double oldll;
 	
 	protected double minValue = 0.0;
-	// If the proposal takes the parameter below this value, 
+	protected double maxValue = Double.POSITIVE_INFINITY;
+	// If the proposal takes the parameter below/above these values, 
 	// the move is rejected.
 	
 	public ContinuousPositiveParameterMove (McmcModule m,
@@ -37,6 +38,9 @@ public abstract class ContinuousPositiveParameterMove extends McmcMove {
 	public void setMinValue(double x) {
 		minValue = x;
 	}
+	public void setMaxValue(double x) {
+		maxValue = x;
+	}
 	public void copyState(Object externalState) {
 		oldpar = param.get();
 		oldll = owner.getLogLike();
@@ -52,7 +56,7 @@ public abstract class ContinuousPositiveParameterMove extends McmcMove {
 		proposalDistribution.updateProposal(proposalWidthControlVariable,param.get());
 		param.set(proposalDistribution.sample());
 		
-		if (param.get() < minValue) {
+		if (param.get() < minValue || param.get() > maxValue) {
 			return(Double.NEGATIVE_INFINITY);
 		}
 
@@ -68,7 +72,7 @@ public abstract class ContinuousPositiveParameterMove extends McmcMove {
 	}
 	
 	public double logPriorDensity(Object externalState) {
-		if (param.get() < minValue) {
+		if (param.get() < minValue || param.get() > maxValue) {
 			return(Double.NEGATIVE_INFINITY);
 		}
 		else {

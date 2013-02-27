@@ -18,7 +18,7 @@ import statalign.base.Mcmc;
 import statalign.base.McmcStep;
 import statalign.base.State;
 import statalign.base.Utils;
-import statalign.base.mcmc.McmcMove;
+import statalign.mcmc.McmcMove;
 import statalign.model.ext.ModelExtManager;
 import statalign.model.ext.ModelExtension;
 import statalign.model.ext.plugins.StructAlign;

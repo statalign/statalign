@@ -12,6 +12,7 @@ import java.util.jar.JarFile;
 
 import org.apache.commons.math3.random.RandomGenerator;
 import org.apache.commons.math3.random.Well19937c;
+import org.apache.commons.math3.util.FastMath;
 
 import statalign.model.subst.plugins.Dayhoff;
 import statalign.ui.ErrorMessage;
@@ -41,6 +42,30 @@ public class Utils{
 	 */
 	public static RandomGenerator generator = new Well19937c(1);
 	
+	/** 
+	 * @param x
+	 * @param shape
+	 * @param rate
+	 * @return The unnormalised log density of Gamma(x | shape, rate)
+	 */
+	public static double logGammaDensity(double x, double shape, double rate) {
+       if (x < 0) {
+            return Double.NEGATIVE_INFINITY;
+       }
+       return (shape-1) * FastMath.log(x) - rate * x;
+    }
+	/** 
+	 * @param x
+	 * @param shape
+	 * @param rate
+	 * @return The unnormalised log density of Gamma(x | shape, rate)
+	 */
+	public static double logBetaDensity(double x, double alpha, double beta) {
+       if (x < 0 || x > 1) {
+            return Double.NEGATIVE_INFINITY;
+       }
+       return (alpha-1) * FastMath.log(x) + (beta-1) * FastMath.log(1-x);
+    }
 	/**
 	 * During the burnin, the SPAN variables for all continuous parameters
 	 * are adjusted in order to ensure that the average acceptance rate is between 
