@@ -179,8 +179,8 @@ public class ModelExtManager {
 				plugin.beforeModExtParamChange(tree, selectedPlugin);
 	}
 	
-	public void proposeParamChange(Tree tree) {
-		selectedPlugin.proposeParamChange(tree);
+	public boolean proposeParamChange(Tree tree) {
+		return selectedPlugin.proposeParamChange(tree);
 	}
 	
 	public boolean modExtParamChangeCallback(double logProposalRatio) {

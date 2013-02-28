@@ -19,6 +19,13 @@ public abstract class McmcModule {
 	
 	protected List<McmcMove> mcmcMoves = new ArrayList<McmcMove>();
 	protected List<Integer> mcmcMoveWeights = new ArrayList<Integer>();
+	public int getParamChangeWeight() {
+		int w = 0;
+		for (int i=0; i<mcmcMoveWeights.size(); i++) {
+			w += mcmcMoveWeights.get(i);
+		}
+		return w;
+	}
 	public void addMcmcMove(McmcMove m, int weight) {
 		mcmcMoves.add(m);
 		mcmcMoveWeights.add(weight);
@@ -74,9 +81,11 @@ public abstract class McmcModule {
 		return 0;
 	}
 	
-	public void proposeParamChange(Tree tree) {
-		int selectedMove = Utils.weightedChoose(mcmcMoveWeights);
-		mcmcMoves.get(selectedMove).move(tree);
+	public boolean proposeParamChange(Tree tree) {
+		int selectedMoveIndex = Utils.weightedChoose(mcmcMoveWeights);
+		McmcMove selectedMove = mcmcMoves.get(selectedMoveIndex); 
+		selectedMove.move(tree);
+		return selectedMove.lastMoveAccepted;
 	}
 	
 	public void modifyProposalWidths() {

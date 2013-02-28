@@ -225,7 +225,9 @@ public class Vertex {
         return parent.left == this ? parent.right : parent.left;
     }
 
-    void updateTransitionMatrix() {
+    // Currently public because otherwise we can't call it
+    // from a subpackage, although this is not ideal.
+    public void updateTransitionMatrix() {
         //	System.out.println("owner: "+owner);
         //System.out.println("");
         charTransMatrix = owner.substitutionModel.updateTransitionMatrix(charTransMatrix, edgeLength);
@@ -376,7 +378,7 @@ public class Vertex {
      * This function calculates the Felsenstein likelihood. The result is stored
      * in the orphanLogLike at the root.
      */
-    void calcFelsRecursively() {
+    public void calcFelsRecursively() {
         if (left != null && right != null) {
             // System.out.println("calling the left child");
             left.calcFelsRecursively();
@@ -528,6 +530,8 @@ public class Vertex {
     }
 
 
+    // Currently public because otherwise we can't call it
+    // from a subpackage, although this is not ideal.
     public void calcIndelLikeRecursively() {
         if (left != null && right != null) {
             left.calcIndelLikeRecursively();

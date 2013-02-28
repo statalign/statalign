@@ -127,6 +127,8 @@ public class Mcmc extends Stoppable {
 	private int phiWeight = 5;
 	private int rhoWeight = 5;
 	private int thetaWeight = 5;
+	
+	private int substWeight = 10;
 
 	/** True while the MCMC is in the burn-in phase. */
 	public boolean burnin;
@@ -214,6 +216,9 @@ public class Mcmc extends Stoppable {
 		if (!lambdaMuMove && !lambdaPhiMove && !rhoThetaMove) {
 			throw new IllegalArgumentException("Invalid proposal scheme selected for indel parameters.");
 		}
+		
+		SubstMove substMove = new SubstMove(coreModel,"Subst");
+		coreModel.addMcmcMove(substMove, substWeight);
 	}
 
 	/**
@@ -241,8 +246,10 @@ public class Mcmc extends Stoppable {
 
 		// TODO add weights to MCMCPars and take from there
 		proposalWeights = DEF_PROP_WEIGHTS;
-		if(tree.substitutionModel.params == null || tree.substitutionModel.params.length == 0)
+		if(tree.substitutionModel.params == null || tree.substitutionModel.params.length == 0) {
 			proposalWeights[4] = 0;
+			substWeight = 0;
+		}
 		
 		coreModel = new CoreMcmcModule(this,modelExtMan);
 		initCoreModel();
@@ -677,6 +684,9 @@ public class Mcmc extends Stoppable {
 	}
 
 	private void sample(int samplingMethod) throws StoppedException {
+		if (samplingMethod == 2) {
+			coreModel.proposeParamChange(tree);
+		}
 		if (samplingMethod == 0) {
 			long timer = 0;
 			stoppable();
@@ -1216,6 +1226,14 @@ public class Mcmc extends Stoppable {
 	} */
 
 	private void sampleSubstParameter() {
+		if (tree.substitutionModel.params.length == 0) {
+			return;
+		}
+		else {
+			coreModel.proposeParamChange(tree);
+		}
+	}
+/*	private void sampleSubstParameter() {
 		substSampled++;
 		if (tree.substitutionModel.params.length == 0)
 			return;
@@ -1247,9 +1265,9 @@ public class Mcmc extends Stoppable {
 			modelExtMan.afterSubstParamChange(tree, tree.substitutionModel, -1, false);
 		}
 	}
-
+*/
 	private boolean modExtParamChangeAccepted;
-
+//
 	private void sampleModelExtParam() {
 //		modextSampled++;
 		modelExtMan.beforeModExtParamChange(tree);
@@ -1284,7 +1302,7 @@ public class Mcmc extends Stoppable {
 		double newLogLikelihood = tree.heat * modelExtMan.logLikeModExtParamChange(tree);
 		if (Utils.generator.nextDouble() < Math.exp(logProposalRatio + newLogLikelihood - oldLogLikelihood)) {
 			// accepted
-			modExtParamChangeAccepted = true;
+			//modExtParamChangeAccepted = true;
 			totalLogLike = newLogLikelihood;
 			return true;
 		}
