@@ -24,6 +24,7 @@ import statalign.mcmc.McmcMove;
 import statalign.mcmc.MultiplicativeProposal;
 import statalign.mcmc.PriorDistribution;
 import statalign.mcmc.ProposalDistribution;
+import statalign.mcmc.UniformProposal;
 import statalign.model.ext.ModelExtManager;
 import statalign.postprocess.PostprocessManager;
 import statalign.postprocess.plugins.contree.CNetwork;
@@ -118,7 +119,7 @@ public class Mcmc extends Stoppable {
 	private McmcModule coreModel;
 	
 	private boolean lambdaMuMove = false;
-	private boolean lambdaPhiMove = true;
+	private boolean lambdaPhiMove = false;
 	private boolean rhoThetaMove = true;
 	private int rWeight = 5;
 	private int lambdaWeight = 5;
@@ -129,7 +130,7 @@ public class Mcmc extends Stoppable {
 	private int thetaWeight = 5;
 	
 	private int substWeight = 10;
-	private int edgeWeight = 3; // Will be multiplied by nEdges
+	private int edgeWeight = 15; 
 	private int alignWeight = 35;
 	private int topologyWeight = 20;
 
@@ -226,7 +227,10 @@ public class Mcmc extends Stoppable {
 		for (int i=0; i<tree.vertex.length-1; i++) {
 			EdgeMove edgeMove = new EdgeMove(coreModel,i,
 					new GammaPrior(1,1),
-					new GaussianProposal(),"Edge"+i);
+					//new GaussianProposal(),
+					new UniformProposal(),
+					"Edge"+i);
+			edgeMove.proposalWidthControlVariable = 0.1;
 			// Default minimum edge length is 0.01
 			coreModel.addMcmcMove(edgeMove, edgeWeight);
 		}
@@ -267,7 +271,7 @@ public class Mcmc extends Stoppable {
 			proposalWeights[4] = 0;
 			substWeight = 0;
 		}
-		edgeWeight *= tree.vertex.length;
+		//edgeWeight *= tree.vertex.length;
 		
 		coreModel = new CoreMcmcModule(this,modelExtMan);
 		initCoreModel(); 
@@ -1340,12 +1344,12 @@ public class Mcmc extends Stoppable {
 		for (McmcMove m : coreModel.getMcmcMoves()) {
 			info += m.name+": "+String.format("%f ", m.acceptanceRate());
 		}
-		//if (Utils.DEBUG) {
-			info += "\nTimings: ";
-			for (McmcMove m : coreModel.getMcmcMoves()) {
-				info += m.name+": "+String.format("%f ", m.getTime());
-			}	
-		//}
+//		//if (Utils.DEBUG) {
+//			info += "\nTimings: ";
+//			for (McmcMove m : coreModel.getMcmcMoves()) {
+//				info += m.name+": "+String.format("%f ", m.getTime());
+//			}	
+//		//}
 		return info;
 //		return (info+String.format("Alignment: %f, Edge: %f, Topology: %f, Substitution: %f]",
 //		(alignmentSampled == 0 ? 0 : (double) alignmentAccepted / (double) alignmentSampled),
