@@ -8,8 +8,13 @@ public class LogisticProposal extends ProposalDistribution<Double> {
 	public LogisticProposal() {
 		n = new NormalDistribution(0,1);
 	}
+	/**
+	 * Computes the logDensity of proposing a value x, adding
+	 * on the term from the Jacobian of the transformation from
+	 * x to logit(x).
+	 */
 	public double logDensity(Double x) {
-		return x * (1-x) * Math.log(n.density(x));
+		return Math.log(n.density(x)) - Math.log(x*(1-x));
 	}
 	@Override
 	public Double sample() { 

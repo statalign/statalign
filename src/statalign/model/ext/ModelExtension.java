@@ -180,6 +180,7 @@ public abstract class ModelExtension extends McmcModule {
 	 * @param logProposalRatio Ratio of proposal and prior densities as explained above
 	 * @return <code>true</code> if the change was accepted
 	 */
+	@Override
 	public final boolean isParamChangeAccepted(double logProposalRatio) {
 		return manager.modExtParamChangeCallback(logProposalRatio);
 	}

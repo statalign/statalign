@@ -357,6 +357,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		else {
 			//epsilon = 100;
 			epsilon = 50;
+			//epsilon = 20;
 		}
 		
 		// number of branches in the tree is 2*leaves - 1
@@ -376,7 +377,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 					sigma2Prior = new GammaPrior(2,2);
 				}
 				else {
-					sigma2Prior = new HyperbolicPrior();
+					sigma2Prior = new GammaPrior(2,2);
+					//sigma2Prior = new HyperbolicPrior();
 				}
 			}
 			else {
@@ -441,6 +443,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			ParameterInterface epsilonInterface = paramInterfaceGenerator.new EpsilonInterface();
 			epsilonMove = 
 				new ContinuousPositiveStructAlignMove(this,epsilonInterface,epsilonPrior,new GaussianProposal(),"ε");
+				//new ContinuousPositiveStructAlignMove(this,epsilonInterface,epsilonPrior,new GammaProposal(0.001,0.001),"ε");
 			epsilonMove.setMinValue(MIN_EPSILON);
 			epsilonMove.moveParams.setPlottable();
 			epsilonMove.moveParams.setPlotSide(1);

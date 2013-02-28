@@ -12,7 +12,7 @@ import statalign.model.ext.plugins.structalign.StructAlignParameterInterface.*;
 
 public abstract class ContinuousPositiveParameterMove extends McmcMove {
 
-	protected Tree tree;
+	protected Tree tree = null;
 
 	private ProposalDistribution<Double> proposalDistribution;
 
@@ -42,16 +42,26 @@ public abstract class ContinuousPositiveParameterMove extends McmcMove {
 		maxValue = x;
 	}
 	public void copyState(Object externalState) {
+		if (externalState instanceof Tree) {
+			if (tree == null) {
+				tree = (Tree) externalState;
+			}
+		}
+		else {
+			throw new IllegalArgumentException("ContinuousPositiveParameterMove.copyState must take an argument of type Tree.");
+		}
 		oldpar = param.get();
 		oldll = owner.getLogLike();
 	}
 
 	public double proposal(Object externalState) {
 		if (externalState instanceof Tree) {
-			tree = (Tree) externalState;
+			if (tree == null) {
+				tree = (Tree) externalState;
+			}
 		}
 		else {
-			throw new IllegalArgumentException("ContinuousPositiveParameterMove.updateLikelihood must take an argument of type Tree.");
+			throw new IllegalArgumentException("ContinuousPositiveParameterMove.proposal must take an argument of type Tree.");
 		}
 		proposalDistribution.updateProposal(proposalWidthControlVariable,param.get());
 		param.set(proposalDistribution.sample());

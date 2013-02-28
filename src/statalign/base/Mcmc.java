@@ -14,11 +14,14 @@ import statalign.base.mcmc.*;
 import statalign.base.thread.Stoppable;
 import statalign.base.thread.StoppedException;
 import statalign.distance.Distance;
+import statalign.mcmc.BetaPrior;
 import statalign.mcmc.GammaPrior;
 import statalign.mcmc.GaussianProposal;
 import statalign.mcmc.LogisticProposal;
+import statalign.mcmc.McmcCombinationMove;
 import statalign.mcmc.McmcModule;
 import statalign.mcmc.McmcMove;
+import statalign.mcmc.MultiplicativeProposal;
 import statalign.mcmc.PriorDistribution;
 import statalign.mcmc.ProposalDistribution;
 import statalign.model.ext.ModelExtManager;
@@ -116,10 +119,11 @@ public class Mcmc extends Stoppable {
 	
 	private boolean lambdaMuMove = false;
 	private boolean lambdaPhiMove = true;
-	private boolean rhoThetaMove = false;
+	private boolean rhoThetaMove = true;
 	private int rWeight = 5;
 	private int lambdaWeight = 5;
 	private int muWeight = 5;
+	private int lambdaMuWeight = 5;
 	private int phiWeight = 5;
 	private int rhoWeight = 5;
 	private int thetaWeight = 5;
@@ -136,8 +140,6 @@ public class Mcmc extends Stoppable {
 		weights = new double[tree.vertex.length];
 		mcmcpars = pars;
 		this.tree.heat = 1.0d;
-		
-		initCoreModel();
 	}
 
 	public Mcmc(Tree tree, MCMCPars pars, PostprocessManager ppm, ModelExtManager modelExtMan,
@@ -149,37 +151,8 @@ public class Mcmc extends Stoppable {
 
 		// Is parallel!
 		isParallel = true;
-		
-		initCoreModel();
 	}
 	
-	private void initCoreModel() {
-		
-		McmcMove rMove = new RMove(coreModel,new GammaPrior(2,2),new GaussianProposal(),"R");
-		coreModel.addMcmcMove(rMove,rWeight);
-		
-		if (lambdaMuMove) {
-			McmcMove lambdaMove = new LambdaMove(coreModel,new GammaPrior(1,1),new GaussianProposal(),"Lambda");
-			coreModel.addMcmcMove(lambdaMove,lambdaWeight);
-			McmcMove muMove = new MuMove(coreModel,new GammaPrior(1,1),new GaussianProposal(),"Mu");
-			coreModel.addMcmcMove(muMove,muWeight);
-		}
-		else if (lambdaPhiMove) {
-			McmcMove lambdaMove = new LambdaMove(coreModel,new GammaPrior(1,1),new GaussianProposal(),"Lambda");
-			coreModel.addMcmcMove(lambdaMove,lambdaWeight);
-			McmcMove phiMove = new PhiMove(coreModel,new GammaPrior(1,1),new LogisticProposal(),"Phi");
-			coreModel.addMcmcMove(phiMove,phiWeight);
-		}
-		else if (rhoThetaMove) {
-			McmcMove rhoMove = new RhoMove(coreModel,new GammaPrior(1,1),new GaussianProposal(),"Rho");
-			coreModel.addMcmcMove(rhoMove,rhoWeight);
-			McmcMove thetaMove = new ThetaMove(coreModel,new GammaPrior(1,1),new LogisticProposal(),"Theta");
-			coreModel.addMcmcMove(thetaMove,thetaWeight);
-		}
-		else {
-			throw new IllegalArgumentException("Invalid proposal scheme selected for indel parameters.");
-		}
-	}
 
 	private int alignmentSampled = 0;
 	private int alignmentAccepted = 0;
@@ -197,6 +170,51 @@ public class Mcmc extends Stoppable {
 	private int substAccepted = 0;
 	
 	private static final DecimalFormat df = new DecimalFormat("0.0000");
+
+	private void initCoreModel() {
+		
+		IndelMove rMove = new RMove(coreModel,new BetaPrior(1,1),new LogisticProposal(),"R");
+		rMove.proposalWidthControlVariable = 0.5;
+		coreModel.addMcmcMove(rMove,rWeight);
+		
+		if (lambdaMuMove) {
+			IndelMove lambdaMove = new LambdaMove(coreModel,new GammaPrior(1,1),new GaussianProposal(),"Lambda");
+			lambdaMove.proposalWidthControlVariable = 0.01;
+			coreModel.addMcmcMove(lambdaMove,lambdaWeight);
+			IndelMove muMove = new MuMove(coreModel,new GammaPrior(1,1),new GaussianProposal(),"Mu");
+			muMove.proposalWidthControlVariable = 0.01;
+			coreModel.addMcmcMove(muMove,muWeight);
+			ArrayList<McmcMove> lambdaMu = new ArrayList<McmcMove>();
+			lambdaMu.add(lambdaMove);
+			lambdaMu.add(muMove);
+			coreModel.addMcmcMove(new McmcCombinationMove(lambdaMu),lambdaMuWeight);
+		}
+		if (lambdaPhiMove) {
+			IndelMove lambdaMove = new LambdaMove(coreModel,new GammaPrior(1,1),new GaussianProposal(),"Lambda");
+			coreModel.addMcmcMove(lambdaMove,lambdaWeight);
+			lambdaMove.proposalWidthControlVariable = 0.01;
+			// phi = lambda/mu 
+			// Must be in the range (0,1)
+			IndelMove phiMove = new PhiMove(coreModel,new BetaPrior(1,1),new LogisticProposal(),"Phi");
+			phiMove.proposalWidthControlVariable = 0.5;
+			coreModel.addMcmcMove(phiMove,phiWeight);
+		}
+		if (rhoThetaMove) {
+			// rho = lambda + mu
+			IndelMove rhoMove = new RhoMove(coreModel,new GammaPrior(1,1),new GaussianProposal(),"Rho");
+			coreModel.addMcmcMove(rhoMove,rhoWeight);
+			rhoMove.proposalWidthControlVariable = 0.02;
+			// theta = lambda / (lambda + mu)
+			// Must be in the range (0,0.5)
+			IndelMove thetaMove = new ThetaMove(coreModel,new BetaPrior(1,1),new LogisticProposal(),"Theta");
+			thetaMove.setMaxValue(0.5);
+			thetaMove.proposalWidthControlVariable = 0.5;
+			coreModel.addMcmcMove(thetaMove,thetaWeight);
+		}
+		if (!lambdaMuMove && !lambdaPhiMove && !rhoThetaMove) {
+			throw new IllegalArgumentException("Invalid proposal scheme selected for indel parameters.");
+		}
+	}
 
 	/**
 	 * In effect starts an MCMC run. It first performs a prescribed number of
@@ -226,6 +244,9 @@ public class Mcmc extends Stoppable {
 		if(tree.substitutionModel.params == null || tree.substitutionModel.params.length == 0)
 			proposalWeights[4] = 0;
 		
+		coreModel = new CoreMcmcModule(this,modelExtMan);
+		initCoreModel();
+
 		// notifies model extension plugins of start of MCMC sampling
 		modelExtMan.beforeSampling(tree);
 
@@ -317,7 +338,7 @@ public class Mcmc extends Stoppable {
 					String[] align = getState().getLeafAlign();
 					alignmentsFromSamples.add(align);
 				}	
-				/*
+				
 				if (AutomateParameters.shouldAutomateProposalVariances() && i % mcmcpars.sampRate == 0) {
 					if (alignmentSampled > Utils.MIN_SAMPLES_FOR_ACC_ESTIMATE) {
 						double alignmentAccRate = (double) alignmentAccepted / (double) alignmentSampled;
@@ -356,55 +377,56 @@ public class Mcmc extends Stoppable {
 							edgeAccepted = 0;
 						}
 					}					
-					if (RSampled > Utils.MIN_SAMPLES_FOR_ACC_ESTIMATE) {
-						double RAccRate = (double) RAccepted / (double) RSampled;
-						if (RAccRate > Utils.MAX_ACCEPTANCE) {
-							Utils.R_SPAN /= Utils.SPAN_MULTIPLIER;
-							//System.out.println("R_SPAN = "+Utils.R_SPAN);
-							RSampled = 0;
-							RAccepted = 0;
-						}
-						else if (RAccRate < Utils.MIN_ACCEPTANCE) {
-							Utils.R_SPAN *= Utils.SPAN_MULTIPLIER;
-							//System.out.println("R_SPAN = "+Utils.R_SPAN);
-							RSampled = 0;
-							RAccepted = 0;
-						}
-					}					
-					if (lambdaSampled > Utils.MIN_SAMPLES_FOR_ACC_ESTIMATE) {
-						double lambdaAccRate = (double) lambdaAccepted / (double) lambdaSampled;
-						if (lambdaAccRate > Utils.MAX_ACCEPTANCE) {
-							Utils.LAMBDA_SPAN /= Utils.SPAN_MULTIPLIER;
-							//System.out.println("LAMBDA_SPAN = "+Utils.LAMBDA_SPAN);
-							lambdaSampled = 0;
-							lambdaAccepted = 0;
-						}
-						else if (lambdaAccRate < Utils.MIN_ACCEPTANCE) {
-							Utils.LAMBDA_SPAN *= Utils.SPAN_MULTIPLIER;
-							//System.out.println("LAMBDA_SPAN = "+Utils.LAMBDA_SPAN);
-							lambdaSampled = 0;
-							lambdaAccepted = 0;
-						}
-					}
-					if (muSampled > Utils.MIN_SAMPLES_FOR_ACC_ESTIMATE) {
-						double muAccRate = (muSampled == 0 ? 0 : (double) muAccepted / (double) muSampled);
-						if (muAccRate > Utils.MAX_ACCEPTANCE) {
-							Utils.MU_SPAN /= Utils.SPAN_MULTIPLIER;
-							//System.out.println("MU_SPAN = "+Utils.MU_SPAN);
-							muSampled = 0;
-							muAccepted = 0;
-						}
-						else if (muAccRate < Utils.MIN_ACCEPTANCE) {
-							Utils.MU_SPAN *= Utils.SPAN_MULTIPLIER;
-							//System.out.println("MU_SPAN = "+Utils.MU_SPAN);
-							muSampled = 0;
-							muAccepted = 0;
-						}
-					}
-					*/
+//					if (RSampled > Utils.MIN_SAMPLES_FOR_ACC_ESTIMATE) {
+//						double RAccRate = (double) RAccepted / (double) RSampled;
+//						if (RAccRate > Utils.MAX_ACCEPTANCE) {
+//							Utils.R_SPAN /= Utils.SPAN_MULTIPLIER;
+//							//System.out.println("R_SPAN = "+Utils.R_SPAN);
+//							RSampled = 0;
+//							RAccepted = 0;
+//						}
+//						else if (RAccRate < Utils.MIN_ACCEPTANCE) {
+//							Utils.R_SPAN *= Utils.SPAN_MULTIPLIER;
+//							//System.out.println("R_SPAN = "+Utils.R_SPAN);
+//							RSampled = 0;
+//							RAccepted = 0;
+//						}
+//					}					
+//					if (lambdaSampled > Utils.MIN_SAMPLES_FOR_ACC_ESTIMATE) {
+//						double lambdaAccRate = (double) lambdaAccepted / (double) lambdaSampled;
+//						if (lambdaAccRate > Utils.MAX_ACCEPTANCE) {
+//							Utils.LAMBDA_SPAN /= Utils.SPAN_MULTIPLIER;
+//							//System.out.println("LAMBDA_SPAN = "+Utils.LAMBDA_SPAN);
+//							lambdaSampled = 0;
+//							lambdaAccepted = 0;
+//						}
+//						else if (lambdaAccRate < Utils.MIN_ACCEPTANCE) {
+//							Utils.LAMBDA_SPAN *= Utils.SPAN_MULTIPLIER;
+//							//System.out.println("LAMBDA_SPAN = "+Utils.LAMBDA_SPAN);
+//							lambdaSampled = 0;
+//							lambdaAccepted = 0;
+//						}
+//					}
+//					if (muSampled > Utils.MIN_SAMPLES_FOR_ACC_ESTIMATE) {
+//						double muAccRate = (muSampled == 0 ? 0 : (double) muAccepted / (double) muSampled);
+//						if (muAccRate > Utils.MAX_ACCEPTANCE) {
+//							Utils.MU_SPAN /= Utils.SPAN_MULTIPLIER;
+//							//System.out.println("MU_SPAN = "+Utils.MU_SPAN);
+//							muSampled = 0;
+//							muAccepted = 0;
+//						}
+//						else if (muAccRate < Utils.MIN_ACCEPTANCE) {
+//							Utils.MU_SPAN *= Utils.SPAN_MULTIPLIER;
+//							//System.out.println("MU_SPAN = "+Utils.MU_SPAN);
+//							muSampled = 0;
+//							muAccepted = 0;
+//						}
+//					}
+					 
+					 
 					coreModel.modifyProposalWidths();
 					modelExtMan.modifyProposalWidths();
-//				}
+				}
 			}
 			
 			//both real burn-in and the one to determine the sampling rate have now been completed.
@@ -571,6 +593,7 @@ public class Mcmc extends Stoppable {
 			double[] myStateInfo = new double[3];
 			myStateInfo[0] = totalLogLike;
 			myStateInfo[1] = modelExtMan.totalLogPrior(tree);
+			//myStateInfo[1] = coreModel.totalLogPrior(tree) + modelExtMan.totalLogPrior(tree);
 			myStateInfo[2] = tree.heat;
 
 			double[] partnerStateInfo = new double[3];
@@ -764,6 +787,7 @@ public class Mcmc extends Stoppable {
 		selectRoot.selectSubtree(SELTRLEVPROB, 0);
 		modelExtMan.beforeAlignChange(tree, selectRoot);
 		// TODO split selectAndResampleAlignment and call beforeAlignChange after window selection
+		//System.out.println("R = "+tree.hmm2.params[0]+"lambda = "+tree.hmm2.params[1]+", mu = "+tree.hmm2.params[2]);
 		double bpp = selectRoot.selectAndResampleAlignment();
 		double newLogLi = modelExtMan.logLikeAlignChange(tree, selectRoot);
 	
@@ -1061,12 +1085,11 @@ public class Mcmc extends Stoppable {
 		}
 	}
 
-//	private void sampleIndelParameter() {
-//	modelExtMan.beforeParamChange(tree, tree.hmm2, ind);
-//		coreModel.proposeParamChange(tree);
-//	modelExtMan.afterParamChange(tree, tree.hmm2, ind, accepted);
-//	}
-	private void sampleIndelParameter() {		
+	private void sampleIndelParameter() {
+		coreModel.proposeParamChange(tree);
+		totalLogLike = coreModel.curLogLike;
+	}
+/*	private void sampleIndelParameter() {		
 		// select indel param
 		int ind = Utils.generator.nextInt(3);
 		boolean accepted = false;
@@ -1190,7 +1213,7 @@ public class Mcmc extends Stoppable {
 		}
 		
 		modelExtMan.afterIndelParamChange(tree, tree.hmm2, ind, accepted);
-	}
+	} */
 
 	private void sampleSubstParameter() {
 		substSampled++;
@@ -1237,17 +1260,35 @@ public class Mcmc extends Stoppable {
 		modelExtMan.afterModExtParamChange(tree, modExtParamChangeAccepted);
 	}
 	
+	/**
+	 * NB logProposalRatio includes the contribution from the prior densities.
+	 * This could be problematic if the priors depend on other parameters, but
+	 * currently we assume that the priors are always independ
+	 * @param logProposalRatio
+	 * @return
+	 */
+	public boolean isParamChangeAccepted(double logProposalRatio) {
+		double oldLogLikelihood = totalLogLike;
+		double newLogLikelihood = coreModel.curLogLike;
+		if (Utils.generator.nextDouble() < Math.exp(logProposalRatio + newLogLikelihood - oldLogLikelihood)) {
+			// accepted
+			totalLogLike = newLogLikelihood;
+			return true;
+		}
+		// rejected, restore (responsibility of the McmcMove)
+		return false;
+	}
 	
 	public boolean modExtParamChangeCallback(double logProposalRatio) {
 		double oldLogLikelihood = totalLogLike;
-		double newLogLikelihood = modelExtMan.logLikeModExtParamChange(tree);
+		double newLogLikelihood = tree.heat * modelExtMan.logLikeModExtParamChange(tree);
 		if (Utils.generator.nextDouble() < Math.exp(logProposalRatio + newLogLikelihood - oldLogLikelihood)) {
 			// accepted
 			modExtParamChangeAccepted = true;
 			totalLogLike = newLogLikelihood;
 			return true;
 		}
-		// rejected, restore (responsibility of the plugin)
+		// rejected, restore (responsibility of the McmcMove)
 		return false;
 	}
 
@@ -1256,14 +1297,25 @@ public class Mcmc extends Stoppable {
 	 * @return a string describing the acceptance ratios.
 	 */
 	public String getInfoString() {
-		return String.format("Acceptances: [Alignment: %f, Edge: %f, Topology: %f, R: %f, lambda: %f, mu: %f, Substitution: %f]",
-				(alignmentSampled == 0 ? 0 : (double) alignmentAccepted / (double) alignmentSampled),
-				(edgeSampled == 0 ? 0 : (double) edgeAccepted / (double) edgeSampled),
-				(topologySampled == 0 ? 0 : (double) topologyAccepted / (double) topologySampled),
-				(RSampled == 0 ? 0 : (double) RAccepted / (double) RSampled),
-				(lambdaSampled == 0 ? 0 : (double) lambdaAccepted / (double) lambdaSampled),
-				(muSampled == 0 ? 0 : (double) muAccepted / (double) muSampled),
-				(substSampled == 0 ? 0 : (double) substAccepted / (double) substSampled));
+		String info = "Acceptance rates: ";
+		for (McmcMove m : coreModel.getMcmcMoves()) {
+			info += m.name+": "+String.format("%f ", m.acceptanceRate());
+		}
+//		return info;
+		return (info+String.format("Alignment: %f, Edge: %f, Topology: %f, Substitution: %f]",
+		(alignmentSampled == 0 ? 0 : (double) alignmentAccepted / (double) alignmentSampled),
+		(edgeSampled == 0 ? 0 : (double) edgeAccepted / (double) edgeSampled),
+		(topologySampled == 0 ? 0 : (double) topologyAccepted / (double) topologySampled),
+		(substSampled == 0 ? 0 : (double) substAccepted / (double) substSampled)));
+
+//		return String.format("Acceptances: [Alignment: %f, Edge: %f, Topology: %f, R: %f, lambda: %f, mu: %f, Substitution: %f]",
+//				(alignmentSampled == 0 ? 0 : (double) alignmentAccepted / (double) alignmentSampled),
+//				(edgeSampled == 0 ? 0 : (double) edgeAccepted / (double) edgeSampled),
+//				(topologySampled == 0 ? 0 : (double) topologyAccepted / (double) topologySampled),
+//				(RSampled == 0 ? 0 : (double) RAccepted / (double) RSampled),
+//				(lambdaSampled == 0 ? 0 : (double) lambdaAccepted / (double) lambdaSampled),
+//				(muSampled == 0 ? 0 : (double) muAccepted / (double) muSampled),
+//				(substSampled == 0 ? 0 : (double) substAccepted / (double) substSampled));
 	}
 
 	/**

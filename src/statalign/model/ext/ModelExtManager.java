@@ -111,6 +111,9 @@ public class ModelExtManager {
 	
 	public void setMcmc(Mcmc mcmc) {
 		this.mcmc = mcmc;
+		for(ModelExtension plugin : pluginList) {
+			plugin.setMcmc(mcmc);
+		}
 	}
 	
 	/**
@@ -142,6 +145,7 @@ public class ModelExtManager {
 	 */
 	public double totalLogLike(Tree tree) {
 		double ll = tree.getLogLike();
+		//double ll = 0.0;
 		for(ModelExtension plugin : activeList)
 			ll += plugin.logLikeFactor(tree);
 		return ll;
@@ -153,10 +157,10 @@ public class ModelExtManager {
 	 * @return the log of total prior probability 
 	 */
 	public double totalLogPrior(Tree tree) {
-		//double ll = tree.getLogPrior();
-		double ll = 0.0;
+		double ll = tree.getLogPrior();
+		//double ll = 0.0;
 		for(ModelExtension plugin : activeList)
-			ll += plugin.logPrior();
+			ll += plugin.logPrior(tree);
 		return ll;
 	}
 	
@@ -187,42 +191,17 @@ public class ModelExtManager {
 		for(ModelExtension modExt : activeList) {
 			modExt.modifyProposalWidths();
 		}
-//			modExtParamModifyProposalWidths(modExt.proposalCounts, modExt.acceptanceCounts,
-//					modExt.proposalWidthControlVariables);
 	}
-//	
-//	public void modExtParamModifyProposalWidths(
-//			int[] proposalCounts, int[] acceptanceCounts,
-//			double[] proposalWidthControlVariables) {
-//		
-//		for (int i=0; i<proposalCounts.length; i++) {
-//			if (proposalCounts[i] > Utils.MIN_SAMPLES_FOR_ACC_ESTIMATE) {
-//				double accRate = (proposalCounts[i] == 0) ? 0 : (double)acceptanceCounts[i]/(double)proposalCounts[i];
-//				//System.out.println("modExtParam["+i+"] acceptance rate = "+accRate);
-//				//System.out.println("var = "+proposalWidthControlVariables[i]);
-//				if (accRate < Utils.MIN_ACCEPTANCE) {
-//					proposalWidthControlVariables[i] *= Utils.SPAN_MULTIPLIER;
-//					proposalCounts[i] = 0;
-//					acceptanceCounts[i] = 0;
-//				}
-//				else if (accRate > Utils.MAX_ACCEPTANCE) {
-//					proposalWidthControlVariables[i] /= Utils.SPAN_MULTIPLIER;
-//					proposalCounts[i] = 0;
-//					acceptanceCounts[i] = 0;
-//				}
-//			}
-//		}
-//	}
-//	
-//	/**
-//	 * Calculates the total log-likelihood of the state by adding the log-likelihood factor
-//	 * contributions from all model extension plugins to the log-likelihood of the tree.
-//	 * @param tree the current tree
-//	 * @return the total log-likelihood
-//	 */
+
+	/**
+	 * Calculates the total log-likelihood of the state by adding the log-likelihood factor
+	 * contributions from all model extension plugins to the log-likelihood of the tree.
+	 * @param tree the current tree
+	 * @return the total log-likelihood
+	 */
 	public double logLikeModExtParamChange(Tree tree) {
-		//double ll = tree.getLogLike();
-		double ll = 0.0;
+		double ll = tree.getLogLike();
+		//double ll = 0.0;
 		for(ModelExtension plugin : activeList)
 			ll += plugin.logLikeModExtParamChange(tree, selectedPlugin);
 		return ll;
@@ -240,15 +219,15 @@ public class ModelExtManager {
 			plugin.beforeAlignChange(tree, selectRoot);
 	}
 	
-//	/**
-//	 * Calculates the total log-likelihood of the state by adding the log-likelihood factor
-//	 * contributions from all model extension plugins to the log-likelihood of the tree.
-//	 * @param tree the current tree
-//	 * @return the total log-likelihood
-//	 */
+	/**
+	 * Calculates the total log-likelihood of the state by adding the log-likelihood factor
+	 * contributions from all model extension plugins to the log-likelihood of the tree.
+	 * @param tree the current tree
+	 * @return the total log-likelihood
+	 */
 	public double logLikeAlignChange(Tree tree, Vertex selectRoot) {
-//		double ll = tree.getLogLike();
-		double ll = 0.0;
+		double ll = tree.getLogLike();
+		//double ll = 0.0;
 		for(ModelExtension plugin : activeList)
 			ll += plugin.logLikeAlignChange(tree, selectRoot);
 		return ll;
@@ -264,15 +243,15 @@ public class ModelExtManager {
 			plugin.beforeTreeChange(tree, nephew);
 	}
 	
-//	/**
-//	 * Calculates the total log-likelihood of the state by adding the log-likelihood factor
-//	 * contributions from all model extension plugins to the log-likelihood of the tree.
-//	 * @param tree the current tree
-//	 * @return the total log-likelihood
-//	 */
+	/**
+	 * Calculates the total log-likelihood of the state by adding the log-likelihood factor
+	 * contributions from all model extension plugins to the log-likelihood of the tree.
+	 * @param tree the current tree
+	 * @return the total log-likelihood
+	 */
 	public double logLikeTreeChange(Tree tree, Vertex nephew) {
-		//double ll = tree.getLogLike();
-		double ll = 0.0;
+		double ll = tree.getLogLike();
+		//double ll = 0.0;
 		for(ModelExtension plugin : activeList)
 			ll += plugin.logLikeTreeChange(tree, nephew);
 		return ll;
@@ -288,15 +267,15 @@ public class ModelExtManager {
 			plugin.beforeEdgeLenChange(tree, vertex);
 	}
 	
-//	/**
-//	 * Calculates the total log-likelihood of the state by adding the log-likelihood factor
-//	 * contributions from all model extension plugins to the log-likelihood of the tree.
-//	 * @param tree the current tree
-//	 * @return the total log-likelihood
-//	 */
+	/**
+	 * Calculates the total log-likelihood of the state by adding the log-likelihood factor
+	 * contributions from all model extension plugins to the log-likelihood of the tree.
+	 * @param tree the current tree
+	 * @return the total log-likelihood
+	 */
 	public double logLikeEdgeLenChange(Tree tree, Vertex vertex) {
-		//double ll = tree.getLogLike();
-		double ll = 0.0;
+		double ll = tree.getLogLike();
+		//double ll = 0.0;
 		for(ModelExtension plugin : activeList)
 			ll += plugin.logLikeEdgeLenChange(tree, vertex);
 		return ll;
@@ -312,15 +291,15 @@ public class ModelExtManager {
 			plugin.beforeIndelParamChange(tree, hmm, m);
 	}
 	
-//	/**
-//	 * Calculates the total log-likelihood of the state by adding the log-likelihood factor
-//	 * contributions from all model extension plugins to the log-likelihood of the tree.
-//	 * @param tree the current tree
-//	 * @return the total log-likelihood
-//	 */
+	/**
+	 * Calculates the total log-likelihood of the state by adding the log-likelihood factor
+	 * contributions from all model extension plugins to the log-likelihood of the tree.
+	 * @param tree the current tree
+	 * @return the total log-likelihood
+	 */
 	public double logLikeIndelParamChange(Tree tree, Hmm hmm, McmcMove m) {
-		//double ll = tree.getLogLike();
-		double ll = 0.0;
+		double ll = tree.getLogLike();
+		//double ll = 0.0;
 		for(ModelExtension plugin : activeList)
 			ll += plugin.logLikeIndelParamChange(tree, hmm, m);
 		return ll;
@@ -337,15 +316,15 @@ public class ModelExtManager {
 			plugin.beforeSubstParamChange(tree, model, ind);
 	}
 	
-//	/**
-//	 * Calculates the total log-likelihood of the state by adding the log-likelihood factor
-//	 * contributions from all model extension plugins to the log-likelihood of the tree.
-//	 * @param tree the current tree
-//	 * @return the total log-likelihood
-//	 */
+	/**
+	 * Calculates the total log-likelihood of the state by adding the log-likelihood factor
+	 * contributions from all model extension plugins to the log-likelihood of the tree.
+	 * @param tree the current tree
+	 * @return the total log-likelihood
+	 */
 	public double logLikeSubstParamChange(Tree tree, SubstitutionModel model, int ind) {
-		//double ll = tree.getLogLike();
-		double ll = 0.0;
+		double ll = tree.getLogLike();
+		//double ll = 0.0;
 		for(ModelExtension plugin : activeList)
 			ll += plugin.logLikeSubstParamChange(tree, model, ind);
 		return ll;

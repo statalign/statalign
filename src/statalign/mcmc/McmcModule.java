@@ -3,10 +3,16 @@ package statalign.mcmc;
 import java.util.ArrayList;
 import java.util.List;
 
+import statalign.base.Mcmc;
 import statalign.base.Tree;
 import statalign.base.Utils;
 
 public abstract class McmcModule {
+	
+	protected Mcmc mcmc;
+	public void setMcmc(Mcmc m) {
+		mcmc = m;
+	}
 	
 	/** Current log-likelihood contribution */
 	public double curLogLike = 0;
@@ -64,7 +70,7 @@ public abstract class McmcModule {
 	 * This should return the log of the total prior calculated for the model parameters. It is only used
 	 * in parallel mode when proposing swaps between chains. By default returns 0.
 	 */
-	public double logPrior() {
+	public double logPrior(Tree tree) {
 		return 0;
 	}
 	
@@ -90,5 +96,7 @@ public abstract class McmcModule {
 			}
 		}
 	}
-	public abstract boolean isParamChangeAccepted(double logProposalRatio);
+	public boolean isParamChangeAccepted(double logProposalRatio) {
+		return mcmc.isParamChangeAccepted(logProposalRatio);
+	}
 }

@@ -3,6 +3,7 @@ package statalign.base.mcmc;
 import java.util.List;
 import java.util.ArrayList;
 
+import statalign.base.Tree;
 import statalign.mcmc.ContinuousPositiveParameterMove;
 import statalign.mcmc.McmcModule;
 import statalign.mcmc.ParameterInterface;
@@ -88,18 +89,28 @@ public abstract class IndelMove extends ContinuousPositiveParameterMove {
 		super(m,null,pr,prop,n);		
 	}
 
+	@Override
 	public void move(Object externalState) {
-		owner.getModelExtMan().beforeIndelParamChange(tree,tree.hmm2,this);
+		if (externalState instanceof Tree) {
+			if (tree == null) {
+				tree = (Tree) externalState;
+			}
+		}
+		else {
+			throw new IllegalArgumentException("IndelMove.move must take an argument of type Tree.");
+		}
+		((CoreMcmcModule) owner).getModelExtMan().beforeIndelParamChange(tree,tree.hmm2,this);
 		super.move(externalState);
-		owner.getModelExtMan().afterIndelParamChange(tree,tree.hmm2,this);
+		((CoreMcmcModule) owner).getModelExtMan().afterIndelParamChange(tree,tree.hmm2,this,lastMoveAccepted);
 	}
+	
 	public void updateLikelihood(Object externalState) {
 		if (param.get() > minValue && param.get() < maxValue) {
 			for (int i = 0; i < tree.vertex.length; i++) {
 				tree.vertex[i].updateHmmMatrices();
 			}
 			tree.root.calcIndelLikeRecursively();
-			owner.setLogLike(owner.getModelExtMan().logLikeIndelParamChange(tree, tree.hmm2, this));
+			owner.setLogLike(((CoreMcmcModule) owner).getModelExtMan().logLikeIndelParamChange(tree, tree.hmm2, this));
 
 		}
 	}
