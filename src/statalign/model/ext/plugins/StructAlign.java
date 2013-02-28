@@ -801,9 +801,12 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	}
 	
 	@Override
-	public double logLikeAlignChange(Tree tree, Vertex selectRoot) {
+	public void beforeAlignChange(Tree tree, Vertex selectRoot) {
 		oldAlign = curAlign;
 		oldLogLi = curLogLike;
+	}
+	@Override
+	public double logLikeAlignChange(Tree tree, Vertex selectRoot) {
 		curAlign = tree.getState().getLeafAlign();
 		curLogLike = calcAllColumnContrib();
 		return curLogLike;
@@ -819,10 +822,13 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	}
 	
 	@Override
-	public double logLikeTreeChange(Tree tree, Vertex nephew) {
+	public void beforeTreeChange(Tree tree, Vertex nephew) {
 		oldCovar = fullCovar;
 		oldAlign = curAlign;
 		oldLogLi = curLogLike;
+	}
+	@Override
+	public double logLikeTreeChange(Tree tree, Vertex nephew) {
 		fullCovar = calcFullCovar(tree);
 		curAlign = tree.getState().getLeafAlign();
 		curLogLike = calcAllColumnContrib();
@@ -844,7 +850,11 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		// do exactly the same as for topology change
 		return logLikeTreeChange(tree, vertex);
 	}
-	
+	@Override
+	public void beforeEdgeLenChange(Tree tree, Vertex vertex) {
+		// do exactly the same as for topology change
+		beforeTreeChange(tree, vertex);
+	}
 	@Override
 	public void afterEdgeLenChange(Tree tree, Vertex vertex, boolean accepted) {
 		// do exactly the same as for topology change

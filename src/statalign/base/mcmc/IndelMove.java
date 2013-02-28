@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.ArrayList;
 
 import statalign.base.Tree;
+import statalign.base.Utils;
 import statalign.mcmc.ContinuousPositiveParameterMove;
 import statalign.mcmc.McmcModule;
 import statalign.mcmc.ParameterInterface;
@@ -91,6 +92,9 @@ public abstract class IndelMove extends ContinuousPositiveParameterMove {
 
 	@Override
 	public void move(Object externalState) {
+//		if (Utils.DEBUG) {
+//			System.out.println("IndelMove");
+//		}
 		if (externalState instanceof Tree) {
 			if (tree == null) {
 				tree = (Tree) externalState;
@@ -117,9 +121,10 @@ public abstract class IndelMove extends ContinuousPositiveParameterMove {
 	@Override
 	public void restoreState(Object externalState) {
 		super.restoreState(externalState);
-		updateLikelihood(externalState);
-		// Need to do the second step because updateLikelihood 
-		// has repercussions, i.e. updates various stored values
+		for (int i = 0; i < tree.vertex.length; i++) {
+			tree.vertex[i].updateHmmMatrices();
+		}
+		tree.root.calcIndelLikeRecursively();
 	}
 
 

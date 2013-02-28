@@ -223,7 +223,7 @@ public class Mcmc extends Stoppable {
 		SubstMove substMove = new SubstMove(coreModel,"Subst");
 		coreModel.addMcmcMove(substMove, substWeight);
 		
-		for (int i=0; i<tree.vertex.length; i++) {
+		for (int i=0; i<tree.vertex.length-1; i++) {
 			EdgeMove edgeMove = new EdgeMove(coreModel,i,
 					new GammaPrior(1,1),
 					new GaussianProposal(),"Edge"+i);
@@ -702,8 +702,19 @@ public class Mcmc extends Stoppable {
 
 	private void sample(int samplingMethod) throws StoppedException {
 		stoppable();
-		coreModel.proposeParamChange(tree);
-		totalLogLike = coreModel.curLogLike;		
+		if(Utils.DEBUG) {
+			if(Math.abs(modelExtMan.totalLogLike(tree)-totalLogLike) > 1e-5) {
+				System.out.println(modelExtMan.totalLogLike(tree)+" "+totalLogLike);
+				throw new Error("Log-likelihood inconsistency at start of sample()");
+			}
+		}
+		boolean accepted = coreModel.proposeParamChange(tree);
+		if (accepted) {
+			totalLogLike = coreModel.curLogLike;
+		}
+		else {
+			coreModel.setLogLike(totalLogLike);
+		}
 		/*if (samplingMethod == 0) {
 			long timer = 0;
 			stoppable();
@@ -789,8 +800,10 @@ public class Mcmc extends Stoppable {
 		*/
 		// check log-likelihood consistency if debugging on
 		if(Utils.DEBUG) {
-			if(Math.abs(modelExtMan.totalLogLike(tree)-totalLogLike) > 1e-5)
-				throw new Error("Log-likelihood inconsistency in MCMC");
+			if(Math.abs(modelExtMan.totalLogLike(tree)-totalLogLike) > 1e-5) {
+				System.out.println(modelExtMan.totalLogLike(tree)+" "+totalLogLike);
+				throw new Error("Log-likelihood inconsistency at end of sample()");
+			}
 		}
 
 	}
@@ -1327,6 +1340,12 @@ public class Mcmc extends Stoppable {
 		for (McmcMove m : coreModel.getMcmcMoves()) {
 			info += m.name+": "+String.format("%f ", m.acceptanceRate());
 		}
+		//if (Utils.DEBUG) {
+			info += "\nTimings: ";
+			for (McmcMove m : coreModel.getMcmcMoves()) {
+				info += m.name+": "+String.format("%f ", m.getTime());
+			}	
+		//}
 		return info;
 //		return (info+String.format("Alignment: %f, Edge: %f, Topology: %f, Substitution: %f]",
 //		(alignmentSampled == 0 ? 0 : (double) alignmentAccepted / (double) alignmentSampled),

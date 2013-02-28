@@ -63,6 +63,9 @@ public class SubstMove extends McmcMove {
 		
 	@Override
 	public void move(Object externalState) {
+//		if (Utils.DEBUG) {
+//			System.out.println("SubstMove");
+//		}
 		if (externalState instanceof Tree) {
 			if (tree == null) {
 				tree = (Tree) externalState;

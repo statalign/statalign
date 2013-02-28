@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.ArrayList;
 
 import statalign.base.Tree;
+import statalign.base.Utils;
 import statalign.base.Vertex;
 import statalign.mcmc.ContinuousPositiveParameterMove;
 import statalign.mcmc.McmcModule;
@@ -47,15 +48,18 @@ public class EdgeMove extends ContinuousPositiveParameterMove {
 			}
 		}
 		else {
-			throw new IllegalArgumentException("IndelMove.move must take an argument of type Tree.");
+			throw new IllegalArgumentException("EdgeMove.move must take an argument of type Tree.");
 		}
+//		if (Utils.DEBUG) {
+//			System.out.println("EdgeMove"+index);
+//		}
 		((CoreMcmcModule) owner).getModelExtMan().beforeEdgeLenChange(tree,tree.vertex[index]);
 		super.move(externalState);
 		((CoreMcmcModule) owner).getModelExtMan().afterEdgeLenChange(tree,tree.vertex[index],lastMoveAccepted);
 	}
 	
 	public void updateLikelihood(Object externalState) {
-		if (param.get() > minValue && param.get() < maxValue) {
+		if (param.get() >= minValue && param.get() < maxValue) {
 			tree.vertex[index].edgeChangeUpdate();
 			tree.vertex[index].calcAllUp();
 			owner.setLogLike(((CoreMcmcModule) owner).getModelExtMan().logLikeEdgeLenChange(tree, tree.vertex[index]));
@@ -64,8 +68,7 @@ public class EdgeMove extends ContinuousPositiveParameterMove {
 	@Override
 	public void restoreState(Object externalState) {
 		super.restoreState(externalState);
-		updateLikelihood(externalState);
-		// Need to do the second step because updateLikelihood 
-		// has repercussions, i.e. updates various stored values
+		tree.vertex[index].edgeChangeUpdate();
+		tree.vertex[index].calcAllUp();
 	}
 }

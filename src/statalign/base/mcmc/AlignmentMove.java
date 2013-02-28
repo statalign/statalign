@@ -64,6 +64,9 @@ public class AlignmentMove extends McmcMove {
 	}
 	
 	public void move(Object externalState) {
+//		if (Utils.DEBUG) {
+//			System.out.println("AlignmentMove");
+//		}
 		super.move(externalState);
 		((CoreMcmcModule) owner).getModelExtMan().afterAlignChange(tree, selectedRoot,lastMoveAccepted);
 	}

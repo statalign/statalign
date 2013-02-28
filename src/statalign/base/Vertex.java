@@ -51,7 +51,7 @@ public class Vertex {
     public Vertex right;
 
     int length;					// sequence length
-    AlignColumn first;			// first alignment column of Vertex
+    public AlignColumn first;			// first alignment column of Vertex
     AlignColumn last;			// last, virtual alignment column of Vertex (always present)
     String seq;					// original sequence of this Vertex (given for leaves only)
 
@@ -324,7 +324,7 @@ public class Vertex {
         winLength = length;
     }
 
-    String print() {
+    public String print() {
 
         // print this node and nodes below in bracket notation
         DecimalFormatSymbols dfs = new DecimalFormatSymbols();
@@ -2827,7 +2827,7 @@ public class Vertex {
 
 
     /** this function checks if the pointers are all right... */
-    void checkPointers() {
+    public void checkPointers() {
         //parent
         for (AlignColumn p = first; p != null; p = p.next) {
             if (p.left != null && (p.left.orphan || p.left.parent != p)) {

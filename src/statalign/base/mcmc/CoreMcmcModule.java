@@ -40,11 +40,14 @@ public class CoreMcmcModule extends McmcModule {
 		weights[1] = modelExtMan.getParamChangeWeight();
 		int choice = Utils.weightedChoose(weights);
 		if (choice == 0) {
+			//System.out.println("Core move.");
 			accepted = super.proposeParamChange(tree);
 		}
 		else {
+			//System.out.println("Model extension move.");
 			modelExtMan.beforeModExtParamChange(tree);
 			accepted = modelExtMan.proposeParamChange(tree);
+			setLogLike(modelExtMan.logLikeModExtParamChange(tree));
 			modelExtMan.afterModExtParamChange(tree, accepted);
 		}
 		return accepted;
