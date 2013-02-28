@@ -21,6 +21,9 @@ public abstract class McmcMove {
 	public boolean moveProposed = false;
 	
 	public double proposalWidthControlVariable = 1.0;
+	public double spanMultiplier = Utils.SPAN_MULTIPLIER;
+	public double minAcceptance = Utils.MIN_ACCEPTANCE;
+	public double maxAcceptance = Utils.MAX_ACCEPTANCE;
 	public boolean autoTune = true;
 	// TODO Add constructor fields for specifying the above two
 	// variables.

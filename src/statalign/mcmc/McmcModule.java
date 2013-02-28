@@ -92,13 +92,13 @@ public abstract class McmcModule {
 		for (McmcMove m : mcmcMoves) {
 			if (!m.autoTune) { continue; }
 			if (m.proposalCount > Utils.MIN_SAMPLES_FOR_ACC_ESTIMATE) {
-				if (m.acceptanceRate() < Utils.MIN_ACCEPTANCE) {
-					m.proposalWidthControlVariable *= Utils.SPAN_MULTIPLIER;
+				if (m.acceptanceRate() < m.minAcceptance) {
+					m.proposalWidthControlVariable *= m.spanMultiplier;
 					m.proposalCount = 0;
 					m.acceptanceCount = 0;
 				}
-				else if (m.acceptanceRate() > Utils.MAX_ACCEPTANCE) {
-					m.proposalWidthControlVariable /= Utils.SPAN_MULTIPLIER;
+				else if (m.acceptanceRate() > m.maxAcceptance) {
+					m.proposalWidthControlVariable /= m.spanMultiplier;
 					m.proposalCount = 0;
 					m.acceptanceCount = 0;
 				}

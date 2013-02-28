@@ -572,7 +572,7 @@ public class Tree extends Stoppable {
     }
 
 
-    int getTopVertexId(int ind) {
+    public int getTopVertexId(int ind) {
         if (root == vertex[ind]) {
             return 0;
         }

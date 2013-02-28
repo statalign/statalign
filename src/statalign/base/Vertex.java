@@ -58,7 +58,7 @@ public class Vertex {
     int winLength;                    // length of window
     AlignColumn winFirst;        // first alignment column of window
     AlignColumn winLast;        // first alignment column past window end
-    boolean selected;                // shows if vertex is part of the selected subtree
+    public boolean selected;                // shows if vertex is part of the selected subtree
 
     /** The length of the edge that connects this vertex with its parent. */
     public double edgeLength;                            // length of edge to parent vertex
@@ -221,7 +221,7 @@ public class Vertex {
 
     }
 
-    Vertex brother() {
+    public Vertex brother() {
         return parent.left == this ? parent.right : parent.left;
     }
 
@@ -1353,7 +1353,7 @@ public class Vertex {
     }
 
     /** Selects a subtree */
-    void selectSubtree(double[] weights, int level) {
+    public void selectSubtree(double[] weights, int level) {
         selected = true;
         // continue below with prescribed probability
         if (left != null && right != null) {
@@ -1377,7 +1377,7 @@ public class Vertex {
     }
 
     /** This function cuts out a window and realigns in the selected subtree. */
-    double selectAndResampleAlignment() {
+    public double selectAndResampleAlignment() {
 
         // this code below checks pointer integrity...
         //    for(int i = 0; i < owner.vertex.length - 1; i++){
@@ -1715,7 +1715,7 @@ public class Vertex {
      * Assumes `this' has a non-null grandparent.
      * @return log-quotient of backproposal and proposal
      */
-    double fastSwapWithUncle() {
+    public double fastSwapWithUncle() {
         Vertex uncle = parent.brother(), grandpa = parent.parent;
         double ret = 0.0;
         Vertex starter;
@@ -2211,7 +2211,7 @@ public class Vertex {
      * Restores the exact state just before the call of `swapWithUncle'. Must be called on ex-uncle.
      * Assumes `this' has a non-null grandparent.
      */
-    void fastSwapBackUncle() {
+    public void fastSwapBackUncle() {
         Vertex uncle = parent.brother(), grandpa = parent.parent;
 
         fullWin();

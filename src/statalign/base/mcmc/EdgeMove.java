@@ -17,11 +17,15 @@ public class EdgeMove extends ContinuousPositiveParameterMove {
 	private int index;
 
 	class EdgeInterface implements ParameterInterface {
+		int ind;
+		EdgeInterface (int i) {
+			ind = i;
+		}
 		public double get() {
-			return tree.vertex[index].edgeLength;
+			return tree.vertex[ind].edgeLength;
 		}
 		public void set(double x) {
-			tree.vertex[index].edgeLength = x;
+			tree.vertex[ind].edgeLength = x;
 		}
 	}
 	
@@ -30,8 +34,9 @@ public class EdgeMove extends ContinuousPositiveParameterMove {
 			PriorDistribution<Double> pr, 
 			ProposalDistribution<Double> prop, String n) {
 		super(m,null,pr,prop,n);
-		param = new EdgeInterface();
-		setMinValue(0.01);
+		index = edgeIndex;
+		param = new EdgeInterface(index);
+		minValue = 0.01;
 	}
 
 	@Override

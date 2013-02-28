@@ -49,9 +49,9 @@ public class Mcmc extends Stoppable {
 	// Constants
 
 	// int samplingMethod = 1; //0: random sampling, 1: total sampling
-	double[] weights; // for selecting internal tree node
-	final static double LEAFCOUNT_POWER = 1.0;
-	final static double SELTRLEVPROB[] = { 0.9, 0.6, 0.4, 0.2, 0 };
+//	double[] weights; // for selecting internal tree node
+//	final static double LEAFCOUNT_POWER = 1.0;
+//	final static double SELTRLEVPROB[] = { 0.9, 0.6, 0.4, 0.2, 0 };
 	
 	/** Default proposal weights in this order: align, topology, edge, indel param, subst param, modelext param */
 	final static int DEF_PROP_WEIGHTS[] = { 35, 20, 15, 15, 10, 0 };
@@ -130,6 +130,8 @@ public class Mcmc extends Stoppable {
 	
 	private int substWeight = 10;
 	private int edgeWeight = 3; // Will be multiplied by nEdges
+	private int alignWeight = 35;
+	private int topologyWeight = 20;
 
 	/** True while the MCMC is in the burn-in phase. */
 	public boolean burnin;
@@ -140,7 +142,7 @@ public class Mcmc extends Stoppable {
 		ppm.mcmc = this;
 		this.modelExtMan.setMcmc(this);
 		this.tree = tree;
-		weights = new double[tree.vertex.length];
+//		weights = new double[tree.vertex.length];
 		mcmcpars = pars;
 		this.tree.heat = 1.0d;
 	}
@@ -157,20 +159,20 @@ public class Mcmc extends Stoppable {
 	}
 	
 
-	private int alignmentSampled = 0;
-	private int alignmentAccepted = 0;
-	private int edgeSampled = 0;
-	private int edgeAccepted = 0;
-	private int topologySampled = 0;
-	private int topologyAccepted = 0;
+//	private int alignmentSampled = 0;
+//	private int alignmentAccepted = 0;
+//	private int edgeSampled = 0;
+//	private int edgeAccepted = 0;
+//	private int topologySampled = 0;
+//	private int topologyAccepted = 0;
 //	private int RSampled = 0;
 //	private int RAccepted = 0;
 //	private int lambdaSampled = 0;
 //	private int lambdaAccepted = 0;
 //	private int muSampled = 0;
 //	private int muAccepted = 0;
-	private int substSampled = 0;
-	private int substAccepted = 0;
+//	private int substSampled = 0;
+//	private int substAccepted = 0;
 	
 	private static final DecimalFormat df = new DecimalFormat("0.0000");
 
@@ -228,6 +230,12 @@ public class Mcmc extends Stoppable {
 			// Default minimum edge length is 0.01
 			coreModel.addMcmcMove(edgeMove, edgeWeight);
 		}
+		
+		AlignmentMove alignMove = new AlignmentMove(coreModel,"Alignment");
+		coreModel.addMcmcMove(alignMove, alignWeight);
+		
+		TopologyMove topologyMove = new TopologyMove(coreModel,"Topology");
+		coreModel.addMcmcMove(topologyMove, topologyWeight);
 	}
 
 	/**
@@ -359,28 +367,28 @@ public class Mcmc extends Stoppable {
 				}	
 				
 				if (AutomateParameters.shouldAutomateProposalVariances() && i % mcmcpars.sampRate == 0) {
-					if (alignmentSampled > Utils.MIN_SAMPLES_FOR_ACC_ESTIMATE) {
-						double alignmentAccRate = (double) alignmentAccepted / (double) alignmentSampled;
-						//System.out.println("alignmentAccRate = "+alignmentAccRate);
-						if (alignmentAccRate > Utils.MAX_ACCEPTANCE && 
-								Utils.WINDOW_MULTIPLIER < Utils.MAX_WINDOW_MULTIPLIER &&
-								Utils.WINDOW_MULTIPLIER > Utils.MIN_WINDOW_MULTIPLIER ) {
-							Utils.WINDOW_MULTIPLIER = Math.min(Utils.MAX_WINDOW_MULTIPLIER,
-									Utils.WINDOW_MULTIPLIER / Utils.WINDOW_CHANGE_FACTOR);
-							//System.out.println("WINDOW_MULTIPLIER = "+Utils.WINDOW_MULTIPLIER);
-							alignmentSampled = 0;
-							alignmentAccepted = 0;
-						}
-						else if (alignmentAccRate < Utils.MIN_ACCEPTANCE && 
-								Utils.WINDOW_MULTIPLIER < Utils.MAX_WINDOW_MULTIPLIER &&
-								Utils.WINDOW_MULTIPLIER > Utils.MIN_WINDOW_MULTIPLIER ) {
-							Utils.WINDOW_MULTIPLIER = Math.max(Utils.MIN_WINDOW_MULTIPLIER,
-									Utils.WINDOW_MULTIPLIER * Utils.WINDOW_CHANGE_FACTOR);
-							//System.out.println("WINDOW_MULTIPLIER = "+Utils.WINDOW_MULTIPLIER);
-							alignmentSampled = 0;
-							alignmentAccepted = 0;
-						}
-					}					
+//					if (alignmentSampled > Utils.MIN_SAMPLES_FOR_ACC_ESTIMATE) {
+//						double alignmentAccRate = (double) alignmentAccepted / (double) alignmentSampled;
+//						//System.out.println("alignmentAccRate = "+alignmentAccRate);
+//						if (alignmentAccRate > Utils.MAX_ACCEPTANCE && 
+//								Utils.WINDOW_MULTIPLIER < Utils.MAX_WINDOW_MULTIPLIER &&
+//								Utils.WINDOW_MULTIPLIER > Utils.MIN_WINDOW_MULTIPLIER ) {
+//							Utils.WINDOW_MULTIPLIER = Math.min(Utils.MAX_WINDOW_MULTIPLIER,
+//									Utils.WINDOW_MULTIPLIER / Utils.WINDOW_CHANGE_FACTOR);
+//							//System.out.println("WINDOW_MULTIPLIER = "+Utils.WINDOW_MULTIPLIER);
+//							alignmentSampled = 0;
+//							alignmentAccepted = 0;
+//						}
+//						else if (alignmentAccRate < Utils.MIN_ACCEPTANCE && 
+//								Utils.WINDOW_MULTIPLIER < Utils.MAX_WINDOW_MULTIPLIER &&
+//								Utils.WINDOW_MULTIPLIER > Utils.MIN_WINDOW_MULTIPLIER ) {
+//							Utils.WINDOW_MULTIPLIER = Math.max(Utils.MIN_WINDOW_MULTIPLIER,
+//									Utils.WINDOW_MULTIPLIER * Utils.WINDOW_CHANGE_FACTOR);
+//							//System.out.println("WINDOW_MULTIPLIER = "+Utils.WINDOW_MULTIPLIER);
+//							alignmentSampled = 0;
+//							alignmentAccepted = 0;
+//						}
+//					}					
 //					if (edgeSampled > Utils.MIN_SAMPLES_FOR_ACC_ESTIMATE) {
 //						double edgeAccRate = (double) edgeAccepted / (double) edgeSampled;
 //						if (edgeAccRate > Utils.MAX_ACCEPTANCE) {
@@ -452,12 +460,12 @@ public class Mcmc extends Stoppable {
 			burnin = false;
 			
 			
-			alignmentSampled = 0;
-			alignmentAccepted = 0;
+//			alignmentSampled = 0;
+//			alignmentAccepted = 0;
 //			edgeSampled = 0;
 //			edgeAccepted = 0;
-			topologySampled = 0;
-			topologyAccepted = 0;
+//			topologySampled = 0;
+//			topologyAccepted = 0;
 //			RSampled = 0;
 //			RAccepted = 0;
 //			lambdaSampled = 0;
@@ -505,8 +513,8 @@ public class Mcmc extends Stoppable {
 			for (int i = 0; i < period && !shouldStop; i++) {
 				for (int j = 0; j < sampRate; j++) {
 					// Samples.
-					sample(0);
-
+					sample(0);				
+					
 					// Proposes a swap.
 					if (isParallel) {
 						swapCounter--;
@@ -553,9 +561,6 @@ public class Mcmc extends Stoppable {
 					if (allAlignments.size() >1){
 						FuzzyAlignment Fa = FuzzyAlignment.getFuzzyAlignmentAndProject(allAlignments.subList(0, allAlignments.size()-1), 0);
 						FuzzyAlignment Fb = FuzzyAlignment.getFuzzyAlignmentAndProject(allAlignments, 0);
-						//System.out.println(Fa);
-						//System.out.println("xxxx");
-						//System.out.println(Fb);
 						currScore = FuzzyAlignment.AMA(Fa, Fb);
 						System.out.println(currScore);
 						distances.add(currScore);
@@ -696,11 +701,10 @@ public class Mcmc extends Stoppable {
 	}
 
 	private void sample(int samplingMethod) throws StoppedException {
-		if (samplingMethod == 2) {
-			stoppable();
-			coreModel.proposeParamChange(tree);
-		}
-		if (samplingMethod == 0) {
+		stoppable();
+		coreModel.proposeParamChange(tree);
+		totalLogLike = coreModel.curLogLike;		
+		/*if (samplingMethod == 0) {
 			long timer = 0;
 			stoppable();
 
@@ -782,7 +786,7 @@ public class Mcmc extends Stoppable {
 			sampleAlignment();
 			sampleModelExtParam();
 		}
-		
+		*/
 		// check log-likelihood consistency if debugging on
 		if(Utils.DEBUG) {
 			if(Math.abs(modelExtMan.totalLogLike(tree)-totalLogLike) > 1e-5)
@@ -791,7 +795,7 @@ public class Mcmc extends Stoppable {
 
 	}
 
-	private void sampleAlignment() {
+/*	private void sampleAlignment() {
 		alignmentSampled++;
 		for (int i = 0; i < tree.vertex.length; i++) {
 			tree.vertex[i].selected = false;
@@ -855,7 +859,8 @@ public class Mcmc extends Stoppable {
 		// tree.root.calcFelsRecursivelyWithCheck();
 		// tree.root.calcIndelRecursivelyWithCheck();
 	}
-
+*/
+	
 	// this is the old
 	/*
 	 * private void sampleTopology(){ int vnum = tree.vertex.length;
@@ -893,7 +898,7 @@ public class Mcmc extends Stoppable {
 	 * //tree.root.calcFelsRecursivelyWithCheck();
 	 * //tree.root.calcIndelRecursivelyWithCheck(); }
 	 */
-	private void sampleTopology() {
+/*	private void sampleTopology() {
 		int vnum = tree.vertex.length;
 	
 		if (vnum <= 3)
@@ -1050,11 +1055,8 @@ public class Mcmc extends Stoppable {
 			tree.root.calcIndelLikeRecursively();
 		}
 	}
+*/
 
-	private void sampleEdge() {
-		coreModel.proposeParamChange(tree);
-		totalLogLike = coreModel.curLogLike;
-	}
 /*	private void sampleEdge() {
 		edgeSampled++;
 		
@@ -1113,10 +1115,6 @@ public class Mcmc extends Stoppable {
 	}
 */
 	
-	private void sampleIndelParameter() {
-		coreModel.proposeParamChange(tree);
-		totalLogLike = coreModel.curLogLike;
-	}
 /*	private void sampleIndelParameter() {		
 		// select indel param
 		int ind = Utils.generator.nextInt(3);
@@ -1243,14 +1241,6 @@ public class Mcmc extends Stoppable {
 		modelExtMan.afterIndelParamChange(tree, tree.hmm2, ind, accepted);
 	} */
 
-	private void sampleSubstParameter() {
-		if (tree.substitutionModel.params.length == 0) {
-			return;
-		}
-		else {
-			coreModel.proposeParamChange(tree);
-		}
-	}
 /*	private void sampleSubstParameter() {
 		substSampled++;
 		if (tree.substitutionModel.params.length == 0)
@@ -1284,17 +1274,17 @@ public class Mcmc extends Stoppable {
 		}
 	}
 */
-	private boolean modExtParamChangeAccepted;
+//	private boolean modExtParamChangeAccepted;
 //
-	private void sampleModelExtParam() {
-//		modextSampled++;
-		modelExtMan.beforeModExtParamChange(tree);
-		modExtParamChangeAccepted = false;
-		modelExtMan.proposeParamChange(tree);
-//		if(modExtParamChangeAccepted)
-//			modextAccepted++;
-		modelExtMan.afterModExtParamChange(tree, modExtParamChangeAccepted);
-	}
+//	private void sampleModelExtParam() {
+////		modextSampled++;
+//		modelExtMan.beforeModExtParamChange(tree);
+//		modExtParamChangeAccepted = false;
+//		modelExtMan.proposeParamChange(tree);
+////		if(modExtParamChangeAccepted)
+////			modextAccepted++;
+//		modelExtMan.afterModExtParamChange(tree, modExtParamChangeAccepted);
+//	}
 	
 	/**
 	 * NB logProposalRatio includes the contribution from the prior densities.
@@ -1337,12 +1327,12 @@ public class Mcmc extends Stoppable {
 		for (McmcMove m : coreModel.getMcmcMoves()) {
 			info += m.name+": "+String.format("%f ", m.acceptanceRate());
 		}
-//		return info;
-		return (info+String.format("Alignment: %f, Edge: %f, Topology: %f, Substitution: %f]",
-		(alignmentSampled == 0 ? 0 : (double) alignmentAccepted / (double) alignmentSampled),
-		(edgeSampled == 0 ? 0 : (double) edgeAccepted / (double) edgeSampled),
-		(topologySampled == 0 ? 0 : (double) topologyAccepted / (double) topologySampled),
-		(substSampled == 0 ? 0 : (double) substAccepted / (double) substSampled)));
+		return info;
+//		return (info+String.format("Alignment: %f, Edge: %f, Topology: %f, Substitution: %f]",
+//		(alignmentSampled == 0 ? 0 : (double) alignmentAccepted / (double) alignmentSampled),
+//		(edgeSampled == 0 ? 0 : (double) edgeAccepted / (double) edgeSampled),
+//		(topologySampled == 0 ? 0 : (double) topologyAccepted / (double) topologySampled)));
+//		(substSampled == 0 ? 0 : (double) substAccepted / (double) substSampled)));
 
 //		return String.format("Acceptances: [Alignment: %f, Edge: %f, Topology: %f, R: %f, lambda: %f, mu: %f, Substitution: %f]",
 //				(alignmentSampled == 0 ? 0 : (double) alignmentAccepted / (double) alignmentSampled),

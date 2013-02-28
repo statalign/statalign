@@ -71,6 +71,9 @@ public class SubstMove extends McmcMove {
 		else {
 			throw new IllegalArgumentException("SubstMove.move must take an argument of type Tree.");
 		}
+		if (tree.substitutionModel.params.length == 0) {
+			return;
+		}
 		((CoreMcmcModule) owner).getModelExtMan().beforeSubstParamChange(tree,tree.substitutionModel, -1);
 		super.move(externalState);
 		((CoreMcmcModule) owner).getModelExtMan().afterSubstParamChange(tree, tree.substitutionModel, -1, lastMoveAccepted);
