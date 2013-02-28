@@ -310,7 +310,7 @@ public class Vertex {
         updateHmm3Matrix();
     }
 
-    void edgeChangeUpdate() {
+    public void edgeChangeUpdate() {
         if (parent != null) {
             updateTransitionMatrix();
             updateHmm2Matrix();
@@ -2400,7 +2400,7 @@ public class Vertex {
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /** Calculates Felsenstein and indel likelihoods up to root, starting from `parent' */
-    void calcAllUp() {
+    public void calcAllUp() {
         for (Vertex v = parent; v != null; v = v.parent) {
             v.calcFelsen();
             v.calcOrphan();

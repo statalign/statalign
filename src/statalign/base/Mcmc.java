@@ -129,6 +129,7 @@ public class Mcmc extends Stoppable {
 	private int thetaWeight = 5;
 	
 	private int substWeight = 10;
+	private int edgeWeight = 3; // Will be multiplied by nEdges
 
 	/** True while the MCMC is in the burn-in phase. */
 	public boolean burnin;
@@ -219,6 +220,14 @@ public class Mcmc extends Stoppable {
 		
 		SubstMove substMove = new SubstMove(coreModel,"Subst");
 		coreModel.addMcmcMove(substMove, substWeight);
+		
+		for (int i=0; i<tree.vertex.length; i++) {
+			EdgeMove edgeMove = new EdgeMove(coreModel,i,
+					new GammaPrior(1,1),
+					new GaussianProposal(),"Edge"+i);
+			// Default minimum edge length is 0.01
+			coreModel.addMcmcMove(edgeMove, edgeWeight);
+		}
 	}
 
 	/**
@@ -250,9 +259,12 @@ public class Mcmc extends Stoppable {
 			proposalWeights[4] = 0;
 			substWeight = 0;
 		}
+		edgeWeight *= tree.vertex.length;
 		
 		coreModel = new CoreMcmcModule(this,modelExtMan);
-		initCoreModel();
+		initCoreModel(); 
+		// initCoreModel() uses the weights, so they need to be defined
+		// and updated before this point.
 
 		// notifies model extension plugins of start of MCMC sampling
 		modelExtMan.beforeSampling(tree);
@@ -369,21 +381,21 @@ public class Mcmc extends Stoppable {
 							alignmentAccepted = 0;
 						}
 					}					
-					if (edgeSampled > Utils.MIN_SAMPLES_FOR_ACC_ESTIMATE) {
-						double edgeAccRate = (double) edgeAccepted / (double) edgeSampled;
-						if (edgeAccRate > Utils.MAX_ACCEPTANCE) {
-							Utils.EDGE_SPAN /= Utils.SPAN_MULTIPLIER;
-							//System.out.println("EDGE_SPAN = "+Utils.EDGE_SPAN);
-							edgeSampled = 0;
-							edgeAccepted = 0;
-						}
-						else if (edgeAccRate < Utils.MIN_ACCEPTANCE) {
-							Utils.EDGE_SPAN *= Utils.SPAN_MULTIPLIER;
-							//System.out.println("EDGE_SPAN = "+Utils.EDGE_SPAN);
-							edgeSampled = 0;
-							edgeAccepted = 0;
-						}
-					}					
+//					if (edgeSampled > Utils.MIN_SAMPLES_FOR_ACC_ESTIMATE) {
+//						double edgeAccRate = (double) edgeAccepted / (double) edgeSampled;
+//						if (edgeAccRate > Utils.MAX_ACCEPTANCE) {
+//							Utils.EDGE_SPAN /= Utils.SPAN_MULTIPLIER;
+//							//System.out.println("EDGE_SPAN = "+Utils.EDGE_SPAN);
+//							edgeSampled = 0;
+//							edgeAccepted = 0;
+//						}
+//						else if (edgeAccRate < Utils.MIN_ACCEPTANCE) {
+//							Utils.EDGE_SPAN *= Utils.SPAN_MULTIPLIER;
+//							//System.out.println("EDGE_SPAN = "+Utils.EDGE_SPAN);
+//							edgeSampled = 0;
+//							edgeAccepted = 0;
+//						}
+//					}					
 //					if (RSampled > Utils.MIN_SAMPLES_FOR_ACC_ESTIMATE) {
 //						double RAccRate = (double) RAccepted / (double) RSampled;
 //						if (RAccRate > Utils.MAX_ACCEPTANCE) {
@@ -442,8 +454,8 @@ public class Mcmc extends Stoppable {
 			
 			alignmentSampled = 0;
 			alignmentAccepted = 0;
-			edgeSampled = 0;
-			edgeAccepted = 0;
+//			edgeSampled = 0;
+//			edgeAccepted = 0;
 			topologySampled = 0;
 			topologyAccepted = 0;
 //			RSampled = 0;
@@ -452,8 +464,8 @@ public class Mcmc extends Stoppable {
 //			lambdaAccepted = 0;
 //			muSampled = 0;
 //			muAccepted = 0;
-			substSampled = 0;
-			substAccepted = 0;
+//			substSampled = 0;
+//			substAccepted = 0;
 
 			int period;
 			if(AutomateParameters.shouldAutomateNumberOfSamples()){
@@ -685,6 +697,7 @@ public class Mcmc extends Stoppable {
 
 	private void sample(int samplingMethod) throws StoppedException {
 		if (samplingMethod == 2) {
+			stoppable();
 			coreModel.proposeParamChange(tree);
 		}
 		if (samplingMethod == 0) {
@@ -1039,6 +1052,10 @@ public class Mcmc extends Stoppable {
 	}
 
 	private void sampleEdge() {
+		coreModel.proposeParamChange(tree);
+		totalLogLike = coreModel.curLogLike;
+	}
+/*	private void sampleEdge() {
 		edgeSampled++;
 		
 		// select edge
@@ -1094,7 +1111,8 @@ public class Mcmc extends Stoppable {
 
 		}
 	}
-
+*/
+	
 	private void sampleIndelParameter() {
 		coreModel.proposeParamChange(tree);
 		totalLogLike = coreModel.curLogLike;

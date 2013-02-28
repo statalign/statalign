@@ -1,5 +1,7 @@
 package statalign.mcmc;
 
+import statalign.base.Utils;
+
 public abstract class McmcMove {
 
 	protected McmcModule owner;
@@ -24,8 +26,10 @@ public abstract class McmcMove {
 	// variables.
 	
 	public String name;
-
-	
+	private long time = 0;
+	public long getTime() {
+		return time;
+	}
 	public double acceptanceRate() {
 		return (double) acceptanceCount / (double) proposalCount;
 	}
@@ -44,6 +48,9 @@ public abstract class McmcMove {
 	
 	public void move(Object externalState) {
 		
+		if (Utils.DEBUG) {
+			time -= System.currentTimeMillis();
+		}
 		proposalCount++;
 		moveProposed = true;
 		copyState(externalState);
@@ -60,6 +67,9 @@ public abstract class McmcMove {
 		else {
 			lastMoveAccepted = false;
 			restoreState(externalState);
+		}
+		if (Utils.DEBUG) {
+			time += System.currentTimeMillis();
 		}
 	}
 	
