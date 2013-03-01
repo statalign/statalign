@@ -11,7 +11,6 @@ import statalign.mcmc.McmcModule;
 import statalign.mcmc.ParameterInterface;
 import statalign.mcmc.PriorDistribution;
 import statalign.mcmc.ProposalDistribution;
-import statalign.model.ext.plugins.StructAlign;
 
 public class EdgeMove extends ContinuousPositiveParameterMove {
 

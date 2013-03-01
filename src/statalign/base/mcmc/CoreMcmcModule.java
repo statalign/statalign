@@ -42,11 +42,16 @@ public class CoreMcmcModule extends McmcModule {
 		if (choice == 0) {
 			//System.out.println("Core move.");
 			accepted = super.proposeParamChange(tree);
+			// These moves will update the curLogLike variable
+			// for their owner, i.e. this
 		}
 		else {
 			//System.out.println("Model extension move.");
 			modelExtMan.beforeModExtParamChange(tree);
 			accepted = modelExtMan.proposeParamChange(tree);
+			// These moves do not have access to this McmcModule
+			// so we need to extract the likelihood via the 
+			// modelExtMan:
 			setLogLike(modelExtMan.logLikeModExtParamChange(tree));
 			modelExtMan.afterModExtParamChange(tree, accepted);
 		}

@@ -26,6 +26,13 @@ public abstract class McmcModule {
 		}
 		return w;
 	}
+	public void setWeight(String name, int weight) {
+		for (int i=0; i<mcmcMoves.size(); i++) {
+			if (mcmcMoves.get(i).name.equals(name)) {
+				mcmcMoveWeights.set(i, weight);
+			}
+		}
+	}
 	public void addMcmcMove(McmcMove m, int weight) {
 		mcmcMoves.add(m);
 		mcmcMoveWeights.add(weight);
