@@ -51,9 +51,7 @@ public abstract class McmcMove {
 	
 	public void move(Object externalState) {
 		
-		//if (Utils.DEBUG) {
-			time -= System.currentTimeMillis();
-		//}
+		time -= System.currentTimeMillis();
 		proposalCount++;
 		moveProposed = true;
 		copyState(externalState);
@@ -64,24 +62,13 @@ public abstract class McmcMove {
 			updateLikelihood(externalState);
 		}
 		if(isParamChangeAccepted(logProposalRatio)) {
-//			if (Utils.DEBUG) {
-//				System.out.println("Accepted. logProposalRatio = "+logProposalRatio);
-//			}
 			acceptanceCount++;
 			lastMoveAccepted = true;
 		}
 		else {
-//			if (Utils.DEBUG) {
-//				System.out.println("Rejected. logProposalRatio = "+logProposalRatio);
-//			}
 			lastMoveAccepted = false;
 			restoreState(externalState);
 		}
-		//if (Utils.DEBUG) {
-			time += System.currentTimeMillis();
-		//}
+		time += System.currentTimeMillis();
 	}
-	
-	 
-	
 }

@@ -47,11 +47,24 @@ public abstract class McmcModule {
 	}
 	public McmcMove getMcmcMove(String name) {
 		for (McmcMove mcmcMove : mcmcMoves) {
-			if (mcmcMove.name.equals(name)) {
+			if (mcmcMove.name.contains(name)) {
 				return mcmcMove;
 			}
 		}
 		throw new RuntimeException("McmcMove "+name+" not found.");
+	}
+	public String getMcmcInfo() {
+		String info = "";
+		for (McmcMove mcmcMove : mcmcMoves) {
+			String infoFormat = "%-24s%8s%8d%6d%8.4f\n";
+			info += String.format(infoFormat,
+					mcmcMove.name,
+					Utils.convertTime(mcmcMove.getTime()),
+					mcmcMove.proposalCount,
+					mcmcMove.getTime()/(mcmcMove.proposalCount>0 ? mcmcMove.proposalCount : 1),
+					mcmcMove.acceptanceRate());
+		}
+		return info;
 	}
 	
 	/**

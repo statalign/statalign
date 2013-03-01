@@ -100,22 +100,22 @@ public class Mcmc extends Stoppable {
 	// Which indel parameter move scheme(s) to use
 	private boolean lambdaMuMove = false;
 	private boolean lambdaPhiMove = true;
-	private boolean rhoThetaMove = false;
+	private boolean rhoThetaMove = true;
 	
 	// Weights for coreModel McmcMoves
-	private int rWeight = 5;
-	private int lambdaWeight = 5;
-	private int muWeight = 5;
-	private int lambdaMuWeight = 5;
-	private int phiWeight = 5;
-	private int rhoWeight = 5;
-	private int thetaWeight = 5;
+	private int rWeight = 6;
+	private int lambdaWeight = 6;
+	private int muWeight = 6;
+	private int lambdaMuWeight = 6;
+	private int phiWeight = 6;
+	private int rhoWeight = 6;
+	private int thetaWeight = 6;
 	
 	private int substWeight = 10;
-	private int edgeWeight = 15; 
+	private int edgeWeight = 2; // per edge
 	private int edgeWeightIncrement = 0; // Added after half of burnin
-	private int alignWeight = 35;
-	private int topologyWeight = 20;
+	private int alignWeight = 25;
+	private int topologyWeight = 8;
 
 	/** True while the MCMC is in the burn-in phase. */
 	public boolean burnin;
@@ -300,18 +300,6 @@ public class Mcmc extends Stoppable {
 	public State getState() {
 		return tree.getState();
 	}
-	
-	/** 
-	 * Takes a time in milliseconds and converts to a string to be printed.
-	 * 
-	 * @param x The time to be formatted, in milliseconds (as a long).
-	 * @return A string to be printed.
-	 */
-	private static String convertTime(long x) {
-		x /= 1000;
-		return String.format("%dh%02dm%02ds", x / 3600,
-				(x / 60) % 60, x % 60);
-	}
 
 	/**
 	 * Starts an MCMC run. 
@@ -389,12 +377,12 @@ public class Mcmc extends Stoppable {
 			boolean alreadyAddedWeightModifiers = false;
 			for (int i = 0; i < burnIn; i++) {
 				
-				if (i > burnIn / 2) {
-					if (!alreadyAddedWeightModifiers) {
-						alreadyAddedWeightModifiers = true;
-						coreModel.setWeight("Edge",edgeWeight+edgeWeightIncrement);
-					}
-				}
+//				if (i > burnIn / 2) {
+//					if (!alreadyAddedWeightModifiers) {
+//						alreadyAddedWeightModifiers = true;
+//						coreModel.setWeight("Edge",edgeWeight+edgeWeightIncrement);
+//					}
+//				}
 				
 				// Perform an MCMC move
 				sample(0);
@@ -555,10 +543,14 @@ public class Mcmc extends Stoppable {
 		}
 
 		//if(Utils.DEBUG) {
-			String info = "Timings: ";
-			for (McmcMove m : coreModel.getMcmcMoves()) {
-				info += m.name+": "+convertTime(m.getTime())+"\n";
-			}	
+			String info = "\n";
+			info += String.format("%-24s","Move name")+
+			String.format("%8s","t (total)")+
+			String.format("%8s","nMoves")+
+			String.format("%6s","time")+
+			String.format("%8s\n", "acc");
+			info += coreModel.getMcmcInfo();
+			info += modelExtMan.getMcmcInfo();
 			System.out.println(info);
 		//}
 

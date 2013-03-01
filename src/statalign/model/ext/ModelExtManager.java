@@ -170,7 +170,15 @@ public class ModelExtManager {
 			total += (propWeights[i++] = plugin.getParamChangeWeight());
 		return total;
 	}
-
+	
+	public String getMcmcInfo() {
+		String info = "";
+		for(ModelExtension plugin : activeList) {
+			info += "\n"+plugin.getPluginID()+"\n\n";
+			info += plugin.getMcmcInfo();
+		}
+		return info;
+	}
 	public void beforeModExtParamChange(Tree tree) {
 		selectedPlugin = activeList.get(Utils.weightedChoose(propWeights));
 		selectedPlugin.beforeModExtParamChange(tree, selectedPlugin);

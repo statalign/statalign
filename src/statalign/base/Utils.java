@@ -296,6 +296,18 @@ public class Utils{
 		return k;
 	}
 
+	/** 
+	 * Takes a time in milliseconds and converts to a string to be printed.
+	 * 
+	 * @param x The time to be formatted, in milliseconds (as a long).
+	 * @return A string to be printed.
+	 */
+	public static String convertTime(long x) {
+		x /= 1000;
+		return String.format("%dh%02dm%02ds", x / 3600,
+				(x / 60) % 60, x % 60);
+	}
+	
 	/**
 	 * Logarithmically add two numbers
 	 * @param a log(x)
