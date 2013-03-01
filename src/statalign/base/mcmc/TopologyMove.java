@@ -46,6 +46,8 @@ public class TopologyMove extends McmcMove {
 		// Should also do a beforeAlignChange here, but not obvious what to pass
 		// as the selectedRoot argument.
 		double logProposalRatio = nephew.fastSwapWithUncle();
+		// Below is another version, slow and slightly better mixing
+		// double logProposalRatio = nephew.swapWithUncleAlignToParent();
 		return logProposalRatio;
 	}
 	public double logPriorDensity(Object externalState) {
@@ -56,6 +58,8 @@ public class TopologyMove extends McmcMove {
 	}
 	public void restoreState(Object externalState) {
 		uncle.fastSwapBackUncle();
+		// If using the alternative move:
+        // uncle.swapBackUncleAlignToParent();
 	}
 	
 	public void move(Object externalState) {

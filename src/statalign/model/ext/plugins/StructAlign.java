@@ -137,12 +137,12 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	private final int pluginProposalWeight = 50; 
 	
 	//int sigma2Weight = 5; //15;
-	int sigma2Weight = 13; //
+	int sigma2Weight = 18; //
 	int tauWeight = 10;
 	int sigma2HierWeight = 10;
 	int nuWeight = 10;
 	//int epsilonWeight = 2;//10;
-	int epsilonWeight = 10; //
+	int epsilonWeight = 13; //
 	int rotationWeight = 2;
 	int translationWeight = 2;
 	int libraryWeight = 2;
