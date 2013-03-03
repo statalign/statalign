@@ -17,19 +17,6 @@ import statalign.base.Vertex;
 import statalign.model.ext.plugins.structalign.Transformation;
 
 public class Funcs{
-
-	/** 
-	 * @param x
-	 * @param shape
-	 * @param rate
-	 * @return The unnormalised log density of Gamma(x | shape, rate)
-	 */
-	public static double logGammaDensity(double x, double shape, double rate) {
-       if (x < 0) {
-            return Double.NEGATIVE_INFINITY;
-       }
-       return (shape-1) * FastMath.log(x) - rate * x;
-    }
 	
 	public static double[][] getSubMatrix(double[][] matrix, int[] rows, int[] cols) {
 		double[][] submat = new double[rows.length][cols.length];

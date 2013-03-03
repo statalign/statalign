@@ -1,4 +1,4 @@
-package statalign.base.mcmc;
+package statalign.mcmc;
 
 import statalign.utils.NormalDistribution;
 public class GaussianProposal extends ProposalDistribution<Double> {

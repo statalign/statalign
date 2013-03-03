@@ -18,7 +18,7 @@ import statalign.base.Mcmc;
 import statalign.base.McmcStep;
 import statalign.base.State;
 import statalign.base.Utils;
-import statalign.base.mcmc.McmcMove;
+import statalign.mcmc.McmcMove;
 import statalign.model.ext.ModelExtManager;
 import statalign.model.ext.ModelExtension;
 import statalign.model.ext.plugins.StructAlign;
@@ -184,11 +184,11 @@ public class StructTrace extends Postprocess {
 				System.out.println(Arrays.toString(structAlign.xlats[i]));
 			}
 			System.out.println();				
+			System.out.println("Acceptance rates:");
+			for (McmcMove mcmcMove : structAlign.getMcmcMoves()) {
+				System.out.println(mcmcMove.name+"\t"+mcmcMove.acceptanceRate());
+			}
 		}
-		System.out.println("Acceptance rates:");
-		for (McmcMove mcmcMove : structAlign.getMcmcMoves()) {
-			System.out.println(mcmcMove.name+"\t"+mcmcMove.acceptanceRate());
-		}	
 	}
 	
 	public static void printMatrix(double[][] m) {
@@ -201,7 +201,7 @@ public class StructTrace extends Postprocess {
 	public void newStep(McmcStep mcmcStep) {
 		if(!active)
 			return;
-		if (count % refreshRate == 0) {
+		if (screenable && (count % refreshRate == 0)) {
 			StructAlignTraceParameters currentParameters = 
 				new StructAlignTraceParameters(this,mcmcStep.burnIn);
 			

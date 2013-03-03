@@ -51,14 +51,14 @@ public class Vertex {
     public Vertex right;
 
     int length;					// sequence length
-    AlignColumn first;			// first alignment column of Vertex
+    public AlignColumn first;			// first alignment column of Vertex
     AlignColumn last;			// last, virtual alignment column of Vertex (always present)
     String seq;					// original sequence of this Vertex (given for leaves only)
 
     int winLength;                    // length of window
     AlignColumn winFirst;        // first alignment column of window
     AlignColumn winLast;        // first alignment column past window end
-    boolean selected;                // shows if vertex is part of the selected subtree
+    public boolean selected;                // shows if vertex is part of the selected subtree
 
     /** The length of the edge that connects this vertex with its parent. */
     public double edgeLength;                            // length of edge to parent vertex
@@ -221,11 +221,11 @@ public class Vertex {
 
     }
 
-    Vertex brother() {
+    public Vertex brother() {
         return parent.left == this ? parent.right : parent.left;
     }
 
-    void updateTransitionMatrix() {
+    public void updateTransitionMatrix() {
         //	System.out.println("owner: "+owner);
         //System.out.println("");
         charTransMatrix = owner.substitutionModel.updateTransitionMatrix(charTransMatrix, edgeLength);
@@ -302,13 +302,13 @@ public class Vertex {
         }
     }
 
-    void updateHmmMatrices() {
+    public void updateHmmMatrices() {
         if (parent != null)
             updateHmm2Matrix();
         updateHmm3Matrix();
     }
 
-    void edgeChangeUpdate() {
+    public void edgeChangeUpdate() {
         if (parent != null) {
             updateTransitionMatrix();
             updateHmm2Matrix();
@@ -322,7 +322,7 @@ public class Vertex {
         winLength = length;
     }
 
-    String print() {
+    public String print() {
 
         // print this node and nodes below in bracket notation
         DecimalFormatSymbols dfs = new DecimalFormatSymbols();
@@ -376,7 +376,7 @@ public class Vertex {
      * This function calculates the Felsenstein likelihood. The result is stored
      * in the orphanLogLike at the root.
      */
-    void calcFelsRecursively() {
+    public void calcFelsRecursively() {
         if (left != null && right != null) {
             // System.out.println("calling the left child");
             left.calcFelsRecursively();
@@ -529,7 +529,7 @@ public class Vertex {
     }
 
 
-    void calcIndelLikeRecursively() {
+    public void calcIndelLikeRecursively() {
         if (left != null && right != null) {
             left.calcIndelLikeRecursively();
             right.calcIndelLikeRecursively();
@@ -1304,7 +1304,7 @@ public class Vertex {
     }
 
     /** Selects a subtree */
-    void selectSubtree(double[] weights, int level) {
+    public void selectSubtree(double[] weights, int level) {
         selected = true;
         // continue below with prescribed probability
         if (left != null && right != null) {
@@ -1328,7 +1328,7 @@ public class Vertex {
     }
 
     /** This function cuts out a window and realigns in the selected subtree. */
-    double selectAndResampleAlignment() {
+    public double selectAndResampleAlignment() {
 
         // this code below checks pointer integrity...
         //    for(int i = 0; i < owner.vertex.length - 1; i++){
@@ -1749,7 +1749,7 @@ public class Vertex {
      * Assumes {@code this} has a non-null grandparent.
      * @return log-quotient of backproposal and proposal
      */
-    double fastSwapWithUncle() {
+    public double fastSwapWithUncle() {
         Vertex uncle = parent.brother(), grandpa = parent.parent;
         double ret = 0.0;
         Vertex starter;
@@ -2246,7 +2246,7 @@ public class Vertex {
      * Must be called on ex-uncle node.
      * Assumes {@code this} has a non-null grandparent.
      */
-    void fastSwapBackUncle() {
+    public void fastSwapBackUncle() {
         Vertex uncle = parent.brother(), grandpa = parent.parent;
 
         fullWin();
@@ -2435,7 +2435,7 @@ public class Vertex {
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /** Calculates Felsenstein and indel likelihoods up to root, starting from `parent' */
-    void calcAllUp() {
+    public void calcAllUp() {
         for (Vertex v = parent; v != null; v = v.parent) {
             v.calcFelsen();
             v.calcOrphan();
@@ -2862,7 +2862,7 @@ public class Vertex {
 
 
     /** this function checks if the pointers are all right... */
-    void checkPointers() {
+    public void checkPointers() {
         //parent
         for (AlignColumn p = first; p != null; p = p.next) {
             if (p.left != null && (p.left.orphan || p.left.parent != p)) {

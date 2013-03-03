@@ -7,7 +7,7 @@ import org.apache.commons.math3.util.MathArrays;
 import statalign.base.Utils;
 import statalign.base.Vertex;
 import statalign.base.Tree;
-import statalign.base.mcmc.McmcMove;
+import statalign.mcmc.McmcMove;
 import statalign.model.ext.plugins.StructAlign;
 
 public abstract class RotationOrTranslationMove extends McmcMove {

@@ -1,4 +1,6 @@
-package statalign.base.mcmc;
+package statalign.mcmc;
+
+import statalign.base.Utils;
 
 public abstract class McmcMove {
 
@@ -19,13 +21,18 @@ public abstract class McmcMove {
 	public boolean moveProposed = false;
 	
 	public double proposalWidthControlVariable = 1.0;
+	public double spanMultiplier = Utils.SPAN_MULTIPLIER;
+	public double minAcceptance = Utils.MIN_ACCEPTANCE;
+	public double maxAcceptance = Utils.MAX_ACCEPTANCE;
 	public boolean autoTune = true;
 	// TODO Add constructor fields for specifying the above two
 	// variables.
 	
 	public String name;
-
-	
+	private long time = 0;
+	public long getTime() {
+		return time;
+	}
 	public double acceptanceRate() {
 		return (double) acceptanceCount / (double) proposalCount;
 	}
@@ -44,6 +51,7 @@ public abstract class McmcMove {
 	
 	public void move(Object externalState) {
 		
+		time -= System.currentTimeMillis();
 		proposalCount++;
 		moveProposed = true;
 		copyState(externalState);
@@ -61,8 +69,6 @@ public abstract class McmcMove {
 			lastMoveAccepted = false;
 			restoreState(externalState);
 		}
+		time += System.currentTimeMillis();
 	}
-	
-	 
-	
 }

@@ -1,7 +1,7 @@
-package statalign.base.mcmc;
+package statalign.mcmc;
 
-import statalign.base.mcmc.PriorDistribution;
-import statalign.model.ext.plugins.structalign.Funcs;
+import statalign.base.Utils;
+import statalign.mcmc.PriorDistribution;
 import statalign.utils.GammaDistribution;
 
 
@@ -20,6 +20,6 @@ public class GammaPrior implements PriorDistribution<Double> {
 		return Math.log(g.density(x));
 	}
 	public double logDensityUnnormalised(Double x) {
-		return Funcs.logGammaDensity(x, shape, rate);
+		return Utils.logGammaDensity(x, shape, rate);
 	}
 }

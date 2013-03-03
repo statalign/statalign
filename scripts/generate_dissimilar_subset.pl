@@ -7,7 +7,7 @@ if (@ARGV) {
     $MAX_PERCENT_ID = shift;
 }
 my $MAX_ID = $MAX_PERCENT_ID/100;
-my $structalign_dir = '~/private/workspace/statalign';
+my $structalign_dir = '~/workspace/statalign';
 
 my $nseqs = 0;
 my $n;

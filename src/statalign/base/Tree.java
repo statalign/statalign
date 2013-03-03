@@ -566,21 +566,20 @@ public class Tree extends Stoppable {
     public double getLogLike() {
         return root.indelLogLike + root.orphanLogLike;
     }
-    
     /**
      * Recomputes the likelihood from scratch and checks whether everything was correct before.
      * Throws error if it finds inconsistency.
      */
     public void recomputeCheckLogLike() {
     	root.recomputeCheckLogLike();
-    }
-
+     }
+    
     public int countLeaves() {
         return root.countLeaves();
     }
 
 
-    int getTopVertexId(int ind) {
+    public int getTopVertexId(int ind) {
         if (root == vertex[ind]) {
             return 0;
         }

@@ -3,11 +3,11 @@ package statalign.model.ext.plugins.structalign;
 import java.util.List;
 import java.util.ArrayList;
 
-import statalign.base.mcmc.GammaPrior;
-import statalign.base.mcmc.McmcMove;
-import statalign.base.mcmc.ParameterInterface;
-import statalign.base.mcmc.PriorDistribution;
-import statalign.base.mcmc.ProposalDistribution;
+import statalign.mcmc.GammaPrior;
+import statalign.mcmc.McmcMove;
+import statalign.mcmc.ParameterInterface;
+import statalign.mcmc.PriorDistribution;
+import statalign.mcmc.ProposalDistribution;
 import statalign.model.ext.plugins.StructAlign;
 
 public class HierarchicalContinuousPositiveStructAlignMove extends ContinuousPositiveStructAlignMove {

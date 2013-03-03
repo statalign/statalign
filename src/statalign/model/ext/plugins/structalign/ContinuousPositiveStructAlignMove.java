@@ -2,10 +2,11 @@ package statalign.model.ext.plugins.structalign;
 
 import java.util.List;
 import java.util.ArrayList;
-import statalign.base.mcmc.ContinuousPositiveParameterMove;
-import statalign.base.mcmc.ParameterInterface;
-import statalign.base.mcmc.PriorDistribution;
-import statalign.base.mcmc.ProposalDistribution;
+
+import statalign.mcmc.ContinuousPositiveParameterMove;
+import statalign.mcmc.ParameterInterface;
+import statalign.mcmc.PriorDistribution;
+import statalign.mcmc.ProposalDistribution;
 import statalign.model.ext.plugins.StructAlign;
 
 public class ContinuousPositiveStructAlignMove extends ContinuousPositiveParameterMove {
