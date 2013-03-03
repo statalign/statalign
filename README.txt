@@ -1,5 +1,5 @@
 StatAlign v3.0a
-http://statalign.github.com/statalign/
+http://statalign.github.com/
  
  
 ### INTRODUCTION ###
