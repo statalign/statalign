@@ -114,7 +114,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	
 	private double epsilonPriorShape = 2;
 	private double epsilonPriorRate = 2;
-	public GammaPrior epsilonPrior = new GammaPrior(epsilonPriorShape,epsilonPriorRate);
+	public PriorDistribution<Double> epsilonPrior;
+	boolean epsilonPriorInitialised = false;
 	
 	private double sigma2HPriorShape = 2;
 	private double sigma2HPriorRate = 2;
@@ -216,55 +217,12 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			System.out.println("Fixing epsilon to "+fixedEpsilonValue+".");
 		}
 		else if (paramName.equals("sigma2Prior")) {
-			if (paramValue.startsWith("hyp")) {
-				sigma2Prior = new HyperbolicPrior();
-				sigma2PriorInitialised = true;
-			}
-			else if (paramValue.startsWith("g{")) {
-				String[] argString = paramValue.split("\\{",2);
-				if (argString[1].endsWith("}")) {				
-					String [] args = argString[1].substring(0,argString[1].length()-1).split("_",2);
-					if (args.length == 2) {
-						sigma2Prior = new GammaPrior(Double.parseDouble(args[0]),Double.parseDouble(args[1]));
-						sigma2PriorInitialised = true;
-						addToFilenameExtension("sigma2Prior_g_"+args[0]+"_"+args[1]);
-						System.out.println("Using Gamma("+Double.parseDouble(args[0])+","+Double.parseDouble(args[1])+
-								") prior for sigma2.");
-					}
-					else {
-						throw new IllegalArgumentException(
-								"Prior parameters must be specifed in the form\n-plugin:structal[sigma2Prior=g(a;b)]\n");
-					}
-				}
-				else {
-					throw new IllegalArgumentException(
-						"Prior parameters must be specifed in the form\n-plugin:structal[sigma2Prior=g(a;b)]\n");
-				}
-			}
-			else if (paramValue.startsWith("invg{")) {
-				String[] argString = paramValue.split("\\{",2);
-				if (argString[1].endsWith("}")) {
-					String [] args = argString[1].substring(0,argString[1].length()-1).split("_",2);
-					if (args.length == 2) {
-						sigma2Prior = new InverseGammaPrior(Double.parseDouble(args[0]),Double.parseDouble(args[1]));
-						sigma2PriorInitialised = true;
-						addToFilenameExtension("sigma2Prior_invg_"+args[0]+"_"+args[1]);
-						System.out.println("Using InvGamma("+Double.parseDouble(args[0])+","+Double.parseDouble(args[1])+
-								") prior for sigma2.");
-					}
-					else {
-						throw new IllegalArgumentException(
-								"Prior parameters must be specifed in the form\n-plugin:structal[sigma2Prior=g(a,b)]\n");
-					}
-				}
-				else {
-					throw new IllegalArgumentException(
-						"Prior parameters must be specifed in the form\n-plugin:structal[sigma2Prior=g(a,b)]\n");
-				}
-			}
-			else {
-				throw new IllegalArgumentException("Unrecognised prior specification "+paramName+"="+paramValue+".");
-			}
+			sigma2Prior = setPrior(paramName,paramValue);
+			sigma2PriorInitialised = (sigma2Prior != null);
+		}
+		else if (paramName.equals("epsilonPrior")) {
+			epsilonPrior = setPrior(paramName,paramValue);
+			epsilonPriorInitialised = (epsilonPrior != null);
 		}
 		else {
 			super.setParam(paramName,paramValue);
@@ -292,6 +250,57 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		}
 		else {
 			super.setParam(paramName,paramValue);
+		}
+	}
+	
+	private PriorDistribution<Double> setPrior(String paramName, 
+						String paramValue) {
+		if (paramValue.startsWith("hyp")) {
+			System.out.println("Using hyperbolic prior for "+paramName+".");
+			return new HyperbolicPrior();
+		}
+		else if (paramValue.startsWith("g{")) {
+			String[] argString = paramValue.split("\\{",2);
+			if (argString[1].endsWith("}")) {				
+				String [] args = argString[1].substring(0,argString[1].length()-1).split("_",2);
+				if (args.length == 2) {
+					addToFilenameExtension(paramName+"_g_"+args[0]+"_"+args[1]);
+					System.out.println("Using Gamma("+Double.parseDouble(args[0])+","+Double.parseDouble(args[1])+
+							") prior for "+paramName+".");
+					return new GammaPrior(Double.parseDouble(args[0]),Double.parseDouble(args[1]));
+				}
+				else {
+					throw new IllegalArgumentException(
+							"Prior parameters must be specifed in the form\n-plugin:structal[sigma2Prior=g(a;b)]\n");
+				}
+			}
+			else {
+				throw new IllegalArgumentException(
+					"Prior parameters must be specifed in the form\n-plugin:structal[sigma2Prior=g(a;b)]\n");
+			}
+		}
+		else if (paramValue.startsWith("invg{")) {
+			String[] argString = paramValue.split("\\{",2);
+			if (argString[1].endsWith("}")) {
+				String [] args = argString[1].substring(0,argString[1].length()-1).split("_",2);
+				if (args.length == 2) {
+					addToFilenameExtension(paramName+"_invg_"+args[0]+"_"+args[1]);
+					System.out.println("Using InvGamma("+Double.parseDouble(args[0])+","+Double.parseDouble(args[1])+
+							") prior for "+paramName+".");
+					return new InverseGammaPrior(Double.parseDouble(args[0]),Double.parseDouble(args[1]));
+				}
+				else {
+					throw new IllegalArgumentException(
+							"Prior parameters must be specifed in the form\n-plugin:structal[sigma2Prior=g(a,b)]\n");
+				}
+			}
+			else {
+				throw new IllegalArgumentException(
+					"Prior parameters must be specifed in the form\n-plugin:structal[sigma2Prior=g(a,b)]\n");
+			}
+		}
+		else {
+			throw new IllegalArgumentException("Unrecognised prior specification "+paramName+"="+paramValue+".");
 		}
 	}
 	@Override
@@ -384,6 +393,11 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				sigma2Prior = new InverseGammaPrior(sigma2PriorShape,sigma2PriorRate);
 			}
 			sigma2PriorInitialised = true;
+		}
+		
+		if (!epsilonPriorInitialised) {
+			epsilonPrior = new GammaPrior(epsilonPriorShape,epsilonPriorRate);
+			epsilonPriorInitialised = true;
 		}
 		
 		
