@@ -225,8 +225,6 @@ public class Vertex {
         return parent.left == this ? parent.right : parent.left;
     }
 
-    // Currently public because otherwise we can't call it
-    // from a subpackage, although this is not ideal.
     public void updateTransitionMatrix() {
         //	System.out.println("owner: "+owner);
         //System.out.println("");
@@ -390,15 +388,16 @@ public class Vertex {
     }
 
 
-    void calcFelsRecursivelyWithCheck() {
+    void recomputeCheckLogLike() {
         if (left != null && right != null) {
             // System.out.println("calling the left child");
-            left.calcFelsRecursivelyWithCheck();
+            left.recomputeCheckLogLike();
             //System.out.println("calling the right child");
-            right.calcFelsRecursivelyWithCheck();
+            right.recomputeCheckLogLike();
         }
         calcFelsenWithCheck();
         calcOrphanWithCheck();
+        calcIndelLogLike(true);
     }
 
 
@@ -530,22 +529,12 @@ public class Vertex {
     }
 
 
-    // Currently public because otherwise we can't call it
-    // from a subpackage, although this is not ideal.
     public void calcIndelLikeRecursively() {
         if (left != null && right != null) {
             left.calcIndelLikeRecursively();
             right.calcIndelLikeRecursively();
         }
-        calcIndelLogLike();
-    }
-
-    void calcIndelRecursivelyWithCheck() {
-        if (left != null && right != null) {
-            left.calcIndelRecursivelyWithCheck();
-            right.calcIndelRecursivelyWithCheck();
-        }
-        calcIndelLikeWithCheck();
+        calcIndelLogLike(false);
     }
 
     /**
@@ -554,25 +543,20 @@ public class Vertex {
      * Saves previous logLikelihood into `old' Vertex, so it shouldn't be called twice in a row.
      * Assumes it has been called previously on both `left' and `right'.
      * Result is stored in `this'.
+     * @param withCheck if true likelihood is re-calculated and checked against the already stored value
      */
-    void calcIndelLogLike() {
-        old.indelLogLike = indelLogLike;
-        indelLogLike = 0.0;
+    void calcIndelLogLike(boolean withCheck) {
+    	if(!withCheck)
+    		old.indelLogLike = indelLogLike;
+        double newIndelLogLike = 0.0;
         if (left != null && right != null) {
-            indelLogLike += left.calcIndelLogLikeUp();
-            indelLogLike += right.calcIndelLogLikeUp();
+            newIndelLogLike += left.calcIndelLogLikeUp();
+            newIndelLogLike += right.calcIndelLogLikeUp();
         }
-    }
-
-    void calcIndelLikeWithCheck() {
-        double newindelLogLike = 0.0;
-        if (left != null && right != null) {
-            newindelLogLike += left.calcIndelLogUpWithCheck();
-            newindelLogLike += right.calcIndelLogUpWithCheck();
-        }
-        if (Math.abs(indelLogLike - newindelLogLike) > 1e-5) {
-            new ErrorMessage(null, "problem: fast indel: " + indelLogLike + " slow indel: " + newindelLogLike, true);
-        }
+        if(!withCheck)
+        	indelLogLike = newIndelLogLike;
+        else if(Math.abs(indelLogLike - newIndelLogLike) > 1e-5)
+        	throw new Error("likelihood inconsistency in calcIndelLogLike - stored likelihood: "+indelLogLike+" recomputed: "+newIndelLogLike);
     }
 
     /**
@@ -590,39 +574,6 @@ public class Vertex {
 
         //System.out.println("--------------------------------------------------");
         //printPointers();
-
-        if (parent != null) {
-            AlignColumn c = first, p = parent.first;
-            int prevk = START, k;
-
-            while (c != last || p != parent.last) {
-                if (c.parent != p) {                            // deletion (* -), pattern code 2
-                    k = emitPatt2State[2];
-                    p = p.next;
-                } else if (c.orphan) {                        // insertion (- *), pattern code 1
-                    k = emitPatt2State[1];
-                    c = c.next;
-                } else {                                                // substitution (* *), pattern code 3
-                    k = emitPatt2State[3];
-                    p = p.next;
-                    c = c.next;
-                }
-                indelLogLikeUp += hmm2TransMatrix[prevk][k];
-                prevk = k;
-            }
-
-            indelLogLikeUp += hmm2TransMatrix[prevk][END];
-        }
-
-        return indelLogLikeUp;
-    }
-
-    double calcIndelLogUpWithCheck() {
-        final int START = owner.hmm2.getStart();
-        final int END = owner.hmm2.getEnd();
-        final int emitPatt2State[] = owner.hmm2.getEmitPatt2State();
-
-        double indelLogLikeUp = indelLogLike;
 
         if (parent != null) {
             AlignColumn c = first, p = parent.first;
@@ -1050,7 +1001,7 @@ public class Vertex {
         left.calcOrphan();
         right.calcOrphan();
         calcFelsen();
-        calcIndelLogLike();
+        calcIndelLogLike(false);
         //		System.out.println("printing the alignments at the root of this subtree: "+print());
         //		System.out.println("pointers");
         //	String[] s = left.printedAlignment();
@@ -1339,7 +1290,7 @@ public class Vertex {
         calcOrphan();
         parent.calcFelsen();
         parent.calcOrphan();
-        parent.calcIndelLogLike();
+        parent.calcIndelLogLike(false);
 
         return retVal.value;
     }
@@ -1455,32 +1406,43 @@ public class Vertex {
         return bpp;
     }
     
+    public double realignToParent() {
+    	return realignToParent(false);
+    }
+    
     /**
      * Samples a new alignment between the subtree rooted at this vertex and the rest of the sequences.
      * Only the alignment between this vertex and its parent is changed.
+     * @param useCurrentWin if true then keeps the current window selection for this node
+     * 		(backproposal and proposal for window selection must be computed by the caller)
      * @return the ratio between backproposal and proposal probabilities
      */
-    public double realignToParent() {
+    public double realignToParent(boolean useCurrentWin) {
     	if(parent == null)
     		throw new Error("realignToParent was called on the root vertex");
-        MuDouble p = new MuDouble(1.0);
-        winLength = Utils.linearizerWeight(length, p, Utils.WINDOW_MULTIPLIER*Math.sqrt(length));
-        //System.out.print("Length: "+length+"\t");
-        //System.out.print("Window length: "+winLength+"\t");
-        int b = (length - winLength == 0 ? 0 : Utils.generator.nextInt(length - winLength));
-        //System.out.print("b: "+b+"\t");
-        AlignColumn actualAC = first;
-        for (int i = 0; i < b; i++) {
-            actualAC = actualAC.next;
+    	
+    	double bpp = 0;
+    	
+        if(!useCurrentWin) {
+        	MuDouble p = new MuDouble(1.0);
+	        winLength = Utils.linearizerWeight(length, p, Utils.WINDOW_MULTIPLIER*Math.sqrt(length));
+	        //System.out.print("Length: "+length+"\t");
+	        //System.out.print("Window length: "+winLength+"\t");
+	        int b = (length - winLength == 0 ? 0 : Utils.generator.nextInt(length - winLength));
+	        //System.out.print("b: "+b+"\t");
+	        AlignColumn actualAC = first;
+	        for (int i = 0; i < b; i++) {
+	            actualAC = actualAC.next;
+	        }
+	        winFirst = actualAC;
+	        for (int i = 0; i < winLength; i++) {
+	            actualAC = actualAC.next;
+	        }
+	        winLast = actualAC;
+	        
+	        //double bpp = -Math.log(p.value * (length - winLength == 0 ? 1 : length - winLength));
+	        bpp -= Math.log(p.value / (length - winLength + 1));
         }
-        winFirst = actualAC;
-        for (int i = 0; i < winLength; i++) {
-            actualAC = actualAC.next;
-        }
-        winLast = actualAC;
-
-        //double bpp = -Math.log(p.value * (length - winLength == 0 ? 1 : length - winLength));
-        double bpp = -Math.log(p.value / (length - winLength + 1));
 
         // nothing is selected for realignment below this vertex
         lastSelected();
@@ -1650,8 +1612,9 @@ public class Vertex {
     }
 
     /**
-     * Swaps `this' with its uncle, hmm3Align'ing parent and grandparent, the latter is hmm2Align'ed as well.
-     * Assumes `this' has a non-null grandparent.
+     * Swaps {@code this} with its uncle, {@link #hmm3Align()}'ing parent and grandparent,
+     * the latter is {@link #hmm2Align()}'ed as well.
+     * Assumes {@code this} has a non-null grandparent.
      * @return log-quotient of backproposal and proposal
      */
     double swapWithUncle1() {
@@ -1695,8 +1658,9 @@ public class Vertex {
     }
 
     /**
-     * Restores the exact state just before the call of `swapWithUncle'. Must be called on ex-uncle.
-     * Assumes `this' has a non-null grandparent.
+     * Restores the exact state just before the call of {@link #swapWithUncle1()}.
+     * Must be called on ex-uncle node.
+     * Assumes {@code this} has a non-null grandparent.
      */
     void swapBackUncle1() {
         Vertex uncle = parent.brother(), grandpa = parent.parent;
@@ -1711,8 +1675,78 @@ public class Vertex {
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
-     * Swaps `this' with its uncle, hmm3Align'ing parent and grandparent, the latter is hmm2Align'ed as well.
-     * Assumes `this' has a non-null grandparent.
+     * Swaps {@code this} with its uncle, but proposes new alignments only between this node and its parent, and
+     * the uncle node and its parent, every other alignment is kept fixed. Slow because full sequence
+     * alignment is done.
+     * Assumes {@code this} has a non-null grandparent.
+     * @return log-quotient of backproposal and proposal
+     */
+    public double swapWithUncleAlignToParent() {
+        Vertex uncle = parent.brother(), grandpa = parent.parent;
+        double ret = 0.0;
+
+        // make node and window selection
+        lastSelected();
+        uncle.lastSelected();
+        
+        fullWin();
+        parent.fullWin();
+        uncle.fullWin();
+        grandpa.fullWin();
+        
+        // compute alignment backproposal
+        ret += hmm2BackProp();
+        ret += uncle.hmm2BackProp();
+
+        // do the swap
+        parentNewChild(uncle);			// order is important here
+        uncle.parentNewChild(this);
+        uncle.parent = parent;
+        parent = grandpa;
+
+        // align the sequences (uncle first, that's now below!)
+        double bppProp = uncle.hmm2AlignWithSave();
+        bppProp += hmm2AlignWithSave();
+        ret += bppProp;
+        parent.calcAllUp();
+
+        if(Utils.DEBUG) {
+        	// check proposal - backproposal consistency
+        	double bppBack = uncle.hmm2BackProp();
+        	bppBack += hmm2BackProp();
+        	if(Math.abs(bppProp+bppBack) > 1e-5) {
+        	  System.out.println("Proposal - backproposal inconsistent in swapWithUncleAlignToParent! Prop: "+bppProp+" Back: "+bppBack);
+        	}
+        }
+
+        return ret;
+	}
+
+    /**
+     * Restores the exact state just before the call to {@link #swapWithUncleAlignToParent()}.
+     * Must be called on ex-uncle node.
+     * Assumes {@code this} has a non-null grandparent.
+     */
+   void swapBackUncleAlignToParent() {
+        Vertex uncle = parent.brother(), grandpa = parent.parent;
+
+        // swap back
+        parentNewChild(uncle);                    // order is important!
+        uncle.parentNewChild(this);
+        uncle.parent = parent;
+        parent = grandpa;
+
+        // restore alignment
+        alignRestore();
+        uncle.alignRestore();
+    }
+
+	/**
+     * Swaps {@code this} with its uncle, but keeps alignment columns where {@code this}, its parent,
+     * the uncle node and its parent are all aligned unchanged with a given probability, and only
+     * proposes new alignments between these selected alignment anchors columns. Alignments between
+     * other sequences than the above mentioned four are kept unchanged.
+     * Assumes {@code this} has a non-null grandparent.
      * @return log-quotient of backproposal and proposal
      */
     public double fastSwapWithUncle() {
@@ -2208,8 +2242,9 @@ public class Vertex {
     }
 
     /**
-     * Restores the exact state just before the call of `swapWithUncle'. Must be called on ex-uncle.
-     * Assumes `this' has a non-null grandparent.
+     * Restores the exact state just before the call of {@link #fastSwapWithUncle()}.
+     * Must be called on ex-uncle node.
+     * Assumes {@code this} has a non-null grandparent.
      */
     public void fastSwapBackUncle() {
         Vertex uncle = parent.brother(), grandpa = parent.parent;
@@ -2404,7 +2439,7 @@ public class Vertex {
         for (Vertex v = parent; v != null; v = v.parent) {
             v.calcFelsen();
             v.calcOrphan();
-            v.calcIndelLogLike();
+            v.calcIndelLogLike(false);
         }
     }
 
