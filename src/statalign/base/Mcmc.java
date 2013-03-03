@@ -103,11 +103,11 @@ public class Mcmc extends Stoppable {
 	private boolean rhoThetaMove = true;
 	
 	// Weights for coreModel McmcMoves
-	private int rWeight = 6;
-	private int lambdaWeight = 6;
+	private int rWeight = 8;
+	private int lambdaWeight = 4;
 	private int muWeight = 6;
 	private int lambdaMuWeight = 6;
-	private int phiWeight = 6;
+	private int phiWeight = 4;
 	private int rhoWeight = 6;
 	private int thetaWeight = 6;
 	
@@ -379,12 +379,14 @@ public class Mcmc extends Stoppable {
 			boolean alreadyAddedWeightModifiers = false;
 			for (int i = 0; i < burnIn; i++) {
 				
-//				if (i > burnIn / 2) {
-//					if (!alreadyAddedWeightModifiers) {
-//						alreadyAddedWeightModifiers = true;
-//						coreModel.setWeight("Edge",edgeWeight+edgeWeightIncrement);
-//					}
-//				}
+				if (i > burnIn / 2) {
+					if (!alreadyAddedWeightModifiers) {
+						alreadyAddedWeightModifiers = true;
+						if (edgeWeightIncrement > 0) {
+							coreModel.setWeight("Edge",edgeWeight+edgeWeightIncrement);
+						}
+					}
+				}
 				
 				// Perform an MCMC move
 				sample(0);

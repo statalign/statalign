@@ -134,10 +134,10 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	 *  align, topology, edge, indel param, subst param, modelext param 
 	 *  { 35, 20, 25, 15, 10, 0 };
 	 */
-	private final int pluginProposalWeight = 50; 
+	private final int pluginProposalWeight = 50; // Currently not used  
 	
 	//int sigma2Weight = 5; //15;
-	int sigma2Weight = 18; //
+	int sigma2Weight = 18; // 
 	int tauWeight = 10;
 	int sigma2HierWeight = 10;
 	int nuWeight = 10;
@@ -162,7 +162,6 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	public final double xlatP = .1;
 	
 	/** Minimum value for epsilon, to prevent numerical errors. */
-
 	public final double MIN_EPSILON = 0.01;
 	/** Value to fix epsilon at if we're not estimating it. */
 	public double fixedEpsilonValue = 0.0;

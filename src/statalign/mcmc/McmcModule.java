@@ -28,8 +28,9 @@ public abstract class McmcModule {
 	}
 	public void setWeight(String name, int weight) {
 		for (int i=0; i<mcmcMoves.size(); i++) {
-			if (mcmcMoves.get(i).name.equals(name)) {
+			if (mcmcMoves.get(i).name.contains(name)) {
 				mcmcMoveWeights.set(i, weight);
+				System.out.println("Move "+mcmcMoves.get(i).name+" now has weight "+weight);
 			}
 		}
 	}
@@ -47,7 +48,7 @@ public abstract class McmcModule {
 	}
 	public McmcMove getMcmcMove(String name) {
 		for (McmcMove mcmcMove : mcmcMoves) {
-			if (mcmcMove.name.contains(name)) {
+			if (mcmcMove.name.equals(name)) {
 				return mcmcMove;
 			}
 		}
