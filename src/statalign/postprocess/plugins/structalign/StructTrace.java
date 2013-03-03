@@ -24,7 +24,6 @@ import statalign.model.ext.ModelExtension;
 import statalign.model.ext.plugins.StructAlign;
 import statalign.postprocess.Postprocess;
 import statalign.postprocess.gui.StructAlignTraceGUI;
-import statalign.postprocess.utils.StructAlignTraceParameters;
 
 
 public class StructTrace extends Postprocess {

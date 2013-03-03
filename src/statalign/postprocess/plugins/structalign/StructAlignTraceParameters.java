@@ -1,4 +1,4 @@
-package statalign.postprocess.utils;
+package statalign.postprocess.plugins.structalign;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import statalign.mcmc.McmcMove;
 import statalign.model.ext.plugins.structalign.ContinuousPositiveStructAlignMove;
 import statalign.model.ext.plugins.StructAlign;
-import statalign.postprocess.plugins.structalign.StructTrace;
 
 /**
  * A container class that stores a parameter values from the StructAlign plugin
