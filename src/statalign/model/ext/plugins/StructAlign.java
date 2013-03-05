@@ -36,6 +36,7 @@ import statalign.mcmc.McmcCombinationMove;
 import statalign.mcmc.McmcMove;
 import statalign.mcmc.ParameterInterface;
 import statalign.mcmc.PriorDistribution;
+import statalign.mcmc.UniformPrior;
 import statalign.model.ext.ModelExtension;
 import statalign.model.ext.plugins.structalign.*;
 
@@ -194,10 +195,12 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		usage.append("\tepsilon=X\t\t(Fixes epsilon at X)\n");
 		usage.append("\tuseLibrary\t\t(Allows rotation library moves to be used)\n");
 		usage.append("\tsigma2Prior=PRIOR\t(Sets the prior and hyperparameters for sigma2)\n");
+		usage.append("\tepsilonPrior=PRIOR\t(Sets the prior and hyperparameters for epsilon)\n");
 		usage.append("\tPRIOR can be one of:\n");
-		usage.append("\t\thyp\t\tUses a hyperbolic prior on sigma (default)\n");
-		usage.append("\t\tg{a_b)\t\tUses a Gamma(a,b) prior on sigma2\n");
-		usage.append("\t\tinvg{a_b)\tUses an InverseGamma(a,b) prior on sigma2\n");
+		usage.append("\t\thyp\t\tUses a hyperbolic prior (default)\n");
+		usage.append("\t\tg{a_b)\t\tUses a Gamma(a,b) prior\n");
+		usage.append("\t\tinvg{a_b)\tUses an InverseGamma(a,b) prior\n");
+		usage.append("\t\tunif{a_b)\tUses a Uniform(a,b) prior\n");
 		
 		return usage.toString();
 	}
@@ -256,8 +259,30 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	private PriorDistribution<Double> setPrior(String paramName, 
 						String paramValue) {
 		if (paramValue.startsWith("hyp")) {
+			addToFilenameExtension(paramName+"_hyp");
 			System.out.println("Using hyperbolic prior for "+paramName+".");
 			return new HyperbolicPrior();
+		}
+		else if (paramValue.startsWith("unif{")) {
+			addToFilenameExtension(paramName+"_unif");
+			String[] argString = paramValue.split("\\{",2);
+			if (argString[1].endsWith("}")) {				
+				String [] args = argString[1].substring(0,argString[1].length()-1).split("_",2);
+				if (args.length == 2) {
+					addToFilenameExtension(paramName+"_u_"+args[0]+"_"+args[1]);
+					System.out.println("Using Unif("+Double.parseDouble(args[0])+","+Double.parseDouble(args[1])+
+							") prior for "+paramName+".");
+					return new UniformPrior(Double.parseDouble(args[0]),Double.parseDouble(args[1]));
+				}
+				else {
+					throw new IllegalArgumentException(
+							"Prior parameters must be specifed in the form\n-plugin:structal[sigma2Prior=unif{a_b}]\n");
+				}
+			}
+			else {
+				throw new IllegalArgumentException(
+					"Prior parameters must be specifed in the form\n-plugin:structal[sigma2Prior=unif{a_b}]\n");
+			}
 		}
 		else if (paramValue.startsWith("g{")) {
 			String[] argString = paramValue.split("\\{",2);
@@ -271,12 +296,12 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				}
 				else {
 					throw new IllegalArgumentException(
-							"Prior parameters must be specifed in the form\n-plugin:structal[sigma2Prior=g(a;b)]\n");
+							"Prior parameters must be specifed in the form\n-plugin:structal[sigma2Prior=g{a_b}]\n");
 				}
 			}
 			else {
 				throw new IllegalArgumentException(
-					"Prior parameters must be specifed in the form\n-plugin:structal[sigma2Prior=g(a;b)]\n");
+					"Prior parameters must be specifed in the form\n-plugin:structal[sigma2Prior=g{a_b}]\n");
 			}
 		}
 		else if (paramValue.startsWith("invg{")) {
@@ -291,12 +316,12 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				}
 				else {
 					throw new IllegalArgumentException(
-							"Prior parameters must be specifed in the form\n-plugin:structal[sigma2Prior=g(a,b)]\n");
+							"Prior parameters must be specifed in the form\n-plugin:structal[sigma2Prior=invg{a_b}]\n");
 				}
 			}
 			else {
 				throw new IllegalArgumentException(
-					"Prior parameters must be specifed in the form\n-plugin:structal[sigma2Prior=g(a,b)]\n");
+					"Prior parameters must be specifed in the form\n-plugin:structal[sigma2Prior=invg{a_b}]\n");
 			}
 		}
 		else {
