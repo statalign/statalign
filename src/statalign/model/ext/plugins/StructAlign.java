@@ -878,6 +878,9 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		if(accepted)	// accepted, do nothing
 			return;
 		// rejected, restore
+		if (Utils.DEBUG) {
+			System.out.println(accepted);
+		}
 		fullCovar = oldCovar;
 		curAlign = oldAlign;
 		curLogLike = oldLogLi;
