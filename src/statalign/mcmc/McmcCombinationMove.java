@@ -2,8 +2,7 @@ package statalign.mcmc;
 
 import java.util.List;
 import java.util.ArrayList;
-
-import statalign.model.ext.ModelExtension;
+import static statalign.utils.Reversed.reversed;
 
 public class McmcCombinationMove extends McmcMove {
 
@@ -28,7 +27,7 @@ public class McmcCombinationMove extends McmcMove {
 	public double proposal(Object externalState) {
 		double logProposalRatio = 0;
 		for (McmcMove mcmcMove : mcmcMoves) {
-			mcmcMove.copyState(externalState);
+			//mcmcMove.copyState(externalState);
 			double oldProposalWidthControlVariable = mcmcMove.proposalWidthControlVariable;
 			mcmcMove.proposalWidthControlVariable *= proposalWidthControlVariable;
 			logProposalRatio += mcmcMove.proposal(externalState); 
@@ -67,7 +66,7 @@ public class McmcCombinationMove extends McmcMove {
 		}
 	}
 	public void restoreState(Object externalState) {
-		for (McmcMove mcmcMove : mcmcMoves) {
+		for (McmcMove mcmcMove : reversed(mcmcMoves)) {
 			mcmcMove.restoreState(externalState);
 		}
 	}

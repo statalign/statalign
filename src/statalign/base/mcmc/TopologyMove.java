@@ -29,15 +29,12 @@ public class TopologyMove extends McmcMove {
 			}
 		}
 		else {
-			throw new IllegalArgumentException("AlignmentMove.copyState must take an argument of type Tree.");
+			throw new IllegalArgumentException("TopologyMove.copyState must take an argument of type Tree.");
 		}
 		vnum = tree.vertex.length;
 		if (vnum <= 3) {
 			return;
 		}
-		// The rest is handled inside the Vertex
-	}
-	public double proposal(Object externalState) {
 		int vertId, rnd = Utils.generator.nextInt(vnum - 3);
 		vertId = tree.getTopVertexId(rnd);
 		if (vertId != -1) {
@@ -57,6 +54,9 @@ public class TopologyMove extends McmcMove {
 		((CoreMcmcModule) owner).getModelExtMan().beforeTreeChange(tree, nephew);		
 		// Should also do a beforeAlignChange here, but not obvious what to pass
 		// as the selectedRoot argument.
+		// The rest of the state copying is handled inside the Vertex
+	}
+	public double proposal(Object externalState) {
 		double logProposalRatio = nephew.fastSwapWithUncle();
 		// Below is another version, slow and slightly better mixing
 		// double logProposalRatio = nephew.swapWithUncleAlignToParent();

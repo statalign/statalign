@@ -198,11 +198,6 @@ public class Mcmc extends Stoppable {
 		SubstMove substMove = new SubstMove(coreModel,"Subst");
 		coreModel.addMcmcMove(substMove, substWeight);
 		
-		AlignmentMove alignMove = new AlignmentMove(coreModel,"Alignment");
-		coreModel.addMcmcMove(alignMove, alignWeight);
-		
-		TopologyMove topologyMove = new TopologyMove(coreModel,"Topology");
-		coreModel.addMcmcMove(topologyMove, topologyWeight);
 		
 		for (int i=0; i<tree.vertex.length-1; i++) {
 			EdgeMove edgeMove = new EdgeMove(coreModel,i,
@@ -213,13 +208,19 @@ public class Mcmc extends Stoppable {
 			edgeMove.proposalWidthControlVariable = 0.1;
 			// Default minimum edge length is 0.01
 			coreModel.addMcmcMove(edgeMove, edgeWeight);
-			if (edgeTopologyWeight > 0) {
-				ArrayList<McmcMove> edgeTopology = new ArrayList<McmcMove>();
-				edgeTopology.add(edgeMove);
-				edgeTopology.add(topologyMove);
-				coreModel.addMcmcMove(new McmcCombinationMove(edgeTopology),edgeTopologyWeight);
-			}
+//			if (edgeTopologyWeight > 0) {
+//				ArrayList<McmcMove> edgeTopology = new ArrayList<McmcMove>();
+//				edgeTopology.add(edgeMove);
+//				edgeTopology.add(topologyMove);
+//				coreModel.addMcmcMove(new McmcCombinationMove(edgeTopology),edgeTopologyWeight);
+//			}
 		}		
+		AlignmentMove alignMove = new AlignmentMove(coreModel,"Alignment");
+		coreModel.addMcmcMove(alignMove, alignWeight);
+		
+		TopologyMove topologyMove = new TopologyMove(coreModel,"Topology");
+		coreModel.addMcmcMove(topologyMove, topologyWeight);
+		
 	}
 	
 	/**

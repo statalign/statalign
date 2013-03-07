@@ -55,11 +55,17 @@ public class EdgeMove extends ContinuousPositiveParameterMove {
 	public void afterMove(Object externalState) {
 		((CoreMcmcModule) owner).getModelExtMan().afterEdgeLenChange(tree,tree.vertex[index],lastMoveAccepted);
 	}
-	
-	public void updateLikelihood(Object externalState) {
+	@Override
+	public double proposal(Object externalState) {
+		double logProposalRatio = super.proposal(externalState);
 		if (param.get() >= minValue && param.get() < maxValue) {
 			tree.vertex[index].edgeChangeUpdate();
 			tree.vertex[index].calcAllUp();
+		}
+		return logProposalRatio;
+	}
+	public void updateLikelihood(Object externalState) {
+		if (param.get() >= minValue && param.get() < maxValue) {
 			owner.setLogLike(((CoreMcmcModule) owner).getModelExtMan().logLikeEdgeLenChange(tree, tree.vertex[index]));
 		}
 	}
