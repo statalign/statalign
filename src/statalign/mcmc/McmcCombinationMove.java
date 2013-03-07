@@ -28,7 +28,6 @@ public class McmcCombinationMove extends McmcMove {
 	public double proposal(Object externalState) {
 		double logProposalRatio = 0;
 		for (McmcMove mcmcMove : mcmcMoves) {
-			mcmcMove.copyState(externalState);
 			double oldProposalWidthControlVariable = mcmcMove.proposalWidthControlVariable;
 			mcmcMove.proposalWidthControlVariable *= proposalWidthControlVariable;
 			logProposalRatio += mcmcMove.proposal(externalState); 
