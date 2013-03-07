@@ -264,7 +264,6 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			return new HyperbolicPrior();
 		}
 		else if (paramValue.startsWith("unif{")) {
-			addToFilenameExtension(paramName+"_unif");
 			String[] argString = paramValue.split("\\{",2);
 			if (argString[1].endsWith("}")) {				
 				String [] args = argString[1].substring(0,argString[1].length()-1).split("_",2);
