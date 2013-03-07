@@ -213,12 +213,12 @@ public class Mcmc extends Stoppable {
 			edgeMove.proposalWidthControlVariable = 0.1;
 			// Default minimum edge length is 0.01
 			coreModel.addMcmcMove(edgeMove, edgeWeight);
-			if (edgeTopologyWeight > 0) {
-				ArrayList<McmcMove> edgeTopology = new ArrayList<McmcMove>();
-				edgeTopology.add(edgeMove);
-				edgeTopology.add(topologyMove);
-				coreModel.addMcmcMove(new McmcCombinationMove(edgeTopology),edgeTopologyWeight);
-			}
+//			if (edgeTopologyWeight > 0) {
+//				ArrayList<McmcMove> edgeTopology = new ArrayList<McmcMove>();
+//				edgeTopology.add(edgeMove);
+//				edgeTopology.add(topologyMove);
+//				coreModel.addMcmcMove(new McmcCombinationMove(edgeTopology),edgeTopologyWeight);
+//			}
 		}		
 	}
 	
