@@ -2,8 +2,7 @@ package statalign.mcmc;
 
 import java.util.List;
 import java.util.ArrayList;
-
-import statalign.model.ext.ModelExtension;
+import static statalign.utils.Reversed.reversed;
 
 public class McmcCombinationMove extends McmcMove {
 
@@ -60,9 +59,13 @@ public class McmcCombinationMove extends McmcMove {
 			mcmcMove.updateLikelihood(externalState);
 		}
 	}
-	
-	public void restoreState(Object externalState) {
+	public void afterMove(Object externalState) {
 		for (McmcMove mcmcMove : mcmcMoves) {
+			mcmcMove.afterMove(externalState);
+		}
+	}
+	public void restoreState(Object externalState) {
+		for (McmcMove mcmcMove : reversed(mcmcMoves)) {
 			mcmcMove.restoreState(externalState);
 		}
 	}

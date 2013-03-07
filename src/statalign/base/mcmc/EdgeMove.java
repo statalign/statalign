@@ -38,9 +38,8 @@ public class EdgeMove extends ContinuousPositiveParameterMove {
 		param = new EdgeInterface(index);
 		minValue = 0.01;
 	}
-
 	@Override
-	public void move(Object externalState) {
+	public void copyState(Object externalState) {
 		if (externalState instanceof Tree) {
 			if (tree == null) {
 				tree = (Tree) externalState;
@@ -49,18 +48,24 @@ public class EdgeMove extends ContinuousPositiveParameterMove {
 		else {
 			throw new IllegalArgumentException("EdgeMove.move must take an argument of type Tree.");
 		}
-//		if (Utils.DEBUG) {
-//			System.out.println("EdgeMove"+index);
-//		}
 		((CoreMcmcModule) owner).getModelExtMan().beforeEdgeLenChange(tree,tree.vertex[index]);
-		super.move(externalState);
+		super.copyState(externalState);
+	}
+	@Override
+	public void afterMove(Object externalState) {
 		((CoreMcmcModule) owner).getModelExtMan().afterEdgeLenChange(tree,tree.vertex[index],lastMoveAccepted);
 	}
-	
-	public void updateLikelihood(Object externalState) {
+	@Override
+	public double proposal(Object externalState) {
+		double logProposalRatio = super.proposal(externalState);
 		if (param.get() >= minValue && param.get() < maxValue) {
 			tree.vertex[index].edgeChangeUpdate();
 			tree.vertex[index].calcAllUp();
+		}
+		return logProposalRatio;
+	}
+	public void updateLikelihood(Object externalState) {
+		if (param.get() >= minValue && param.get() < maxValue) {
 			owner.setLogLike(((CoreMcmcModule) owner).getModelExtMan().logLikeEdgeLenChange(tree, tree.vertex[index]));
 		}
 	}

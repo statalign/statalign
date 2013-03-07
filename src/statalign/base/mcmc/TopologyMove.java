@@ -23,9 +23,18 @@ public class TopologyMove extends McmcMove {
 	}
 
 	public void copyState(Object externalState) {
-		// This is handled inside the Vertex
-	}
-	public double proposal(Object externalState) {
+		if (externalState instanceof Tree) {
+			if (tree == null) {
+				tree = (Tree) externalState;
+			}
+		}
+		else {
+			throw new IllegalArgumentException("TopologyMove.copyState must take an argument of type Tree.");
+		}
+		vnum = tree.vertex.length;
+		if (vnum <= 3) {
+			return;
+		}
 		int vertId, rnd = Utils.generator.nextInt(vnum - 3);
 		vertId = tree.getTopVertexId(rnd);
 		if (vertId != -1) {
@@ -45,6 +54,9 @@ public class TopologyMove extends McmcMove {
 		((CoreMcmcModule) owner).getModelExtMan().beforeTreeChange(tree, nephew);		
 		// Should also do a beforeAlignChange here, but not obvious what to pass
 		// as the selectedRoot argument.
+		// The rest of the state copying is handled inside the Vertex
+	}
+	public double proposal(Object externalState) {
 		double logProposalRatio = nephew.fastSwapWithUncle();
 		// Below is another version, slow and slightly better mixing
 		// double logProposalRatio = nephew.swapWithUncleAlignToParent();
@@ -62,24 +74,7 @@ public class TopologyMove extends McmcMove {
         // uncle.swapBackUncleAlignToParent();
 	}
 	
-	public void move(Object externalState) {
-//		if (Utils.DEBUG) {
-//			System.out.println("TopologyMove");
-//		}
-		if (externalState instanceof Tree) {
-			if (tree == null) {
-				tree = (Tree) externalState;
-			}
-		}
-		else {
-			throw new IllegalArgumentException("AlignmentMove.copyState must take an argument of type Tree.");
-		}
-		vnum = tree.vertex.length;
-		if (vnum <= 3) {
-			return;
-		}
-		
-		super.move(externalState);
+	public void afterMove(Object externalState) {
 		((CoreMcmcModule) owner).getModelExtMan().afterTreeChange(tree,lastMoveAccepted ? uncle : nephew,lastMoveAccepted);
 		// Should also do an afterAlignChange here, but not obvious what to pass
 		// as the selectedRoot argument.
