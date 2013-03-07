@@ -1727,7 +1727,7 @@ public class Vertex {
      * Must be called on ex-uncle node.
      * Assumes {@code this} has a non-null grandparent.
      */
-   void swapBackUncleAlignToParent() {
+   public void swapBackUncleAlignToParent() {
         Vertex uncle = parent.brother(), grandpa = parent.parent;
 
         // swap back

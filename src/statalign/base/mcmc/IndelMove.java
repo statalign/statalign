@@ -91,10 +91,7 @@ public abstract class IndelMove extends ContinuousPositiveParameterMove {
 	}
 
 	@Override
-	public void move(Object externalState) {
-//		if (Utils.DEBUG) {
-//			System.out.println("IndelMove");
-//		}
+	public void copyState(Object externalState) {
 		if (externalState instanceof Tree) {
 			if (tree == null) {
 				tree = (Tree) externalState;
@@ -104,7 +101,10 @@ public abstract class IndelMove extends ContinuousPositiveParameterMove {
 			throw new IllegalArgumentException("IndelMove.move must take an argument of type Tree.");
 		}
 		((CoreMcmcModule) owner).getModelExtMan().beforeIndelParamChange(tree,tree.hmm2,this);
-		super.move(externalState);
+		super.copyState(externalState);
+	}
+	@Override
+	public void afterMove(Object externalState) {
 		((CoreMcmcModule) owner).getModelExtMan().afterIndelParamChange(tree,tree.hmm2,this,lastMoveAccepted);
 	}
 	

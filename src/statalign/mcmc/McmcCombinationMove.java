@@ -61,7 +61,11 @@ public class McmcCombinationMove extends McmcMove {
 			mcmcMove.updateLikelihood(externalState);
 		}
 	}
-	
+	public void afterMove(Object externalState) {
+		for (McmcMove mcmcMove : mcmcMoves) {
+			mcmcMove.afterMove(externalState);
+		}
+	}
 	public void restoreState(Object externalState) {
 		for (McmcMove mcmcMove : mcmcMoves) {
 			mcmcMove.restoreState(externalState);

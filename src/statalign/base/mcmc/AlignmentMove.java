@@ -63,11 +63,7 @@ public class AlignmentMove extends McmcMove {
 		selectedRoot.alignRestore();
 	}
 	
-	public void move(Object externalState) {
-//		if (Utils.DEBUG) {
-//			System.out.println("AlignmentMove");
-//		}
-		super.move(externalState);
+	public void afterMove(Object externalState) {
 		((CoreMcmcModule) owner).getModelExtMan().afterAlignChange(tree, selectedRoot,lastMoveAccepted);
 	}
 	

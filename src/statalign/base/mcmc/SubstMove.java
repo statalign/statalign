@@ -35,7 +35,19 @@ public class SubstMove extends McmcMove {
 	}
 
 	public void copyState(Object externalState) {
-		// SubstitutionModel does this internally
+		if (externalState instanceof Tree) {
+			if (tree == null) {
+				tree = (Tree) externalState;
+			}
+		}
+		else {
+			throw new IllegalArgumentException("SubstMove.move must take an argument of type Tree.");
+		}
+		if (tree.substitutionModel.params.length == 0) {
+			return;
+		}
+		((CoreMcmcModule) owner).getModelExtMan().beforeSubstParamChange(tree,tree.substitutionModel, -1);
+		// SubstitutionModel does the rest internally
 	}
 	public double proposal(Object externalState) {
 		if (externalState instanceof Tree) {
@@ -62,23 +74,7 @@ public class SubstMove extends McmcMove {
 	}
 		
 	@Override
-	public void move(Object externalState) {
-//		if (Utils.DEBUG) {
-//			System.out.println("SubstMove");
-//		}
-		if (externalState instanceof Tree) {
-			if (tree == null) {
-				tree = (Tree) externalState;
-			}
-		}
-		else {
-			throw new IllegalArgumentException("SubstMove.move must take an argument of type Tree.");
-		}
-		if (tree.substitutionModel.params.length == 0) {
-			return;
-		}
-		((CoreMcmcModule) owner).getModelExtMan().beforeSubstParamChange(tree,tree.substitutionModel, -1);
-		super.move(externalState);
+	public void afterMove(Object externalState) {
 		((CoreMcmcModule) owner).getModelExtMan().afterSubstParamChange(tree, tree.substitutionModel, -1, lastMoveAccepted);
 	}
 	

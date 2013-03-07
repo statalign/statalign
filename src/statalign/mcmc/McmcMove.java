@@ -44,7 +44,8 @@ public abstract class McmcMove {
 	public abstract double logPriorDensity(Object externalState);
 	public abstract void updateLikelihood(Object externalState); 
 	public abstract void restoreState(Object externalState);
-	
+	public void afterMove(Object externalState) { }
+
 	public boolean isParamChangeAccepted(double logProposalRatio) {
 		return getOwner().isParamChangeAccepted(logProposalRatio);
 	}
@@ -69,6 +70,7 @@ public abstract class McmcMove {
 			lastMoveAccepted = false;
 			restoreState(externalState);
 		}
+		afterMove(externalState);
 		time += System.currentTimeMillis();
 	}
 }
