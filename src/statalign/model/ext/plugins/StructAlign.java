@@ -719,26 +719,6 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				covar[j][i] = covar[i][j] = tau * Math.exp(-distanceMatrix[i][j]);
 		for(int i = 0; i < tree.names.length; i++)
 			covar[i][i] += epsilon;
-		
-		System.out.println("Distance Matrix:");
-		for(int i = 0; i < distanceMatrix.length; i++){
-			for(int j = 0; j < distanceMatrix.length; j++)
-				System.out.print(distanceMatrix[i][j] + "\t");
-			System.out.println();
-		}
-		
-		System.out.println("Covariance Matrix:");
-		for(int i = 0; i < covar.length; i++){
-			for(int j = 0; j < covar.length; j++)
-				System.out.print(covar[i][j] + "\t");
-			System.out.println();
-		}
-		
-		System.out.println("Edge lengths:");
-		for(int i = 0; i < tree.vertex.length; i++)
-			System.out.println(tree.vertex[i].edgeLength);
-		
-		
 		return covar;
 	}
 	
