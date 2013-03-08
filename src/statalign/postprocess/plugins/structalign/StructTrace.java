@@ -288,8 +288,8 @@ public class StructTrace extends Postprocess {
 		for(int i = 0; i < leaves; i++){
 			radii[i] = 0;
 			// coordinates are centered in StructAlign.initRun()
-			for(int j = 0; j < coor[0].length; j++)
-				for(int k = 0; k < coor[0][0].length; k++)
+			for(int j = 0; j < coor[i].length; j++)
+				for(int k = 0; k < coor[i][0].length; k++)
 					radii[i] += Math.pow(coor[i][j][k], 2.0);
 			radii[i] /= coor[0].length;
 			radii[i] = Math.pow(radii[i], 0.5);
