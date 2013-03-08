@@ -149,10 +149,14 @@ public class StructTrace extends Postprocess {
 		} catch (IOException e){}
 		
 		double[] rad = calcGyration();
+		System.out.println("Rad length: " + rad.length);
+		System.out.println(rad[0]);
 		for(int i = 0; i < rad.length; i++){
-			try {radiiOut.write(rad[i] + "\n");
+			try {radiiOut.write(rad[i] + "\t" + "\n");
 			} catch (IOException e){}
 		}
+		try {radiiOut.close();
+		} catch (IOException e){}
 	}
 	
 	@Override
@@ -183,7 +187,8 @@ public class StructTrace extends Postprocess {
 			try {
 				for(int i = 0; i < msd.length-1; i++)
 					for(int j = i+1; j < msd.length; j++)
-						rmsdOut.write(msd[i][j] + "\t" + structAlign.distanceMatrix[i][j] + "\t");
+						rmsdOut.write(msd[i][j] + "\t" +  // distance matrix must be rescaled by tau and sigma 
+								structAlign.distanceMatrix[i][j] * 2 / structAlign.sigma2[0] * structAlign.tau + "\t");
 				rmsdOut.write("\n");
 			} catch (IOException e){
 				e.printStackTrace();
@@ -197,6 +202,11 @@ public class StructTrace extends Postprocess {
 			return;
 		try {
 			outputFile.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		try {
+			rmsdOut.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
