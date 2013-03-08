@@ -2,6 +2,7 @@ package statalign.postprocess.plugins.structalign;
 
 import java.awt.BorderLayout;
 import java.io.IOException;
+import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -27,7 +28,10 @@ import statalign.postprocess.gui.StructAlignTraceGUI;
 
 
 public class StructTrace extends Postprocess {
-		
+
+	FileWriter rmsdOut;
+	FileWriter radiiOut;
+	
 	public StructAlign structAlign;
 	List<StructAlignTraceParameters> parameterHistory;
 	
@@ -136,6 +140,19 @@ public class StructTrace extends Postprocess {
 		// Means we will have the whole burnin in one window, but then it
 		// will start to shift.
 		count = 0;
+		
+		try{
+			rmsdOut = new FileWriter("rmsd.txt");
+		} catch (IOException e){}
+		try{
+			radiiOut = new FileWriter("radii.txt");
+		} catch (IOException e){}
+		
+		double[] rad = calcGyration();
+		for(int i = 0; i < rad.length; i++){
+			try {radiiOut.write(rad[i] + "\n");
+			} catch (IOException e){}
+		}
 	}
 	
 	@Override
@@ -160,6 +177,17 @@ public class StructTrace extends Postprocess {
 				e.printStackTrace(); 
 			}
 			//structAlign.setAllMovesNotProposed();
+			
+			double[][] msd = calcMSD();
+			
+			try {
+				for(int i = 0; i < msd.length-1; i++)
+					for(int j = i+1; j < msd.length; j++)
+						rmsdOut.write(msd[i][j] + "\t" + structAlign.distanceMatrix[i][j] + "\t");
+				rmsdOut.write("\n");
+			} catch (IOException e){
+				e.printStackTrace();
+			}
 		}
 	}
 	
@@ -221,21 +249,39 @@ public class StructTrace extends Postprocess {
 		++count;
 	}
 	
-	public void calcRMSD(){
-		double[][] dist = structAlign.distanceMatrix;
+	public double[][] calcMSD(){
 		double[][][] coor = structAlign.rotCoords;
+		String[] align = structAlign.curAlign;
 		int leaves = coor.length;
-		double t;
-		for(int i = 0; i < leaves-1; i++)
-			for(int j = i+1; j < leaves; j++)
-				t = structAlign.distanceMatrix[i][j];
-		
-		// how to access aligned coordinates
-		
-		
+		boolean igap, jgap;
+		double[][] msd = new double[leaves][leaves];
+		for(int i = 0; i < leaves-1; i++){
+			for(int j = i+1; j < leaves; j++){
+				int ii = 0, jj = 0, n = 0;
+				for(int k = 0; k < align[0].length(); k++){
+					igap = align[i].charAt(k) == '-';
+					jgap = align[j].charAt(k) == '-';
+					if(!igap & !jgap){
+						msd[i][j] += sqDistance(coor[i][ii], coor[j][jj]);
+						n++;
+					}
+					ii += igap ? 0 : 1;
+					jj += jgap ? 0 : 1;
+				}
+				msd[i][j] /= n;
+			}
+		}
+		return msd;
 	}
 	
-	public void calcGyration(){
+	public double sqDistance(double[] x, double[] y){
+		double d = 0;
+		for(int i = 0; i < x.length; i++)
+			d += Math.pow(x[i] - y[i], 2.0);
+		return d;
+	}
+	
+	public double[] calcGyration(){
 		double[][][] coor = structAlign.coords;
 		int leaves = coor.length;
 		double[] radii = new double[leaves];
@@ -248,5 +294,6 @@ public class StructTrace extends Postprocess {
 			radii[i] /= coor[0].length;
 			radii[i] = Math.pow(radii[i], 0.5);
 		}
+		return radii;
 	}
 }
