@@ -84,6 +84,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	public double epsilon;
 	// TODO Allow starting values to be specified at command line/GUI
 	
+	/** Pairwise distances implied by current tree topology */
+	public double[][] distanceMatrix;
 	/** Covariance matrix implied by current tree topology */
 	public double[][] fullCovar;
 	/** Current alignment between all leaf sequences */
@@ -93,6 +95,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	public RotationProposal rotProp;
 
 	public double[][] oldCovar;
+	public double[][] oldDist;
 	public String[] oldAlign;
 	public double oldLogLi;
 	
@@ -353,6 +356,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				if(len != cl.size())
 					throw new IllegalArgumentException("structalign: sequence length mismatch with structure file for seq "+name);
 				coords[ind] = new double[len][];
+				// center all coordinates to mean zero so that rotations are around center of gravity
 				for(int j = 0; j < len; j++)
 					 coords[ind][j] = Utils.copyOf(cl.get(j));
 				RealMatrix temp = new Array2DRowRealMatrix(coords[ind]);
@@ -560,36 +564,10 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		if(!checkConsRots() && rotCoords[0] == null)
 			calcAllRotations();
 		
-		/** TESTING
-		
-		System.out.println();
-		System.out.println("Parameters for structural log likelihood:");		
-		System.out.println("Sigma2: " + sigma2);
-		System.out.println("Theta: " + theta);
-		System.out.println("Branch length: " + (tree.root.left.edgeLength + tree.root.right.edgeLength));
-		
-		System.out.println("Rotation matrices:");
-		for(int i = 1; i < xlats.length; i++) {
-			Rotation rot = new Rotation(new Vector3D(axes[i]), angles[i]);
-			double[][] m = rot.getMatrix();
-			for(int j = 0; j < m.length; j++)
-				System.out.println(Arrays.toString(m[j]));
-		}
-		
-		System.out.println("Translations:");
-		for(int i = 0; i < xlats.length; i++)
-			System.out.println(Arrays.toString(xlats[i]));
-		
-		/** END TESTING */
-		
-		
 		double logli = calcAllColumnContrib();
 		checkConsLogLike(logli); 
 		curLogLike = logli;
-		
-		// testing
-		//System.out.println("Total log likelihood " + curLogLike);
-		
+				
 		return curLogLike;
 	}
 	
@@ -603,7 +581,6 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				col[j] = align[j].charAt(i) == '-' ? -1 : inds[j]++;
 			double ll = columnContrib(col); 
 			logli += ll;
-			//System.out.println("Column: " + Arrays.toString(col) + "  ll: " + ll);
 		}
 		return structTemp * logli;
 	}
@@ -732,14 +709,10 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	 * return the full covariance matrix for the tree topology and branch lengths
 	 */	
 	public double[][] calcFullCovar(Tree tree) {
-		// I'm assuming that tree.names.length is equal to the number of vertices here
+		// tree.names.length is equal to the number of vertices
 		double[][] distMat = new double[tree.names.length][tree.names.length];
 		calcDistanceMatrix(tree.root, distMat);
-		//System.out.print("Distance: " + distMat[0][1]);
-		
-		//System.out.println("Current tree:");
-		//printTree(tree.root, "o");
-		
+		distanceMatrix = distMat;
 		for(int i = 0; i < tree.names.length; i++)
 			for(int j = i; j < tree.names.length; j++)
 				distMat[j][i] = distMat[i][j] = tau * Math.exp(-distMat[i][j]);
@@ -788,11 +761,6 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		else {
 			addEdgeLength(distMat, subTree, vertex.edgeLength * sigma2[vertex.index] / (2*tau));
 		}
-		/*System.out.println();
-		System.out.println("Distmat:");
-		for(int i = 0; i < distMat.length; i++)
-			for(int j = 0; j < distMat[0].length; j++)
-				System.out.println(distMat[i][j]);*/
 		return subTree;
 	}
 		
@@ -860,6 +828,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	
 	@Override
 	public void beforeTreeChange(Tree tree, Vertex nephew) {
+		oldDist = distanceMatrix;
 		oldCovar = fullCovar;
 		oldAlign = curAlign;
 		oldLogLi = curLogLike;
@@ -880,6 +849,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		if (Utils.DEBUG) {
 			System.out.println(accepted);
 		}
+		distanceMatrix = oldDist;
 		fullCovar = oldCovar;
 		curAlign = oldAlign;
 		curLogLike = oldLogLi;

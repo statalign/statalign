@@ -27,7 +27,7 @@ import statalign.postprocess.gui.StructAlignTraceGUI;
 
 
 public class StructTrace extends Postprocess {
-	
+		
 	public StructAlign structAlign;
 	List<StructAlignTraceParameters> parameterHistory;
 	
@@ -221,4 +221,32 @@ public class StructTrace extends Postprocess {
 		++count;
 	}
 	
+	public void calcRMSD(){
+		double[][] dist = structAlign.distanceMatrix;
+		double[][][] coor = structAlign.rotCoords;
+		int leaves = coor.length;
+		double t;
+		for(int i = 0; i < leaves-1; i++)
+			for(int j = i+1; j < leaves; j++)
+				t = structAlign.distanceMatrix[i][j];
+		
+		// how to access aligned coordinates
+		
+		
+	}
+	
+	public void calcGyration(){
+		double[][][] coor = structAlign.coords;
+		int leaves = coor.length;
+		double[] radii = new double[leaves];
+		for(int i = 0; i < leaves; i++){
+			radii[i] = 0;
+			// coordinates are centered in StructAlign.initRun()
+			for(int j = 0; j < coor[0].length; j++)
+				for(int k = 0; k < coor[0][0].length; k++)
+					radii[i] += Math.pow(coor[i][j][k], 2.0);
+			radii[i] /= coor[0].length;
+			radii[i] = Math.pow(radii[i], 0.5);
+		}
+	}
 }
