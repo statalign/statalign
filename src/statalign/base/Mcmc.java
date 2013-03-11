@@ -113,9 +113,11 @@ public class Mcmc extends Stoppable {
 	
 	private int substWeight = 10;
 	private int edgeWeight = 2; // per edge
+	private int allEdgeWeight = 6; 
 	private int edgeWeightIncrement = 0; // Added after half of burnin
 	private int alignWeight = 25;
 	private int topologyWeight = 8;
+	private int topologyWeightIncrement = 0; // Added after half of burnin
 	
 	private int edgeTopologyWeight = 1;
 
@@ -203,10 +205,14 @@ public class Mcmc extends Stoppable {
 		
 		TopologyMove topologyMove = new TopologyMove(coreModel,"Topology");
 		coreModel.addMcmcMove(topologyMove, topologyWeight);
-		
+//		EdgeTopologyMove edgeTopologyMove = new EdgeTopologyMove(coreModel,"EdgeTopology");
+//		edgeTopologyMove.proposalWidthControlVariable = 2.0;
+//		coreModel.addMcmcMove(edgeTopologyMove, topologyWeight);
+
+		GammaPrior edgePrior = new GammaPrior(1,1);
 		for (int i=0; i<tree.vertex.length-1; i++) {
 			EdgeMove edgeMove = new EdgeMove(coreModel,i,
-					new GammaPrior(1,1),
+					edgePrior,
 					//new GaussianProposal(),
 					new UniformProposal(),
 					"Edge"+i);
@@ -220,6 +226,10 @@ public class Mcmc extends Stoppable {
 //				coreModel.addMcmcMove(new McmcCombinationMove(edgeTopology),edgeTopologyWeight);
 //			}
 		}		
+//		AllEdgeMove allEdgeMove = new AllEdgeMove(coreModel,edgePrior,
+//				new MultiplicativeProposal(),"AllEdge");
+//		allEdgeMove.proposalWidthControlVariable = 0.5;
+//		coreModel.addMcmcMove(allEdgeMove, allEdgeWeight);
 	}
 	
 	/**
@@ -238,27 +248,27 @@ public class Mcmc extends Stoppable {
 		if(Utils.DEBUG) {
 			tree.recomputeCheckLogLike();
 			if(Math.abs(modelExtMan.totalLogLike(tree)-totalLogLike) > 1e-5) {
-				System.out.println(modelExtMan.totalLogLike(tree)+" "+totalLogLike);
+				System.out.println("\nBefore: "+modelExtMan.totalLogLike(tree)+" "+totalLogLike);
 				throw new Error("Log-likelihood inconsistency at start of sample()");
 			}
 		}
 		boolean accepted = coreModel.proposeParamChange(tree);
 		if (accepted) {
-			if (Utils.DEBUG) {
-				System.out.println("Move accepted.");
-			}
+//			if (Utils.DEBUG) {
+//				System.out.println("Move accepted.");
+//			}
 			totalLogLike = coreModel.curLogLike;
 		}
 		else {
-			if (Utils.DEBUG) {
-				System.out.println("Move rejected.");
-			}
+//			if (Utils.DEBUG) {
+//				System.out.println("Move rejected.");
+//			}
 			coreModel.setLogLike(totalLogLike);
 		}
 		if(Utils.DEBUG) {
 			tree.recomputeCheckLogLike();
 			if(Math.abs(modelExtMan.totalLogLike(tree)-totalLogLike) > 1e-5) {
-				System.out.println(modelExtMan.totalLogLike(tree)+" "+totalLogLike);
+				System.out.println("After: "+modelExtMan.totalLogLike(tree)+" "+totalLogLike);
 				throw new Error("Log-likelihood inconsistency at end of sample()");
 			}
 		}
@@ -398,6 +408,9 @@ public class Mcmc extends Stoppable {
 						alreadyAddedWeightModifiers = true;
 						if (edgeWeightIncrement > 0) {
 							coreModel.setWeight("Edge",edgeWeight+edgeWeightIncrement);
+						}
+						if (topologyWeightIncrement > 0) {
+							coreModel.setWeight("Topology",topologyWeight+topologyWeightIncrement);
 						}
 					}
 				}

@@ -146,8 +146,9 @@ public class ModelExtManager {
 	public double totalLogLike(Tree tree) {
 		double ll = tree.getLogLike();
 		//double ll = 0.0;
-		for(ModelExtension plugin : activeList)
+		for(ModelExtension plugin : activeList) {
 			ll += plugin.logLikeFactor(tree);
+		}
 		return ll;
 	}
 	
