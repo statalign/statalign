@@ -143,19 +143,29 @@ public class StructTrace extends Postprocess {
 		
 		try{
 			rmsdOut = new FileWriter("rmsd.txt");
-		} catch (IOException e){}
-		try{
 			radiiOut = new FileWriter("radii.txt");
 		} catch (IOException e){}
 		
 		double[] rad = calcGyration();
-		System.out.println("Rad length: " + rad.length);
-		System.out.println(rad[0]);
-		for(int i = 0; i < rad.length; i++){
-			try {radiiOut.write(rad[i] + "\t" + "\n");
-			} catch (IOException e){}
-		}
-		try {radiiOut.close();
+		int leaves = structAlign.coords.length;
+		try {
+			for(int i = 0; i < leaves-1; i++)
+				for(int j = i+1; j < leaves; j++)
+					rmsdOut.write("msd" + i + "_" + j + "\t");
+			for(int i = 0; i < leaves-1; i++)
+				for(int j = i+1; j < leaves; j++)
+					rmsdOut.write("t" + i + "_" + j + "\t");
+			for(int i = 0; i < leaves-1; i++)
+				for(int j = i+1; j < leaves; j++)
+					rmsdOut.write("seqID" + i + "_" + j + "\t");
+			rmsdOut.write("\n");
+			
+			for(int i = 0; i < rad.length; i++)
+				radiiOut.write(mcmc.tree.names[i] + "\t");
+			radiiOut.write("\n");
+			for(int i = 0; i < rad.length; i++)
+				radiiOut.write(rad[i] + "\t"); 
+			radiiOut.close();
 		} catch (IOException e){}
 	}
 	
@@ -183,12 +193,18 @@ public class StructTrace extends Postprocess {
 			//structAlign.setAllMovesNotProposed();
 			
 			double[][] msd = calcMSD();
+			double[][] seqID = calcSeqID();
 			
 			try {
 				for(int i = 0; i < msd.length-1; i++)
 					for(int j = i+1; j < msd.length; j++)
-						rmsdOut.write(msd[i][j] + "\t" +  // distance matrix must be rescaled by tau and sigma 
-								structAlign.distanceMatrix[i][j] * 2 / structAlign.sigma2[0] * structAlign.tau + "\t");
+						rmsdOut.write(msd[i][j] + "\t");
+				for(int i = 0; i < msd.length-1; i++)
+					for(int j = i+1; j < msd.length; j++) // distance matrix must be rescaled by tau and sigma
+						rmsdOut.write(structAlign.distanceMatrix[i][j] * 2 / structAlign.sigma2[0] * structAlign.tau + "\t");
+				for(int i = 0; i < msd.length-1; i++)
+					for(int j = i+1; j < msd.length; j++)
+						rmsdOut.write(seqID[i][j] + "\t");
 				rmsdOut.write("\n");
 			} catch (IOException e){
 				e.printStackTrace();
@@ -305,5 +321,27 @@ public class StructTrace extends Postprocess {
 			radii[i] = Math.pow(radii[i], 0.5);
 		}
 		return radii;
+	}
+	
+	public double[][] calcSeqID(){
+		String[] align = structAlign.curAlign;
+		int leaves = align.length;
+		boolean igap, jgap;
+		double[][] seqID = new double[leaves][leaves];
+		for(int i = 0; i < leaves-1; i++){
+			for(int j = i+1; j < leaves; j++){
+				double match = 0, id = 0;
+				for(int k = 0; k < align[0].length(); k++){
+					igap = align[i].charAt(k) == '-';
+					jgap = align[j].charAt(k) == '-';
+					if(!igap & !jgap){
+						id += align[i].charAt(k) == align[j].charAt(k) ? 1 : 0;
+						match++;
+					}
+				}
+				seqID[i][j] = id / match;
+			}
+		}
+		return seqID;
 	}
 }
