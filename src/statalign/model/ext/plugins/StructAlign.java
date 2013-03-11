@@ -25,17 +25,18 @@ import statalign.base.Tree;
 import statalign.base.Utils;
 import statalign.base.Vertex;
 import statalign.base.hmm.Hmm;
-import statalign.base.mcmc.GammaPrior;
-import statalign.base.mcmc.GammaProposal;
-import statalign.base.mcmc.GaussianProposal;
-import statalign.base.mcmc.HyperbolicPrior;
-import statalign.base.mcmc.InverseGammaPrior;
-import statalign.base.mcmc.McmcCombinationMove;
-import statalign.base.mcmc.McmcMove;
-import statalign.base.mcmc.ParameterInterface;
-import statalign.base.mcmc.PriorDistribution;
 import statalign.io.DataType;
 import statalign.io.ProteinSkeletons;
+import statalign.mcmc.GammaPrior;
+import statalign.mcmc.GammaProposal;
+import statalign.mcmc.GaussianProposal;
+import statalign.mcmc.HyperbolicPrior;
+import statalign.mcmc.InverseGammaPrior;
+import statalign.mcmc.McmcCombinationMove;
+import statalign.mcmc.McmcMove;
+import statalign.mcmc.ParameterInterface;
+import statalign.mcmc.PriorDistribution;
+import statalign.mcmc.UniformPrior;
 import statalign.model.ext.ModelExtension;
 import statalign.model.ext.plugins.structalign.*;
 
@@ -83,18 +84,18 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	public double epsilon;
 	// TODO Allow starting values to be specified at command line/GUI
 	
+	/** Pairwise distances implied by current tree topology */
+	public double[][] distanceMatrix;
 	/** Covariance matrix implied by current tree topology */
 	public double[][] fullCovar;
 	/** Current alignment between all leaf sequences */
 	public String[] curAlign;
 	
-	/** Current log-likelihood contribution */
-	public double curLogLike = 0;
-	
 	/** independence rotation proposal distribution */
 	public RotationProposal rotProp;
 
 	public double[][] oldCovar;
+	public double[][] oldDist;
 	public String[] oldAlign;
 	public double oldLogLi;
 	
@@ -117,7 +118,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	
 	private double epsilonPriorShape = 2;
 	private double epsilonPriorRate = 2;
-	public GammaPrior epsilonPrior = new GammaPrior(epsilonPriorShape,epsilonPriorRate);
+	public PriorDistribution<Double> epsilonPrior;
+	boolean epsilonPriorInitialised = false;
 	
 	private double sigma2HPriorShape = 2;
 	private double sigma2HPriorRate = 2;
@@ -137,15 +139,15 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	 *  align, topology, edge, indel param, subst param, modelext param 
 	 *  { 35, 20, 25, 15, 10, 0 };
 	 */
-	private final int pluginProposalWeight = 50; 
+	private final int pluginProposalWeight = 50; // Currently not used  
 	
 	//int sigma2Weight = 5; //15;
-	int sigma2Weight = 13; //
+	int sigma2Weight = 18; // 
 	int tauWeight = 10;
 	int sigma2HierWeight = 10;
 	int nuWeight = 10;
 	//int epsilonWeight = 2;//10;
-	int epsilonWeight = 10; //
+	int epsilonWeight = 13; //
 	int rotationWeight = 2;
 	int translationWeight = 2;
 	int libraryWeight = 2;
@@ -165,7 +167,6 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	public final double xlatP = .1;
 	
 	/** Minimum value for epsilon, to prevent numerical errors. */
-
 	public final double MIN_EPSILON = 0.01;
 	/** Value to fix epsilon at if we're not estimating it. */
 	public double fixedEpsilonValue = 0.0;
@@ -197,10 +198,12 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		usage.append("\tepsilon=X\t\t(Fixes epsilon at X)\n");
 		usage.append("\tuseLibrary\t\t(Allows rotation library moves to be used)\n");
 		usage.append("\tsigma2Prior=PRIOR\t(Sets the prior and hyperparameters for sigma2)\n");
+		usage.append("\tepsilonPrior=PRIOR\t(Sets the prior and hyperparameters for epsilon)\n");
 		usage.append("\tPRIOR can be one of:\n");
-		usage.append("\t\thyp\t\tUses a hyperbolic prior on sigma (default)\n");
-		usage.append("\t\tg{a_b)\t\tUses a Gamma(a,b) prior on sigma2\n");
-		usage.append("\t\tinvg{a_b)\tUses an InverseGamma(a,b) prior on sigma2\n");
+		usage.append("\t\thyp\t\tUses a hyperbolic prior (default)\n");
+		usage.append("\t\tg{a_b)\t\tUses a Gamma(a,b) prior\n");
+		usage.append("\t\tinvg{a_b)\tUses an InverseGamma(a,b) prior\n");
+		usage.append("\t\tunif{a_b)\tUses a Uniform(a,b) prior\n");
 		
 		return usage.toString();
 	}
@@ -220,55 +223,12 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			System.out.println("Fixing epsilon to "+fixedEpsilonValue+".");
 		}
 		else if (paramName.equals("sigma2Prior")) {
-			if (paramValue.startsWith("hyp")) {
-				sigma2Prior = new HyperbolicPrior();
-				sigma2PriorInitialised = true;
-			}
-			else if (paramValue.startsWith("g{")) {
-				String[] argString = paramValue.split("\\{",2);
-				if (argString[1].endsWith("}")) {				
-					String [] args = argString[1].substring(0,argString[1].length()-1).split("_",2);
-					if (args.length == 2) {
-						sigma2Prior = new GammaPrior(Double.parseDouble(args[0]),Double.parseDouble(args[1]));
-						sigma2PriorInitialised = true;
-						addToFilenameExtension("sigma2Prior_g_"+args[0]+"_"+args[1]);
-						System.out.println("Using Gamma("+Double.parseDouble(args[0])+","+Double.parseDouble(args[1])+
-								") prior for sigma2.");
-					}
-					else {
-						throw new IllegalArgumentException(
-								"Prior parameters must be specifed in the form\n-plugin:structal[sigma2Prior=g(a;b)]\n");
-					}
-				}
-				else {
-					throw new IllegalArgumentException(
-						"Prior parameters must be specifed in the form\n-plugin:structal[sigma2Prior=g(a;b)]\n");
-				}
-			}
-			else if (paramValue.startsWith("invg{")) {
-				String[] argString = paramValue.split("\\{",2);
-				if (argString[1].endsWith("}")) {
-					String [] args = argString[1].substring(0,argString[1].length()-1).split("_",2);
-					if (args.length == 2) {
-						sigma2Prior = new InverseGammaPrior(Double.parseDouble(args[0]),Double.parseDouble(args[1]));
-						sigma2PriorInitialised = true;
-						addToFilenameExtension("sigma2Prior_invg_"+args[0]+"_"+args[1]);
-						System.out.println("Using InvGamma("+Double.parseDouble(args[0])+","+Double.parseDouble(args[1])+
-								") prior for sigma2.");
-					}
-					else {
-						throw new IllegalArgumentException(
-								"Prior parameters must be specifed in the form\n-plugin:structal[sigma2Prior=g(a,b)]\n");
-					}
-				}
-				else {
-					throw new IllegalArgumentException(
-						"Prior parameters must be specifed in the form\n-plugin:structal[sigma2Prior=g(a,b)]\n");
-				}
-			}
-			else {
-				throw new IllegalArgumentException("Unrecognised prior specification "+paramName+"="+paramValue+".");
-			}
+			sigma2Prior = setPrior(paramName,paramValue);
+			sigma2PriorInitialised = (sigma2Prior != null);
+		}
+		else if (paramName.equals("epsilonPrior")) {
+			epsilonPrior = setPrior(paramName,paramValue);
+			epsilonPriorInitialised = (epsilonPrior != null);
 		}
 		else {
 			super.setParam(paramName,paramValue);
@@ -298,6 +258,78 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			super.setParam(paramName,paramValue);
 		}
 	}
+	
+	private PriorDistribution<Double> setPrior(String paramName, 
+						String paramValue) {
+		if (paramValue.startsWith("hyp")) {
+			addToFilenameExtension(paramName+"_hyp");
+			System.out.println("Using hyperbolic prior for "+paramName+".");
+			return new HyperbolicPrior();
+		}
+		else if (paramValue.startsWith("unif{")) {
+			String[] argString = paramValue.split("\\{",2);
+			if (argString[1].endsWith("}")) {				
+				String [] args = argString[1].substring(0,argString[1].length()-1).split("_",2);
+				if (args.length == 2) {
+					addToFilenameExtension(paramName+"_u_"+args[0]+"_"+args[1]);
+					System.out.println("Using Unif("+Double.parseDouble(args[0])+","+Double.parseDouble(args[1])+
+							") prior for "+paramName+".");
+					return new UniformPrior(Double.parseDouble(args[0]),Double.parseDouble(args[1]));
+				}
+				else {
+					throw new IllegalArgumentException(
+							"Prior parameters must be specifed in the form\n-plugin:structal[sigma2Prior=unif{a_b}]\n");
+				}
+			}
+			else {
+				throw new IllegalArgumentException(
+					"Prior parameters must be specifed in the form\n-plugin:structal[sigma2Prior=unif{a_b}]\n");
+			}
+		}
+		else if (paramValue.startsWith("g{")) {
+			String[] argString = paramValue.split("\\{",2);
+			if (argString[1].endsWith("}")) {				
+				String [] args = argString[1].substring(0,argString[1].length()-1).split("_",2);
+				if (args.length == 2) {
+					addToFilenameExtension(paramName+"_g_"+args[0]+"_"+args[1]);
+					System.out.println("Using Gamma("+Double.parseDouble(args[0])+","+Double.parseDouble(args[1])+
+							") prior for "+paramName+".");
+					return new GammaPrior(Double.parseDouble(args[0]),Double.parseDouble(args[1]));
+				}
+				else {
+					throw new IllegalArgumentException(
+							"Prior parameters must be specifed in the form\n-plugin:structal[sigma2Prior=g{a_b}]\n");
+				}
+			}
+			else {
+				throw new IllegalArgumentException(
+					"Prior parameters must be specifed in the form\n-plugin:structal[sigma2Prior=g{a_b}]\n");
+			}
+		}
+		else if (paramValue.startsWith("invg{")) {
+			String[] argString = paramValue.split("\\{",2);
+			if (argString[1].endsWith("}")) {
+				String [] args = argString[1].substring(0,argString[1].length()-1).split("_",2);
+				if (args.length == 2) {
+					addToFilenameExtension(paramName+"_invg_"+args[0]+"_"+args[1]);
+					System.out.println("Using InvGamma("+Double.parseDouble(args[0])+","+Double.parseDouble(args[1])+
+							") prior for "+paramName+".");
+					return new InverseGammaPrior(Double.parseDouble(args[0]),Double.parseDouble(args[1]));
+				}
+				else {
+					throw new IllegalArgumentException(
+							"Prior parameters must be specifed in the form\n-plugin:structal[sigma2Prior=invg{a_b}]\n");
+				}
+			}
+			else {
+				throw new IllegalArgumentException(
+					"Prior parameters must be specifed in the form\n-plugin:structal[sigma2Prior=invg{a_b}]\n");
+			}
+		}
+		else {
+			throw new IllegalArgumentException("Unrecognised prior specification "+paramName+"="+paramValue+".");
+		}
+	}
 	@Override
 	public void init() {
 
@@ -324,6 +356,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				if(len != cl.size())
 					throw new IllegalArgumentException("structalign: sequence length mismatch with structure file for seq "+name);
 				coords[ind] = new double[len][];
+				// center all coordinates to mean zero so that rotations are around center of gravity
 				for(int j = 0; j < len; j++)
 					 coords[ind][j] = Utils.copyOf(cl.get(j));
 				RealMatrix temp = new Array2DRowRealMatrix(coords[ind]);
@@ -360,23 +393,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		else {
 			//epsilon = 100;
 			epsilon = 50;
+			//epsilon = 20;
 		}
-		
-		
-		// alternative initializations
-		// actual initialization now occurs in beforeSampling()
-		/*
-		for(i = 1; i < axes.length; i++) {
-			Transformation initial = rotProp.propose(i);
-			axes[i] = initial.axis.toArray();
-			angles[i] = initial.rot;
-			xlats[i] = initial.xlat.toArray();
-		}
-		for(i = 0; i < axes.length; i++) {
-			axes[i] = new double[] { 1, 0, 0 };
-			angles[i] = 0;
-			xlats[i] = new double[] { 0, 0, 0 };
-		} */
 		
 		// number of branches in the tree is 2*leaves - 1
 		if (globalSigma) {
@@ -395,13 +413,19 @@ public class StructAlign extends ModelExtension implements ActionListener {
 					sigma2Prior = new GammaPrior(2,2);
 				}
 				else {
-					sigma2Prior = new HyperbolicPrior();
+					sigma2Prior = new GammaPrior(2,2);
+					//sigma2Prior = new HyperbolicPrior();
 				}
 			}
 			else {
 				sigma2Prior = new InverseGammaPrior(sigma2PriorShape,sigma2PriorRate);
 			}
 			sigma2PriorInitialised = true;
+		}
+		
+		if (!epsilonPriorInitialised) {
+			epsilonPrior = new GammaPrior(epsilonPriorShape,epsilonPriorRate);
+			epsilonPriorInitialised = true;
 		}
 		
 		
@@ -448,13 +472,9 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		/** Add moves for scalar parameters */
 		StructAlignParameterInterface paramInterfaceGenerator = new StructAlignParameterInterface(this); 
 		
-		// Random walk proposals 
-		GammaProposal gProp = new GammaProposal(0.001,0.001);
-		GaussianProposal nProp = new GaussianProposal();
-
 		ParameterInterface tauInterface = paramInterfaceGenerator.new TauInterface();
 		ContinuousPositiveStructAlignMove tauMove = 
-			new ContinuousPositiveStructAlignMove(this,tauInterface,tauPrior,gProp,"τ");
+			new ContinuousPositiveStructAlignMove(this,tauInterface,tauPrior,new GammaProposal(0.001,0.001),"τ");
 		tauMove.moveParams.setPlottable();
 		tauMove.moveParams.setPlotSide(1);
 		addMcmcMove(tauMove,tauWeight);
@@ -463,7 +483,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		if (!fixedEpsilon) {
 			ParameterInterface epsilonInterface = paramInterfaceGenerator.new EpsilonInterface();
 			epsilonMove = 
-				new ContinuousPositiveStructAlignMove(this,epsilonInterface,epsilonPrior,nProp,"ε");
+				new ContinuousPositiveStructAlignMove(this,epsilonInterface,epsilonPrior,new GaussianProposal(),"ε");
+				//new ContinuousPositiveStructAlignMove(this,epsilonInterface,epsilonPrior,new GammaProposal(0.001,0.001),"ε");
 			epsilonMove.setMinValue(MIN_EPSILON);
 			epsilonMove.moveParams.setPlottable();
 			epsilonMove.moveParams.setPlotSide(1);
@@ -474,13 +495,13 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		HierarchicalContinuousPositiveStructAlignMove nuMove = null;
 		if (!globalSigma) {
 			ParameterInterface sigma2HInterface = paramInterfaceGenerator.new Sigma2HInterface();
-			sigma2HMove = new HierarchicalContinuousPositiveStructAlignMove(this,sigma2HInterface,sigma2HPrior,gProp,"σ_g");
+			sigma2HMove = new HierarchicalContinuousPositiveStructAlignMove(this,sigma2HInterface,sigma2HPrior,new GammaProposal(0.001,0.001),"σ_g");
 			sigma2HMove.moveParams.setPlottable();
 			sigma2HMove.moveParams.setPlotSide(0);
 			addMcmcMove(sigma2HMove,sigma2HierWeight); 
 			
 			ParameterInterface nuInterface = paramInterfaceGenerator.new NuInterface();
-			nuMove = new HierarchicalContinuousPositiveStructAlignMove(this,nuInterface,nuPrior,gProp,"ν");
+			nuMove = new HierarchicalContinuousPositiveStructAlignMove(this,nuInterface,nuPrior,new GammaProposal(0.001,0.001),"ν");
 			nuMove.moveParams.setPlottable();
 			nuMove.moveParams.setPlotSide(1);
 			addMcmcMove(nuMove,nuWeight);
@@ -497,8 +518,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			ParameterInterface sigma2Interface = paramInterfaceGenerator.new Sigma2Interface(j);
 			ContinuousPositiveStructAlignMove m = new ContinuousPositiveStructAlignMove(
 														this,sigma2Interface,
-														sigma2Prior,nProp,sigmaName);
-														//sigma2Prior,gProp,sigmaName);
+														sigma2Prior,new GaussianProposal(),sigmaName);
+														//sigma2Prior,new GammaProposal(0.001,0.001),sigmaName);
 			if (!globalSigma && j == sigma2.length - 1) {
 				continue;
 				// i.e. don't add the last one if we have
@@ -529,12 +550,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		Funcs.initLSRotations(tree,coords,xlats,axes,angles);
 	}
 	
-	public double getLogLike() {
-		return curLogLike;
-	}
-	public void setLogLike(double ll) {
-		curLogLike = ll;
-	}
+	
 	@Override
 	public double logLikeFactor(Tree tree) {
 		String[] align = tree.getState().getLeafAlign();
@@ -548,36 +564,10 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		if(!checkConsRots() && rotCoords[0] == null)
 			calcAllRotations();
 		
-		/** TESTING
-		
-		System.out.println();
-		System.out.println("Parameters for structural log likelihood:");		
-		System.out.println("Sigma2: " + sigma2);
-		System.out.println("Theta: " + theta);
-		System.out.println("Branch length: " + (tree.root.left.edgeLength + tree.root.right.edgeLength));
-		
-		System.out.println("Rotation matrices:");
-		for(int i = 1; i < xlats.length; i++) {
-			Rotation rot = new Rotation(new Vector3D(axes[i]), angles[i]);
-			double[][] m = rot.getMatrix();
-			for(int j = 0; j < m.length; j++)
-				System.out.println(Arrays.toString(m[j]));
-		}
-		
-		System.out.println("Translations:");
-		for(int i = 0; i < xlats.length; i++)
-			System.out.println(Arrays.toString(xlats[i]));
-		
-		/** END TESTING */
-		
-		
 		double logli = calcAllColumnContrib();
 		checkConsLogLike(logli); 
 		curLogLike = logli;
-		
-		// testing
-		//System.out.println("Total log likelihood " + curLogLike);
-		
+				
 		return curLogLike;
 	}
 	
@@ -591,7 +581,6 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				col[j] = align[j].charAt(i) == '-' ? -1 : inds[j]++;
 			double ll = columnContrib(col); 
 			logli += ll;
-			//System.out.println("Column: " + Arrays.toString(col) + "  ll: " + ll);
 		}
 		return structTemp * logli;
 	}
@@ -720,20 +709,17 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	 * return the full covariance matrix for the tree topology and branch lengths
 	 */	
 	public double[][] calcFullCovar(Tree tree) {
-		// I'm assuming that tree.names.length is equal to the number of vertices here
-		double[][] distMat = new double[tree.names.length][tree.names.length];
-		calcDistanceMatrix(tree.root, distMat);
-		//System.out.print("Distance: " + distMat[0][1]);
-		
-		//System.out.println("Current tree:");
-		//printTree(tree.root, "o");
-		
+		// tree.names.length is equal to the number of vertices
+		distanceMatrix = new double[tree.names.length][tree.names.length];
+		double[][] covar = new double[tree.names.length][tree.names.length];
+		calcDistanceMatrix(tree.root, distanceMatrix);
+		// distance matrix calculation already incorporates multiplication by theta = tau / (2 * sigma^2)
 		for(int i = 0; i < tree.names.length; i++)
 			for(int j = i; j < tree.names.length; j++)
-				distMat[j][i] = distMat[i][j] = tau * Math.exp(-distMat[i][j]);
+				covar[j][i] = covar[i][j] = tau * Math.exp(-distanceMatrix[i][j]);
 		for(int i = 0; i < tree.names.length; i++)
-			distMat[i][i] += epsilon;
-		return distMat;
+			covar[i][i] += epsilon;
+		return covar;
 	}
 	
 
@@ -776,11 +762,6 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		else {
 			addEdgeLength(distMat, subTree, vertex.edgeLength * sigma2[vertex.index] / (2*tau));
 		}
-		/*System.out.println();
-		System.out.println("Distmat:");
-		for(int i = 0; i < distMat.length; i++)
-			for(int j = 0; j < distMat[0].length; j++)
-				System.out.println(distMat[i][j]);*/
 		return subTree;
 	}
 		
@@ -826,9 +807,12 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	}
 	
 	@Override
-	public double logLikeAlignChange(Tree tree, Vertex selectRoot) {
+	public void beforeAlignChange(Tree tree, Vertex selectRoot) {
 		oldAlign = curAlign;
 		oldLogLi = curLogLike;
+	}
+	@Override
+	public double logLikeAlignChange(Tree tree, Vertex selectRoot) {
 		curAlign = tree.getState().getLeafAlign();
 		curLogLike = calcAllColumnContrib();
 		return curLogLike;
@@ -844,10 +828,14 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	}
 	
 	@Override
-	public double logLikeTreeChange(Tree tree, Vertex nephew) {
+	public void beforeTreeChange(Tree tree, Vertex nephew) {
+		oldDist = distanceMatrix;
 		oldCovar = fullCovar;
 		oldAlign = curAlign;
 		oldLogLi = curLogLike;
+	}
+	@Override
+	public double logLikeTreeChange(Tree tree, Vertex nephew) {
 		fullCovar = calcFullCovar(tree);
 		curAlign = tree.getState().getLeafAlign();
 		curLogLike = calcAllColumnContrib();
@@ -859,6 +847,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		if(accepted)	// accepted, do nothing
 			return;
 		// rejected, restore
+		distanceMatrix = oldDist;
 		fullCovar = oldCovar;
 		curAlign = oldAlign;
 		curLogLike = oldLogLi;
@@ -869,7 +858,11 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		// do exactly the same as for topology change
 		return logLikeTreeChange(tree, vertex);
 	}
-	
+	@Override
+	public void beforeEdgeLenChange(Tree tree, Vertex vertex) {
+		// do exactly the same as for topology change
+		beforeTreeChange(tree, vertex);
+	}
 	@Override
 	public void afterEdgeLenChange(Tree tree, Vertex vertex, boolean accepted) {
 		// do exactly the same as for topology change
@@ -877,7 +870,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	}
 	
 	@Override
-	public double logLikeIndelParamChange(Tree tree, Hmm hmm, int ind) {
+	public double logLikeIndelParamChange(Tree tree, Hmm hmm, McmcMove m) {
 		// does not affect log-likelihood
 		return curLogLike;
 	}

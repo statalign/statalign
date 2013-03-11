@@ -3,7 +3,6 @@ package statalign.base;
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Random;
 
 import mpi.MPI;
@@ -11,16 +10,34 @@ import mpi.MPI;
 import org.apache.commons.math3.random.Well19937c;
 
 import statalign.MPIUtils;
-import statalign.base.mcmc.McmcModule;
+import statalign.base.mcmc.AlignmentMove;
+import statalign.base.mcmc.CoreMcmcModule;
+import statalign.base.mcmc.EdgeMove;
+import statalign.base.mcmc.IndelMove;
+import statalign.base.mcmc.LambdaMove;
+import statalign.base.mcmc.MuMove;
+import statalign.base.mcmc.PhiMove;
+import statalign.base.mcmc.RMove;
+import statalign.base.mcmc.RhoMove;
+import statalign.base.mcmc.SubstMove;
+import statalign.base.mcmc.ThetaMove;
+import statalign.base.mcmc.TopologyMove;
 import statalign.base.thread.Stoppable;
 import statalign.base.thread.StoppedException;
 import statalign.distance.Distance;
+import statalign.mcmc.BetaPrior;
+import statalign.mcmc.GammaPrior;
+import statalign.mcmc.GaussianProposal;
+import statalign.mcmc.LogisticProposal;
+import statalign.mcmc.McmcCombinationMove;
+import statalign.mcmc.McmcModule;
+import statalign.mcmc.McmcMove;
+import statalign.mcmc.UniformProposal;
 import statalign.model.ext.ModelExtManager;
 import statalign.postprocess.PostprocessManager;
 import statalign.postprocess.plugins.contree.CNetwork;
 import statalign.ui.ErrorMessage;
 import statalign.ui.MainFrame;
-import statalign.utils.SimpleStats;
 
 import com.ppfold.algo.AlignmentData;
 import com.ppfold.algo.FuzzyAlignment;
@@ -36,31 +53,6 @@ import com.ppfold.algo.FuzzyAlignment;
  * 
  */
 public class Mcmc extends Stoppable {
-
-	// Constants
-
-	// int samplingMethod = 1; //0: random sampling, 1: total sampling
-	double[] weights; // for selecting internal tree node
-	final static double LEAFCOUNT_POWER = 1.0;
-	final static double SELTRLEVPROB[] = { 0.9, 0.6, 0.4, 0.2, 0 };
-	
-	/** Default proposal weights in this order: align, topology, edge, indel param, subst param, modelext param */
-	final static int DEF_PROP_WEIGHTS[] = { 35, 20, 15, 15, 10, 0 };
-	/** Changes to make to the proposal weights after half the burnin is over. This
-	 *  may be useful when one parameter takes a while to converge, but mixes well, 
-	 *  or vice versa.
-	 */
-	final static int WEIGHT_CHANGE_AFTER_HALF_BURNIN[] = {0, 0, 10, 0, 0, 0};
-
-	
-//	final static int FIVECHOOSE[] = { 35, 5, 15, 35, 10 }; // edge, topology,
-//	// indel parameter, alignment, substitutionparameter
-//	final static int FOURCHOOSE[] = { 35, 5, 25, 35 }; // edge, topology, indel
-//	// parameter, alignment
-	
-	private static final int SAMPLE_RATE_WHEN_DETERMINING_THE_SPACE = 100;
-	private static final int BURNIN_TO_CALCULATE_THE_SPACE = 25000;
-
 
 	// Parallelization
 
@@ -94,9 +86,6 @@ public class Mcmc extends Stoppable {
 	 * of steps in the MCMC and the sampling rate.
 	 */
 	public MCMCPars mcmcpars;
-	
-	/** Proposal weights: 0 align, 1 topology, 2 edge, 3 indel par, 4 subst par, 5 modelext par */
-	int[] proposalWeights;
 
 	public McmcStep mcmcStep = new McmcStep();
 
@@ -106,7 +95,41 @@ public class Mcmc extends Stoppable {
 	/** Manager that handles model extension plugins */
 	public ModelExtManager modelExtMan;
 	
+	/** McmcModule containing the moves for the core components of
+	 * the model, i.e. the indel parameters, substitution model parameters,
+	 * alignment, topology and edge lengths.
+	 * The coreModel also decides whether to execute MCMC moves from the 
+	 * ModelExtension modules.
+	 */
 	private McmcModule coreModel;
+	
+	// TODO Move the parameters below into MCMCPars. Would be nice to have
+	// a set of sliding bars in a menu in the GUI that go from 0 to 100, 
+	// to select the relative frequency of the different moves etc.
+	
+	// Which indel parameter move scheme(s) to use
+	private boolean lambdaMuMove = false;
+	private boolean lambdaPhiMove = true;
+	private boolean rhoThetaMove = true;
+	
+	// Weights for coreModel McmcMoves
+	private int rWeight = 8;
+	private int lambdaWeight = 4;
+	private int muWeight = 6;
+	private int lambdaMuWeight = 6;
+	private int phiWeight = 4;
+	private int rhoWeight = 6;
+	private int thetaWeight = 6;
+	
+	private int substWeight = 10;
+	private int edgeWeight = 2; // per edge
+	private int allEdgeWeight = 6; 
+	private int edgeWeightIncrement = 0; // Added after half of burnin
+	private int alignWeight = 25;
+	private int topologyWeight = 8;
+	private int topologyWeightIncrement = 0; // Added after half of burnin
+	
+	private int edgeTopologyWeight = 1;
 
 	/** True while the MCMC is in the burn-in phase. */
 	public boolean burnin;
@@ -117,7 +140,6 @@ public class Mcmc extends Stoppable {
 		ppm.mcmc = this;
 		this.modelExtMan.setMcmc(this);
 		this.tree = tree;
-		weights = new double[tree.vertex.length];
 		mcmcpars = pars;
 		this.tree.heat = 1.0d;
 	}
@@ -132,32 +154,207 @@ public class Mcmc extends Stoppable {
 		// Is parallel!
 		isParallel = true;
 	}
-
-	private int alignmentSampled = 0;
-	private int alignmentAccepted = 0;
-	private int edgeSampled = 0;
-	private int edgeAccepted = 0;
-	private int topologySampled = 0;
-	private int topologyAccepted = 0;
-	private int RSampled = 0;
-	private int RAccepted = 0;
-	private int lambdaSampled = 0;
-	private int lambdaAccepted = 0;
-	private int muSampled = 0;
-	private int muAccepted = 0;
-	private int substSampled = 0;
-	private int substAccepted = 0;
 	
 	private static final DecimalFormat df = new DecimalFormat("0.0000");
 
 	/**
-	 * In effect starts an MCMC run. It first performs a prescribed number of
-	 * burn-in steps, then, if one wants to automate the sampling rate, goes to 
-	 * secondary burn-in where the sampling rate is determined. After that it
-	 *  makes the prescribed number of steps after both burn-ins,
-	 * drawing samples with the prescribes frequency. It also calls the
-	 * appropriate functions of the PostpocessManager <tt>postprocMan</tt> to
-	 * trigger data transfer to postprocessing modules when necessary
+	 * Initialises the coreModel, adding the various MCMC moves
+	 * with the specified priors and proposal distributions where 
+	 * appropriate. Currently the coreModel cannot be modified from the 
+	 * command line nor from within the GUI. 
+	 */
+	private void initCoreModel() {
+		
+		IndelMove rMove = new RMove(coreModel,new BetaPrior(1,1),new LogisticProposal(),"R");
+		rMove.proposalWidthControlVariable = 0.5;
+		coreModel.addMcmcMove(rMove,rWeight);
+		
+		if (lambdaMuMove) {
+			IndelMove lambdaMove = new LambdaMove(coreModel,new GammaPrior(1,1),new GaussianProposal(),"Lambda");
+			lambdaMove.proposalWidthControlVariable = 0.01;
+			coreModel.addMcmcMove(lambdaMove,lambdaWeight);
+			IndelMove muMove = new MuMove(coreModel,new GammaPrior(1,1),new GaussianProposal(),"Mu");
+			muMove.proposalWidthControlVariable = 0.01;
+			coreModel.addMcmcMove(muMove,muWeight);
+			ArrayList<McmcMove> lambdaMu = new ArrayList<McmcMove>();
+			lambdaMu.add(lambdaMove);
+			lambdaMu.add(muMove);
+			coreModel.addMcmcMove(new McmcCombinationMove(lambdaMu),lambdaMuWeight);
+		}
+		if (lambdaPhiMove) {
+			IndelMove lambdaMove = new LambdaMove(coreModel,new GammaPrior(1,1),new GaussianProposal(),"Lambda");
+			coreModel.addMcmcMove(lambdaMove,lambdaWeight);
+			lambdaMove.proposalWidthControlVariable = 0.01;
+			// phi = lambda/mu 
+			// Must be in the range (0,1)
+			IndelMove phiMove = new PhiMove(coreModel,new BetaPrior(1,1),new LogisticProposal(),"Phi");
+			phiMove.proposalWidthControlVariable = 0.5;
+			coreModel.addMcmcMove(phiMove,phiWeight);
+		}
+		if (rhoThetaMove) {
+			// rho = lambda + mu
+			IndelMove rhoMove = new RhoMove(coreModel,new GammaPrior(1,1),new GaussianProposal(),"Rho");
+			coreModel.addMcmcMove(rhoMove,rhoWeight);
+			rhoMove.proposalWidthControlVariable = 0.02;
+			// theta = lambda / (lambda + mu)
+			// Must be in the range (0,0.5)
+			IndelMove thetaMove = new ThetaMove(coreModel,new BetaPrior(1,1),new LogisticProposal(),"Theta");
+			thetaMove.setMaxValue(0.5);
+			thetaMove.proposalWidthControlVariable = 0.5;
+			coreModel.addMcmcMove(thetaMove,thetaWeight);
+		}
+		if (!lambdaMuMove && !lambdaPhiMove && !rhoThetaMove) {
+			throw new IllegalArgumentException("Invalid proposal scheme selected for indel parameters.");
+		}
+		
+		SubstMove substMove = new SubstMove(coreModel,"Subst");
+		coreModel.addMcmcMove(substMove, substWeight);
+		
+		AlignmentMove alignMove = new AlignmentMove(coreModel,"Alignment");
+		coreModel.addMcmcMove(alignMove, alignWeight);
+		
+		TopologyMove topologyMove = new TopologyMove(coreModel,"Topology");
+		coreModel.addMcmcMove(topologyMove, topologyWeight);
+//		EdgeTopologyMove edgeTopologyMove = new EdgeTopologyMove(coreModel,"EdgeTopology");
+//		edgeTopologyMove.proposalWidthControlVariable = 2.0;
+//		coreModel.addMcmcMove(edgeTopologyMove, topologyWeight);
+
+		GammaPrior edgePrior = new GammaPrior(1,1);
+		for (int i=0; i<tree.vertex.length-1; i++) {
+			EdgeMove edgeMove = new EdgeMove(coreModel,i,
+					edgePrior,
+					//new GaussianProposal(),
+					new UniformProposal(),
+					"Edge"+i);
+			edgeMove.proposalWidthControlVariable = 0.1;
+			// Default minimum edge length is 0.01
+			coreModel.addMcmcMove(edgeMove, edgeWeight);
+//			if (edgeTopologyWeight > 0) {
+//				ArrayList<McmcMove> edgeTopology = new ArrayList<McmcMove>();
+//				edgeTopology.add(edgeMove);
+//				edgeTopology.add(topologyMove);
+//				coreModel.addMcmcMove(new McmcCombinationMove(edgeTopology),edgeTopologyWeight);
+//			}
+		}		
+//		AllEdgeMove allEdgeMove = new AllEdgeMove(coreModel,edgePrior,
+//				new MultiplicativeProposal(),"AllEdge");
+//		allEdgeMove.proposalWidthControlVariable = 0.5;
+//		coreModel.addMcmcMove(allEdgeMove, allEdgeWeight);
+	}
+	
+	/**
+	 * Triggers a call to <tt>coreModel</tt> to propose a move from one
+	 * of the McmcMove objects, selected according to its weight.
+	 * If there are active ModelExtension plugins, then <tt>coreModel</tt>
+	 * will delegate the sampling to the ModelExtensionManager with
+	 * probability proportional to the sum of the weights of the
+	 * active plugins.
+	 * 
+	 * @param samplingMethod Currently unused.
+	 * @throws StoppedException
+	 */
+	private void sample(int samplingMethod) throws StoppedException {
+		stoppable();
+		if(Utils.DEBUG) {
+			tree.recomputeCheckLogLike();
+			if(Math.abs(modelExtMan.totalLogLike(tree)-totalLogLike) > 1e-5) {
+				System.out.println("\nBefore: "+modelExtMan.totalLogLike(tree)+" "+totalLogLike);
+				throw new Error("Log-likelihood inconsistency at start of sample()");
+			}
+		}
+		boolean accepted = coreModel.proposeParamChange(tree);
+		if (accepted) {
+//			if (Utils.DEBUG) {
+//				System.out.println("Move accepted.");
+//			}
+			totalLogLike = coreModel.curLogLike;
+		}
+		else {
+//			if (Utils.DEBUG) {
+//				System.out.println("Move rejected.");
+//			}
+			coreModel.setLogLike(totalLogLike);
+		}
+		if(Utils.DEBUG) {
+			tree.recomputeCheckLogLike();
+			if(Math.abs(modelExtMan.totalLogLike(tree)-totalLogLike) > 1e-5) {
+				System.out.println("After: "+modelExtMan.totalLogLike(tree)+" "+totalLogLike);
+				throw new Error("Log-likelihood inconsistency at end of sample()");
+			}
+		}
+	}
+	
+	/**
+	 * This function is called by the McmcMove objects inside <tt>coreModel</tt>
+	 * in order to determine whether the proposed moves are to be accepted.
+	 *   
+	 * @param logProposalRatio This also includes the contribution from the prior densities.
+	 * This could be problematic if the priors depend on other parameters, but
+	 * currently we assume that the priors are always independent.
+	 * @return true if the move is accepted
+	 */
+	public boolean isParamChangeAccepted(double logProposalRatio) {
+		double oldLogLikelihood = totalLogLike;
+		double newLogLikelihood = coreModel.curLogLike;
+		return (Math.log(Utils.generator.nextDouble()) < 
+				(logProposalRatio + tree.heat*(newLogLikelihood - oldLogLikelihood)));
+	}	
+	
+	/**
+	 * This function is called by the McmcMove objects inside the ModelExtensions
+	 * in order to determine whether the proposed moves are to be accepted.
+	 *   
+	 * @param logProposalRatio This also includes the contribution from the prior densities.
+	 * This could be problematic if the priors depend on other parameters, but
+	 * currently we assume that the priors are always independent.
+	 * @return true if the move is accepted
+	 */
+	public boolean modExtParamChangeCallback(double logProposalRatio) {
+		double oldLogLikelihood = totalLogLike;
+		double newLogLikelihood = modelExtMan.logLikeModExtParamChange(tree);
+		return (Math.log(Utils.generator.nextDouble()) < 
+				(logProposalRatio + tree.heat*(newLogLikelihood - oldLogLikelihood)));
+	}	
+	
+	/**
+	 * Returns a string representation describing the acceptance ratios of the current MCMC run.
+	 * @return a string describing the acceptance ratios.
+	 */
+	public String getInfoString() {
+		String info = "Acceptance rates: ";
+		for (McmcMove m : coreModel.getMcmcMoves()) {
+			info += m.name+": "+String.format("%f ", m.acceptanceRate());
+		}
+		return info;
+	}
+
+	/**
+	 * Returns a {@link State} object that describes the current state of the
+	 * MCMC. This can then be passed on to other classes such as postprocessing
+	 * plugins.
+	 */
+	public State getState() {
+		return tree.getState();
+	}
+
+	/**
+	 * Starts an MCMC run. 
+	 * 
+	 * If <tt>AutomateParameters.shouldAutomateProposalVariances() = true</tt>
+	 * then the proposal distributions will be automatically adjusted during the 
+	 * burnin.
+	 * 
+	 * If <tt>AutomateParameters.shouldAutomateNumberOfSamples() = true</tt>
+	 * or <tt>AutomateParameters.shouldAutomateStepRate() = true</tt>
+	 * or <tt>AutomateParameters.shouldAutomateBurnin() = true</tt>
+	 * then these parameters will be adjusted automatically, although this  
+	 * approach may affect the theoretical convergence properties of the MCMC
+	 * chain, so this type of automation should be regarded more as a quick way
+	 * of getting some initial results without tweaking the parameters.
+	 * 
+	 * This function also calls the appropriate functions of the PostpocessManager
+	 * <tt>postprocMan</tt> to trigger data transfer to postprocessing modules 
+	 * when necessary
 	 */
 	public void doMCMC() {
 		if (isParallel) {
@@ -173,11 +370,16 @@ public class Mcmc extends Stoppable {
 		MainFrame frame = postprocMan.mainManager.frame;
 		Utils.generator = new Well19937c(mcmcpars.seed + rank);
 
-		// TODO add weights to MCMCPars and take from there
-		proposalWeights = DEF_PROP_WEIGHTS;
-		if(tree.substitutionModel.params == null || tree.substitutionModel.params.length == 0)
-			proposalWeights[4] = 0;
+		if(tree.substitutionModel.params == null || tree.substitutionModel.params.length == 0) {
+			substWeight = 0;
+		}
+		//edgeWeight *= tree.vertex.length;
 		
+		coreModel = new CoreMcmcModule(this,modelExtMan);
+		initCoreModel(); 
+		// initCoreModel() uses the weights, so they need to be defined
+		// and updated before this point.
+
 		// notifies model extension plugins of start of MCMC sampling
 		modelExtMan.beforeSampling(tree);
 
@@ -188,22 +390,21 @@ public class Mcmc extends Stoppable {
 
 		long currentTime, start = System.currentTimeMillis();
 
-		// calculates initial log-likelihood
+		// calculates initial log-likelihood (includes coreModel likelihood)
 		totalLogLike = modelExtMan.totalLogLike(tree);
 		
 		ArrayList<Double> logLikeList = new ArrayList<Double>();
 
 		try {
 			//only to use if AutomateParameters.shouldAutomate() == true
+			final int SAMPLE_RATE_WHEN_DETERMINING_THE_SPACE = 100;
+			final int BURNIN_TO_CALCULATE_THE_SPACE = 25000;
 			ArrayList<String[]> alignmentsFromSamples = new ArrayList<String[]>(); 
 			int burnIn = mcmcpars.burnIn;
 			boolean stopBurnIn = false;
-
-
 			if(AutomateParameters.shouldAutomateBurnIn()){
 				burnIn = 10000000;
 			} 
-
 			if(AutomateParameters.shouldAutomateStepRate()){
 				burnIn += BURNIN_TO_CALCULATE_THE_SPACE;
 			}
@@ -215,14 +416,16 @@ public class Mcmc extends Stoppable {
 				if (i > burnIn / 2) {
 					if (!alreadyAddedWeightModifiers) {
 						alreadyAddedWeightModifiers = true;
-						for (int j=0; j<proposalWeights.length; j++) {
-							proposalWeights[j] += WEIGHT_CHANGE_AFTER_HALF_BURNIN[j];
-							// This should really be handled in a less hard-coded fashion,
-							// for example allowing each plugin to alter the relative 
-							// weights of the non-plugin moves.
+						if (edgeWeightIncrement > 0) {
+							coreModel.setWeight("Edge",edgeWeight+edgeWeightIncrement);
+						}
+						if (topologyWeightIncrement > 0) {
+							coreModel.setWeight("Topology",topologyWeight+topologyWeightIncrement);
 						}
 					}
 				}
+				
+				// Perform an MCMC move
 				sample(0);
 
 				// Triggers a /new step/ and a /new peek/ (if appropriate) of
@@ -237,9 +440,9 @@ public class Mcmc extends Stoppable {
 					}
 				}
 				
-				//every 50 steps, add the current loglikelihood to a list
-				// and check if we find a major decline in that list 
 				if(AutomateParameters.shouldAutomateBurnIn() && i % 50 == 0){
+					// every 50 steps, add the current loglikelihood to a list
+					// and check if we find a major decline in that list 
 					logLikeList.add(getState().logLike);
 					if(!stopBurnIn){
 						stopBurnIn = AutomateParameters.shouldStopBurnIn(logLikeList);
@@ -263,118 +466,18 @@ public class Mcmc extends Stoppable {
 				} else if (i % 1000 == 999) {
 					System.out.println("Burn in: " + (i + 1));
 				}
-
-
 				if( AutomateParameters.shouldAutomateStepRate() && (i >= realBurnIn) && i % SAMPLE_RATE_WHEN_DETERMINING_THE_SPACE == 0)   {
 					String[] align = getState().getLeafAlign();
 					alignmentsFromSamples.add(align);
 				}	
-				
 				if (AutomateParameters.shouldAutomateProposalVariances() && i % mcmcpars.sampRate == 0) {
-					if (alignmentSampled > Utils.MIN_SAMPLES_FOR_ACC_ESTIMATE) {
-						double alignmentAccRate = (double) alignmentAccepted / (double) alignmentSampled;
-						//System.out.println("alignmentAccRate = "+alignmentAccRate);
-						if (alignmentAccRate > Utils.MAX_ACCEPTANCE && 
-								Utils.WINDOW_MULTIPLIER < Utils.MAX_WINDOW_MULTIPLIER &&
-								Utils.WINDOW_MULTIPLIER > Utils.MIN_WINDOW_MULTIPLIER ) {
-							Utils.WINDOW_MULTIPLIER = Math.min(Utils.MAX_WINDOW_MULTIPLIER,
-									Utils.WINDOW_MULTIPLIER / Utils.WINDOW_CHANGE_FACTOR);
-							//System.out.println("WINDOW_MULTIPLIER = "+Utils.WINDOW_MULTIPLIER);
-							alignmentSampled = 0;
-							alignmentAccepted = 0;
-						}
-						else if (alignmentAccRate < Utils.MIN_ACCEPTANCE && 
-								Utils.WINDOW_MULTIPLIER < Utils.MAX_WINDOW_MULTIPLIER &&
-								Utils.WINDOW_MULTIPLIER > Utils.MIN_WINDOW_MULTIPLIER ) {
-							Utils.WINDOW_MULTIPLIER = Math.max(Utils.MIN_WINDOW_MULTIPLIER,
-									Utils.WINDOW_MULTIPLIER * Utils.WINDOW_CHANGE_FACTOR);
-							//System.out.println("WINDOW_MULTIPLIER = "+Utils.WINDOW_MULTIPLIER);
-							alignmentSampled = 0;
-							alignmentAccepted = 0;
-						}
-					}					
-					if (edgeSampled > Utils.MIN_SAMPLES_FOR_ACC_ESTIMATE) {
-						double edgeAccRate = (double) edgeAccepted / (double) edgeSampled;
-						if (edgeAccRate > Utils.MAX_ACCEPTANCE) {
-							Utils.EDGE_SPAN /= Utils.SPAN_MULTIPLIER;
-							//System.out.println("EDGE_SPAN = "+Utils.EDGE_SPAN);
-							edgeSampled = 0;
-							edgeAccepted = 0;
-						}
-						else if (edgeAccRate < Utils.MIN_ACCEPTANCE) {
-							Utils.EDGE_SPAN *= Utils.SPAN_MULTIPLIER;
-							//System.out.println("EDGE_SPAN = "+Utils.EDGE_SPAN);
-							edgeSampled = 0;
-							edgeAccepted = 0;
-						}
-					}					
-					if (RSampled > Utils.MIN_SAMPLES_FOR_ACC_ESTIMATE) {
-						double RAccRate = (double) RAccepted / (double) RSampled;
-						if (RAccRate > Utils.MAX_ACCEPTANCE) {
-							Utils.R_SPAN /= Utils.SPAN_MULTIPLIER;
-							//System.out.println("R_SPAN = "+Utils.R_SPAN);
-							RSampled = 0;
-							RAccepted = 0;
-						}
-						else if (RAccRate < Utils.MIN_ACCEPTANCE) {
-							Utils.R_SPAN *= Utils.SPAN_MULTIPLIER;
-							//System.out.println("R_SPAN = "+Utils.R_SPAN);
-							RSampled = 0;
-							RAccepted = 0;
-						}
-					}					
-					if (lambdaSampled > Utils.MIN_SAMPLES_FOR_ACC_ESTIMATE) {
-						double lambdaAccRate = (double) lambdaAccepted / (double) lambdaSampled;
-						if (lambdaAccRate > Utils.MAX_ACCEPTANCE) {
-							Utils.LAMBDA_SPAN /= Utils.SPAN_MULTIPLIER;
-							//System.out.println("LAMBDA_SPAN = "+Utils.LAMBDA_SPAN);
-							lambdaSampled = 0;
-							lambdaAccepted = 0;
-						}
-						else if (lambdaAccRate < Utils.MIN_ACCEPTANCE) {
-							Utils.LAMBDA_SPAN *= Utils.SPAN_MULTIPLIER;
-							//System.out.println("LAMBDA_SPAN = "+Utils.LAMBDA_SPAN);
-							lambdaSampled = 0;
-							lambdaAccepted = 0;
-						}
-					}
-					if (muSampled > Utils.MIN_SAMPLES_FOR_ACC_ESTIMATE) {
-						double muAccRate = (muSampled == 0 ? 0 : (double) muAccepted / (double) muSampled);
-						if (muAccRate > Utils.MAX_ACCEPTANCE) {
-							Utils.MU_SPAN /= Utils.SPAN_MULTIPLIER;
-							//System.out.println("MU_SPAN = "+Utils.MU_SPAN);
-							muSampled = 0;
-							muAccepted = 0;
-						}
-						else if (muAccRate < Utils.MIN_ACCEPTANCE) {
-							Utils.MU_SPAN *= Utils.SPAN_MULTIPLIER;
-							//System.out.println("MU_SPAN = "+Utils.MU_SPAN);
-							muSampled = 0;
-							muAccepted = 0;
-						}
-					}
+					coreModel.modifyProposalWidths();
 					modelExtMan.modifyProposalWidths();
 				}
 			}
 			
 			//both real burn-in and the one to determine the sampling rate have now been completed.
 			burnin = false;
-			
-			
-			alignmentSampled = 0;
-			alignmentAccepted = 0;
-			edgeSampled = 0;
-			edgeAccepted = 0;
-			topologySampled = 0;
-			topologyAccepted = 0;
-			RSampled = 0;
-			RAccepted = 0;
-			lambdaSampled = 0;
-			lambdaAccepted = 0;
-			muSampled = 0;
-			muAccepted = 0;
-			substSampled = 0;
-			substAccepted = 0;
 
 			int period;
 			if(AutomateParameters.shouldAutomateNumberOfSamples()){
@@ -403,6 +506,8 @@ public class Mcmc extends Stoppable {
 
 			int swapNo = 0; // TODO: delete?
 			swapCounter = mcmcpars.swapRate;
+			
+			
 			AlignmentData alignment = new AlignmentData(getState().getLeafAlign());
 			ArrayList<AlignmentData> allAlignments = new ArrayList<AlignmentData>();
 			ArrayList<Double> distances = new ArrayList<Double>();
@@ -411,11 +516,10 @@ public class Mcmc extends Stoppable {
 			double currScore = 0;
 			for (int i = 0; i < period && !shouldStop; i++) {
 				for (int j = 0; j < sampRate; j++) {
-					// Samples.
-					sample(0);
-
-					//FuzzyAlignment fuzzyAlignment2 = FuzzyAlignment.getFuzzyAlignmentAndProject(alignments, "");
-
+					
+					// Perform an MCMC move
+					sample(0);				
+					
 					// Proposes a swap.
 					if (isParallel) {
 						swapCounter--;
@@ -462,9 +566,6 @@ public class Mcmc extends Stoppable {
 					if (allAlignments.size() >1){
 						FuzzyAlignment Fa = FuzzyAlignment.getFuzzyAlignmentAndProject(allAlignments.subList(0, allAlignments.size()-1), 0);
 						FuzzyAlignment Fb = FuzzyAlignment.getFuzzyAlignmentAndProject(allAlignments, 0);
-						//System.out.println(Fa);
-						//System.out.println("xxxx");
-						//System.out.println(Fb);
 						currScore = FuzzyAlignment.AMA(Fa, Fb);
 						System.out.println(currScore);
 						distances.add(currScore);
@@ -482,14 +583,17 @@ public class Mcmc extends Stoppable {
 			// should we still call afterLastSample?
 		}
 
-		if(Utils.DEBUG) {
-			System.out.println("Times spent in each MCMC step type (ms):");
-			System.out.println(ali);
-			System.out.println(top);
-			System.out.println(edge);
-			System.out.println(ind);
-			System.out.println(sub);
-		}
+		//if(Utils.DEBUG) {
+			String info = "\n";
+			info += String.format("%-24s","Move name")+
+			String.format("%8s","t (total)")+
+			String.format("%8s","nMoves")+
+			String.format("%6s","time")+
+			String.format("%8s\n", "acc");
+			info += coreModel.getMcmcInfo();
+			info += modelExtMan.getMcmcInfo();
+			System.out.println(info);
+		//}
 
 		// Triggers a /after first sample/ of the plugins.
 		if ((isParallel && MPIUtils.isMaster(rank)) || !isParallel) {
@@ -507,6 +611,71 @@ public class Mcmc extends Stoppable {
 
 	}
 
+	/** 
+	 * Triggers <tt>postProcMan</tt> to print out a report of the current
+	 * state of the chain.
+	 * 
+	 * @param no
+	 * @param total
+	 */
+	private void report(int no, int total) {
+
+		int coldChainLocation = -1;
+
+		if (isParallel) {
+			// Get rank of cold chain.
+			int[] ranks = new int[] { (isColdChain() ? rank : 0) };
+			int[] coldChainLoc = new int[1];
+			MPI.COMM_WORLD.Reduce(ranks, 0, coldChainLoc, 0, 1, MPI.INT, MPI.SUM, 0);
+			coldChainLocation = coldChainLoc[0];
+
+			// TODO: Remove - for debugging purposes
+			if (MPIUtils.isMaster(rank)) {
+				MPIUtils.println(rank, "Cold chain is at: " + coldChainLocation);
+			}
+
+			if (isColdChain() && MPIUtils.isMaster(rank)) {
+				// Sample normally.
+				postprocMan.newSample(getState(), no, total);
+			} else if (isColdChain() && !MPIUtils.isMaster(rank)) {
+				// Send state.
+				State state = getState();
+				MPIStateSend(state);
+			} else if (!isColdChain() && MPIUtils.isMaster(rank)) {
+				// Receive state.
+				State state = MPIStateReceieve(coldChainLocation);
+				postprocMan.newSample(state, no, total);
+			}
+
+		} else {
+			postprocMan.newSample(getState(), no, total);
+		}
+
+		// Log the accept ratios/params to the (.log) file. TODO: move to a plugin.
+		try {
+			if ((isParallel && MPIUtils.isMaster(rank)) || !isParallel) {
+				postprocMan.logFile.write(getInfoString() + "\n");
+				postprocMan.logFile.write("Report\tLogLikelihood\t"
+						+ (modelExtMan.totalLogLike(tree))
+						+ "\tR\t" + tree.hmm2.params[0] + "\tLambda\t"
+						+ tree.hmm2.params[1] + "\tMu\t" + tree.hmm2.params[2]
+								+ "\t" + tree.substitutionModel.print() + "\n");
+				if (isParallel) {
+					postprocMan.logFile.write("Cold chain location: " + coldChainLocation + "\n");
+				}
+
+			}
+		} catch (IOException e) {
+			if (postprocMan.mainManager.frame != null) {
+				new ErrorMessage(null, e.getLocalizedMessage(), true);
+			} else {
+				e.printStackTrace(System.out);
+			}
+		}
+	}
+	
+	// The functions below are used only by the parallel version
+	
 	private void doSwap(int swapNo) {
 		int swapA, swapB;
 		swapA = swapGenerator.nextInt(noOfProcesses);
@@ -523,6 +692,7 @@ public class Mcmc extends Stoppable {
 			double[] myStateInfo = new double[3];
 			myStateInfo[0] = totalLogLike;
 			myStateInfo[1] = modelExtMan.totalLogPrior(tree);
+			//myStateInfo[1] = coreModel.totalLogPrior(tree) + modelExtMan.totalLogPrior(tree);
 			myStateInfo[2] = tree.heat;
 
 			double[] partnerStateInfo = new double[3];
@@ -580,637 +750,7 @@ public class Mcmc extends Stoppable {
 		}
 
 	}
-
-	private static String remainingTime(long x) {
-		x /= 1000;
-		return String.format("Estimated time left: %d:%02d:%02d", x / 3600,
-				(x / 60) % 60, x % 60);
-	}
-
-	SimpleStats ali;
-	SimpleStats top;
-	SimpleStats edge;
-	SimpleStats ind;
-	SimpleStats sub;
-	SimpleStats modext;
-
-	{
-		if(Utils.DEBUG) {
-			ali = new SimpleStats("Alignment");
-			top = new SimpleStats("Topology");
-			edge = new SimpleStats("Edge len");
-			ind = new SimpleStats("Indel param");
-			sub = new SimpleStats("Subst param");
-			modext = new SimpleStats("Model ext param");
-		}
-	}
-
-	private void sample(int samplingMethod) throws StoppedException {
-		if (samplingMethod == 0) {
-			long timer = 0;
-			stoppable();
-
-			proposalWeights[5] = modelExtMan.getParamChangeWeight();
-			switch (Utils.weightedChoose(proposalWeights)) {
-			case 0:
-				if(Utils.DEBUG) {
-//					System.out.println("Alignment");
-					timer = -System.currentTimeMillis();
-				}
-				sampleAlignment();
-				if(Utils.DEBUG) {
-					timer += System.currentTimeMillis();
-					ali.addData(timer);
-				}
-				break;
-			case 1:
-				if(Utils.DEBUG) {
-//					System.out.println("Topology");
-					timer = -System.currentTimeMillis();
-				}
-				sampleTopology();
-				if(Utils.DEBUG) {
-					timer += System.currentTimeMillis();
-					top.addData(timer);
-				}
-				break;
-			case 2:
-				if(Utils.DEBUG) {
-//					System.out.println("Edge");
-					timer = -System.currentTimeMillis();
-				}
-				sampleEdge();
-				if(Utils.DEBUG) {
-					timer += System.currentTimeMillis();
-					edge.addData(timer);
-				}
-				break;
-			case 3:
-				if(Utils.DEBUG) {
-//					System.out.println("IndelParam");
-					timer = -System.currentTimeMillis();
-				}
-				sampleIndelParameter();
-				if(Utils.DEBUG) {
-					timer += System.currentTimeMillis();
-					ind.addData(timer);
-				}
-				break;
-			case 4:
-				if(Utils.DEBUG) {
-//					System.out.println("SubstParam");
-					timer = -System.currentTimeMillis();
-				}
-				sampleSubstParameter();
-				if(Utils.DEBUG) {
-					timer += System.currentTimeMillis();
-					sub.addData(timer);
-				}
-				break;
-			case 5:
-				if(Utils.DEBUG) {
-//					System.out.println("ModelExtParam");
-					timer = -System.currentTimeMillis();
-				}
-				sampleModelExtParam();
-				if(Utils.DEBUG) {
-					timer += System.currentTimeMillis();
-					modext.addData(timer);
-				}
-				break;
-			}
-		} else {
-			stoppable();
-			sampleEdge();
-			sampleTopology();
-			sampleIndelParameter();
-			sampleSubstParameter();
-			sampleAlignment();
-			sampleModelExtParam();
-		}
-		
-		// check log-likelihood consistency if debugging on
-		if(Utils.DEBUG) {
-			tree.recomputeCheckLogLike();
-			if(Math.abs(modelExtMan.totalLogLike(tree)-totalLogLike) > 1e-5)
-				throw new Error("Log-likelihood inconsistency in MCMC");
-		}
-
-	}
-
-	private void sampleAlignment() {
-		alignmentSampled++;
-		for (int i = 0; i < tree.vertex.length; i++) {
-			tree.vertex[i].selected = false;
-		}
-		// System.out.print("Alignment: ");
-		double oldLogLi = totalLogLike;
-		// System.out.println("fast indel before: "+tree.root.indelLogLike);
-		tree.countLeaves(); // calculates recursively how many leaves we have
-		// below this node
-		for (int i = 0; i < weights.length; i++) {
-			weights[i] = Math.pow(tree.vertex[i].leafCount, LEAFCOUNT_POWER);
-		}
-		int k = Utils.weightedChoose(weights, null);
-		Vertex selectRoot = tree.vertex[k];
-		// System.out.println("Sampling from the subtree: "+tree.vertex[k].print());
-		selectRoot.selectSubtree(SELTRLEVPROB, 0);
-		modelExtMan.beforeAlignChange(tree, selectRoot);
-		// TODO split selectAndResampleAlignment and call beforeAlignChange after window selection
-		double bpp = selectRoot.selectAndResampleAlignment();
-		double newLogLi = modelExtMan.logLikeAlignChange(tree, selectRoot);
 	
-		// String[] printedAlignment = tree.printedAlignment("StatAlign");
-		// for(String i: printedAlignment)
-		// System.out.println(i);
-		//
-		// System.out.println("-----------------------------------------------------------------------------");
-		// double fastFels = tree.root.orphanLogLike;
-		// double fastIns = tree.root.indelLogLike;
-		// report();
-		// tree.root.first.seq[0] = 0.0;
-		// System.out.println("Old before: "+tree.root.old.indelLogLike);
-		// tree.root.calcFelsRecursivelyWithCheck();
-		// tree.root.calcIndelRecursivelyWithCheck();
-		// tree.root.calcIndelLikeRecursively();
-		// System.out.println("Old after: "+tree.root.old.indelLogLike);
-		// System.out.println("Check logli: "+tree.getLogLike()+" fastFels: "+fastFels+" slowFels: "+tree.root.orphanLogLike+
-		// " fastIns: "+fastIns+" slowIns: "+tree.root.indelLogLike);
-		// System.out.println("selected subtree: "+tree.vertex[k].print());
-		// System.out.println("bpp: "+bpp+"old: "+oldLogLi+"new: "+newLogLi +
-		// "heated diff: " + ((newLogLi - oldLogLi) * tree.heat));
-		if (Math.log(Utils.generator.nextDouble()) < bpp
-				+ (newLogLi - oldLogLi) * tree.heat) {
-			// accepted
-			//System.out.println("accepted (old: "+oldLogLi+" new: "+newLogLi+")");
-			totalLogLike = newLogLi;
-			alignmentAccepted++;
-			modelExtMan.afterAlignChange(tree, selectRoot, true);
-		} else {
-			// refused
-			// String[] s = tree.printedAlignment();
-			selectRoot.alignRestore();
-			// s = tree.printedAlignment();
-			//System.out.println("rejected (old: "+oldLogLi+" new: "+newLogLi+")");
-			// System.out.println("after reject fast: "+tree.root.indelLogLike);
-			// tree.root.calcIndelRecursivelyWithCheck();
-			// System.out.println(" slow: "+tree.root.indelLogLike);
-			modelExtMan.afterAlignChange(tree, selectRoot, false);
-	
-		}
-		// tree.root.calcFelsRecursivelyWithCheck();
-		// tree.root.calcIndelRecursivelyWithCheck();
-	}
-
-	// this is the old
-	/*
-	 * private void sampleTopology(){ int vnum = tree.vertex.length;
-	 * 
-	 * if(vnum <= 3) return;
-	 * 
-	 * System.out.print("Topology: "); double oldLogLi = tree.getLogLike();
-	 * 
-	 * int vertId, rnd = Utils.generator.nextInt(vnum-3); vertId =
-	 * tree.getTopVertexId(rnd); if(vertId != -1) { int lastId[] = new int[3],
-	 * num = 0, newId = vertId;
-	 * 
-	 * for(int i = vnum-3; i < vnum; i++) { int id = tree.getTopVertexId(i);
-	 * if(id == -1) lastId[num++] = i; else if(id < vertId) newId--; } rnd =
-	 * lastId[newId]; } Vertex nephew = tree.vertex[rnd]; Vertex uncle =
-	 * nephew.parent.brother();
-	 * 
-	 * // for(vertId = 0; vertId < vnum; vertId++) { //
-	 * if(tree.getTopVertexId(vertId) == -1) { // vertex eligible // if(rnd-- ==
-	 * 0) // break; // } // } // Vertex nephew = tree.vertex[vertId];
-	 * 
-	 * double bpp = nephew.swapWithUncle();
-	 * 
-	 * double newLogLi = tree.getLogLike();
-	 * 
-	 * // tree.root.calcFelsRecursivelyWithCheck();
-	 * //tree.root.calcIndelRecursivelyWithCheck();
-	 * 
-	 * if(Math.log(Utils.generator.nextDouble()) < bpp+newLogLi-oldLogLi) { //
-	 * accepted
-	 * System.out.println("accepted (old: "+oldLogLi+" new: "+newLogLi+")"); }
-	 * else { // refused uncle.swapBackUncle();
-	 * System.out.println("rejected (old: "+oldLogLi+" new: "+newLogLi+")"); }
-	 * 
-	 * //tree.root.calcFelsRecursivelyWithCheck();
-	 * //tree.root.calcIndelRecursivelyWithCheck(); }
-	 */
-	private void sampleTopology() {
-		int vnum = tree.vertex.length;
-	
-		if (vnum <= 3)
-			return;
-	
-		topologySampled++;
-		// System.out.println("\n\n\t***\t***\t***\n\n\n");
-		// System.out.print("Topology: ");
-		// tree.printAllPointers();
-		double oldLogLi = totalLogLike;
-	
-		int vertId, rnd = Utils.generator.nextInt(vnum - 3);
-		vertId = tree.getTopVertexId(rnd);
-		if (vertId != -1) {
-			int lastId[] = new int[3], num = 0, newId = vertId;
-	
-			for (int i = vnum - 3; i < vnum; i++) {
-				int id = tree.getTopVertexId(i);
-				if (id == -1)
-					lastId[num++] = i;
-				else if (id < vertId)
-					newId--;
-			}
-			rnd = lastId[newId];
-		}
-		Vertex nephew = tree.vertex[rnd];
-		Vertex uncle = nephew.parent.brother();
-		
-		modelExtMan.beforeTreeChange(tree, nephew);
-
-		// alignment and tree before
-		System.out.println("Before:");
-		int nn = 0;
-		for(String a : getState().getFullAlign())
-			System.out.println((nn<tree.names.length?tree.names[nn++]:nn++)+"\t"+a);
-		System.out.println(tree.printedTree());
-		
-		System.out.println("nephew: "+nephew.index+" parent: "+nephew.parent.index+
-				" uncle: "+uncle.index+" grandpa: "+nephew.parent.parent.index);
-		
-			
-		double bpp = nephew.fastSwapWithUncle();
-//		double bpp = nephew.swapWithUncleAlignToParent();
-
-		// double bpp = nephew.swapWithUncle();
-	
-		double newLogLi = modelExtMan.logLikeTreeChange(tree, nephew);
-	
-		System.out.println("p="+(Math.exp(bpp + (newLogLi - oldLogLi) * tree.heat)));
-		if (Math.log(Utils.generator.nextDouble()) < bpp
-				+ (newLogLi - oldLogLi) * tree.heat) {
-			// accepted
-//			System.out.println("accepted (old: "+oldLogLi+" new: "+newLogLi+")");
-			topologyAccepted++;
-			if (Utils.DEBUG) {
-				System.out.println("Topology move accepted: "+nephew.index+" <--> "+uncle.index);
-			}
-			totalLogLike = newLogLi;
-			modelExtMan.afterTreeChange(tree, uncle, true);
-		} else {
-			// rejected
-
-			// proposed and rejected alignment and tree 
-			System.out.println("Proposed:");
-			nn = 0;
-			for(String a : getState().getFullAlign())
-				System.out.println((nn<tree.names.length?tree.names[nn++]:nn++)+"\t"+a);
-			System.out.println(tree.printedTree());
-			System.out.println("R, L, M: "+Arrays.toString(tree.hmm2.params));
-			
-			if(Utils.DEBUG) {
-				// Checking pointer integrity before changing back topology
-				for (int i = 0; i < tree.vertex.length; i++) {
-					if (tree.vertex[i].left != null && tree.vertex[i].right != null) {
-						tree.vertex[i].checkPointers();
-						AlignColumn p;
-						// checking pointer integrity
-						for (AlignColumn c = tree.vertex[i].left.first; c != null; c = c.next) {
-							p = tree.vertex[i].first;
-							while (c.parent != p && p != null)
-								p = p.next;
-							if (p == null)
-								throw new Error(
-										"children does not have a parent!!!"
-												+ tree.vertex[i] + " "
-												+ tree.vertex[i].print());
-						}
-						for (AlignColumn c = tree.vertex[i].right.first; c != null; c = c.next) {
-							p = tree.vertex[i].first;
-							while (c.parent != p && p != null)
-								p = p.next;
-							if (p == null)
-								throw new Error(
-										"children does not have a parent!!!"
-												+ tree.vertex[i] + " "
-												+ tree.vertex[i].print());
-						}
-		
-					}
-				}
-			}
-	
-			uncle.fastSwapBackUncle();
-//			uncle.swapBackUncleAlignToParent();
-			// uncle.swapBackUncle();
-			
-			if(Utils.DEBUG) {
-				// Checking pointer integrity after changing back topology
-				for (int i = 0; i < tree.vertex.length; i++) {
-					if (tree.vertex[i].left != null && tree.vertex[i].right != null) {
-						tree.vertex[i].checkPointers();
-						AlignColumn p;
-						// checking pointer integrity
-						for (AlignColumn c = tree.vertex[i].left.first; c != null; c = c.next) {
-							p = tree.vertex[i].first;
-							while (c.parent != p && p != null)
-								p = p.next;
-							if (p == null)
-								throw new Error(
-										"children does not have a parent!!!"
-												+ tree.vertex[i] + " "
-												+ tree.vertex[i].print());
-						}
-						for (AlignColumn c = tree.vertex[i].right.first; c != null; c = c.next) {
-							p = tree.vertex[i].first;
-							while (c.parent != p && p != null)
-								p = p.next;
-							if (p == null)
-								throw new Error(
-										"children does not have a parent!!!"
-												+ tree.vertex[i] + " "
-												+ tree.vertex[i].print());
-						}
-					}
-				}
-			}
-			
-			System.out.println("rejected (old: "+oldLogLi+" new: "+newLogLi+" bpp: "+bpp+")");
-			
-			modelExtMan.afterTreeChange(tree, nephew, false);
-		}
-	
-		// tree.printAllPointers();
-		// System.out.println("\n\n\t***\t***\t***\n\n\n");
-	}
-
-	private void sampleEdge() {
-		edgeSampled++;
-		
-		// select edge
-		int i = Utils.generator.nextInt(tree.vertex.length - 1);
-		Vertex selectedNode = tree.vertex[i];
-		double oldEdge = selectedNode.edgeLength;
-		double oldLogLikelihood = totalLogLike;
-		
-		modelExtMan.beforeEdgeLenChange(tree, selectedNode);
-
-		double minEdgeLength = 0.01;
-		// perform change
-		while ((selectedNode.edgeLength = oldEdge
-				+ Utils.generator.nextDouble() * Utils.EDGE_SPAN
-				- (Utils.EDGE_SPAN / 2.0)) < minEdgeLength)
-			;
-		selectedNode.edgeChangeUpdate();
-		// Vertex actual = tree.vertex[i];
-		// while(actual != null){
-		// actual.calcFelsen();
-		// actual.calcOrphan();
-		// actual.calcIndelLogLike();
-		// actual = actual.parent;
-		// }
-		selectedNode.calcAllUp();
-		double newLogLikelihood = modelExtMan.logLikeEdgeLenChange(tree, selectedNode);
-		if (Utils.generator.nextDouble() < 
-				( Math.exp((newLogLikelihood - oldLogLikelihood - selectedNode.edgeLength + oldEdge)* tree.heat) 
-				* (Math.min(oldEdge - minEdgeLength, Utils.EDGE_SPAN / 2.0) + Utils.EDGE_SPAN / 2.0) 
-				) /
-				(Math.min(selectedNode.edgeLength - minEdgeLength,
-						Utils.EDGE_SPAN / 2.0) + Utils.EDGE_SPAN / 2.0)) {
-			// acceptance, do nothing
-			// System.out.println("accepted (old: "+oldLogLikelihood+" new: "+newLogLikelihood+")");
-			edgeAccepted++;
-			totalLogLike = newLogLikelihood;
-			modelExtMan.afterEdgeLenChange(tree, selectedNode, true);
-		} else {
-			// reject, restore
-			// System.out.print("Rejected! i: "+i+"\tOld likelihood: "+oldLogLikelihood+"\tNew likelihood: "+newLogLikelihood);
-			selectedNode.edgeLength = oldEdge;
-			selectedNode.edgeChangeUpdate();
-			// actual = tree.vertex[i];
-			// while(actual != null){
-			// actual.calcFelsen();
-			// actual.calcOrphan();
-			// actual.calcIndelLogLike();
-			// actual = actual.parent;
-			// }
-			selectedNode.calcAllUp();
-			// System.out.println("rejected (old: "+oldLogLikelihood+" new: "+newLogLikelihood+")");
-			modelExtMan.afterEdgeLenChange(tree, selectedNode, false);
-
-		}
-	}
-
-	private void sampleIndelParameter() {		
-		// select indel param
-		int ind = Utils.generator.nextInt(3);
-		boolean accepted = false;
-		
-		modelExtMan.beforeIndelParamChange(tree, tree.hmm2, ind);
-		
-		// perform change, then accept/reject
-		switch (ind) {
-		case 0:
-			RSampled++;
-			// System.out.print("Indel param R: ");
-			double oldR = tree.hmm2.params[0];
-			double oldLogLikelihood = totalLogLike;
-			while ((tree.hmm2.params[0] = oldR + Utils.generator.nextDouble()
-					* Utils.R_SPAN - Utils.R_SPAN / 2.0) <= 0.0
-					|| tree.hmm2.params[0] >= 1.0)
-				;
-			for (int i = 0; i < tree.vertex.length; i++) {
-				tree.vertex[i].updateHmmMatrices();
-			}
-			tree.root.calcIndelLikeRecursively();
-			double newLogLikelihood = modelExtMan.logLikeIndelParamChange(tree, tree.hmm2, ind);
-			if (Utils.generator.nextDouble() < Math
-					.exp((newLogLikelihood - oldLogLikelihood) * tree.heat)
-					* (Math.min(1.0 - oldR, Utils.R_SPAN / 2.0) + Math.min(
-							oldR, Utils.R_SPAN / 2.0))
-							/ (Math.min(1.0 - tree.hmm2.params[0], Utils.R_SPAN / 2.0) + Math
-									.min(tree.hmm2.params[0], Utils.R_SPAN / 2.0))) {
-				// accept, do nothing
-				// System.out.println("accepted (old: "+oldLogLikelihood+" new: "+newLogLikelihood+")");
-				RAccepted++;
-				accepted = true;
-				totalLogLike = newLogLikelihood;
-			} else {
-				// restore
-				tree.hmm2.params[0] = oldR;
-				for (int i = 0; i < tree.vertex.length; i++) {
-					tree.vertex[i].updateHmmMatrices();
-				}
-				tree.root.calcIndelLikeRecursively();
-				// System.out.println("rejected (old: "+oldLogLikelihood+" new: "+newLogLikelihood+")");
-			}
-
-			break;
-		case 1:
-			lambdaSampled++;
-			// ///////////////////////////////////////////////
-			// System.out.print("Indel param Lambda: ");
-			double oldLambda = tree.hmm2.params[1];
-			oldLogLikelihood = totalLogLike;
-			while ((tree.hmm2.params[1] = oldLambda
-					+ Utils.generator.nextDouble() * Utils.LAMBDA_SPAN
-					- Utils.LAMBDA_SPAN / 2.0) <= 0.0
-					|| tree.hmm2.params[1] >= tree.hmm2.params[2])
-				;
-			for (int i = 0; i < tree.vertex.length; i++) {
-				tree.vertex[i].updateHmmMatrices();
-			}
-			tree.root.calcIndelLikeRecursively();
-			newLogLikelihood = modelExtMan.logLikeIndelParamChange(tree, tree.hmm2, ind);
-			if (Utils.generator.nextDouble() < Math.exp((newLogLikelihood
-					- oldLogLikelihood - tree.hmm2.params[1] + oldLambda)
-					* tree.heat)
-					* (Math.min(Utils.LAMBDA_SPAN / 2.0, tree.hmm2.params[2]
-							- oldLambda) + Math.min(oldLambda,
-									Utils.LAMBDA_SPAN / 2.0))
-									/ (Math.min(Utils.LAMBDA_SPAN / 2.0, tree.hmm2.params[2]
-											- tree.hmm2.params[1]) + Math.min(
-													tree.hmm2.params[1], Utils.LAMBDA_SPAN / 2.0))) {
-				// accept, do nothing
-				// System.out.println("accepted (old: "+oldLogLikelihood+" new: "+newLogLikelihood+" oldLambda: "+oldLambda+" newLambda: "+tree.hmm2.params[1]+")");
-				lambdaAccepted++;
-				accepted = true;
-				totalLogLike = newLogLikelihood;
-			} else {
-				// restore
-				tree.hmm2.params[1] = oldLambda;
-				for (int i = 0; i < tree.vertex.length; i++) {
-					tree.vertex[i].updateHmmMatrices();
-				}
-				tree.root.calcIndelLikeRecursively();
-				// System.out.println("rejected (old: "+oldLogLikelihood+" new: "+newLogLikelihood+" oldLambda: "+oldLambda+" newLambda: "+tree.hmm2.params[1]+")");
-			}
-			break;
-		case 2:
-			muSampled++;
-			// ///////////////////////////////////////////////////////
-			// System.out.print("Indel param Mu: ");
-			double oldMu = tree.hmm2.params[2];
-			oldLogLikelihood = totalLogLike;
-			while ((tree.hmm2.params[2] = oldMu + Utils.generator.nextDouble()
-					* Utils.MU_SPAN - Utils.MU_SPAN / 2.0) <= tree.hmm2.params[1])
-				;
-			for (int i = 0; i < tree.vertex.length; i++) {
-				tree.vertex[i].updateHmmMatrices();
-			}
-			tree.root.calcIndelLikeRecursively();
-			newLogLikelihood = modelExtMan.logLikeIndelParamChange(tree, tree.hmm2, ind);
-			if (Utils.generator.nextDouble() < Math.exp((newLogLikelihood
-					- oldLogLikelihood - tree.hmm2.params[2] + oldMu)
-					* tree.heat)
-					* (Utils.MU_SPAN / 2.0 + Math.min(oldMu
-							- tree.hmm2.params[1], Utils.MU_SPAN / 2.0))
-							/ (Utils.MU_SPAN / 2.0 + Math.min(tree.hmm2.params[2]
-									- tree.hmm2.params[1], Utils.MU_SPAN / 2.0))) {
-				// accept, do nothing
-				// System.out.println("accepted (old: "+oldLogLikelihood+" new: "+newLogLikelihood+")");
-				muAccepted++;
-				accepted = true;
-				totalLogLike = newLogLikelihood;
-			} else {
-				// restore
-				tree.hmm2.params[2] = oldMu;
-				for (int i = 0; i < tree.vertex.length; i++) {
-					tree.vertex[i].updateHmmMatrices();
-				}
-				tree.root.calcIndelLikeRecursively();
-				// System.out.println("rejected (old: "+oldLogLikelihood+" new: "+newLogLikelihood+")");
-			}
-			break;
-		}
-		
-		modelExtMan.afterIndelParamChange(tree, tree.hmm2, ind, accepted);
-	}
-
-	private void sampleSubstParameter() {
-		substSampled++;
-		if (tree.substitutionModel.params.length == 0)
-			return;
-		
-		modelExtMan.beforeSubstParamChange(tree, tree.substitutionModel, -1);
-		
-		double mh = tree.substitutionModel.sampleParameter();
-		double oldlikelihood = totalLogLike;
-		for (int i = 0; i < tree.vertex.length; i++) {
-			tree.vertex[i].updateTransitionMatrix();
-		}
-		tree.root.calcFelsRecursively();
-		double newlikelihood = modelExtMan.logLikeSubstParamChange(tree, tree.substitutionModel, -1);
-		if (Utils.generator.nextDouble() < Math.exp(mh
-				+ (Math.log(tree.substitutionModel.getPrior())
-						+ newlikelihood - oldlikelihood))
-						* tree.heat) {
-			// System.out.println("Substitution parameter: accepted (old: "+oldlikelihood+" new: "+newlikelihood+")");
-			substAccepted++;
-			totalLogLike = newlikelihood;
-			modelExtMan.afterSubstParamChange(tree, tree.substitutionModel, -1, true);
-		} else {
-			tree.substitutionModel.restoreParameter();
-			for (int i = 0; i < tree.vertex.length; i++) {
-				tree.vertex[i].updateTransitionMatrix();
-			}
-			tree.root.calcFelsRecursively();
-			// System.out.println("Substitution parameter: rejected (old: "+oldlikelihood+" new: "+newlikelihood+")");
-			modelExtMan.afterSubstParamChange(tree, tree.substitutionModel, -1, false);
-		}
-	}
-
-	private void sampleModelExtParam() {
-//		modextSampled++;
-		modelExtMan.beforeModExtParamChange(tree);
-		modExtParamChangeAccepted = false;
-		modelExtMan.proposeParamChange(tree);
-//		if(modExtParamChangeAccepted)
-//			modextAccepted++;
-		modelExtMan.afterModExtParamChange(tree, modExtParamChangeAccepted);
-	}
-	
-	private boolean modExtParamChangeAccepted;
-	
-	public boolean modExtParamChangeCallback(double logProposalRatio) {
-		double oldLogLikelihood = totalLogLike;
-		double newLogLikelihood = modelExtMan.logLikeModExtParamChange(tree);
-		if (Utils.generator.nextDouble() < Math.exp(logProposalRatio + newLogLikelihood - oldLogLikelihood)) {
-			// accepted
-			modExtParamChangeAccepted = true;
-			totalLogLike = newLogLikelihood;
-			return true;
-		}
-		// rejected, restore (responsibility of the plugin)
-		return false;
-	}
-
-	/**
-	 * Returns a string representation describing the acceptance ratios of the current MCMC run.
-	 * @return a string describing the acceptance ratios.
-	 */
-	public String getInfoString() {
-		return String.format("Acceptances: [Alignment: %f, Edge: %f, Topology: %f, R: %f, lambda: %f, mu: %f, Substitution: %f]",
-				(alignmentSampled == 0 ? 0 : (double) alignmentAccepted / (double) alignmentSampled),
-				(edgeSampled == 0 ? 0 : (double) edgeAccepted / (double) edgeSampled),
-				(topologySampled == 0 ? 0 : (double) topologyAccepted / (double) topologySampled),
-				(RSampled == 0 ? 0 : (double) RAccepted / (double) RSampled),
-				(lambdaSampled == 0 ? 0 : (double) lambdaAccepted / (double) lambdaSampled),
-				(muSampled == 0 ? 0 : (double) muAccepted / (double) muSampled),
-				(substSampled == 0 ? 0 : (double) substAccepted / (double) substSampled));
-	}
-
-	/**
-	 * Returns a {@link State} object that describes the current state of the
-	 * MCMC. This can then be passed on to other classes such as postprocessing
-	 * plugins.
-	 */
-	public State getState() {
-		return tree.getState();
-	}
-
 	private boolean isColdChain() {
 		return tree.heat == 1.0d;
 	}
@@ -1343,109 +883,500 @@ public class Mcmc extends Stoppable {
 		// TODO: END OF OPTIMIZATION.
 
 	}
+	
 
-	private void report(int no, int total) {
-
-		int coldChainLocation = -1;
-
-		if (isParallel) {
-			// Get rank of cold chain.
-			int[] ranks = new int[] { (isColdChain() ? rank : 0) };
-			int[] coldChainLoc = new int[1];
-			MPI.COMM_WORLD.Reduce(ranks, 0, coldChainLoc, 0, 1, MPI.INT, MPI.SUM, 0);
-			coldChainLocation = coldChainLoc[0];
-
-			// TODO: Remove - for debugging purposes
-			if (MPIUtils.isMaster(rank)) {
-				MPIUtils.println(rank, "Cold chain is at: " + coldChainLocation);
+	// Below are old functions that are currently unused, for reference
+	
+	/*	private void sampleAlignment() {
+			alignmentSampled++;
+			for (int i = 0; i < tree.vertex.length; i++) {
+				tree.vertex[i].selected = false;
 			}
-
-			if (isColdChain() && MPIUtils.isMaster(rank)) {
-				// Sample normally.
-				postprocMan.newSample(getState(), no, total);
-			} else if (isColdChain() && !MPIUtils.isMaster(rank)) {
-				// Send state.
-				State state = getState();
-				MPIStateSend(state);
-			} else if (!isColdChain() && MPIUtils.isMaster(rank)) {
-				// Receive state.
-				State state = MPIStateReceieve(coldChainLocation);
-				postprocMan.newSample(state, no, total);
+			// System.out.print("Alignment: ");
+			double oldLogLi = totalLogLike;
+			// System.out.println("fast indel before: "+tree.root.indelLogLike);
+			tree.countLeaves(); // calculates recursively how many leaves we have
+			// below this node
+			for (int i = 0; i < weights.length; i++) {
+				weights[i] = Math.pow(tree.vertex[i].leafCount, LEAFCOUNT_POWER);
 			}
-
-		} else {
-			postprocMan.newSample(getState(), no, total);
+			int k = Utils.weightedChoose(weights, null);
+			Vertex selectRoot = tree.vertex[k];
+			// System.out.println("Sampling from the subtree: "+tree.vertex[k].print());
+			selectRoot.selectSubtree(SELTRLEVPROB, 0);
+			modelExtMan.beforeAlignChange(tree, selectRoot);
+			// TODO split selectAndResampleAlignment and call beforeAlignChange after window selection
+			//System.out.println("R = "+tree.hmm2.params[0]+"lambda = "+tree.hmm2.params[1]+", mu = "+tree.hmm2.params[2]);
+			double bpp = selectRoot.selectAndResampleAlignment();
+			double newLogLi = modelExtMan.logLikeAlignChange(tree, selectRoot);
+		
+			// String[] printedAlignment = tree.printedAlignment("StatAlign");
+			// for(String i: printedAlignment)
+			// System.out.println(i);
+			//
+			// System.out.println("-----------------------------------------------------------------------------");
+			// double fastFels = tree.root.orphanLogLike;
+			// double fastIns = tree.root.indelLogLike;
+			// report();
+			// tree.root.first.seq[0] = 0.0;
+			// System.out.println("Old before: "+tree.root.old.indelLogLike);
+			// tree.root.calcFelsRecursivelyWithCheck();
+			// tree.root.calcIndelRecursivelyWithCheck();
+			// tree.root.calcIndelLikeRecursively();
+			// System.out.println("Old after: "+tree.root.old.indelLogLike);
+			// System.out.println("Check logli: "+tree.getLogLike()+" fastFels: "+fastFels+" slowFels: "+tree.root.orphanLogLike+
+			// " fastIns: "+fastIns+" slowIns: "+tree.root.indelLogLike);
+			// System.out.println("selected subtree: "+tree.vertex[k].print());
+			// System.out.println("bpp: "+bpp+"old: "+oldLogLi+"new: "+newLogLi +
+			// "heated diff: " + ((newLogLi - oldLogLi) * tree.heat));
+			if (Math.log(Utils.generator.nextDouble()) < bpp
+					+ (newLogLi - oldLogLi) * tree.heat) {
+				// accepted
+				//System.out.println("accepted (old: "+oldLogLi+" new: "+newLogLi+")");
+				totalLogLike = newLogLi;
+				alignmentAccepted++;
+				modelExtMan.afterAlignChange(tree, selectRoot, true);
+			} else {
+				// refused
+				// String[] s = tree.printedAlignment();
+				selectRoot.alignRestore();
+				// s = tree.printedAlignment();
+				//System.out.println("rejected (old: "+oldLogLi+" new: "+newLogLi+")");
+				// System.out.println("after reject fast: "+tree.root.indelLogLike);
+				// tree.root.calcIndelRecursivelyWithCheck();
+				// System.out.println(" slow: "+tree.root.indelLogLike);
+				modelExtMan.afterAlignChange(tree, selectRoot, false);
+		
+			}
+			// tree.root.calcFelsRecursivelyWithCheck();
+			// tree.root.calcIndelRecursivelyWithCheck();
 		}
+	*/
+		
+		// this is the old
+		/*
+		 * private void sampleTopology(){ int vnum = tree.vertex.length;
+		 * 
+		 * if(vnum <= 3) return;
+		 * 
+		 * System.out.print("Topology: "); double oldLogLi = tree.getLogLike();
+		 * 
+		 * int vertId, rnd = Utils.generator.nextInt(vnum-3); vertId =
+		 * tree.getTopVertexId(rnd); if(vertId != -1) { int lastId[] = new int[3],
+		 * num = 0, newId = vertId;
+		 * 
+		 * for(int i = vnum-3; i < vnum; i++) { int id = tree.getTopVertexId(i);
+		 * if(id == -1) lastId[num++] = i; else if(id < vertId) newId--; } rnd =
+		 * lastId[newId]; } Vertex nephew = tree.vertex[rnd]; Vertex uncle =
+		 * nephew.parent.brother();
+		 * 
+		 * // for(vertId = 0; vertId < vnum; vertId++) { //
+		 * if(tree.getTopVertexId(vertId) == -1) { // vertex eligible // if(rnd-- ==
+		 * 0) // break; // } // } // Vertex nephew = tree.vertex[vertId];
+		 * 
+		 * double bpp = nephew.swapWithUncle();
+		 * 
+		 * double newLogLi = tree.getLogLike();
+		 * 
+		 * // tree.root.calcFelsRecursivelyWithCheck();
+		 * //tree.root.calcIndelRecursivelyWithCheck();
+		 * 
+		 * if(Math.log(Utils.generator.nextDouble()) < bpp+newLogLi-oldLogLi) { //
+		 * accepted
+		 * System.out.println("accepted (old: "+oldLogLi+" new: "+newLogLi+")"); }
+		 * else { // refused uncle.swapBackUncle();
+		 * System.out.println("rejected (old: "+oldLogLi+" new: "+newLogLi+")"); }
+		 * 
+		 * //tree.root.calcFelsRecursivelyWithCheck();
+		 * //tree.root.calcIndelRecursivelyWithCheck(); }
+		 */
+	/*	private void sampleTopology() {
+			int vnum = tree.vertex.length;
+		
+			if (vnum <= 3)
+				return;
+		
+			topologySampled++;
+			// System.out.println("\n\n\t***\t***\t***\n\n\n");
+			// System.out.print("Topology: ");
+			// tree.printAllPointers();
+			double oldLogLi = totalLogLike;
+		
+			int vertId, rnd = Utils.generator.nextInt(vnum - 3);
+			vertId = tree.getTopVertexId(rnd);
+			if (vertId != -1) {
+				int lastId[] = new int[3], num = 0, newId = vertId;
+		
+				for (int i = vnum - 3; i < vnum; i++) {
+					int id = tree.getTopVertexId(i);
+					if (id == -1)
+						lastId[num++] = i;
+					else if (id < vertId)
+						newId--;
+				}
+				rnd = lastId[newId];
+			}
+			Vertex nephew = tree.vertex[rnd];
+			Vertex uncle = nephew.parent.brother();
+			
+			modelExtMan.beforeTreeChange(tree, nephew);
+		
+			// for(vertId = 0; vertId < vnum; vertId++) {
+			// if(tree.getTopVertexId(vertId) == -1) { // vertex eligible
+			// if(rnd-- == 0)
+			// break;
+			// }
+			// }
+			// Vertex nephew = tree.vertex[vertId];
+		
+			// String[] s = tree.root.printedMultipleAlignment();
+			// System.out.println("Alignment before topology changing: ");
+			// for(int i = 0; i < s.length; i++){
+			// System.out.println(s[i]);
+			// }
+			double bpp = nephew.fastSwapWithUncle();
+			//double bpp = nephew.swapWithUncle1();
+			// s = tree.root.printedMultipleAlignment();
+			// System.out.println("Alignment after topology changing: ");
+			// for(int i = 0; i < s.length; i++){
+			// System.out.println(s[i]);
+			// }
+		
+			double newLogLi = modelExtMan.logLikeTreeChange(tree, nephew);
+		
+			// tree.root.calcFelsRecursivelyWithCheck();
+			// tree.root.calcIndelRecursivelyWithCheck();
+		
+			if (Math.log(Utils.generator.nextDouble()) < bpp
+					+ (newLogLi - oldLogLi) * tree.heat) {
+				// accepted
+				// System.out.println("accepted (old: "+oldLogLi+" new: "+newLogLi+")");
+				topologyAccepted++;
+				if (Utils.DEBUG) {
+					System.out.println("Topology move accepted: "+nephew.index+" <--> "+uncle.index);
+				}
+				totalLogLike = newLogLi;
+				modelExtMan.afterTreeChange(tree, uncle, true);
+			} else {
+				// rejected
+//				if (Utils.DEBUG) {
+//					System.out.println("Topology move rejected: "+nephew.index+" <--> "+uncle.index);
+//				}
+				// System.out.println("Checking pointer integrity before changing back topology: ");
+				if (Utils.DEBUG) {
+					for (int i = 0; i < tree.vertex.length; i++) {
+						if (tree.vertex[i].left != null && tree.vertex[i].right != null) {
+							tree.vertex[i].checkPointers();
+							AlignColumn p;
+							// checking pointer integrity
+							for (AlignColumn c = tree.vertex[i].left.first; c != null; c = c.next) {
+								p = tree.vertex[i].first;
+								while (c.parent != p && p != null)
+									p = p.next;
+								if (p == null)
+									throw new Error(
+											"children does not have a parent!!!"
+													+ tree.vertex[i] + " "
+													+ tree.vertex[i].print());
+							}
+							for (AlignColumn c = tree.vertex[i].right.first; c != null; c = c.next) {
+								p = tree.vertex[i].first;
+								while (c.parent != p && p != null)
+									p = p.next;
+								if (p == null)
+									throw new Error(
+											"children does not have a parent!!!"
+													+ tree.vertex[i] + " "
+													+ tree.vertex[i].print());
+							}
+			
+						}
+					}
+				}
+		
+				uncle.fastSwapBackUncle();
+				//uncle.swapBackUncle1();
+				// System.out.println("Checking pointer integrity after changing back topology: ");
+				if (Utils.DEBUG) {
+					for (int i = 0; i < tree.vertex.length; i++) {
+						if (tree.vertex[i].left != null && tree.vertex[i].right != null) {
+							tree.vertex[i].checkPointers();
+							AlignColumn p;
+							// checking pointer integrity
+							for (AlignColumn c = tree.vertex[i].left.first; c != null; c = c.next) {
+								p = tree.vertex[i].first;
+								while (c.parent != p && p != null)
+									p = p.next;
+								if (p == null)
+									throw new Error(
+											"children does not have a parent!!!"
+													+ tree.vertex[i] + " "
+													+ tree.vertex[i].print());
+							}
+							for (AlignColumn c = tree.vertex[i].right.first; c != null; c = c.next) {
+								p = tree.vertex[i].first;
+								while (c.parent != p && p != null)
+									p = p.next;
+								if (p == null)
+									throw new Error(
+											"children does not have a parent!!!"
+													+ tree.vertex[i] + " "
+													+ tree.vertex[i].print());
+							}
+						}
+					}
+				}
+				
+				// s = tree.root.printedMultipleAlignment();
+				// System.out.println("Alignment after changing back the topology: ");
+				// for(int i = 0; i < s.length; i++){
+				// System.out.println(s[i]);
+				// }
+				// System.out.println("rejected (old: "+oldLogLi+" new: "+newLogLi+")");
+				modelExtMan.afterTreeChange(tree, nephew, false);
+			}
+		
+			// tree.printAllPointers();
+			// System.out.println("\n\n\t***\t***\t***\n\n\n");
+			if (Utils.DEBUG) {
+				tree.root.calcFelsRecursivelyWithCheck();
+				tree.root.calcIndelRecursivelyWithCheck();
+			}
+			else {
+				tree.root.calcFelsRecursively();
+				tree.root.calcIndelLikeRecursively();
+			}
+		}
+	*/
 
-		// Log the accept ratios/params to the (.log) file. TODO: move to a plugin.
-		try {
-			if ((isParallel && MPIUtils.isMaster(rank)) || !isParallel) {
-				postprocMan.logFile.write(getInfoString() + "\n");
-				postprocMan.logFile.write("Report\tLogLikelihood\t"
-						+ (modelExtMan.totalLogLike(tree))
-						+ "\tR\t" + tree.hmm2.params[0] + "\tLamda\t"
-						+ tree.hmm2.params[1] + "\tMu\t" + tree.hmm2.params[2]
-								+ "\t" + tree.substitutionModel.print() + "\n");
-				if (isParallel) {
-					postprocMan.logFile.write("Cold chain location: " + coldChainLocation + "\n");
+	/*	private void sampleEdge() {
+			edgeSampled++;
+			
+			// select edge
+			int i = Utils.generator.nextInt(tree.vertex.length - 1);
+			Vertex selectedNode = tree.vertex[i];
+			double oldEdge = selectedNode.edgeLength;
+			double oldLogLikelihood = totalLogLike;
+			
+			modelExtMan.beforeEdgeLenChange(tree, selectedNode);
+
+			double minEdgeLength = 0.01;
+			// perform change
+			while ((selectedNode.edgeLength = oldEdge
+					+ Utils.generator.nextDouble() * Utils.EDGE_SPAN
+					- (Utils.EDGE_SPAN / 2.0)) < minEdgeLength)
+				;
+			selectedNode.edgeChangeUpdate();
+			// Vertex actual = tree.vertex[i];
+			// while(actual != null){
+			// actual.calcFelsen();
+			// actual.calcOrphan();
+			// actual.calcIndelLogLike();
+			// actual = actual.parent;
+			// }
+			selectedNode.calcAllUp();
+			double newLogLikelihood = modelExtMan.logLikeEdgeLenChange(tree, selectedNode);
+			if (Utils.generator.nextDouble() < 
+					( Math.exp((newLogLikelihood - oldLogLikelihood - selectedNode.edgeLength + oldEdge)* tree.heat) 
+					* (Math.min(oldEdge - minEdgeLength, Utils.EDGE_SPAN / 2.0) + Utils.EDGE_SPAN / 2.0) 
+					) /
+					(Math.min(selectedNode.edgeLength - minEdgeLength,
+							Utils.EDGE_SPAN / 2.0) + Utils.EDGE_SPAN / 2.0)) {
+				// acceptance, do nothing
+				// System.out.println("accepted (old: "+oldLogLikelihood+" new: "+newLogLikelihood+")");
+				edgeAccepted++;
+				totalLogLike = newLogLikelihood;
+				modelExtMan.afterEdgeLenChange(tree, selectedNode, true);
+			} else {
+				// reject, restore
+				// System.out.print("Rejected! i: "+i+"\tOld likelihood: "+oldLogLikelihood+"\tNew likelihood: "+newLogLikelihood);
+				selectedNode.edgeLength = oldEdge;
+				selectedNode.edgeChangeUpdate();
+				// actual = tree.vertex[i];
+				// while(actual != null){
+				// actual.calcFelsen();
+				// actual.calcOrphan();
+				// actual.calcIndelLogLike();
+				// actual = actual.parent;
+				// }
+				selectedNode.calcAllUp();
+				// System.out.println("rejected (old: "+oldLogLikelihood+" new: "+newLogLikelihood+")");
+				modelExtMan.afterEdgeLenChange(tree, selectedNode, false);
+
+			}
+		}
+	*/
+		
+	/*	private void sampleIndelParameter() {		
+			// select indel param
+			int ind = Utils.generator.nextInt(3);
+			boolean accepted = false;
+			
+			modelExtMan.beforeIndelParamChange(tree, tree.hmm2, ind);
+			
+			// perform change, then accept/reject
+			switch (ind) {
+			case 0:
+				RSampled++;
+				// System.out.print("Indel param R: ");
+				double oldR = tree.hmm2.params[0];
+				double oldLogLikelihood = totalLogLike;
+				while ((tree.hmm2.params[0] = oldR + Utils.generator.nextDouble()
+						* Utils.R_SPAN - Utils.R_SPAN / 2.0) <= 0.0
+						|| tree.hmm2.params[0] >= 1.0)
+					;
+				for (int i = 0; i < tree.vertex.length; i++) {
+					tree.vertex[i].updateHmmMatrices();
+				}
+				tree.root.calcIndelLikeRecursively();
+				double newLogLikelihood = modelExtMan.logLikeIndelParamChange(tree, tree.hmm2, ind);
+				if (Utils.generator.nextDouble() < Math
+						.exp((newLogLikelihood - oldLogLikelihood) * tree.heat)
+						* (Math.min(1.0 - oldR, Utils.R_SPAN / 2.0) + Math.min(
+								oldR, Utils.R_SPAN / 2.0))
+								/ (Math.min(1.0 - tree.hmm2.params[0], Utils.R_SPAN / 2.0) + Math
+										.min(tree.hmm2.params[0], Utils.R_SPAN / 2.0))) {
+					// accept, do nothing
+					// System.out.println("accepted (old: "+oldLogLikelihood+" new: "+newLogLikelihood+")");
+					RAccepted++;
+					accepted = true;
+					totalLogLike = newLogLikelihood;
+				} else {
+					// restore
+					tree.hmm2.params[0] = oldR;
+					for (int i = 0; i < tree.vertex.length; i++) {
+						tree.vertex[i].updateHmmMatrices();
+					}
+					tree.root.calcIndelLikeRecursively();
+					// System.out.println("rejected (old: "+oldLogLikelihood+" new: "+newLogLikelihood+")");
 				}
 
+				break;
+			case 1:
+				lambdaSampled++;
+				// ///////////////////////////////////////////////
+				// System.out.print("Indel param Lambda: ");
+				double oldLambda = tree.hmm2.params[1];
+				oldLogLikelihood = totalLogLike;
+				while ((tree.hmm2.params[1] = oldLambda
+						+ Utils.generator.nextDouble() * Utils.LAMBDA_SPAN
+						- Utils.LAMBDA_SPAN / 2.0) <= 0.0
+						|| tree.hmm2.params[1] >= tree.hmm2.params[2])
+					;
+				for (int i = 0; i < tree.vertex.length; i++) {
+					tree.vertex[i].updateHmmMatrices();
+				}
+				tree.root.calcIndelLikeRecursively();
+				newLogLikelihood = modelExtMan.logLikeIndelParamChange(tree, tree.hmm2, ind);
+				if (Utils.generator.nextDouble() < Math.exp((newLogLikelihood
+						- oldLogLikelihood - tree.hmm2.params[1] + oldLambda)
+						* tree.heat)
+						* (Math.min(Utils.LAMBDA_SPAN / 2.0, tree.hmm2.params[2]
+								- oldLambda) + Math.min(oldLambda,
+										Utils.LAMBDA_SPAN / 2.0))
+										/ (Math.min(Utils.LAMBDA_SPAN / 2.0, tree.hmm2.params[2]
+												- tree.hmm2.params[1]) + Math.min(
+														tree.hmm2.params[1], Utils.LAMBDA_SPAN / 2.0))) {
+					// accept, do nothing
+					// System.out.println("accepted (old: "+oldLogLikelihood+" new: "+newLogLikelihood+" oldLambda: "+oldLambda+" newLambda: "+tree.hmm2.params[1]+")");
+					lambdaAccepted++;
+					accepted = true;
+					totalLogLike = newLogLikelihood;
+				} else {
+					// restore
+					tree.hmm2.params[1] = oldLambda;
+					for (int i = 0; i < tree.vertex.length; i++) {
+						tree.vertex[i].updateHmmMatrices();
+					}
+					tree.root.calcIndelLikeRecursively();
+					// System.out.println("rejected (old: "+oldLogLikelihood+" new: "+newLogLikelihood+" oldLambda: "+oldLambda+" newLambda: "+tree.hmm2.params[1]+")");
+				}
+				break;
+			case 2:
+				muSampled++;
+				// ///////////////////////////////////////////////////////
+				// System.out.print("Indel param Mu: ");
+				double oldMu = tree.hmm2.params[2];
+				oldLogLikelihood = totalLogLike;
+				while ((tree.hmm2.params[2] = oldMu + Utils.generator.nextDouble()
+						* Utils.MU_SPAN - Utils.MU_SPAN / 2.0) <= tree.hmm2.params[1])
+					;
+				for (int i = 0; i < tree.vertex.length; i++) {
+					tree.vertex[i].updateHmmMatrices();
+				}
+				tree.root.calcIndelLikeRecursively();
+				newLogLikelihood = modelExtMan.logLikeIndelParamChange(tree, tree.hmm2, ind);
+				if (Utils.generator.nextDouble() < Math.exp((newLogLikelihood
+						- oldLogLikelihood - tree.hmm2.params[2] + oldMu)
+						* tree.heat)
+						* (Utils.MU_SPAN / 2.0 + Math.min(oldMu
+								- tree.hmm2.params[1], Utils.MU_SPAN / 2.0))
+								/ (Utils.MU_SPAN / 2.0 + Math.min(tree.hmm2.params[2]
+										- tree.hmm2.params[1], Utils.MU_SPAN / 2.0))) {
+					// accept, do nothing
+					// System.out.println("accepted (old: "+oldLogLikelihood+" new: "+newLogLikelihood+")");
+					muAccepted++;
+					accepted = true;
+					totalLogLike = newLogLikelihood;
+				} else {
+					// restore
+					tree.hmm2.params[2] = oldMu;
+					for (int i = 0; i < tree.vertex.length; i++) {
+						tree.vertex[i].updateHmmMatrices();
+					}
+					tree.root.calcIndelLikeRecursively();
+					// System.out.println("rejected (old: "+oldLogLikelihood+" new: "+newLogLikelihood+")");
+				}
+				break;
 			}
-		} catch (IOException e) {
-			if (postprocMan.mainManager.frame != null) {
-				new ErrorMessage(null, e.getLocalizedMessage(), true);
+			
+			modelExtMan.afterIndelParamChange(tree, tree.hmm2, ind, accepted);
+		} 
+	*/
+
+	/*	private void sampleSubstParameter() {
+			substSampled++;
+			if (tree.substitutionModel.params.length == 0)
+				return;
+			
+			modelExtMan.beforeSubstParamChange(tree, tree.substitutionModel, -1);
+			
+			double mh = tree.substitutionModel.sampleParameter();
+			double oldlikelihood = totalLogLike;
+			for (int i = 0; i < tree.vertex.length; i++) {
+				tree.vertex[i].updateTransitionMatrix();
+			}
+			tree.root.calcFelsRecursively();
+			double newlikelihood = modelExtMan.logLikeSubstParamChange(tree, tree.substitutionModel, -1);
+			if (Utils.generator.nextDouble() < Math.exp(mh
+					+ (Math.log(tree.substitutionModel.getPrior())
+							+ newlikelihood - oldlikelihood))
+							* tree.heat) {
+				// System.out.println("Substitution parameter: accepted (old: "+oldlikelihood+" new: "+newlikelihood+")");
+				substAccepted++;
+				totalLogLike = newlikelihood;
+				modelExtMan.afterSubstParamChange(tree, tree.substitutionModel, -1, true);
 			} else {
-				e.printStackTrace(System.out);
+				tree.substitutionModel.restoreParameter();
+				for (int i = 0; i < tree.vertex.length; i++) {
+					tree.vertex[i].updateTransitionMatrix();
+				}
+				tree.root.calcFelsRecursively();
+				// System.out.println("Substitution parameter: rejected (old: "+oldlikelihood+" new: "+newlikelihood+")");
+				modelExtMan.afterSubstParamChange(tree, tree.substitutionModel, -1, false);
 			}
 		}
-
-		// alignmentSampled = 0;
-		// alignmentAccepted = 0;
-		// edgeSampled = 0;
-		// edgeAccepted = 0;
-		// topologySampled = 0;
-		// topologyAccepted = 0;
-		// indelSampled = 0;
-		// indelAccepted = 0;
-		// substSampled = 0;
-		// substAccepted = 0;
-
-	}
-
-
-
-	/**
-	 * This function is only for testing and debugging purposes.
-	 * 
-	 * @param args
-	 *            Actually, we do not use these parameters, as this function is
-	 *            for testing and debugging purposes. All necessary input data
-	 *            is directly written into the function.
-	 * 
-	 */
-	// public static void main(String[] args) {
-	// try {
-	// Tree tree = new Tree(new String[] { "kkkkkkwwwwwwwwlidwwwwwkkk",
-	// "kkkwwwwwwwlidwwwwwkkk", "kkkwwwwwwwlidwwwwwkkk",
-	// "kkkwwwwwwwlidwwwwwkkk", "kkkwwwwwlidwwwwwkkkddkldkl",
-	// "kkkwwwwwlidwwwwwkkkeqiqii", "kkkwwwwwlidwwwwwkkkddkidkil",
-	// "kkkwwwwwlidwwwwwkkkeqiq", "kkkwwwwwlidwwwwwkkkddkldkll",
-	// "kkkwwwwwlidwwwwwkkkddkldkil" }, new String[] { "A", "B",
-	// "C", "D", "E", "F", "G", "H", "I", "J" }, new Dayhoff(), new Blosum62(),
-	// "");
-	// for (int i = 0; i < tree.vertex.length; i++) {
-	// // tree.vertex[i].edgeLength = 0.1;
-	// tree.vertex[i].updateTransitionMatrix();
-	// }
-	// tree.root.calcFelsRecursively();
-	// System.out.println(tree.printedTree());
-	// // Mcmc mcmc = new Mcmc(tree, new MCMCPars(0, 10000, 10, 1L), new
-	// // PostprocessManager(null));
-	// // mcmc.doMCMC();
-	// } catch (StoppedException e) {
-	// // stopped during tree construction
-	// } catch (IOException e) {
-	// }
-	// }
+	*/
+//		private boolean modExtParamChangeAccepted;
+	//
+//		private void sampleModelExtParam() {
+////			modextSampled++;
+//			modelExtMan.beforeModExtParamChange(tree);
+//			modExtParamChangeAccepted = false;
+//			modelExtMan.proposeParamChange(tree);
+////			if(modExtParamChangeAccepted)
+////				modextAccepted++;
+//			modelExtMan.afterModExtParamChange(tree, modExtParamChangeAccepted);
+//		}
 
 }

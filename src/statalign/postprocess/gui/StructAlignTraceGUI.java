@@ -11,9 +11,9 @@ import java.util.List;
 
 import javax.swing.JPanel;
 
+import statalign.postprocess.plugins.structalign.StructAlignTraceParameters;
 import statalign.postprocess.plugins.structalign.StructTrace;
-import statalign.postprocess.utils.StructAlignTraceParameters;
-import statalign.postprocess.utils.StructAlignTraceParameters.*;
+import statalign.postprocess.plugins.structalign.StructAlignTraceParameters.*;
 
 /**
  * This class implements the graphical interface for showing the trace

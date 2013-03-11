@@ -12,9 +12,9 @@ import statalign.base.Tree;
 import statalign.base.Utils;
 import statalign.base.Vertex;
 import statalign.base.hmm.Hmm;
-import statalign.base.mcmc.McmcMove;
-import statalign.base.mcmc.McmcModule;
 import statalign.io.DataType;
+import statalign.mcmc.McmcModule;
+import statalign.mcmc.McmcMove;
 import statalign.model.subst.SubstitutionModel;
 
 
@@ -36,29 +36,6 @@ public abstract class ModelExtension extends McmcModule {
 	public String getFilenameExtension() {
 		return manager.getFilenameExtension();
 	}
-	
-//	private List<McmcMove> mcmcMoves = new ArrayList<McmcMove>();
-//	protected List<Integer> mcmcMoveWeights = new ArrayList<Integer>();
-//	protected void addMcmcMove(McmcMove m, int weight) {
-//		mcmcMoves.add(m);
-//		mcmcMoveWeights.add(weight);
-//	}
-//	public List<McmcMove> getMcmcMoves() {
-//		return mcmcMoves;
-//	}
-//	public void setAllMovesNotProposed() {
-//		for (McmcMove mcmcMove : mcmcMoves) {
-//			mcmcMove.moveProposed = false;
-//		}
-//	}
-//	public McmcMove getMcmcMove(String name) {
-//		for (McmcMove mcmcMove : mcmcMoves) {
-//			if (mcmcMove.name.equals(name)) {
-//				return mcmcMove;
-//			}
-//		}
-//		throw new RuntimeException("McmcMove "+name+" not found.");
-//	}
 	
 	/**
 	 * This function is called when command line arguments are specified for
@@ -203,6 +180,7 @@ public abstract class ModelExtension extends McmcModule {
 	 * @param logProposalRatio Ratio of proposal and prior densities as explained above
 	 * @return <code>true</code> if the change was accepted
 	 */
+	@Override
 	public final boolean isParamChangeAccepted(double logProposalRatio) {
 		return manager.modExtParamChangeCallback(logProposalRatio);
 	}
@@ -290,9 +268,9 @@ public abstract class ModelExtension extends McmcModule {
 	 * @param hmm the TKF92 HMM containing its parameters
 	 * @param ind the index of the selected parameter
 	 */
-	public void beforeIndelParamChange(Tree tree, Hmm hmm, int ind) {}
+	public void beforeIndelParamChange(Tree tree, Hmm hmm, McmcMove m) {}
 	
-	public double logLikeIndelParamChange(Tree tree, Hmm hmm, int ind) {
+	public double logLikeIndelParamChange(Tree tree, Hmm hmm, McmcMove m) {
 		return logLikeFactor(tree);
 	}
 	
@@ -303,7 +281,7 @@ public abstract class ModelExtension extends McmcModule {
 	 * @param ind the index of the selected parameter
 	 * @param accepted true if the change was accepted
 	 */
-	public void afterIndelParamChange(Tree tree, Hmm hmm, int ind, boolean accepted) {}
+	public void afterIndelParamChange(Tree tree, Hmm hmm, McmcMove m, boolean accepted) {}
 
 	/**
 	 * Called before a substitution parameter change is proposed.

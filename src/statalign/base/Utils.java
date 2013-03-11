@@ -11,6 +11,7 @@ import java.util.jar.JarFile;
 
 import org.apache.commons.math3.random.RandomGenerator;
 import org.apache.commons.math3.random.Well19937c;
+import org.apache.commons.math3.util.FastMath;
 
 import statalign.ui.ErrorMessage;
 
@@ -39,6 +40,30 @@ public class Utils{
 	 */
 	public static RandomGenerator generator = new Well19937c(1);
 	
+	/** 
+	 * @param x
+	 * @param shape
+	 * @param rate
+	 * @return The unnormalised log density of Gamma(x | shape, rate)
+	 */
+	public static double logGammaDensity(double x, double shape, double rate) {
+       if (x < 0) {
+            return Double.NEGATIVE_INFINITY;
+       }
+       return (shape-1) * FastMath.log(x) - rate * x;
+    }
+	/** 
+	 * @param x
+	 * @param shape
+	 * @param rate
+	 * @return The unnormalised log density of Gamma(x | shape, rate)
+	 */
+	public static double logBetaDensity(double x, double alpha, double beta) {
+       if (x < 0 || x > 1) {
+            return Double.NEGATIVE_INFINITY;
+       }
+       return (alpha-1) * FastMath.log(x) + (beta-1) * FastMath.log(1-x);
+    }
 	/**
 	 * During the burnin, the SPAN variables for all continuous parameters
 	 * are adjusted in order to ensure that the average acceptance rate is between 
@@ -53,9 +78,6 @@ public class Utils{
 	// typically goes down
 	public static final double MAX_ACCEPTANCE = 0.4;
 	
-	public static final double WINDOW_CHANGE_FACTOR = 0.9;
-	public static final double MIN_WINDOW_MULTIPLIER = 0.1;
-	public static final double MAX_WINDOW_MULTIPLIER = 1.0;
 	public static double WINDOW_MULTIPLIER = 1.0;
 
 	/** 
@@ -272,6 +294,18 @@ public class Utils{
 		return k;
 	}
 
+	/** 
+	 * Takes a time in milliseconds and converts to a string to be printed.
+	 * 
+	 * @param x The time to be formatted, in milliseconds (as a long).
+	 * @return A string to be printed.
+	 */
+	public static String convertTime(long x) {
+		x /= 1000;
+		return String.format("%dh%02dm%02ds", x / 3600,
+				(x / 60) % 60, x % 60);
+	}
+	
 	/**
 	 * Logarithmically add two numbers
 	 * @param a log(x)
