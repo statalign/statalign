@@ -101,4 +101,8 @@ public abstract class ContinuousPositiveParameterMove extends McmcMove {
 		param.set(oldpar);
 		owner.setLogLike(oldll);
 	}
+	public void updateProposal(double proposalWidthControlVariable, 
+			Double currentParam) {
+		proposalDistribution.updateProposal(proposalWidthControlVariable, currentParam);
+	}
 }

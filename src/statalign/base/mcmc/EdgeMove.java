@@ -38,6 +38,13 @@ public class EdgeMove extends ContinuousPositiveParameterMove {
 		param = new EdgeInterface(index);
 		minValue = 0.01;
 	}
+	void setEdgeIndex(int i) {
+		index = i;
+		param = new EdgeInterface(index);
+	}
+	int getEdgeIndex() {
+		return index;
+	}
 	@Override
 	public void copyState(Object externalState) {
 		if (externalState instanceof Tree) {
