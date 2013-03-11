@@ -14,6 +14,7 @@ import statalign.base.hmm.HmmSilent;
 import statalign.base.hmm.HmmTkf92;
 import statalign.base.thread.Stoppable;
 import statalign.base.thread.StoppedException;
+import statalign.io.DataType;
 import statalign.model.score.SubstitutionScore;
 import statalign.model.score.plugins.Blosum62;
 import statalign.model.subst.SubstitutionModel;
@@ -26,7 +27,7 @@ import statalign.postprocess.plugins.contree.CNetwork;
  * while it calls a function in the Tree class.
  * @author miklos, novak
  */
-public class Tree extends Stoppable {
+public class Tree extends Stoppable implements DataType {
 
     /** Characters on this tree undergo substitutions according to this model. */
     public SubstitutionModel substitutionModel;
@@ -65,7 +66,7 @@ public class Tree extends Stoppable {
     public CNetwork network;
 
 
-    Tree() {
+    public Tree() {
         try {
             substitutionModel = new Dayhoff();
         } catch (IOException e) {
@@ -694,6 +695,20 @@ public class Tree extends Stoppable {
             }
         }
         return s;
+    }
+    
+    @Override
+    public boolean perSequenceData() {
+    	return false;
+    }
+    
+    @Override
+    public String getSummaryAssociatedWith(String sequenceName) {
+    	return null;
+    }
+    
+    @Override
+    public void removeDataAssociatedWith(String sequenceName) {
     }
 
     /** This function is only for testing purposes. */

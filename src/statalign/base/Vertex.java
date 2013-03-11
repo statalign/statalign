@@ -84,6 +84,17 @@ public class Vertex {
 
     Vertex() {
     }
+    
+	public Vertex(Tree tree) {
+		owner = tree;
+		old = new Vertex();
+	}
+
+	public Vertex(Vertex parent) {
+		this.parent = parent;
+		owner = parent.owner;
+		old = new Vertex();
+	}
 
     Vertex(Tree owner, double edgeLength) {
         this.owner = owner;
@@ -221,6 +232,9 @@ public class Vertex {
 
     }
 
+    /**
+     * @return the "brother" of this node, i.e. the other descendant of its parent
+     */
     Vertex brother() {
         return parent.left == this ? parent.right : parent.left;
     }

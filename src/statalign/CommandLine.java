@@ -16,17 +16,17 @@ import ml.options.Options.Multiplicity;
 import ml.options.Options.Separator;
 import statalign.base.AutomateParameters;
 import statalign.base.MainManager;
+import statalign.base.Tree;
 import statalign.base.Utils;
 import statalign.io.DataType;
 import statalign.io.RawSequences;
+import statalign.model.ext.ModelExtension;
 import statalign.model.subst.RecognitionError;
 import statalign.model.subst.SubstitutionModel;
 import statalign.model.subst.plugins.Dayhoff;
 import statalign.model.subst.plugins.Kimura3;
-import statalign.postprocess.PluginParameters;
 import statalign.postprocess.Postprocess;
 import statalign.postprocess.PostprocessManager;
-import statalign.model.ext.ModelExtension;
 
 public class CommandLine {
 
@@ -80,6 +80,8 @@ public class CommandLine {
 				.addOption("subst", Separator.EQUALS)
 				.addOption("mcmc", Separator.EQUALS)
 				.addOption("seed", Separator.EQUALS)
+				.addOption("usealign", Separator.EQUALS)
+				.addOption("usetree", Separator.EQUALS)
 				.addOption("ot", Separator.EQUALS)
 				.addOption("log", Separator.EQUALS)
 				.addOption("plugin", Separator.COLON, Multiplicity.ZERO_OR_MORE)
@@ -161,8 +163,11 @@ public class CommandLine {
 					return error("input file does not appear to be in a known format: "+inputFile);
 				} else if(data instanceof RawSequences) {
 					manager.inputData.seqs.add((RawSequences)data);
+				} else if(data instanceof Tree) {
+					if(manager.inputData.tree != null)
+						return error("more than one initial tree has been given!");
+					manager.inputData.tree = (Tree) data;
 				} else {
-					// TODO separate a case for tree datatypes (so that initial tree can be given)
 					manager.inputData.auxData.add(data);
 				}
 			}
@@ -263,7 +268,30 @@ public class CommandLine {
 					return error("error parsing seed parameter: " + seedPar);
 				}
 			}
-
+			
+			if(set.isSet("usealign")) {
+				String useAlign = set.getOption("usealign").getResultValue(0);
+				if(useAlign.length() != 1 || (manager.inputData.useAlign =
+						"NIF".indexOf(Character.toUpperCase(useAlign.charAt(0)))) == -1)
+					return error("bad format for parameter -usealign: "+useAlign);
+				if(manager.inputData.useAlign == 2)
+					return error("fixing the alignment is currently not supported");
+				if(manager.inputData.useAlign > 0 && !manager.inputData.seqs.isAligned())
+					return error("input sequences must be aligned when -usealign="+useAlign+" is used");
+			}
+			
+			if(set.isSet("usetree")) {
+				String useTree = set.getOption("usetree").getResultValue(0);
+				if(useTree.length() != 1 || (manager.inputData.useTree =
+						"NITE".indexOf(Character.toUpperCase(useTree.charAt(0)))) == -1)
+					return error("bad format for parameter -usetree: "+useTree);
+				if(manager.inputData.useTree > 0 && manager.inputData.tree == null)
+					return error("a tree must be given when -usetree="+useTree+" is used");
+			} else {
+				// default depends on whether a tree file was provided
+				manager.inputData.useTree = manager.inputData.tree == null ? 0 : 1;
+			}
+			
 			if (set.isSet("ot")) {
 				String outType = set.getOption("ot").getResultValue(0);
 				int i;
@@ -363,22 +391,29 @@ public class CommandLine {
 
 			if (isParallel) {
 				// TODO: this.
-				sb.append("    <depends> statalign.jar [options] seqfile1 [seqfile2 ...]\n\n\n");
+				sb.append("    <depends> statalign.jar [options] seqfile1 [seqfile2 ...] [treefile]\n\n\n");
 			} else {
-				sb.append("    java -Xmx512m -jar statalign.jar [options] seqfile1 [seqfile2 ...]\n\n\n");
+				sb.append("    java -Xmx512m -jar statalign.jar [options] seqfiles [treefile]\n\n");
 			}
 	
-			sb.append("Description:\n\n");
-			sb.append("    StatAlign can be used for Bayesian analysis of protein, DNA and RNA\n");
-			sb.append("    sequences. Multiple alignments, phylogenetic trees and evolutionary\n");
-			sb.append("    parameters are co-estimated in a Markov Chain Monte Carlo framework.\n");
-			sb.append("    The input sequence files must be in Fasta format.\n\n\n");
+			sb.append("Description:\n\n")
+			  .append("    StatAlign can be used for Bayesian analysis of protein, DNA and RNA\n")
+			  .append("    sequences. Multiple alignments, phylogenetic trees and evolutionary\n")
+			  .append("    parameters are co-estimated in a Markov Chain Monte Carlo framework.\n\n")
+			
+			  .append("Parameters:\n\n")
+			  .append("    seqfiles\n")
+			  .append("        Files with the input sequences to align, they must be in Fasta format.\n")
+			  .append("    treefile\n")
+			  .append("        An optional tree file in Newick format. When given, the tree is used\n")
+			  .append("          as the initial tree of the MCMC analysis.\n")
+			  .append("        Default: the initial tree is built using the NJ algorithm\n\n")
 	
-			sb.append("Options:\n\n");
+			  .append("Options:\n\n")
 	
-			sb.append("    -subst=MODEL\n");
-			sb.append("        Select from the present substitution models (for full list, see \"-list:subst\").\n");
-			sb.append("        Default: " + Kimura3.class.getSimpleName()
+			  .append("    -subst=MODEL\n")
+			  .append("        Select from the present substitution models (for full list, see \"-list:subst\").\n")
+			  .append("        Default: " + Kimura3.class.getSimpleName()
 					+ " (for DNA/RNA data), " + Dayhoff.class.getSimpleName()
 					+ " (for protein data)\n\n");
 			
@@ -394,42 +429,57 @@ public class CommandLine {
 				sb.append("        Default: 10k,100k,1k\n\n");
 			}
 			
-			sb.append("    -automate=burn,cycl,rate\n");
-			sb.append("        Automate MCMC parameters: burn-in, cycles after burn-in, sampling rate.\n");
-			sb.append("        Select which parameters to automate by listing one or more of: burn, cycl, rate\n\n");
+			sb.append("    -automate=burn,cycl,rate\n")
+			  .append("        Automate MCMC parameters: burn-in, cycles after burn-in, sampling rate.\n")
+			  .append("        Select which parameters to automate by listing one or more of: burn, cycl, rate\n\n")
 			
-			sb.append("    -plugin:PLUGIN_NAME\n");
-			sb.append("        Specify additional plugins to be run and the corresponding parameters for each.\n");
-			sb.append("        Each plugin should be specified seperately, e.g. -plugin:ppfold -plugin:rnaalifold\n");
-			sb.append("        For additional usage information for a specific plugin, use -help:PLUGIN_NAME.\n\n");
+			  .append("    -usealign=N|I|F\n")
+			  .append("        Specifies how the alignment of the input sequences is used\n")
+			  .append("          N: it is ignored and sequences are re-aligned from scratch\n")
+			  .append("          I: it is used as the initial alignment and sampled during MCMC\n")
+			  .append("          F: it is fixed throughout the MCMC analysis\n")
+			  .append("        Default: N\n\n")
 			
-			sb.append("    -help:PLUGIN_NAME\n");
-			sb.append("        Prints usage information for the specified plugin.\n\n");			
-	
-			sb.append("    -list:subst\n");
-			sb.append("        Prints the list of available substition models.\n\n");			
-	
-			sb.append("    -list:plugin\n");
-			sb.append("        Prints the list of available model extension plugins.\n\n");
+			  .append("    -usetree=N|I|T|E\n")
+			  .append("        Defines how the specified tree should be used\n")
+			  .append("          N: the tree is constructed from scratch using NJ\n")
+			  .append("          I: it is used as the initial tree and sampled during MCMC\n")
+			  .append("          T: the topology is fixed throughout the MCMC analysis, edges are sampled\n")
+			  .append("          E: both topology and edge lengths are fixed during the MCMC\n")
+			  .append("        Default: N (without tree file) or I (when tree file is given)\n\n")
 			
-			sb.append("    -seed=value\n");
-			sb.append("        Sets the random seed (same value will reproduce same results for\n");
-			sb.append("          identical input and settings)\n");
-			sb.append("        Default: 1\n\n");
+			  .append("    -plugin:PLUGIN_NAME\n")
+			  .append("        Specify additional plugins to be run and the corresponding parameters for each.\n")
+			  .append("        Each plugin should be specified seperately, e.g. -plugin:ppfold -plugin:rnaalifold\n")
+			  .append("        For additional usage information for a specific plugin, use -help:PLUGIN_NAME.\n\n")
+			
+			  .append("    -help:PLUGIN_NAME\n")
+			  .append("        Prints usage information for the specified plugin.\n\n")
 	
-			sb.append("    -ot=OUTTYPE\n");
-			sb.append("        Sets output alignment type.\n");
-			sb.append("          (One of: "
-					+ Utils.joinStrings(MainManager.alignmentTypes, ", ") + ")\n");
-			sb.append("        Default: " + MainManager.alignmentTypes[0] + "\n\n");
+			  .append("    -list:subst\n")
+			  .append("        Prints the list of available substition models.\n\n")
 	
-			sb.append("    -log=["
+			  .append("    -list:plugin\n")
+			  .append("        Prints the list of available model extension plugins.\n\n")
+			
+			  .append("    -seed=value\n")
+			  .append("        Sets the random seed (same value will reproduce same results for\n")
+			  .append("          identical input and settings)\n")
+			  .append("        Default: 1\n\n")
+	
+			  .append("    -ot=OUTTYPE\n")
+			  .append("        Sets output alignment type.\n")
+			  .append("          (One of: "
+					+ Utils.joinStrings(MainManager.alignmentTypes, ", ") + ")\n")
+			  .append("        Default: " + MainManager.alignmentTypes[0] + "\n\n")
+	
+			  .append("    -log=["
 					+ Utils.joinStrings(postprocAbbr.keySet().toArray(), "][,")
-					+ "]\n");
-			sb.append("        Lets you customise what is written into the log file (one entry\n");
-			sb.append("        for each sample).\n");
-			sb.append(buildPpListStr(man, "          "));
-			sb.append("        Default: " + buildDefPpList(man) + "\n\n");
+					+ "]\n")
+			  .append("        Lets you customise what is written into the log file (one entry\n")
+			  .append("        for each sample).\n")
+			  .append(buildPpListStr(man, "          "))
+			  .append("        Default: " + buildDefPpList(man) + "\n\n");
 		}
 		else {
 			List<ModelExtension> pluginList = Utils.findPlugins(ModelExtension.class);

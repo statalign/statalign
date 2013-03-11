@@ -3,6 +3,7 @@ package statalign.base;
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Random;
 
 import mpi.MPI;
@@ -829,15 +830,15 @@ public class Mcmc extends Stoppable {
 		
 		modelExtMan.beforeTreeChange(tree, nephew);
 
-//		// alignment and tree before
-//		System.out.println("Before:");
-//		int nn = 0;
-//		for(String a : getState().getFullAlign())
-//			System.out.println((nn<tree.names.length?tree.names[nn++]:nn++)+"\t"+a);
-//		System.out.println(tree.printedTree());
-//		
-//		System.out.println("nephew: "+nephew.index+" parent: "+nephew.parent.index+
-//				" uncle: "+uncle.index+" grandpa: "+nephew.parent.parent.index);
+		// alignment and tree before
+		System.out.println("Before:");
+		int nn = 0;
+		for(String a : getState().getFullAlign())
+			System.out.println((nn<tree.names.length?tree.names[nn++]:nn++)+"\t"+a);
+		System.out.println(tree.printedTree());
+		
+		System.out.println("nephew: "+nephew.index+" parent: "+nephew.parent.index+
+				" uncle: "+uncle.index+" grandpa: "+nephew.parent.parent.index);
 		
 			
 		double bpp = nephew.fastSwapWithUncle();
@@ -847,7 +848,7 @@ public class Mcmc extends Stoppable {
 	
 		double newLogLi = modelExtMan.logLikeTreeChange(tree, nephew);
 	
-//		System.out.println("p="+(Math.exp(bpp + (newLogLi - oldLogLi) * tree.heat)));
+		System.out.println("p="+(Math.exp(bpp + (newLogLi - oldLogLi) * tree.heat)));
 		if (Math.log(Utils.generator.nextDouble()) < bpp
 				+ (newLogLi - oldLogLi) * tree.heat) {
 			// accepted
@@ -861,13 +862,13 @@ public class Mcmc extends Stoppable {
 		} else {
 			// rejected
 
-//			// proposed and rejected alignment and tree 
-//			System.out.println("Proposed:");
-//			nn = 0;
-//			for(String a : getState().getFullAlign())
-//				System.out.println((nn<tree.names.length?tree.names[nn++]:nn++)+"\t"+a);
-//			System.out.println(tree.printedTree());
-//			System.out.println("R, L, M: "+Arrays.toString(tree.hmm2.params));
+			// proposed and rejected alignment and tree 
+			System.out.println("Proposed:");
+			nn = 0;
+			for(String a : getState().getFullAlign())
+				System.out.println((nn<tree.names.length?tree.names[nn++]:nn++)+"\t"+a);
+			System.out.println(tree.printedTree());
+			System.out.println("R, L, M: "+Arrays.toString(tree.hmm2.params));
 			
 			if(Utils.DEBUG) {
 				// Checking pointer integrity before changing back topology
@@ -936,7 +937,7 @@ public class Mcmc extends Stoppable {
 				}
 			}
 			
-//			System.out.println("rejected (old: "+oldLogLi+" new: "+newLogLi+" bpp: "+bpp+")");
+			System.out.println("rejected (old: "+oldLogLi+" new: "+newLogLi+" bpp: "+bpp+")");
 			
 			modelExtMan.afterTreeChange(tree, nephew, false);
 		}

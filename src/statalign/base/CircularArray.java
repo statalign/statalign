@@ -173,6 +173,22 @@ public class CircularArray<E> {
 	}
 
 	/**
+	 * Copies contents of this CircularArray to a regular array. It must be at least of
+	 * length() size.
+	 *
+	 * @return array
+	 */
+	public E[] toArray(E[] newData) {
+		E[] oldData = data;
+		int size = oldData.length;
+		int sk = startKey;
+		int n = endKey-sk;
+		sk &= size-1;
+		copy(oldData, newData, sk, 0, size, n);
+		return newData;
+	}
+
+	/**
 	 * Finds minimal capacity <tt>2^n >= size+1</tt>.
 	 * 
 	 * @param size  lower bound for capacity
@@ -226,16 +242,21 @@ public class CircularArray<E> {
 			System.arraycopy(oldData, sk, newData, nsk, rem1);
 			System.arraycopy(oldData, (sk+rem1) & (size-1), newData, 0, rem2);
 		} else {
-			rem1 = size-sk;
-			rem2 = n-rem1;
-			if(rem2 > 0) {
-				System.arraycopy(oldData, sk, newData, nsk, rem1);
-				System.arraycopy(oldData, 0, newData, nsk+rem1, rem2);
-			} else {
-				System.arraycopy(oldData, sk, newData, nsk, n);
-			}
+			copy(oldData, newData, sk, nsk, size, n);
 		}
 		data = newData;
 	}	
+
+	private void copy(E[] oldData, E[] newData, int sk, int nsk, int size, int n) {
+		int rem1 = size-sk;
+		int rem2 = n-rem1;
+		if(rem2 > 0) {
+			System.arraycopy(oldData, sk, newData, nsk, rem1);
+			System.arraycopy(oldData, 0, newData, nsk+rem1, rem2);
+		} else {
+			System.arraycopy(oldData, sk, newData, nsk, n);
+		}
+	}
+
 
 }

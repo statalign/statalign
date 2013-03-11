@@ -14,7 +14,6 @@ import statalign.base.thread.StoppedException;
 import statalign.io.DataManager;
 import statalign.model.ext.ModelExtManager;
 import statalign.model.subst.SubstitutionModel;
-import statalign.postprocess.PluginParameters;
 import statalign.postprocess.Postprocess;
 import statalign.postprocess.PostprocessManager;
 import statalign.postprocess.gui.InputGUI;
