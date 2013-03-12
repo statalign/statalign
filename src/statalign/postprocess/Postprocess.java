@@ -12,6 +12,7 @@ import statalign.base.InputData;
 import statalign.base.Mcmc;
 import statalign.base.McmcStep;
 import statalign.base.State;
+import statalign.mcmc.McmcModule;
 import statalign.model.ext.ModelExtManager;
 import statalign.model.ext.ModelExtension;
 
@@ -239,7 +240,8 @@ public abstract class Postprocess {
 	 */
 	public void newSample(State state, int no, int total) {
 	}
-	
+	public void newSample(McmcModule coreModel, State state, int no, int total) {		
+	}
 	/**
 	 * This function switches on or off the sampling mode.
 	 * @param enabled Set it true if you need samples.
@@ -263,6 +265,8 @@ public abstract class Postprocess {
     public List<ModelExtension> getModExtPlugins() {
     	return mcmc.modelExtMan.getPluginList();
     }
+
+	
 
 
 
