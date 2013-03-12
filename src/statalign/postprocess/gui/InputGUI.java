@@ -23,7 +23,7 @@ import statalign.base.MainManager;
 /**
  * This is the graphical interface for showing the input data
  * 
- * @author miklos, novak
+ * @author miklos, novak, herman
  *
  */
 public class InputGUI extends JPanel implements ActionListener, ListSelectionListener{

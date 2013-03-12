@@ -7,6 +7,15 @@ import statalign.base.Mcmc;
 import statalign.base.Tree;
 import statalign.base.Utils;
 
+/**
+ * 
+ * Generic class for a group of McmcMove objects. Each ModelExtension
+ * is an instance of this class, as is the CoreMcmcModule
+ * 
+ * @author herman
+ *
+ */
+
 public abstract class McmcModule {
 	
 	protected Mcmc mcmc;
@@ -44,6 +53,12 @@ public abstract class McmcModule {
 	public void setAllMovesNotProposed() {
 		for (McmcMove mcmcMove : mcmcMoves) {
 			mcmcMove.moveProposed = false;
+		}
+	}
+	public void zeroAllMoveCounts() {
+		for (McmcMove mcmcMove : mcmcMoves) {
+			mcmcMove.proposalCount = 0;
+			mcmcMove.acceptanceCount = 0;
 		}
 	}
 	public McmcMove getMcmcMove(String name) {
@@ -106,9 +121,23 @@ public abstract class McmcModule {
 		int selectedMoveIndex = Utils.weightedChoose(mcmcMoveWeights);
 		McmcMove selectedMove = mcmcMoves.get(selectedMoveIndex); 
 //		if (Utils.DEBUG) {
-//			System.out.println(selectedMove.name);
+//			try {
+//				System.out.print(selectedMove.name+" = "+selectedMove.getParam().get());
+//			}
+//			catch (NullPointerException e) {
+//				System.out.print(selectedMove.name);
+//			}
 //		}
 		selectedMove.move(tree);
+//		if (Utils.DEBUG) {
+//			try {
+//				System.out.print("\t"+selectedMove.name+" = "+selectedMove.getParam().get());
+//				System.out.println();
+//			}
+//			catch (NullPointerException e) {
+//				System.out.println();
+//			}
+//		}
 		return selectedMove.lastMoveAccepted;
 	}
 	

@@ -28,7 +28,7 @@ public class InputData {
 	 * MCMC parameters such as the number of burn-in cycles, number of
 	 * steps and sampling rate
 	 */
-	public MCMCPars pars = new MCMCPars(20000, 50000, 100, 1, 1, 100);
+	public MCMCPars pars = new MCMCPars(20000, 50000, 100, 1, 1, 100, 0);
 	
 	/**
 	 * Specifies how the alignment of the input sequences in {@link #seqs} is used.<br><br>

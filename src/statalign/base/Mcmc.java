@@ -80,6 +80,29 @@ public class Mcmc extends Stoppable {
 
 	/** Total log-likelihood of the current state, cached for speed */
 	double totalLogLike;
+	
+	/** 
+	 * If this variable is true, all proposed coreModel moves are accepted. 
+	 * The purpose of this is to allow:
+	 * a) an initial run of moves to randomise the starting configuration
+	 * b) a series of moves to be proposed before choosing whether to
+	 *    accept or reject the final configuration, with Hastings ratio
+	 *    equal to the product of the Hastings ratios along the way.
+	 */
+	boolean acceptAllCoreMoves = false;
+	
+	/**
+	 * Number of steps in which the chain will be allowed to move randomly
+	 * with all moves accepted, in order to create a random starting
+	 * configuration.
+	 */
+	int randomisationPeriod = 0;
+	/** 
+	 * To be used in order to allow a series of moves to be proposed before
+	 * deciding whether to accept or reject the final state, with Hastings
+	 * ratio given by this cumulative value.
+	 */
+	double cumulativeLogProposalRatio = 0.0;
 
 	/**
 	 * MCMC parameters including the number of burn-in steps, the total number
@@ -123,13 +146,14 @@ public class Mcmc extends Stoppable {
 	
 	private int substWeight = 10;
 	private int edgeWeight = 2; // per edge
-	private int allEdgeWeight = 6; 
+	// private int allEdgeWeight = 6; // This move is currently disabled
 	private int edgeWeightIncrement = 0; // Added after half of burnin
 	private int alignWeight = 25;
 	private int topologyWeight = 8;
 	private int topologyWeightIncrement = 0; // Added after half of burnin
+	private int topologyWeightDuringRandomisationPeriod = 100; // To use while we're randomising initial config
 	
-	private int edgeTopologyWeight = 1;
+	// private int edgeTopologyWeight = 1; // This move is currently disabled
 
 	/** True while the MCMC is in the burn-in phase. */
 	public boolean burnin;
@@ -142,6 +166,7 @@ public class Mcmc extends Stoppable {
 		this.tree = tree;
 		mcmcpars = pars;
 		this.tree.heat = 1.0d;
+		randomisationPeriod = mcmcpars.randomisationPeriod;
 	}
 
 	public Mcmc(Tree tree, MCMCPars pars, PostprocessManager ppm, ModelExtManager modelExtMan,
@@ -302,8 +327,7 @@ public class Mcmc extends Stoppable {
 	public boolean isParamChangeAccepted(double logProposalRatio) {
 		double oldLogLikelihood = totalLogLike;
 		double newLogLikelihood = coreModel.curLogLike;
-		return (Math.log(Utils.generator.nextDouble()) < 
-				(logProposalRatio + tree.heat*(newLogLikelihood - oldLogLikelihood)));
+		return acceptanceDecision(oldLogLikelihood,newLogLikelihood,logProposalRatio,acceptAllCoreMoves);
 	}	
 	
 	/**
@@ -318,10 +342,25 @@ public class Mcmc extends Stoppable {
 	public boolean modExtParamChangeCallback(double logProposalRatio) {
 		double oldLogLikelihood = totalLogLike;
 		double newLogLikelihood = modelExtMan.logLikeModExtParamChange(tree);
-		return (Math.log(Utils.generator.nextDouble()) < 
-				(logProposalRatio + tree.heat*(newLogLikelihood - oldLogLikelihood)));
+		return acceptanceDecision(oldLogLikelihood,newLogLikelihood,logProposalRatio,false);
 	}	
 	
+	public boolean acceptanceDecision(double oldLogLikelihood, double newLogLikelihood, double logProposalRatio,
+			boolean acceptMoveIfPossible) {
+		if (logProposalRatio > Double.NEGATIVE_INFINITY) {
+			cumulativeLogProposalRatio += logProposalRatio;
+		}
+		else {
+			return false;
+		}
+		//System.out.print("\t"+logProposalRatio+"\t"+cumulativeLogProposalRatio+"\t");
+		if (acceptMoveIfPossible) {						
+			return (newLogLikelihood > Double.NEGATIVE_INFINITY);
+		}
+		return (Math.log(Utils.generator.nextDouble()) < 
+				(cumulativeLogProposalRatio + tree.heat*(newLogLikelihood - oldLogLikelihood))
+				+ (cumulativeLogProposalRatio=0));
+	}		
 	/**
 	 * Returns a string representation describing the acceptance ratios of the current MCMC run.
 	 * @return a string describing the acceptance ratios.
@@ -415,6 +454,21 @@ public class Mcmc extends Stoppable {
 				burnIn += BURNIN_TO_CALCULATE_THE_SPACE;
 			}
 
+			// Randomise the initial starting configuration 
+			// by accepting all moves for a period.
+			if (randomisationPeriod > 0) {
+				System.out.println("Randomising initial configuration for "+randomisationPeriod+" steps.");
+				acceptAllCoreMoves = true;
+				coreModel.setWeight("Topology",topologyWeightDuringRandomisationPeriod);
+			}
+			for (int i = 0; i < randomisationPeriod; i++) {						
+				sample(0);
+			}
+			coreModel.setWeight("Topology",topologyWeight);
+			coreModel.zeroAllMoveCounts();
+			modelExtMan.zeroAllMoveCounts();
+			acceptAllCoreMoves = false;
+			
 			burnin = true;
 			boolean alreadyAddedWeightModifiers = false;
 			for (int i = 0; i < burnIn; i++) {

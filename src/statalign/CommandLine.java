@@ -233,23 +233,36 @@ public class CommandLine {
 				String mcmcPars = set.getOption("mcmc").getResultValue(0);
 				String[] pars = mcmcPars.split(",");
 
-				if (pars.length != 3 && pars.length != 4) {
+				if (pars.length != 3 && pars.length != 4 && pars.length != 5) {
 					return error("MCMC parameters not recognized: " + mcmcPars);
 				}
 
 				manager.inputData.pars.burnIn = parseValue(pars[0]);
 				manager.inputData.pars.cycles = parseValue(pars[1]);
 				manager.inputData.pars.sampRate = parseValue(pars[2]);
-
 				if (pars.length == 4) {
+					if (!isParallel) {
+						manager.inputData.pars.randomisationPeriod = parseValue(pars[3]);
+					}
+					else {
+						manager.inputData.pars.swapRate = parseValue(pars[3]);
+						if (manager.inputData.pars.swapRate < 0) {
+							return error("MCMC parameter not recognized: "
+									+ mcmcPars);
+						}
+					}
+				}
+				if (pars.length == 5) {
 					if (!isParallel) {
 						return error("Unrecognized MCMC parameters for non-parallel version.");
 					}
-
-					manager.inputData.pars.swapRate = parseValue(pars[3]);
-					if (manager.inputData.pars.swapRate < 0) {
-						return error("MCMC parameter not recognized: "
-								+ mcmcPars);
+					else {
+						manager.inputData.pars.randomisationPeriod = parseValue(pars[3]);
+						manager.inputData.pars.swapRate = parseValue(pars[4]);
+						if (manager.inputData.pars.swapRate < 0) {
+							return error("MCMC parameter not recognized: "
+									+ mcmcPars);
+						}
 					}
 				}
 
@@ -420,15 +433,17 @@ public class CommandLine {
 					+ " (for protein data)\n\n");
 			
 			if (isParallel) {
-				sb.append("    -mcmc=burn,cycl,samprate,swaprate\n");
-				sb.append("        Sets MCMC parameters: burn-in, cycles after burn-in, sampling rate, swap rate.\n");
+				sb.append("    -mcmc=burn,cycl,samprate[,randomisationPeriod],swaprate\n");
+				sb.append("        Sets MCMC parameters: burn-in, cycles after burn-in, sampling rate, swap rate,\n" +
+						           "and (optionally) initial randomisation period.\n");
 				sb.append("          Abbreviations k and m mean 1e3 and 1e6 factors.\n");
-				sb.append("        Default: 10k,100k,1k,100\n\n");
+				sb.append("        Default: 20k,50k,100,0,100\n\n");
 			} else {
-				sb.append("    -mcmc=burn,cycl,rate\n");
-				sb.append("        Sets MCMC parameters: burn-in, cycles after burn-in, sampling rate.\n");
+				sb.append("    -mcmc=burn,cycl,rate[,randomisationPeriod]\n");
+				sb.append("        Sets MCMC parameters: burn-in, cycles after burn-in, sampling rate,\n" +
+						           "and (optionally) initial randomisation period.\n");
 				sb.append("          Abbreviations k and m mean 1e3 and 1e6 factors.\n");
-				sb.append("        Default: 10k,100k,1k\n\n");
+				sb.append("        Default: 20k,50k,100,0\n\n");
 			}
 			
 			sb.append("    -automate=burn,cycl,rate\n")

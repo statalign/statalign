@@ -202,6 +202,11 @@ public class ModelExtManager {
 		}
 	}
 
+	public void zeroAllMoveCounts() {
+		for(ModelExtension modExt : activeList) {
+			modExt.zeroAllMoveCounts();
+		}
+	}
 	/**
 	 * Calculates the total log-likelihood of the state by adding the log-likelihood factor
 	 * contributions from all model extension plugins to the log-likelihood of the tree.

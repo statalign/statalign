@@ -8,6 +8,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.util.ArrayList;
 
 import javax.swing.Box;
 import javax.swing.JButton;
@@ -39,6 +40,8 @@ public class McmcSettingsDlg extends JDialog implements ActionListener, KeyListe
 	private JTextField cycles = new JTextField(10);
 	private JTextField sampRate = new JTextField(10);
 	private JTextField seed = new JTextField(10);
+	private JTextField randomisationPeriod = new JTextField(10);
+	
 	private JCheckBox automateStepRate = new JCheckBox("Automate (Slow)",false);
 	private JCheckBox automateNumberOfSamples = new JCheckBox("Automate (RNA only)",false);
 	private JCheckBox automateBurnIn = new JCheckBox("Automate",false);
@@ -54,7 +57,7 @@ public class McmcSettingsDlg extends JDialog implements ActionListener, KeyListe
 		cp.setLayout(new BorderLayout());
 		Box bigBox = Box.createVerticalBox();
 		JPanel pan = new JPanel();
-		GridLayout l = new GridLayout(4,4);
+		GridLayout l = new GridLayout(5,4);
 		l.setHgap(5);
 		l.setVgap(5);
 		pan.setLayout(l);
@@ -102,6 +105,9 @@ public class McmcSettingsDlg extends JDialog implements ActionListener, KeyListe
 		seed.addKeyListener(this);
 		pan.add(seed);
 		
+		pan.add(new JLabel("Randomisation period:"));
+		randomisationPeriod.addKeyListener(this);
+		pan.add(randomisationPeriod);
 		//myButton.isSelected()
 		
 		
@@ -134,6 +140,7 @@ public class McmcSettingsDlg extends JDialog implements ActionListener, KeyListe
 		cycles.setText(Integer.toString(pars.cycles));
 		sampRate.setText(Integer.toString(pars.sampRate));
 		seed.setText(Integer.toString((int) pars.seed));
+		randomisationPeriod.setText(Integer.toString((int) pars.randomisationPeriod));
 //		outFile.setText(sp.outFile);
 		setLocationRelativeTo(c);
 //		pack();
@@ -178,6 +185,7 @@ public class McmcSettingsDlg extends JDialog implements ActionListener, KeyListe
 				pars.cycles = Integer.parseInt(cycles.getText());
 				pars.sampRate = Integer.parseInt(sampRate.getText());
 				pars.seed = Integer.parseInt(seed.getText());
+				pars.randomisationPeriod = Integer.parseInt(randomisationPeriod.getText());
 				AutomateParameters.setAutomateStepRate(automateStepRate.isSelected());
 				AutomateParameters.setAutomateNumberOfSamples(automateNumberOfSamples.isSelected());
 				AutomateParameters.setAutomateBurnIn(automateBurnIn.isSelected());
