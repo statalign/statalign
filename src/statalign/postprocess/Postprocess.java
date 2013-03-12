@@ -241,6 +241,7 @@ public abstract class Postprocess {
 	public void newSample(State state, int no, int total) {
 	}
 	public void newSample(McmcModule coreModel, State state, int no, int total) {		
+		newSample(state,no,total);
 	}
 	/**
 	 * This function switches on or off the sampling mode.

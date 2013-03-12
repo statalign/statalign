@@ -158,7 +158,7 @@ public class PostprocessManager {
 	public void newSample(McmcModule coreModel, State state, int no, int total) {
 		if(rnaMode) {
 			for(Postprocess plugin : plugins) {
-				plugin.newSample(state, no, total);
+				plugin.newSample(coreModel,state, no, total);
 			}
 		}
 		
