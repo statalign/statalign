@@ -158,14 +158,14 @@ public class PostprocessManager {
 	public void newSample(McmcModule coreModel, State state, int no, int total) {
 		if(rnaMode) {
 			for(Postprocess plugin : plugins) {
-				plugin.newSample(coreModel,state, no, total);
+				plugin.newSample(state, no, total);
 			}
 		}
 		
 		else {
 			for(Postprocess plugin : plugins) {
 				if(!plugin.rnaAssociated) {
-					plugin.newSample(state, no, total);
+					plugin.newSample(coreModel,state, no, total);
 				}
 			}
 		}
