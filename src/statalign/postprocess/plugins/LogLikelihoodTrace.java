@@ -14,6 +14,7 @@ import javax.swing.JPanel;
 import statalign.base.InputData;
 import statalign.base.McmcStep;
 import statalign.base.State;
+import statalign.mcmc.McmcModule;
 import statalign.postprocess.gui.LogLikelihoodTraceGUI;
 import statalign.postprocess.utils.LogLikelihoodTraceContainer;
 import statalign.ui.ErrorMessage;
@@ -31,7 +32,7 @@ public class LogLikelihoodTrace extends statalign.postprocess.Postprocess{
 	int current;
 	int step;
 	int count;
-	List<Double> loglikelihoods;
+	ArrayList<double[]> loglikelihoods;
 	private LogLikelihoodTraceGUI gui;
 
 	/**
@@ -101,8 +102,10 @@ public class LogLikelihoodTrace extends statalign.postprocess.Postprocess{
 	 * Writes the loglikelihoods into a logfile, if sampling mode is switched on.
 	 */
 	@Override
-	public void newSample(State state, int no, int total) {
-		double logLike = state.logLike;
+	public void newSample(McmcModule coreModel, State state, int no, int total) {
+		double[] logLike = new double[2];
+		logLike[0] = state.logLike;
+		logLike[1] = coreModel.curLogLike;
 		if(postprocessWrite)
 			loglikelihoods.add(logLike);
 		if(sampling){
@@ -160,7 +163,7 @@ public class LogLikelihoodTrace extends statalign.postprocess.Postprocess{
 		current = 0;
 		step = 2;
 		count = 0;
-		loglikelihoods = new ArrayList<Double>();
+		loglikelihoods = new ArrayList<double[]>();
 	}
 
 	/**
@@ -170,8 +173,8 @@ public class LogLikelihoodTrace extends statalign.postprocess.Postprocess{
 	public void afterLastSample() {
 		if (postprocessWrite) {
 			try {
-				for (double ll : loglikelihoods) {
-					outputFile.write(ll + "\n");
+				for (double[] ll : loglikelihoods) {
+					outputFile.write(ll[0]+"\t"+ll[1]+"\n");
 				}
 				outputFile.close();
 			} catch (IOException e) {

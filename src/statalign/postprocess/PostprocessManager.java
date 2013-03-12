@@ -12,6 +12,7 @@ import statalign.base.Mcmc;
 import statalign.base.McmcStep;
 import statalign.base.State;
 import statalign.base.Utils;
+import statalign.mcmc.McmcModule;
 import statalign.model.ext.ModelExtManager;
 import statalign.ui.ErrorMessage;
 
@@ -154,10 +155,10 @@ public class PostprocessManager {
 	 * @param no The number of the current sample
 	 * @param total The total number of samples.
 	 */
-	public void newSample(State state, int no, int total) {
+	public void newSample(McmcModule coreModel, State state, int no, int total) {
 		if(rnaMode) {
 			for(Postprocess plugin : plugins) {
-				plugin.newSample(state, no, total);
+				plugin.newSample(coreModel,state, no, total);
 			}
 		}
 		

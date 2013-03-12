@@ -626,7 +626,7 @@ public class Mcmc extends Stoppable {
 
 			if (isColdChain() && MPIUtils.isMaster(rank)) {
 				// Sample normally.
-				postprocMan.newSample(getState(), no, total);
+				postprocMan.newSample(coreModel,getState(), no, total);
 			} else if (isColdChain() && !MPIUtils.isMaster(rank)) {
 				// Send state.
 				State state = getState();
@@ -634,11 +634,11 @@ public class Mcmc extends Stoppable {
 			} else if (!isColdChain() && MPIUtils.isMaster(rank)) {
 				// Receive state.
 				State state = MPIStateReceieve(coldChainLocation);
-				postprocMan.newSample(state, no, total);
+				postprocMan.newSample(coreModel,state, no, total);
 			}
 
 		} else {
-			postprocMan.newSample(getState(), no, total);
+			postprocMan.newSample(coreModel,getState(), no, total);
 		}
 
 		// Log the accept ratios/params to the (.log) file. TODO: move to a plugin.
