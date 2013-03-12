@@ -12,6 +12,7 @@ import statalign.MPIUtils;
 import statalign.base.thread.MainThread;
 import statalign.base.thread.StoppedException;
 import statalign.io.DataManager;
+import statalign.io.RawSequences;
 import statalign.model.ext.ModelExtManager;
 import statalign.model.subst.SubstitutionModel;
 import statalign.postprocess.Postprocess;
@@ -178,11 +179,36 @@ public class MainManager {
 		double heat = 1.0d / (1.0d + ((double) rank / noOfProcesses));;
 		
 		try {
+			// remove gaps and whitespace
+			RawSequences seqs = inputData.seqs;
 			inputData.title = new File(fullPath).getName();
-			Tree tree = new Tree(inputData.seqs.sequences.toArray(new String[inputData.seqs.sequences
-					.size()]), inputData.seqs.seqNames.toArray(new String[inputData.seqs.seqNames
-					.size()]), inputData.model, inputData.model.attachedScoringScheme, new File(
-					fullPath).getName());
+			String[] nongapped = new String[seqs.sequences.size()];
+			StringBuilder builder = new StringBuilder();
+			int i, j;
+			char ch;
+			for(i = 0; i < nongapped.length; i++) {
+				builder.setLength(0);
+				String seq = seqs.sequences.get(i);
+				for(j = 0; j < seq.length(); j++) {
+					ch = seq.charAt(j);
+					if(Character.isWhitespace(ch) || ch == '-')
+						continue;
+					builder.append(ch);
+				}
+				nongapped[i] = builder.toString();
+			}
+			String[] names = seqs.seqNames.toArray(new String[seqs.seqNames.size()]);
+
+			TreeAlgo treeAlgo = new TreeAlgo();
+			Tree tree;
+			if(inputData.useTree > 0) {
+				tree = treeAlgo.rearrangeTree(inputData.tree, names);
+				treeAlgo.addAlignSeqsToTree(tree, nongapped, names,
+						inputData.model, new File(fullPath).getName());
+			} else {
+				tree = treeAlgo.buildNJTree(nongapped, seqs.seqNames.toArray(new String[seqs.seqNames.size()]), 	
+						inputData.model, new File(fullPath).getName());
+			}
 			Mcmc mcmc = new Mcmc(tree, inputData.pars, postProcMan, modelExtMan, noOfProcesses, rank, heat);
 			mcmc.doMCMC();
 

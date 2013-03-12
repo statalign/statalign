@@ -6,8 +6,6 @@ import statalign.base.Utils;
 import statalign.base.Vertex;
 import statalign.mcmc.McmcModule;
 import statalign.mcmc.McmcMove;
-import statalign.mcmc.PriorDistribution;
-import statalign.mcmc.ProposalDistribution;
 
 public class TopologyMove extends McmcMove {
 
@@ -22,6 +20,7 @@ public class TopologyMove extends McmcMove {
 		autoTune = false;
 	}
 
+	@Override
 	public void copyState(Object externalState) {
 		if (externalState instanceof Tree) {
 			if (tree == null) {
@@ -56,24 +55,29 @@ public class TopologyMove extends McmcMove {
 		// as the selectedRoot argument.
 		// The rest of the state copying is handled inside the Vertex
 	}
+	@Override
 	public double proposal(Object externalState) {
 		double logProposalRatio = nephew.fastSwapWithUncle();
 		// Below is another version, slow and slightly better mixing
 		// double logProposalRatio = nephew.swapWithUncleAlignToParent();
 		return logProposalRatio;
 	}
+	@Override
 	public double logPriorDensity(Object externalState) {
 		return 0.0;
 	}
+	@Override
 	public void updateLikelihood(Object externalState) {
 		owner.setLogLike(((CoreMcmcModule) owner).getModelExtMan().logLikeTreeChange(tree, nephew));
 	}
+	@Override
 	public void restoreState(Object externalState) {
 		uncle.fastSwapBackUncle();
 		// If using the alternative move:
         // uncle.swapBackUncleAlignToParent();
 	}
 	
+	@Override
 	public void afterMove(Object externalState) {
 		((CoreMcmcModule) owner).getModelExtMan().afterTreeChange(tree,lastMoveAccepted ? uncle : nephew,lastMoveAccepted);
 		// Should also do an afterAlignChange here, but not obvious what to pass
@@ -93,7 +97,7 @@ public class TopologyMove extends McmcMove {
 							throw new Error(
 									"children does not have a parent!!!"
 											+ tree.vertex[i] + " "
-											+ tree.vertex[i].print());
+											+ tree.vertex[i].print(4));
 					}
 					for (AlignColumn c = tree.vertex[i].right.first; c != null; c = c.next) {
 						p = tree.vertex[i].first;
@@ -103,7 +107,7 @@ public class TopologyMove extends McmcMove {
 							throw new Error(
 									"children does not have a parent!!!"
 											+ tree.vertex[i] + " "
-											+ tree.vertex[i].print());
+											+ tree.vertex[i].print(4));
 					}
 	
 				}

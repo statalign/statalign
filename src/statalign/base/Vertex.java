@@ -99,18 +99,20 @@ public class Vertex {
     Vertex(Tree owner, double edgeLength) {
         this.owner = owner;
         this.edgeLength = edgeLength;
-        updateTransitionMatrix();
         indelLogLike = 0.0;
         old = new Vertex();
     }
 
-    Vertex(Tree owner, int index, double edgeLength, int[][] seq, String name, String origSeq) {
+    Vertex(Tree owner, int index, double edgeLength, String name) {
         this.owner = owner;
         this.index = index;
         this.edgeLength = edgeLength;
-        this.name = new String(name);
-        this.seq = origSeq;
+        this.name = name;
         old = new Vertex();
+    }
+    
+    void addSeq(int[][] seq, String origSeq) {
+    	this.seq = origSeq;
         int size = owner.substitutionModel.e.length;
         first = new AlignColumn(this);
         first.seq = new double[size];
@@ -135,16 +137,23 @@ public class Vertex {
         length = seq.length;
         edgeChangeUpdate();
         indelLogLike = 0.0;
-        //		// test print
-        //		System.out.println("Sequences at leaves\n"+this.name);
-        //		actual = first;
-        //		while(actual.right != null){
-        //		for(int i = 0; i < actual.seq.length; i++){
-        //		System.out.print(actual.seq[i]+" ");
-        //		}
-        //		System.out.println();
-        //		actual = actual.right;
-        //		}
+    }
+    
+    /**
+     * Adds empty sequence to an ancestor to allow 3-way alignment.
+     * Left and right vertices must exist.
+     */
+    void addEmptySeq() {
+        AlignColumn fake = new AlignColumn(this);
+        first = fake;
+        last = fake;
+        length = 0;
+        fake.left = left.last;
+        fake.right = right.last;
+        left.last.parent = fake;
+        left.last.orphan = false;
+        right.last.parent = fake;
+        right.last.orphan = false;
     }
 
 
@@ -336,31 +345,37 @@ public class Vertex {
         winLength = length;
     }
 
-    public String print() {
+    static DecimalFormat printDf;
+    static {
+    	DecimalFormatSymbols dfs = new DecimalFormatSymbols(); 
+    	dfs.setDecimalSeparator('.');
+    	printDf = new DecimalFormat("0.#####", dfs);
+    }
+
+    public void print(StringBuffer b) {
 
         // print this node and nodes below in bracket notation
-        DecimalFormatSymbols dfs = new DecimalFormatSymbols();
-        dfs.setDecimalSeparator('.');
-        DecimalFormat df = new DecimalFormat("0.#####", dfs);
 
         if (left == null && right == null) {
-            String x = df.format(edgeLength, new StringBuffer(), new FieldPosition(1)).toString();
-
-            return name.replaceAll(" ", "") + ":" +
-                    x;//.substring(0,Math.min(x.length(),ROUNDING));
+        	b.append(name.replaceAll(" ", ""));
+        	b.append(':');
+        	printDf.format(edgeLength, b, new FieldPosition(1));
         } else {
+        	b.append('(');
+        	left.print(b);
+        	b.append(',');
+        	right.print(b);
+        	b.append(')');
             if (parent != null) {
-                //	String x = Double.toString(edgeLength);
-                String x = df.format(edgeLength, new StringBuffer(), new FieldPosition(1)).toString();
-                return "(" + left.print() + "," + right.print() + "):" +
-                        x;//.substring(0,Math.min(x.length(),ROUNDING));
+            	b.append(':');
+            	printDf.format(edgeLength, b, new FieldPosition(1));
             } else {
-                return "(" + left.print() + "," + right.print() + ");";
+                b.append(';');
             }
         }
     }
 
-    String print(int digits) {
+    public String print(int digits) {
 
         String pattern = "0.";
         for (int i = 0; i < digits; i++) {
@@ -2222,7 +2237,7 @@ public class Vertex {
 	                    p = p.next;
 	                }
 	                if (p == null) {
-	                    throw new Error("children does not have a parent!!!" + this + " " + this.print());
+	                    throw new Error("children does not have a parent!!!" + this + " " + this.print(3));
 	                }
 	            }
 	            for (AlignColumn c = right.first; c != null; c = c.next) {
@@ -2231,7 +2246,7 @@ public class Vertex {
 	                    p = p.next;
 	                }
 	                if (p == null) {
-	                    throw new Error("children does not have a parent!!!" + this + " " + this.print());
+	                    throw new Error("children does not have a parent!!!" + this + " " + this.print(3));
 	                }
 	            }
         	}

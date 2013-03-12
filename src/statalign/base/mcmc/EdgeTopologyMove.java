@@ -7,9 +7,6 @@ import statalign.base.Vertex;
 import statalign.mcmc.GammaPrior;
 import statalign.mcmc.McmcModule;
 import statalign.mcmc.McmcMove;
-import statalign.mcmc.MultiplicativeProposal;
-import statalign.mcmc.PriorDistribution;
-import statalign.mcmc.ProposalDistribution;
 import statalign.mcmc.UniformProposal;
 
 public class EdgeTopologyMove extends McmcMove {
@@ -35,6 +32,7 @@ public class EdgeTopologyMove extends McmcMove {
 				new UniformProposal(),"UncleEdge");
 	}
 
+	@Override
 	public void copyState(Object externalState) {
 		if (externalState instanceof Tree) {
 			if (tree == null) {
@@ -73,6 +71,7 @@ public class EdgeTopologyMove extends McmcMove {
 		// as the selectedRoot argument.
 		// The rest of the state copying is handled inside the Vertex
 	}
+	@Override
 	public double proposal(Object externalState) {
 		nephewEdgeMove.proposalWidthControlVariable = proposalWidthControlVariable;
 		uncleEdgeMove.proposalWidthControlVariable = proposalWidthControlVariable;
@@ -94,12 +93,15 @@ public class EdgeTopologyMove extends McmcMove {
 		// double logProposalRatio = nephew.swapWithUncleAlignToParent();
 		return logProposalRatio;
 	}
+	@Override
 	public double logPriorDensity(Object externalState) {
 		return nephewEdgeMove.logPriorDensity(externalState) + uncleEdgeMove.logPriorDensity(externalState);
 	}
+	@Override
 	public void updateLikelihood(Object externalState) {
 		owner.setLogLike(((CoreMcmcModule) owner).getModelExtMan().logLikeTreeChange(tree, nephew));
 	}
+	@Override
 	public void restoreState(Object externalState) {
 		uncle.fastSwapBackUncle();
 		// If using the alternative move:
@@ -110,6 +112,7 @@ public class EdgeTopologyMove extends McmcMove {
 		//System.out.println("After restore: "+nephewEdgeMove.getParam().get()+"\t"+uncleEdgeMove.getParam().get());
 	}
 	
+	@Override
 	public void afterMove(Object externalState) {
 		((CoreMcmcModule) owner).getModelExtMan().afterTreeChange(tree,lastMoveAccepted ? uncle : nephew,lastMoveAccepted);
 		// Should also do an afterAlignChange here, but not obvious what to pass
@@ -129,7 +132,7 @@ public class EdgeTopologyMove extends McmcMove {
 							throw new Error(
 									"children does not have a parent!!!"
 											+ tree.vertex[i] + " "
-											+ tree.vertex[i].print());
+											+ tree.vertex[i].print(4));
 					}
 					for (AlignColumn c = tree.vertex[i].right.first; c != null; c = c.next) {
 						p = tree.vertex[i].first;
@@ -139,7 +142,7 @@ public class EdgeTopologyMove extends McmcMove {
 							throw new Error(
 									"children does not have a parent!!!"
 											+ tree.vertex[i] + " "
-											+ tree.vertex[i].print());
+											+ tree.vertex[i].print(4));
 					}
 	
 				}

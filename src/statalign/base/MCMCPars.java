@@ -40,6 +40,10 @@ public class MCMCPars {
 	 */
 	public int swapRate;
 	
+	public boolean fixAlign = false;
+	public boolean fixTopology = false;
+	public boolean fixEdge = false;
+	
 	/**
 	 * This constructor sets the values in the class
 	 * 

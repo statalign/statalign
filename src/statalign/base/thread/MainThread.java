@@ -5,6 +5,7 @@ import java.io.File;
 import statalign.base.MainManager;
 import statalign.base.Mcmc;
 import statalign.base.Tree;
+import statalign.base.TreeAlgo;
 import statalign.io.RawSequences;
 import statalign.ui.MainFrame;
 
@@ -35,7 +36,7 @@ public class MainThread extends StoppableThread {
 	@Override
 	public synchronized void run() {
 		try {
-
+			
 			// initialise model extension plugins for run
 			owner.modelExtMan.initRun(owner.inputData);
 			
@@ -64,11 +65,26 @@ public class MainThread extends StoppableThread {
 				}
 				nongapped[i] = builder.toString();
 			}
-			
-			Tree tree = new Tree(nongapped, seqs.seqNames.toArray(new String[seqs.seqNames.size()]), 	
-					owner.inputData.model,
-					owner.inputData.model.attachedScoringScheme,
-					new File(owner.fullPath).getName());
+			String[] names = seqs.seqNames.toArray(new String[seqs.seqNames.size()]);
+
+			TreeAlgo treeAlgo = new TreeAlgo();
+			Tree tree;
+			if(owner.inputData.useTree > 0) {
+				tree = treeAlgo.rearrangeTree(owner.inputData.tree, names);
+				treeAlgo.addAlignSeqsToTree(tree, nongapped, names,
+						owner.inputData.model, new File(owner.fullPath).getName());
+			} else {
+				tree = treeAlgo.buildNJTree(nongapped, seqs.seqNames.toArray(new String[seqs.seqNames.size()]), 	
+						owner.inputData.model, new File(owner.fullPath).getName());
+			}
+			System.out.println("Initial tree: "+tree.printedTree()+"\n");
+//			Tree tree = new Tree(nongapped, seqs.seqNames.toArray(new String[seqs.seqNames.size()]), 	
+//					owner.inputData.model,
+//					owner.inputData.model.attachedScoringScheme,
+//					new File(owner.fullPath).getName());
+			owner.inputData.pars.fixAlign = owner.inputData.useAlign >= 2;
+			owner.inputData.pars.fixTopology = owner.inputData.useTree >= 2;
+			owner.inputData.pars.fixEdge = owner.inputData.useTree >= 3;
 			Mcmc mcmc = new Mcmc(tree, owner.inputData.pars, owner.postProcMan, owner.modelExtMan);
 			mcmc.doMCMC();
 			

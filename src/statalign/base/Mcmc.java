@@ -209,37 +209,43 @@ public class Mcmc extends Stoppable {
 		
 		SubstMove substMove = new SubstMove(coreModel,"Subst");
 		coreModel.addMcmcMove(substMove, substWeight);
-		
-		AlignmentMove alignMove = new AlignmentMove(coreModel,"Alignment");
-		coreModel.addMcmcMove(alignMove, alignWeight);
-		
-		TopologyMove topologyMove = new TopologyMove(coreModel,"Topology");
-		coreModel.addMcmcMove(topologyMove, topologyWeight);
-//		EdgeTopologyMove edgeTopologyMove = new EdgeTopologyMove(coreModel,"EdgeTopology");
-//		edgeTopologyMove.proposalWidthControlVariable = 2.0;
-//		coreModel.addMcmcMove(edgeTopologyMove, topologyWeight);
 
-		GammaPrior edgePrior = new GammaPrior(1,1);
-		for (int i=0; i<tree.vertex.length-1; i++) {
-			EdgeMove edgeMove = new EdgeMove(coreModel,i,
-					edgePrior,
-					//new GaussianProposal(),
-					new UniformProposal(),
-					"Edge"+i);
-			edgeMove.proposalWidthControlVariable = 0.1;
-			// Default minimum edge length is 0.01
-			coreModel.addMcmcMove(edgeMove, edgeWeight);
-//			if (edgeTopologyWeight > 0) {
-//				ArrayList<McmcMove> edgeTopology = new ArrayList<McmcMove>();
-//				edgeTopology.add(edgeMove);
-//				edgeTopology.add(topologyMove);
-//				coreModel.addMcmcMove(new McmcCombinationMove(edgeTopology),edgeTopologyWeight);
-//			}
-		}		
-//		AllEdgeMove allEdgeMove = new AllEdgeMove(coreModel,edgePrior,
-//				new MultiplicativeProposal(),"AllEdge");
-//		allEdgeMove.proposalWidthControlVariable = 0.5;
-//		coreModel.addMcmcMove(allEdgeMove, allEdgeWeight);
+		if(!mcmcpars.fixAlign) {
+			AlignmentMove alignMove = new AlignmentMove(coreModel,"Alignment");
+			coreModel.addMcmcMove(alignMove, alignWeight);
+		}
+
+		if(!mcmcpars.fixTopology) {
+			TopologyMove topologyMove = new TopologyMove(coreModel,"Topology");
+			coreModel.addMcmcMove(topologyMove, topologyWeight);
+	//		EdgeTopologyMove edgeTopologyMove = new EdgeTopologyMove(coreModel,"EdgeTopology");
+	//		edgeTopologyMove.proposalWidthControlVariable = 2.0;
+	//		coreModel.addMcmcMove(edgeTopologyMove, topologyWeight);
+		}
+
+		if(!mcmcpars.fixEdge) {
+			GammaPrior edgePrior = new GammaPrior(1,1);
+			for (int i=0; i<tree.vertex.length-1; i++) {
+				EdgeMove edgeMove = new EdgeMove(coreModel,i,
+						edgePrior,
+						//new GaussianProposal(),
+						new UniformProposal(),
+						"Edge"+i);
+				edgeMove.proposalWidthControlVariable = 0.1;
+				// Default minimum edge length is 0.01
+				coreModel.addMcmcMove(edgeMove, edgeWeight);
+	//			if (edgeTopologyWeight > 0) {
+	//				ArrayList<McmcMove> edgeTopology = new ArrayList<McmcMove>();
+	//				edgeTopology.add(edgeMove);
+	//				edgeTopology.add(topologyMove);
+	//				coreModel.addMcmcMove(new McmcCombinationMove(edgeTopology),edgeTopologyWeight);
+	//			}
+			}		
+	//		AllEdgeMove allEdgeMove = new AllEdgeMove(coreModel,edgePrior,
+	//				new MultiplicativeProposal(),"AllEdge");
+	//		allEdgeMove.proposalWidthControlVariable = 0.5;
+	//		coreModel.addMcmcMove(allEdgeMove, allEdgeWeight);
+		}
 	}
 	
 	/**
@@ -366,7 +372,7 @@ public class Mcmc extends Stoppable {
 		} else {
 			System.out.println("Starting MCMC...\n");
 		}
-
+		
 		MainFrame frame = postprocMan.mainManager.frame;
 		Utils.generator = new Well19937c(mcmcpars.seed + rank);
 

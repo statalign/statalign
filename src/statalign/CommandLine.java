@@ -278,6 +278,8 @@ public class CommandLine {
 					return error("fixing the alignment is currently not supported");
 				if(manager.inputData.useAlign > 0 && !manager.inputData.seqs.isAligned())
 					return error("input sequences must be aligned when -usealign="+useAlign+" is used");
+				if(manager.inputData.useAlign == 1)
+					return error("initial alignment is not yet supported");
 			}
 			
 			if(set.isSet("usetree")) {
