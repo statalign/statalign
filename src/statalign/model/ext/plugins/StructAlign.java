@@ -59,6 +59,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	public boolean globalSigma = true;
 	public boolean useLibrary = false;
 	public boolean fixedEpsilon = false;
+	public boolean fixedSigma2 = false;
 	
 	double structTemp = 1;
 
@@ -103,7 +104,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	// TODO change the above public variables to package visible and put 
 	// StructAlign.java in statalign.model.ext.plugins.structalign ?
 	
-	/** Priors */
+	/* Priors */
 	private double sigma2PriorShape = 0.001;
 	private double sigma2PriorRate = 0.001;
 	public PriorDistribution<Double> sigma2Prior;
@@ -111,16 +112,18 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	// sigma2Prior will either be InverseGamma or Hyperbolic, depending
 	// on whether globalSigma is switched on. It is defined inside the initRun()
 	// method.
-	
-	private double tauPriorShape = 0.001;
-	private double tauPriorRate = 0.001;
-	public InverseGammaPrior tauPrior = new InverseGammaPrior(tauPriorShape,tauPriorRate);
-	
 	private double epsilonPriorShape = 2;
 	private double epsilonPriorRate = 2;
 	public PriorDistribution<Double> epsilonPrior;
 	boolean epsilonPriorInitialised = false;
 	
+	
+	
+	
+	private double tauPriorShape = 0.001;
+	private double tauPriorRate = 0.001;
+	public InverseGammaPrior tauPrior = new InverseGammaPrior(tauPriorShape,tauPriorRate);
+
 	private double sigma2HPriorShape = 2;
 	private double sigma2HPriorRate = 2;
 //	public InverseGammaPrior sigma2HPrior = new InverseGammaPrior(sigma2HPriorShape,sigma2HPriorRate);
@@ -166,6 +169,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	/** Starting value for translation proposal tuning parameter. */
 	public final double xlatP = .1;
 	
+	/** Value to fix sigma at if we're not estimating it. */
+	public double fixedSigma2Value = 0.0;
 	/** Minimum value for epsilon, to prevent numerical errors. */
 	public final double MIN_EPSILON = 0.01;
 	/** Value to fix epsilon at if we're not estimating it. */
@@ -195,15 +200,16 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		usage.append("^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\n");
 		usage.append("java -jar statalign.jar -plugin:structal[OPTIONS]\n");
 		usage.append("OPTIONS: \n");
+		usage.append("\tsigma2=X\t\t(Fixes sigma2 at X)\n");
 		usage.append("\tepsilon=X\t\t(Fixes epsilon at X)\n");
 		usage.append("\tuseLibrary\t\t(Allows rotation library moves to be used)\n");
 		usage.append("\tsigma2Prior=PRIOR\t(Sets the prior and hyperparameters for sigma2)\n");
 		usage.append("\tepsilonPrior=PRIOR\t(Sets the prior and hyperparameters for epsilon)\n");
 		usage.append("\tPRIOR can be one of:\n");
 		usage.append("\t\thyp\t\tUses a hyperbolic prior (default)\n");
-		usage.append("\t\tg{a_b)\t\tUses a Gamma(a,b) prior\n");
-		usage.append("\t\tinvg{a_b)\tUses an InverseGamma(a,b) prior\n");
-		usage.append("\t\tunif{a_b)\tUses a Uniform(a,b) prior\n");
+		usage.append("\t\tg{a_b}\t\tUses a Gamma(a,b) prior\n");
+		usage.append("\t\tinvg{a_b}\tUses an InverseGamma(a,b) prior\n");
+		usage.append("\t\tunif{a_b}\tUses a Uniform(a,b) prior\n");
 		
 		return usage.toString();
 	}
@@ -221,6 +227,12 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			fixedEpsilonValue = Double.parseDouble(paramValue);
 			addToFilenameExtension("eps_"+fixedEpsilonValue);
 			System.out.println("Fixing epsilon to "+fixedEpsilonValue+".");
+		}
+		else if (paramName.equals("sigma2")) {
+			fixedSigma2 = true;
+			fixedSigma2Value = Double.parseDouble(paramValue);
+			addToFilenameExtension("sigma2_"+fixedSigma2Value);
+			System.out.println("Fixing sigma2 to "+fixedSigma2Value+".");
 		}
 		else if (paramName.equals("sigma2Prior")) {
 			sigma2Prior = setPrior(paramName,paramValue);
@@ -396,6 +408,9 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			//epsilon = 20;
 		}
 		
+		if (fixedSigma2) {
+			globalSigma = true;
+		}
 		// number of branches in the tree is 2*leaves - 1
 		if (globalSigma) {
 			sigma2 = new double[1];
@@ -404,10 +419,15 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			sigma2 = new double[2*coords.length - 1];
 		}
 		
-		for(i = 0; i < sigma2.length; i++)
+		for(i = 0; i < sigma2.length; i++) {
 			sigma2[i] = 1;
+		}
+		if (fixedSigma2) {
+			sigma2[0] = fixedSigma2Value;
+			epsilonWeight += sigmaEpsilonWeight;
+		}
 		
-		if (!sigma2PriorInitialised) {
+		if (!sigma2PriorInitialised && !fixedSigma2) {
 			if (globalSigma) {
 				if (fixedEpsilon) {
 					sigma2Prior = new GammaPrior(2,2);
@@ -423,7 +443,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			sigma2PriorInitialised = true;
 		}
 		
-		if (!epsilonPriorInitialised) {
+		if (!epsilonPriorInitialised && !fixedEpsilon) {
 			epsilonPrior = new GammaPrior(epsilonPriorShape,epsilonPriorRate);
 			epsilonPriorInitialised = true;
 		}
@@ -491,57 +511,58 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			addMcmcMove(epsilonMove,epsilonWeight);
 		}
 				
-		HierarchicalContinuousPositiveStructAlignMove sigma2HMove = null;
-		HierarchicalContinuousPositiveStructAlignMove nuMove = null;
-		if (!globalSigma) {
-			ParameterInterface sigma2HInterface = paramInterfaceGenerator.new Sigma2HInterface();
-			sigma2HMove = new HierarchicalContinuousPositiveStructAlignMove(this,sigma2HInterface,sigma2HPrior,new GammaProposal(0.001,0.001),"σ_g");
-			sigma2HMove.moveParams.setPlottable();
-			sigma2HMove.moveParams.setPlotSide(0);
-			addMcmcMove(sigma2HMove,sigma2HierWeight); 
-			
-			ParameterInterface nuInterface = paramInterfaceGenerator.new NuInterface();
-			nuMove = new HierarchicalContinuousPositiveStructAlignMove(this,nuInterface,nuPrior,new GammaProposal(0.001,0.001),"ν");
-			nuMove.moveParams.setPlottable();
-			nuMove.moveParams.setPlotSide(1);
-			addMcmcMove(nuMove,nuWeight);
-		}
-		
-		for (int j=0; j<sigma2.length; j++) {
-			String sigmaName;
-			if (sigma2.length == 1) {
-				sigmaName = "σ2";
-			}
-			else {
-				sigmaName = "σ2_"+j;
-			}
-			ParameterInterface sigma2Interface = paramInterfaceGenerator.new Sigma2Interface(j);
-			ContinuousPositiveStructAlignMove m = new ContinuousPositiveStructAlignMove(
-														this,sigma2Interface,
-														sigma2Prior,new GaussianProposal(),sigmaName);
-														//sigma2Prior,new GammaProposal(0.001,0.001),sigmaName);
-			if (!globalSigma && j == sigma2.length - 1) {
-				continue;
-				// i.e. don't add the last one if we have
-				// more than one
-			}
-			m.moveParams.setPlottable();
-			m.moveParams.setPlotSide(0);
-			addMcmcMove(m,sigma2Weight);
+		if (!fixedSigma2) {
+			HierarchicalContinuousPositiveStructAlignMove sigma2HMove = null;
+			HierarchicalContinuousPositiveStructAlignMove nuMove = null;
 			if (!globalSigma) {
-				sigma2HMove.addChildMove(m);
-				nuMove.addChildMove(m);
+				ParameterInterface sigma2HInterface = paramInterfaceGenerator.new Sigma2HInterface();
+				sigma2HMove = new HierarchicalContinuousPositiveStructAlignMove(this,sigma2HInterface,sigma2HPrior,new GammaProposal(0.001,0.001),"σ_g");
+				sigma2HMove.moveParams.setPlottable();
+				sigma2HMove.moveParams.setPlotSide(0);
+				addMcmcMove(sigma2HMove,sigma2HierWeight); 
+				
+				ParameterInterface nuInterface = paramInterfaceGenerator.new NuInterface();
+				nuMove = new HierarchicalContinuousPositiveStructAlignMove(this,nuInterface,nuPrior,new GammaProposal(0.001,0.001),"ν");
+				nuMove.moveParams.setPlottable();
+				nuMove.moveParams.setPlotSide(1);
+				addMcmcMove(nuMove,nuWeight);
 			}
-			if (sigma2.length == 1 && !fixedEpsilon) {
-				ArrayList<McmcMove> sigmaEpsilon = new ArrayList<McmcMove>();
-				sigmaEpsilon.add(m);
-				sigmaEpsilon.add(epsilonMove);
-				McmcCombinationMove sigmaEpsilonMove = 
-					new McmcCombinationMove(sigmaEpsilon);
-				addMcmcMove(sigmaEpsilonMove,sigmaEpsilonWeight);
+			
+			for (int j=0; j<sigma2.length; j++) {
+				String sigmaName;
+				if (sigma2.length == 1) {
+					sigmaName = "σ2";
+				}
+				else {
+					sigmaName = "σ2_"+j;
+				}
+				ParameterInterface sigma2Interface = paramInterfaceGenerator.new Sigma2Interface(j);
+				ContinuousPositiveStructAlignMove m = new ContinuousPositiveStructAlignMove(
+															this,sigma2Interface,
+															sigma2Prior,new GaussianProposal(),sigmaName);
+															//sigma2Prior,new GammaProposal(0.001,0.001),sigmaName);
+				if (!globalSigma && j == sigma2.length - 1) {
+					continue;
+					// i.e. don't add the last one if we have
+					// more than one
+				}
+				m.moveParams.setPlottable();
+				m.moveParams.setPlotSide(0);
+				addMcmcMove(m,sigma2Weight);
+				if (!globalSigma) {
+					sigma2HMove.addChildMove(m);
+					nuMove.addChildMove(m);
+				}
+				if (sigma2.length == 1 && !fixedEpsilon) {
+					ArrayList<McmcMove> sigmaEpsilon = new ArrayList<McmcMove>();
+					sigmaEpsilon.add(m);
+					sigmaEpsilon.add(epsilonMove);
+					McmcCombinationMove sigmaEpsilonMove = 
+						new McmcCombinationMove(sigmaEpsilon);
+					addMcmcMove(sigmaEpsilonMove,sigmaEpsilonWeight);
+				}
 			}
 		}
-		
 	
 	}
 	
