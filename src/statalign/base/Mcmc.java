@@ -153,8 +153,6 @@ public class Mcmc extends Stoppable {
 	private int topologyWeightIncrement = 0; // Added after half of burnin
 	private int topologyWeightDuringRandomisationPeriod = 100; // To use while we're randomising initial config
 	
-	// private int edgeTopologyWeight = 1; // This move is currently disabled
-
 	/** True while the MCMC is in the burn-in phase. */
 	public boolean burnin;
 
@@ -243,9 +241,6 @@ public class Mcmc extends Stoppable {
 		if(!mcmcpars.fixTopology) {
 			TopologyMove topologyMove = new TopologyMove(coreModel,"Topology");
 			coreModel.addMcmcMove(topologyMove, topologyWeight);
-	//		EdgeTopologyMove edgeTopologyMove = new EdgeTopologyMove(coreModel,"EdgeTopology");
-	//		edgeTopologyMove.proposalWidthControlVariable = 2.0;
-	//		coreModel.addMcmcMove(edgeTopologyMove, topologyWeight);
 		}
 
 		if(!mcmcpars.fixEdge) {
@@ -259,12 +254,6 @@ public class Mcmc extends Stoppable {
 				edgeMove.proposalWidthControlVariable = 0.1;
 				// Default minimum edge length is 0.01
 				coreModel.addMcmcMove(edgeMove, edgeWeight);
-	//			if (edgeTopologyWeight > 0) {
-	//				ArrayList<McmcMove> edgeTopology = new ArrayList<McmcMove>();
-	//				edgeTopology.add(edgeMove);
-	//				edgeTopology.add(topologyMove);
-	//				coreModel.addMcmcMove(new McmcCombinationMove(edgeTopology),edgeTopologyWeight);
-	//			}
 			}		
 	//		AllEdgeMove allEdgeMove = new AllEdgeMove(coreModel,edgePrior,
 	//				new MultiplicativeProposal(),"AllEdge");
