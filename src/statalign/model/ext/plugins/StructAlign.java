@@ -60,7 +60,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	public boolean globalSigma = true;
 	public boolean useLibrary = false;
 	public boolean fixedEpsilon = false;
-	public boolean fixedSigma2 = true;
+	public boolean fixedSigma2 = false;
 	
 	double structTemp = 1;
 
