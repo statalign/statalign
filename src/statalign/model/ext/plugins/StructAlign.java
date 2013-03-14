@@ -714,17 +714,12 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		
 		double logli = 0;
 		double[] vals = new double[numMatch];
-		// loop over all 3 coordinates
 		
-		/*System.out.println("Calculating log likelihood: ");
-		System.out.println("Mean: " + Arrays.toString(multiNorm.getMeans()));
-		System.out.println("Variance: " + Arrays.toString(subCovar[0]));*/
+		// loop over all 3 coordinates
 		for(j = 0; j < 3; j++){
 			for(int i = 0; i < numMatch; i++)
 				vals[i] = rotCoords[notgap[i]][col[notgap[i]]][j];
-			//System.out.println("Values: " + Arrays.toString(vals));
 			logli += multiNorm.logDensity(vals);
-			//System.out.println("LL: " + multiNorm.logDensity(vals));
 		}
 		return logli;
 	}
