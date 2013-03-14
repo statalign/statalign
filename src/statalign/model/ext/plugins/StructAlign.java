@@ -42,6 +42,7 @@ import statalign.model.ext.plugins.structalign.*;
 
 import statalign.model.subst.SubstitutionModel;
 import statalign.postprocess.PluginParameters;
+import statalign.utils.LinkFunction;
 
 public class StructAlign extends ModelExtension implements ActionListener {
 	
@@ -100,7 +101,9 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	public String[] oldAlign;
 	public double oldLogLi;
 	
-	
+	/** Relates the structural and sequence evolutionary timescales */
+	private LinkFunction<Double> linkFunction; 
+	public String linkType = "linear";  
 	// TODO change the above public variables to package visible and put 
 	// StructAlign.java in statalign.model.ext.plugins.structalign ?
 	
@@ -210,7 +213,11 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		usage.append("\t\tg{a_b}\t\tUses a Gamma(a,b) prior\n");
 		usage.append("\t\tinvg{a_b}\tUses an InverseGamma(a,b) prior\n");
 		usage.append("\t\tunif{a_b}\tUses a Uniform(a,b) prior\n");
-		
+		usage.append("\tlink=LINK_FUNCTION\tSets link function between sequene and structure time\n");
+		usage.append("\tLINK_FUNCTION can be one of:\n");
+		usage.append("\t\tlinear\n");
+		usage.append("\t\tquadratic\n");
+												
 		return usage.toString();
 	}
 
@@ -241,6 +248,11 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		else if (paramName.equals("epsilonPrior")) {
 			epsilonPrior = setPrior(paramName,paramValue);
 			epsilonPriorInitialised = (epsilonPrior != null);
+		}
+		else if (paramName.equals("link")) {
+			linkType = paramValue;
+			addToFilenameExtension("link_"+paramValue);
+			System.out.println("Setting link function to "+paramValue+".");
 		}
 		else {
 			super.setParam(paramName,paramValue);
@@ -448,6 +460,15 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			epsilonPriorInitialised = true;
 		}
 		
+		if(linkType.equals("linear")) {
+			linkFunction = new LinearLink();
+		}
+		else if (linkType.equals("quadratic")) {
+			linkFunction = new QuadraticLink(); 
+		}
+		else {
+			throw new IllegalArgumentException("Invalid link function selected.");
+		}
 		
 		/* Add alignment and rotation/translation moves */
 		RotationMove rotationMove = new RotationMove(this,"rotation"); 
