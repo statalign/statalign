@@ -215,7 +215,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		usage.append("\t\tunif{a_b}\tUses a Uniform(a,b) prior\n");
 		usage.append("\tlink=LINK_FUNCTION\tSets link function between sequene and structure time\n");
 		usage.append("\tLINK_FUNCTION can be one of:\n");
-		usage.append("\t\tlinear\n");
+		usage.append("\t\tlinear (default)\n");
 		usage.append("\t\tquadratic\n");
 												
 		return usage.toString();
