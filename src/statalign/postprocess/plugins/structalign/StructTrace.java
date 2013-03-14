@@ -200,8 +200,8 @@ public class StructTrace extends Postprocess {
 					for(int j = i+1; j < msd.length; j++)
 						rmsdOut.write(msd[i][j] + "\t");
 				for(int i = 0; i < msd.length-1; i++)
-					for(int j = i+1; j < msd.length; j++) // distance matrix must be rescaled by tau and sigma
-						rmsdOut.write(structAlign.distanceMatrix[i][j] * 2 / structAlign.sigma2[0] * structAlign.tau + "\t");
+					for(int j = i+1; j < msd.length; j++) 
+						rmsdOut.write(structAlign.distanceMatrix[i][j] + "\t");
 				for(int i = 0; i < msd.length-1; i++)
 					for(int j = i+1; j < msd.length; j++)
 						rmsdOut.write(seqID[i][j] + "\t");

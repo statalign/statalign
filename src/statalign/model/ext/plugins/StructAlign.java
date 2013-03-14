@@ -470,6 +470,11 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			throw new IllegalArgumentException("Invalid link function selected.");
 		}
 		
+		// for now, don't allow hierarchical sigma unless link function is linear
+		if(!linkType.equals("linear")){
+			globalSigma = true;
+		}
+		
 		/* Add alignment and rotation/translation moves */
 		RotationMove rotationMove = new RotationMove(this,"rotation"); 
 		addMcmcMove(rotationMove,rotationWeight); 
@@ -531,7 +536,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			epsilonMove.moveParams.setPlotSide(1);
 			addMcmcMove(epsilonMove,epsilonWeight);
 		}
-				
+		
 		if (!fixedSigma2) {
 			HierarchicalContinuousPositiveStructAlignMove sigma2HMove = null;
 			HierarchicalContinuousPositiveStructAlignMove nuMove = null;
@@ -755,10 +760,18 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		distanceMatrix = new double[tree.names.length][tree.names.length];
 		double[][] covar = new double[tree.names.length][tree.names.length];
 		calcDistanceMatrix(tree.root, distanceMatrix);
-		// distance matrix calculation already incorporates multiplication by theta = tau / (2 * sigma^2)
-		for(int i = 0; i < tree.names.length; i++)
-			for(int j = i; j < tree.names.length; j++)
-				covar[j][i] = covar[i][j] = tau * Math.exp(-distanceMatrix[i][j]);
+		
+		// for hierarchical sigma, distance matrix calculation already incorporates multiplication 
+		// by theta_i = sigma_i^2 / (2 tau)
+		if(globalSigma){
+			for(int i = 0; i < tree.names.length; i++)
+				for(int j = i; j < tree.names.length; j++)
+					covar[j][i] = covar[i][j] = tau * Math.exp(-linkFunction.f(distanceMatrix[i][j]) * sigma2[0] / (2*tau));
+		} else{
+			for(int i = 0; i < tree.names.length; i++)
+				for(int j = i; j < tree.names.length; j++)
+					covar[j][i] = covar[i][j] = tau * Math.exp(-distanceMatrix[i][j]);
+		}
 		for(int i = 0; i < tree.names.length; i++)
 			covar[i][i] += epsilon;
 		return covar;
@@ -799,7 +812,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		}
 
 		if (globalSigma) {
-			addEdgeLength(distMat, subTree, vertex.edgeLength * sigma2[0] / (2*tau));	
+			addEdgeLength(distMat, subTree, vertex.edgeLength);	
 		}
 		else {
 			addEdgeLength(distMat, subTree, vertex.edgeLength * sigma2[vertex.index] / (2*tau));
