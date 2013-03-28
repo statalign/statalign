@@ -149,7 +149,7 @@ public class Mcmc extends Stoppable {
 	
 	private int substWeight = 10;
 	private int edgeWeight = 2; // per edge
-	private int allEdgeWeight = 6; // This move is currently disabled
+	private int allEdgeWeight = 0; 
 	private int edgeWeightIncrement = 0; // Added after half of burnin
 	private int alignWeight = 25;
 	private int topologyWeight = 8;
@@ -288,15 +288,15 @@ public class Mcmc extends Stoppable {
 		}
 		boolean accepted = coreModel.proposeParamChange(tree);
 		if (accepted) {
-			if (Utils.DEBUG) {
-				System.out.println("Move accepted.");
-			}
+//			if (Utils.DEBUG) {
+//				System.out.println("Move accepted.");
+//			}
 			totalLogLike = coreModel.curLogLike;
 		}
 		else {
-			if (Utils.DEBUG) {
-				System.out.println("Move rejected.");
-			}
+//			if (Utils.DEBUG) {
+//				System.out.println("Move rejected.");
+//			}
 			coreModel.setLogLike(totalLogLike);
 		}
 		if(Utils.DEBUG) {

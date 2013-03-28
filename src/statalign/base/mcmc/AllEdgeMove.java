@@ -62,6 +62,7 @@ public class AllEdgeMove extends ContinuousPositiveParameterMove {
 		}
 //		tree.root.edgeChangeUpdateRecursively();
 		tree.root.calcFelsRecursively();
+		tree.root.calcIndelLikeRecursively();
 		return logProposalRatio;
 	}
 	@Override
@@ -85,5 +86,6 @@ public class AllEdgeMove extends ContinuousPositiveParameterMove {
 		}
 //		tree.root.edgeChangeUpdateRecursively();
 		tree.root.calcFelsRecursively();
+		tree.root.calcIndelLikeRecursively();
 	}
 }
