@@ -15,11 +15,13 @@ import statalign.mcmc.ProposalDistribution;
 
 public class AllEdgeMove extends ContinuousPositiveParameterMove {
 
+	double multiplier = 1.0;
 	class AllEdgeInterface implements ParameterInterface {
 		public double get() {
 			return 1;
 		}
 		public void set(double x) {
+			multiplier = x;
 			for (int i=0; i<tree.vertex.length-1; i++) {
 				tree.vertex[i].edgeLength *= x;
 			}
@@ -55,11 +57,12 @@ public class AllEdgeMove extends ContinuousPositiveParameterMove {
 	@Override
 	public double proposal(Object externalState) {
 		double logProposalRatio = super.proposal(externalState);
-//		for (int i=0; i<tree.vertex.length-1; i++) {
-//			tree.vertex[i].edgeChangeUpdate();
-//		}
+		for (int i=0; i<tree.vertex.length-1; i++) {
+			tree.vertex[i].edgeChangeUpdate();
+		}
 //		tree.root.edgeChangeUpdateRecursively();
 		tree.root.calcFelsRecursively();
+		tree.root.calcIndelLikeRecursively();
 		return logProposalRatio;
 	}
 	@Override
@@ -75,13 +78,14 @@ public class AllEdgeMove extends ContinuousPositiveParameterMove {
 	    // Should pass the index of a tip Vertex?
 	}
 	@Override
-	public void restoreState(Object externalState) {
-		param.set(1.0/param.get()); // Undo the multiplication
+	public void restoreState(Object externalState) {		
 		owner.setLogLike(oldll);
-//		for (int i=0; i<tree.vertex.length-1; i++) {
-//			tree.vertex[i].edgeChangeUpdate();
-//		}
+		for (int i=0; i<tree.vertex.length-1; i++) {
+			tree.vertex[i].edgeLength /= multiplier;
+			tree.vertex[i].edgeChangeUpdate();
+		}
 //		tree.root.edgeChangeUpdateRecursively();
 		tree.root.calcFelsRecursively();
+		tree.root.calcIndelLikeRecursively();
 	}
 }
