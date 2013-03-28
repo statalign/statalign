@@ -148,8 +148,8 @@ public class Mcmc extends Stoppable {
 	private int thetaWeight = 6;
 	
 	private int substWeight = 10;
-	private int edgeWeight = 2; // per edge
-	private int allEdgeWeight = 0; 
+	private int edgeWeight = 1; // per edge
+	private int allEdgeWeight = 6;
 	private int edgeWeightIncrement = 0; // Added after half of burnin
 	private int alignWeight = 25;
 	private int topologyWeight = 8;
