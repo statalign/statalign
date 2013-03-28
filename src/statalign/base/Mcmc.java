@@ -11,6 +11,7 @@ import org.apache.commons.math3.random.Well19937c;
 
 import statalign.MPIUtils;
 import statalign.base.mcmc.AlignmentMove;
+import statalign.base.mcmc.AllEdgeMove;
 import statalign.base.mcmc.CoreMcmcModule;
 import statalign.base.mcmc.EdgeMove;
 import statalign.base.mcmc.IndelMove;
@@ -28,10 +29,12 @@ import statalign.distance.Distance;
 import statalign.mcmc.BetaPrior;
 import statalign.mcmc.GammaPrior;
 import statalign.mcmc.GaussianProposal;
+import statalign.mcmc.HyperbolicPrior;
 import statalign.mcmc.LogisticProposal;
 import statalign.mcmc.McmcCombinationMove;
 import statalign.mcmc.McmcModule;
 import statalign.mcmc.McmcMove;
+import statalign.mcmc.MultiplicativeProposal;
 import statalign.mcmc.UniformProposal;
 import statalign.model.ext.ModelExtManager;
 import statalign.postprocess.PostprocessManager;
@@ -146,7 +149,7 @@ public class Mcmc extends Stoppable {
 	
 	private int substWeight = 10;
 	private int edgeWeight = 2; // per edge
-	// private int allEdgeWeight = 6; // This move is currently disabled
+	private int allEdgeWeight = 6; // This move is currently disabled
 	private int edgeWeightIncrement = 0; // Added after half of burnin
 	private int alignWeight = 25;
 	private int topologyWeight = 8;
@@ -245,6 +248,7 @@ public class Mcmc extends Stoppable {
 
 		if(!mcmcpars.fixEdge) {
 			GammaPrior edgePrior = new GammaPrior(1,1);
+			//HyperbolicPrior edgePrior = new HyperbolicPrior();
 			for (int i=0; i<tree.vertex.length-1; i++) {
 				EdgeMove edgeMove = new EdgeMove(coreModel,i,
 						edgePrior,
@@ -255,10 +259,10 @@ public class Mcmc extends Stoppable {
 				// Default minimum edge length is 0.01
 				coreModel.addMcmcMove(edgeMove, edgeWeight);
 			}		
-	//		AllEdgeMove allEdgeMove = new AllEdgeMove(coreModel,edgePrior,
-	//				new MultiplicativeProposal(),"AllEdge");
-	//		allEdgeMove.proposalWidthControlVariable = 0.5;
-	//		coreModel.addMcmcMove(allEdgeMove, allEdgeWeight);
+			AllEdgeMove allEdgeMove = new AllEdgeMove(coreModel,edgePrior,
+					new MultiplicativeProposal(),"AllEdge");
+			allEdgeMove.proposalWidthControlVariable = 0.5;
+			coreModel.addMcmcMove(allEdgeMove, allEdgeWeight);
 		}
 	}
 	
@@ -284,15 +288,15 @@ public class Mcmc extends Stoppable {
 		}
 		boolean accepted = coreModel.proposeParamChange(tree);
 		if (accepted) {
-//			if (Utils.DEBUG) {
-//				System.out.println("Move accepted.");
-//			}
+			if (Utils.DEBUG) {
+				System.out.println("Move accepted.");
+			}
 			totalLogLike = coreModel.curLogLike;
 		}
 		else {
-//			if (Utils.DEBUG) {
-//				System.out.println("Move rejected.");
-//			}
+			if (Utils.DEBUG) {
+				System.out.println("Move rejected.");
+			}
 			coreModel.setLogLike(totalLogLike);
 		}
 		if(Utils.DEBUG) {
