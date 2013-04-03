@@ -31,23 +31,19 @@ public class TopologyMove extends McmcMove {
 			throw new IllegalArgumentException("TopologyMove.copyState must take an argument of type Tree.");
 		}
 		vnum = tree.vertex.length;
-		if (vnum <= 3) {
+		if (vnum <= 3) { // then we can't do the nephew-uncle swap
 			return;
 		}
-		int vertId, rnd = Utils.generator.nextInt(vnum - 3);
-		vertId = tree.getTopVertexId(rnd);
-		if (vertId != -1) {
-			int lastId[] = new int[3], num = 0, newId = vertId;
-	
-			for (int i = vnum - 3; i < vnum; i++) {
-				int id = tree.getTopVertexId(i);
-				if (id == -1)
-					lastId[num++] = i;
-				else if (id < vertId)
-					newId--;
-			}
-			rnd = lastId[newId];
+		
+		int rnd = Utils.generator.nextInt(vnum);
+		int vertId = tree.getTopVertexId(rnd);
+		// Need to choose a valid nephew, i.e. not the root or either of its children
+		while (vertId >= 0) { // while nephew is invalid
+			rnd = Utils.generator.nextInt(vnum); // select a new nephew
+			vertId = tree.getTopVertexId(rnd);
 		}
+		
+
 		nephew = tree.vertex[rnd];
 		uncle = nephew.parent.brother();
 		((CoreMcmcModule) owner).getModelExtMan().beforeTreeChange(tree, nephew);		
