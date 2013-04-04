@@ -31,7 +31,7 @@ public class Utils{
 	/**
 	 * Debugging mode (various consistency checks done if on)
 	 */
-	public static boolean DEBUG = false;
+	public static boolean DEBUG = true;
 	
 	/**
 	 * The random number generator used throughout the program.
@@ -381,7 +381,7 @@ public class Utils{
 	/**
 	 *  Calculates emission probability from Felsenstein likelihoods
 	 */
-   static double calcEmProb(double fel[], double aaEquDist[]) {
+   public static double calcEmProb(double fel[], double aaEquDist[]) {
 		double p = 0;
 
 		for(int i = 0; i < fel.length; i++)

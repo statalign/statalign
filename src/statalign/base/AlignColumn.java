@@ -61,7 +61,7 @@ public class AlignColumn {
 	/**
 	 * This double array contains the Felsenstein Likelihoods
 	 */
-	double seq[];						// Felsenstein likelihoods of the column
+	public double seq[];						// Felsenstein likelihoods of the column
 
 	/**
 	 * It constructs a new AlignColumn. Sets only the owner, other fields are filled in outside of the
