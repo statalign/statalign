@@ -255,13 +255,16 @@ public class Mcmc extends Stoppable {
 			coreModel.addMcmcMove(alignMove, alignWeight);
 		}
 
+		GammaPrior edgePrior = new GammaPrior(1,1);
+		double uniformProposalWidthControlVariable = 0.1;
+		double multiplicativeProposalWidthControlVariable = 0.5;
+		
 		if(!mcmcpars.fixTopology) {
-			TopologyMove topologyMove = new TopologyMove(coreModel,"Topology");
+			TopologyMove topologyMove = new TopologyMove(coreModel,edgePrior,
+					0.5*multiplicativeProposalWidthControlVariable,"Topology");
 			coreModel.addMcmcMove(topologyMove, topologyWeight);
 		}
-
 		if(!mcmcpars.fixEdge) {
-			GammaPrior edgePrior = new GammaPrior(1,1);
 			//HyperbolicPrior edgePrior = new HyperbolicPrior();
 			for (int i=0; i<tree.vertex.length-1; i++) {
 				EdgeMove edgeMove = new EdgeMove(coreModel,i,
@@ -269,13 +272,13 @@ public class Mcmc extends Stoppable {
 						//new GaussianProposal(),
 						new UniformProposal(),
 						"Edge"+i);
-				edgeMove.proposalWidthControlVariable = 0.1;
+				edgeMove.proposalWidthControlVariable = uniformProposalWidthControlVariable;
 				// Default minimum edge length is 0.01
 				coreModel.addMcmcMove(edgeMove, edgeWeight);
 			}		
 			AllEdgeMove allEdgeMove = new AllEdgeMove(coreModel,edgePrior,
 					new MultiplicativeProposal(),"AllEdge");
-			allEdgeMove.proposalWidthControlVariable = 0.5;
+			allEdgeMove.proposalWidthControlVariable = multiplicativeProposalWidthControlVariable;
 			coreModel.addMcmcMove(allEdgeMove, allEdgeWeight);
 		}
 	}
@@ -303,14 +306,14 @@ public class Mcmc extends Stoppable {
 		boolean accepted = coreModel.proposeParamChange(tree);
 		if (accepted) {
 //			if (Utils.DEBUG) {
-//				System.out.println("Move accepted.");
+				//System.out.println("Move accepted.");
 //			}
 			totalLogLike = coreModel.curLogLike;
 		}
 		else {
-//			if (Utils.DEBUG) {
-//				System.out.println("Move rejected.");
-//			}
+			//if (Utils.DEBUG) {
+				//System.out.println("Move rejected.");
+			//}
 			coreModel.setLogLike(totalLogLike);
 		}
 		if(Utils.DEBUG) {

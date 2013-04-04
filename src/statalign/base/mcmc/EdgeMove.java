@@ -38,6 +38,17 @@ public class EdgeMove extends ContinuousPositiveParameterMove {
 		param = new EdgeInterface(index);
 		minValue = 0.01;
 	}
+	public EdgeMove (McmcModule m, 
+			int edgeIndex,
+			PriorDistribution<Double> pr, 
+			ProposalDistribution<Double> prop, 
+			double propVar, String n) {
+		super(m,null,pr,prop,n);
+		index = edgeIndex;
+		param = new EdgeInterface(index);
+		minValue = 0.01;
+		proposalWidthControlVariable = propVar;
+	}
 	void setEdgeIndex(int i) {
 		index = i;
 		param = new EdgeInterface(index);
