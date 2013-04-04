@@ -5,9 +5,12 @@ import statalign.base.Utils;
 import statalign.base.Vertex;
 import statalign.mcmc.McmcModule;
 import statalign.mcmc.McmcMove;
+import java.io.FileWriter;
+import java.io.IOException;
 
 public class TopologyMove extends McmcMove {
-
+	
+	FileWriter topMoves;
 	Tree tree = null;
 	int vnum;
 	Vertex nephew;
@@ -17,6 +20,12 @@ public class TopologyMove extends McmcMove {
 		owner = m;
 		name = n;
 		autoTune = false;
+		if(Utils.DEBUG){
+			try{
+				topMoves = new FileWriter("topMoves.txt");
+				topMoves.write("origInd \t origSeq \t propInd \t propSeq \t Hastings \t logAccept \n");
+			} catch (IOException e){}
+		}
 	}
 
 	@Override
@@ -68,8 +77,9 @@ public class TopologyMove extends McmcMove {
 			System.out.println(printTree);
 			System.out.println(tree.root.indelLogLike);
 			System.out.println(tree.root.orphanLogLike);
-			System.out.println(Utils.calcEmProb(tree.root.first.seq, tree.substitutionModel.e));
-			System.out.println(Utils.calcEmProb(tree.root.first.next.seq, tree.substitutionModel.e));
+			try{
+				topMoves.write(tree.root.indelLogLike + "\t" + tree.root.orphanLogLike + "\t");
+			} catch(IOException e){}
 		}
 		double logProposalRatio = nephew.fastSwapWithUncle();
 		if(Utils.DEBUG){
@@ -83,6 +93,10 @@ public class TopologyMove extends McmcMove {
 			printEdges(tree.root);
 			System.out.println("logProposalRatio:");
 			System.out.println(logProposalRatio);
+			try{
+				topMoves.write(tree.root.indelLogLike + "\t" + tree.root.orphanLogLike + "\t" + logProposalRatio + "\n");
+			} catch(IOException e){}
+			
 		}
 		// Below is another version, slow and slightly better mixing
 		// double logProposalRatio = nephew.swapWithUncleAlignToParent();
