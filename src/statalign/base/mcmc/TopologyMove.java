@@ -104,9 +104,27 @@ public class TopologyMove extends McmcMove {
 		// Below is another version, slow but slightly better mixing
 		// double logProposalRatio = nephew.swapWithUncleAlignToParent();
 		
-		
 		return logProposalRatio;
 	}
+	
+	public void printChildren(Vertex v){
+		if(v.left != null){
+			System.out.println(v.index + " " + v.left.index);
+			System.out.println(v.index + " " + v.right.index);
+			printChildren(v.left);
+			printChildren(v.right);
+		}
+	}
+
+	public void printEdges(Vertex v){
+		System.out.println(v.index + " " + v.edgeLength);
+		if(v.left != null){
+			printEdges(v.left);
+			printEdges(v.right);
+		}
+	}
+	
+	
 	@Override
 	public double logPriorDensity(Object externalState) {
 		return 0.0;
