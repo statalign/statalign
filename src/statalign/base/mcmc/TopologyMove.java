@@ -7,17 +7,28 @@ import statalign.mcmc.McmcModule;
 import statalign.mcmc.McmcMove;
 import java.io.FileWriter;
 import java.io.IOException;
+import statalign.mcmc.MultiplicativeProposal;
+import statalign.mcmc.PriorDistribution;
+import statalign.mcmc.UniformProposal;
 
 public class TopologyMove extends McmcMove {
 	
 	FileWriter topMoves;
 	Tree tree = null;
-	int vnum;
 	Vertex nephew;
 	Vertex uncle;
 	
-	public TopologyMove (McmcModule m, String n) {
+	double edgeProposalWidthControlVariable;
+	EdgeMove nephewEdgeMove;
+	EdgeMove parentEdgeMove;
+	EdgeMove uncleEdgeMove;
+	
+	PriorDistribution<Double> edgePrior;
+	
+	public TopologyMove (McmcModule m, PriorDistribution<Double> pr, double propVar, String n) {
 		owner = m;
+		edgePrior = pr;
+		edgeProposalWidthControlVariable = propVar;
 		name = n;
 		autoTune = false;
 		if(Utils.DEBUG){
@@ -38,7 +49,7 @@ public class TopologyMove extends McmcMove {
 		else {
 			throw new IllegalArgumentException("TopologyMove.copyState must take an argument of type Tree.");
 		}
-		vnum = tree.vertex.length;
+		int vnum = tree.vertex.length;
 		if (vnum <= 3) { // then we can't do the nephew-uncle swap
 			return;
 		}
@@ -51,9 +62,38 @@ public class TopologyMove extends McmcMove {
 			vertId = tree.getTopVertexId(rnd);
 		}
 		
-
 		nephew = tree.vertex[rnd];
 		uncle = nephew.parent.brother();
+		
+		if (nephewEdgeMove == null) {
+			nephewEdgeMove = new EdgeMove(
+					owner,nephew.index,edgePrior,new MultiplicativeProposal(),
+					edgeProposalWidthControlVariable,"nephewEdge");
+		}
+		else {
+			nephewEdgeMove.setEdgeIndex(nephew.index);
+		}
+		if (parentEdgeMove == null) {
+			parentEdgeMove = new EdgeMove(
+					owner,nephew.parent.index,edgePrior,new MultiplicativeProposal(),
+					edgeProposalWidthControlVariable,"parentEdge");
+		}
+		else {
+			parentEdgeMove.setEdgeIndex(nephew.parent.index);
+		}
+		if (uncleEdgeMove == null) {
+			uncleEdgeMove = new EdgeMove(
+					owner,uncle.index,edgePrior,new MultiplicativeProposal(),
+					edgeProposalWidthControlVariable,"uncleEdge");
+		}
+		else {
+			uncleEdgeMove.setEdgeIndex(uncle.index);
+		}
+		
+		nephewEdgeMove.copyState(externalState);
+		parentEdgeMove.copyState(externalState);
+		uncleEdgeMove.copyState(externalState);
+		
 		((CoreMcmcModule) owner).getModelExtMan().beforeTreeChange(tree, nephew);		
 		// Should also do a beforeAlignChange here, but not obvious what to pass
 		// as the selectedRoot argument.
@@ -81,7 +121,13 @@ public class TopologyMove extends McmcMove {
 				topMoves.write(tree.root.indelLogLike + "\t" + tree.root.orphanLogLike + "\t");
 			} catch(IOException e){}
 		}
-		double logProposalRatio = nephew.fastSwapWithUncle();
+		double logProposalRatio = nephewEdgeMove.proposal(externalState);
+		logProposalRatio += parentEdgeMove.proposal(externalState);
+		logProposalRatio += uncleEdgeMove.proposal(externalState);
+		logProposalRatio += nephew.fastSwapWithUncle();
+		//nephew.calcAllUp();
+		//nephew.parent.calcAllUp();
+		//uncle.calcAllUp();
 		if(Utils.DEBUG){
 			System.out.println("Proposed:");
 			String[] fullAlign = tree.getState().getFullAlign();
@@ -98,8 +144,6 @@ public class TopologyMove extends McmcMove {
 			} catch(IOException e){}
 			
 		}
-		// Below is another version, slow and slightly better mixing
-		// double logProposalRatio = nephew.swapWithUncleAlignToParent();
 		return logProposalRatio;
 	}
 	
@@ -127,17 +171,24 @@ public class TopologyMove extends McmcMove {
 	}
 	@Override
 	public void updateLikelihood(Object externalState) {
+		System.out.println("After: "+tree.printedTree());
+		System.out.print("LogLikelihood before: "+owner.curLogLike+"\t");
 		owner.setLogLike(((CoreMcmcModule) owner).getModelExtMan().logLikeTreeChange(tree, nephew));
-		if(Utils.DEBUG){
-			System.out.println("Proposed Likelihood:");
-			System.out.println(owner.curLogLike);
-		}
+		System.out.println("LogLikelihood after: "+owner.curLogLike);
 	}
 	@Override
 	public void restoreState(Object externalState) {
+		
+		// Note these are restored in the reverse order to the proposal
 		uncle.fastSwapBackUncle();
 		// If using the alternative move:
         // uncle.swapBackUncleAlignToParent();
+		
+		uncleEdgeMove.restoreState(externalState);
+		parentEdgeMove.restoreState(externalState);
+		nephewEdgeMove.restoreState(externalState);
+		
+		
 	}
 	
 	@Override
