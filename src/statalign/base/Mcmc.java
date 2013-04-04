@@ -135,7 +135,8 @@ public class Mcmc extends Stoppable {
 	
 	// Which indel parameter move scheme(s) to use
 	private boolean lambdaMuMove = false;
-	private boolean lambdaPhiMove = true;
+	private boolean lambdaMove = true;
+	private boolean lambdaPhiMove = false;
 	private boolean rhoThetaMove = true;
 	
 	// Weights for coreModel McmcMoves
@@ -191,15 +192,17 @@ public class Mcmc extends Stoppable {
 	 */
 	private void initCoreModel() {
 		
+		double[] lambdaMuPriorParams = {1,1};
+		
 		IndelMove rMove = new RMove(coreModel,new BetaPrior(1,1),new LogisticProposal(),"R");
-		rMove.proposalWidthControlVariable = 0.5;
+		rMove.proposalWidthControlVariable = 1.0;
 		coreModel.addMcmcMove(rMove,rWeight);
 		
 		if (lambdaMuMove) {
-			IndelMove lambdaMove = new LambdaMove(coreModel,new GammaPrior(1,1),new GaussianProposal(),"Lambda");
+			IndelMove lambdaMove = new LambdaMove(coreModel,new GammaPrior(lambdaMuPriorParams[0],lambdaMuPriorParams[1]),new GaussianProposal(),"Lambda");
 			lambdaMove.proposalWidthControlVariable = 0.01;
 			coreModel.addMcmcMove(lambdaMove,lambdaWeight);
-			IndelMove muMove = new MuMove(coreModel,new GammaPrior(1,1),new GaussianProposal(),"Mu");
+			IndelMove muMove = new MuMove(coreModel,new GammaPrior(lambdaMuPriorParams[0],lambdaMuPriorParams[0]),new GaussianProposal(),"Mu");
 			muMove.proposalWidthControlVariable = 0.01;
 			coreModel.addMcmcMove(muMove,muWeight);
 			ArrayList<McmcMove> lambdaMu = new ArrayList<McmcMove>();
@@ -207,26 +210,37 @@ public class Mcmc extends Stoppable {
 			lambdaMu.add(muMove);
 			coreModel.addMcmcMove(new McmcCombinationMove(lambdaMu),lambdaMuWeight);
 		}
-		if (lambdaPhiMove) {
-			IndelMove lambdaMove = new LambdaMove(coreModel,new GammaPrior(1,1),new GaussianProposal(),"Lambda");
+		if (lambdaMove || lambdaPhiMove) {
+			IndelMove lambdaMove = new LambdaMove(coreModel,new GammaPrior(lambdaMuPriorParams[0],lambdaMuPriorParams[1]),new GaussianProposal(),"Lambda");
 			coreModel.addMcmcMove(lambdaMove,lambdaWeight);
 			lambdaMove.proposalWidthControlVariable = 0.01;
+		}
+		if (lambdaPhiMove) {
 			// phi = lambda/mu 
 			// Must be in the range (0,1)
-			IndelMove phiMove = new PhiMove(coreModel,new BetaPrior(1,1),new LogisticProposal(),"Phi");
+			// The prior on phi below [Beta(1,1)] is not the prior implied by the priors on lambda and mu
+			// (which would be of F-distribution type), so effectively it means we have two different 
+			// priors on lambda and mu if we use this move, which is undesirable. 
+			// Hence, this move should probably be avoided. 
+			IndelMove phiMove = new PhiMove(coreModel,new BetaPrior(1,1),new LogisticProposal(),"Phi"); 
 			phiMove.proposalWidthControlVariable = 0.5;
 			coreModel.addMcmcMove(phiMove,phiWeight);
 		}
 		if (rhoThetaMove) {
 			// rho = lambda + mu
-			IndelMove rhoMove = new RhoMove(coreModel,new GammaPrior(1,1),new GaussianProposal(),"Rho");
+			// Since lambda and mu are gamma distributed in the prior, this ratio
+			// also follows a gamma distribution in the prior.
+			IndelMove rhoMove = new RhoMove(coreModel,new GammaPrior(2*lambdaMuPriorParams[0],lambdaMuPriorParams[1]),new GaussianProposal(),"Rho");
 			coreModel.addMcmcMove(rhoMove,rhoWeight);
 			rhoMove.proposalWidthControlVariable = 0.02;
+
 			// theta = lambda / (lambda + mu)
 			// Must be in the range (0,0.5)
-			IndelMove thetaMove = new ThetaMove(coreModel,new BetaPrior(1,1),new LogisticProposal(),"Theta");
+			// Since lambda and mu are gamma distributed in the prior, this ratio
+			// follows a beta distribution in the prior.
+			IndelMove thetaMove = new ThetaMove(coreModel,new BetaPrior(lambdaMuPriorParams[0],lambdaMuPriorParams[0]),new GaussianProposal(),"Theta");
 			thetaMove.setMaxValue(0.5);
-			thetaMove.proposalWidthControlVariable = 0.5;
+			thetaMove.proposalWidthControlVariable = 0.02;
 			coreModel.addMcmcMove(thetaMove,thetaWeight);
 		}
 		if (!lambdaMuMove && !lambdaPhiMove && !rhoThetaMove) {
@@ -639,10 +653,11 @@ public class Mcmc extends Stoppable {
 		//if(Utils.DEBUG) {
 			String info = "\n";
 			info += String.format("%-24s","Move name")+
-			String.format("%8s","t (total)")+
+			String.format("%8s","t")+
 			String.format("%8s","nMoves")+
-			String.format("%6s","time")+
-			String.format("%8s\n", "acc");
+			String.format("%8s","t/move")+
+			String.format("%8s", "acc")+
+			String.format("%8s\n", "propVar");
 			info += coreModel.getMcmcInfo();
 			info += modelExtMan.getMcmcInfo();
 			System.out.println(info);

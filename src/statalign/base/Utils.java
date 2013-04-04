@@ -54,9 +54,9 @@ public class Utils{
     }
 	/** 
 	 * @param x
-	 * @param shape
-	 * @param rate
-	 * @return The unnormalised log density of Gamma(x | shape, rate)
+	 * @param alpha
+	 * @param beta
+	 * @return The unnormalised log density of Beta(x | alpha, beta)
 	 */
 	public static double logBetaDensity(double x, double alpha, double beta) {
        if (x < 0 || x > 1) {
@@ -65,19 +65,36 @@ public class Utils{
        return (alpha-1) * FastMath.log(x) + (beta-1) * FastMath.log(1-x);
     }
 	/**
-	 * During the burnin, the SPAN variables for all continuous parameters
-	 * are adjusted in order to ensure that the average acceptance rate is between 
-	 * 0.1 and 0.4 where possible. This is done by repeatedly multiplying the SPAN
-	 * by SPAN_MULTIPLIER until the acceptance falls within the desired range,
-	 * specified by [MIN_ACCEPTANCE,MAX_ACCEPTANCE].
+	 * During the burnin, the proposalWidthControlVariable for all continuous parameters
+	 * is adjusted in order to ensure that the average acceptance rate is between 
+	 * MIN_ACCEPTANCE and MAX_ACCEPTANCE where possible. 
+	 * This is done by repeatedly multiplying the proposalWidthControlVariable
+	 * by SPAN_MULTIPLIER until the acceptance falls within the desired range.
 	 */
 	public static final double SPAN_MULTIPLIER = 0.7;
+	/**
+	 * During the burnin, the proposalWidthControlVariable for all continuous parameters
+	 * is adjusted in order to ensure that the average acceptance rate is between 
+	 * MIN_ACCEPTANCE and MAX_ACCEPTANCE where possible. 
+	 * This is done by repeatedly multiplying the proposalWidthControlVariable
+	 * by SPAN_MULTIPLIER until the acceptance falls within the desired range.
+	 */
 	public static final double MIN_ACCEPTANCE = 0.2;
 	// Put the minimum a bit higher than we want it to be
 	// because as the parameters converge the acceptance rate
 	// typically goes down
+	/**
+	 * During the burnin, the proposalWidthControlVariable for all continuous parameters
+	 * is adjusted in order to ensure that the average acceptance rate is between 
+	 * MIN_ACCEPTANCE and MAX_ACCEPTANCE where possible. 
+	 * This is done by repeatedly multiplying the proposalWidthControlVariable
+	 * by SPAN_MULTIPLIER until the acceptance falls within the desired range.
+	 */
 	public static final double MAX_ACCEPTANCE = 0.4;
 	
+	/**
+	 * Initial value for the alignment proposal window length multiplier.
+	 */
 	public static double WINDOW_MULTIPLIER = 1.0;
 
 	/** 
@@ -87,26 +104,6 @@ public class Utils{
 	 */
 	public static final double MIN_SAMPLES_FOR_ACC_ESTIMATE = 10;
 
-	/**
-	 * When a new edge length is proposed in MCMC, it is drawn uniformly from the
-	 * neighborhood of the current value. The neighborhood size has this span.
-	 */
-	public static double EDGE_SPAN = 0.1;
-	/**
-	 * When a new R of the TKF92 model is proposed in MCMC, it is drawn uniformly from the
-	 * a neighborhood of the current value. The neighborhood size has this span.
-	 */
-	public static double R_SPAN = 0.05;
-	/**
-	 * When a new lambda of the TKF92 model is proposed in MCMC, it is drawn uniformly from the
-	 * a neighborhood of the current value. The neighborhood size has this span.
-	 */
-	public static double LAMBDA_SPAN = 0.01;
-	/**
-	 * When a new mu of the TKF92 model is proposed in MCMC, it is drawn uniformly from the
-	 * a neighborhood of the current value. The neighborhood size has this span.
-	 */
-	public static double MU_SPAN = 0.01;
 	/**
 	 * log(0) is set to Double.NEGATIVE_INFINITY. This is used in logarithmic adding.
 	 * The logarithm of an empty sum is set to this value.

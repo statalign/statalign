@@ -39,7 +39,7 @@ public abstract class McmcModule {
 		for (int i=0; i<mcmcMoves.size(); i++) {
 			if (mcmcMoves.get(i).name.contains(name)) {
 				mcmcMoveWeights.set(i, weight);
-				System.out.println("Move "+mcmcMoves.get(i).name+" now has weight "+weight);
+				System.out.println("Move \""+mcmcMoves.get(i).name+"\" now has weight "+weight);
 			}
 		}
 	}
@@ -72,13 +72,14 @@ public abstract class McmcModule {
 	public String getMcmcInfo() {
 		String info = "";
 		for (McmcMove mcmcMove : mcmcMoves) {
-			String infoFormat = "%-24s%8s%8d%6d%8.4f\n";
+			String infoFormat = "%-24s%8s%8d%8d%8.4f%8.4f\n";
 			info += String.format(infoFormat,
 					mcmcMove.name,
 					Utils.convertTime(mcmcMove.getTime()),
 					mcmcMove.proposalCount,
 					mcmcMove.getTime()/(mcmcMove.proposalCount>0 ? mcmcMove.proposalCount : 1),
-					mcmcMove.acceptanceRate());
+					mcmcMove.acceptanceRate(),
+					mcmcMove.proposalWidthControlVariable);
 		}
 		return info;
 	}

@@ -27,6 +27,8 @@ public class AlignmentMove extends McmcMove {
 	public AlignmentMove (StructAlign s, String n) {
 		owner = s;
 		name = n;
+		autoTune = false; 
+		// This move gets autoTune'd via the core AlignmentMove
 	}
 	
 	public void copyState(Object externalState) {

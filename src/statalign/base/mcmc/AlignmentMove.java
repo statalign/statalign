@@ -36,6 +36,9 @@ public class AlignmentMove extends McmcMove {
 				proposalWidthControlVariable < MAX_WINDOW_MULTIPLIER) {
 			Utils.WINDOW_MULTIPLIER = proposalWidthControlVariable;
 		}
+		else {
+			autoTune = false;
+		}
 	}
 	public double proposal(Object externalState) {
 		weights = new double[tree.vertex.length];
