@@ -1,6 +1,5 @@
 package statalign.base.mcmc;
 
-import statalign.base.AlignColumn;
 import statalign.base.Tree;
 import statalign.base.Utils;
 import statalign.base.Vertex;
@@ -80,34 +79,7 @@ public class TopologyMove extends McmcMove {
 		// as the selectedRoot argument.
 		
 		if (Utils.DEBUG) {
-			for (int i = 0; i < tree.vertex.length; i++) {
-				if (tree.vertex[i].left != null && tree.vertex[i].right != null) {
-					tree.vertex[i].checkPointers();
-					AlignColumn p;
-					// checking pointer integrity
-					for (AlignColumn c = tree.vertex[i].left.first; c != null; c = c.next) {
-						p = tree.vertex[i].first;
-						while (c.parent != p && p != null)
-							p = p.next;
-						if (p == null)
-							throw new Error(
-									"children does not have a parent!!!"
-											+ tree.vertex[i] + " "
-											+ tree.vertex[i].print(4));
-					}
-					for (AlignColumn c = tree.vertex[i].right.first; c != null; c = c.next) {
-						p = tree.vertex[i].first;
-						while (c.parent != p && p != null)
-							p = p.next;
-						if (p == null)
-							throw new Error(
-									"children does not have a parent!!!"
-											+ tree.vertex[i] + " "
-											+ tree.vertex[i].print(4));
-					}
-	
-				}
-			}
+			tree.checkPointers();
 		}
 	}
 	

@@ -219,6 +219,37 @@ public class Tree extends Stoppable implements DataType {
         System.out.println("tree.orphan=" + tree.root.orphanLogLike);
         root.compareLike(tree.root);
     }
+    
+    public void checkPointers() {
+    	for (int i = 0; i < vertex.length; i++) {
+			if (vertex[i].left != null && vertex[i].right != null) {
+				vertex[i].checkPointers();
+				AlignColumn p;
+				// checking pointer integrity
+				for (AlignColumn c = vertex[i].left.first; c != null; c = c.next) {
+					p = vertex[i].first;
+					while (c.parent != p && p != null)
+						p = p.next;
+					if (p == null)
+						throw new Error(
+								"child does not have a parent!!!"
+										+ vertex[i] + " "
+										+ vertex[i].print(4));
+				}
+				for (AlignColumn c = vertex[i].right.first; c != null; c = c.next) {
+					p = vertex[i].first;
+					while (c.parent != p && p != null)
+						p = p.next;
+					if (p == null)
+						throw new Error(
+								"child does not have a parent!!!"
+										+ vertex[i] + " "
+										+ vertex[i].print(4));
+				}
+
+			}
+		}
+    }
 
     /**
      * This constructor constructs a tree using a newick representation of the tree. It <b>does not</b>
