@@ -18,7 +18,11 @@ public class LOCALTopologyMove extends McmcMove {
 		
 	double edgeProposalWidthControlVariable;
 	
+	double minEdgeLength;
+	
 	boolean topologyChange;
+	boolean invalidProposal;
+	public int nTopologyChanges = 0;
 	
 	PriorDistribution<Double> edgePrior;
 	
@@ -28,10 +32,26 @@ public class LOCALTopologyMove extends McmcMove {
 		edgeProposalWidthControlVariable = propVar;
 		name = n;
 		autoTune = false; 
-		// Already true by default, but let's write it here to be explicit
+		// autoTune = true by default
+		minEdgeLength = 0.001;
 	}
 	
+	/**
+	 * Sets the three edges affected by the LOCAL move (nephew, parent and uncle) 
+	 * to the specified values. If any of the values are less than <tt>minEdgeLength</tt>
+	 * then the change is not made, <tt>invalidProposal</tt> is set to <tt>true</tt>, 
+	 * and negative infinity is returned.
+	 * @param a The edge length for the nephew
+	 * @param b The edge length for the parent
+	 * @param c The edge length for the uncle
+	 * @return The log ratio of new versus old prior densities.
+	 */
 	public double setEdges(double a, double b, double c) {
+		
+		if (invalidProposal || a < minEdgeLength || b < minEdgeLength || c < minEdgeLength) {
+			invalidProposal = true;
+			return Double.NEGATIVE_INFINITY;
+		}
 		double logPrior = -edgePrior.logDensity(nephew.edgeLength);
 		nephew.setEdgeLength(a);
 		logPrior += edgePrior.logDensity(nephew.edgeLength);
@@ -122,17 +142,14 @@ public class LOCALTopologyMove extends McmcMove {
 		double w_aj_new = u2 * w_ac_new;
 		double logProposalRatio = 3 * Math.log(r);
 		//System.out.println("Before LOCAL: "+tree.printedTree());
+		invalidProposal = false;
 		if (w_aj_new < w_ai_new) { // Then we have a topology switch
 			topologyChange = true;
+			nTopologyChanges++;
 			double w_ij_new = w_ai_new - w_aj_new;
 			double w_ic_new = w_ac_new - w_ai_new;
 			// Add in priorDensity to logProposalRatio
-			logProposalRatio += setEdges(w_ic_new, w_ij_new, w_aj_new);
-
-			// Do the topology switch:
-			logProposalRatio += nephew.fastSwapWithUncle();
-			// Below is another version, slow and slightly better mixing
-			// logProposalRatio += nephew.swapWithUncleAlignToParent();
+			logProposalRatio += setEdges(w_ic_new, w_ij_new, w_aj_new); 
 		}
 		else {
 			//System.out.println("Only changing edges.");
@@ -140,6 +157,12 @@ public class LOCALTopologyMove extends McmcMove {
 			double w_jc_new = w_ac_new - w_aj_new;
 			double w_ij_new = w_aj_new - w_ai_new;
 			logProposalRatio += setEdges(w_jc_new, w_ij_new, w_ai_new);
+		}
+		if (topologyChange && !invalidProposal) {
+			// Do the topology switch:
+			logProposalRatio += nephew.fastSwapWithUncle();
+			// Below is another version, slow and slightly better mixing
+			// logProposalRatio += nephew.swapWithUncleAlignToParent();
 		}
 		//System.out.println("After LOCAL ("+logProposalRatio+"): "+tree.printedTree());
 		return logProposalRatio;
@@ -154,12 +177,11 @@ public class LOCALTopologyMove extends McmcMove {
 	}
 	@Override
 	public void restoreState(Object externalState) {
-		if (topologyChange) {
+		if (topologyChange && !invalidProposal) {
 			uncle.fastSwapBackUncle();
+			// If using the alternative move:
+		       // uncle.swapBackUncleAlignToParent();
 		}
-		// If using the alternative move:
-        // uncle.swapBackUncleAlignToParent();
-		
 		setEdges(w_ac-w_aj, w_ij, w_ai);
 	}
 	

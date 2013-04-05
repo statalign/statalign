@@ -159,6 +159,8 @@ public class Mcmc extends Stoppable {
 	private int topologyWeightIncrement = 0; // Added after half of burnin
 	private int topologyWeightDuringRandomisationPeriod = 100; // To use while we're randomising initial config
 	
+	LOCALTopologyMove localTopologyMove;
+	
 	/** True while the MCMC is in the burn-in phase. */
 	public boolean burnin;
 
@@ -266,7 +268,9 @@ public class Mcmc extends Stoppable {
 					0.5*multiplicativeProposalWidthControlVariable,"Topology");
 			coreModel.addMcmcMove(topologyMove, topologyWeight);
 			
-			LOCALTopologyMove localTopologyMove = new LOCALTopologyMove(coreModel,edgePrior,
+//			LOCALTopologyMove localTopologyMove = new LOCALTopologyMove(coreModel,edgePrior,
+//					0.5*multiplicativeProposalWidthControlVariable,"LOCALTopology");
+			localTopologyMove = new LOCALTopologyMove(coreModel,edgePrior,
 					0.5*multiplicativeProposalWidthControlVariable,"LOCALTopology");
 			coreModel.addMcmcMove(localTopologyMove, localTopologyWeight);
 		}
@@ -681,6 +685,8 @@ public class Mcmc extends Stoppable {
 		modelExtMan.afterSampling();
 		
 		System.out.println(getInfoString());
+		System.out.println("Proportion of LOCAL proposals resulting in topology change = "+
+				String.format("%8.4f",(double)localTopologyMove.nTopologyChanges/(double)localTopologyMove.proposalCount));
 		
 		if (frame != null) {
 			frame.statusText.setText(MainFrame.IDLE_STATUS_MESSAGE);
