@@ -109,7 +109,7 @@ public class MpdAlignment extends statalign.postprocess.Postprocess {
 			JScrollPane scroll = new JScrollPane();
 			scroll.setViewportView(gui = new AlignmentGUI(title,input.model));//, mcmc.tree.printedAlignment()));
 			pan.add(scroll, BorderLayout.CENTER);
-			System.out.println("Mpd Alignment parent: " + pan.getParent());
+			//System.out.println("Mpd Alignment parent: " + pan.getParent());
 			pan.getParent().validate();
 		}
 
