@@ -5,12 +5,15 @@ import statalign.base.Utils;
 import statalign.base.Vertex;
 import statalign.mcmc.McmcModule;
 import statalign.mcmc.McmcMove;
+import java.io.FileWriter;
+import java.io.IOException;
 import statalign.mcmc.MultiplicativeProposal;
 import statalign.mcmc.PriorDistribution;
 import statalign.mcmc.UniformProposal;
 
 public class TopologyMove extends McmcMove {
-
+	
+	FileWriter topMoves;
 	Tree tree = null;
 	Vertex nephew;
 	Vertex uncle;
@@ -28,6 +31,12 @@ public class TopologyMove extends McmcMove {
 		edgeProposalWidthControlVariable = propVar;
 		name = n;
 		autoTune = false;
+		if(Utils.DEBUG){
+			try{
+				topMoves = new FileWriter("topMoves.txt");
+				topMoves.write("origInd \t origSeq \t propInd \t propSeq \t Hastings \t logAccept \n");
+			} catch (IOException e){}
+		}
 	}
 
 	@Override
@@ -92,14 +101,50 @@ public class TopologyMove extends McmcMove {
 	}
 	@Override
 	public double proposal(Object externalState) {
-		//System.out.println("Before: "+tree.printedTree());
+			
+		if(Utils.DEBUG){
+			System.out.println("Before:");
+			System.out.println("Likelihood:");
+			System.out.println(owner.curLogLike);
+			double[] params = tree.getState().indelParams;
+			for(int i = 0; i < params.length; i++)
+				System.out.println(params[i]);
+			String[] fullAlign = tree.getState().getFullAlign();
+			for(int i = 0; i < fullAlign.length; i++)
+				System.out.println(fullAlign[i]);
+			String printTree = tree.printedTree();
+			Vertex.printChildren(tree.root);
+			Vertex.printEdges(tree.root);
+			System.out.println(printTree);
+			System.out.println(tree.root.indelLogLike);
+			System.out.println(tree.root.orphanLogLike);
+			try{
+				topMoves.write(tree.root.indelLogLike + "\t" + tree.root.orphanLogLike + "\t");
+			} catch(IOException e){}
+		}
+		
 		double logProposalRatio = nephewEdgeMove.proposal(externalState);
 		logProposalRatio += parentEdgeMove.proposal(externalState);
 		logProposalRatio += uncleEdgeMove.proposal(externalState);
 		
 		logProposalRatio += nephew.fastSwapWithUncle();
-		// Below is another version, slow but slightly better mixing
-		// double logProposalRatio = nephew.swapWithUncleAlignToParent();
+
+		if(Utils.DEBUG){
+			System.out.println("Proposed:");
+			String[] fullAlign = tree.getState().getFullAlign();
+			for(int i = 0; i < fullAlign.length; i++)
+				System.out.println(fullAlign[i]);
+			String printTree = tree.printedTree();
+			System.out.println(printTree);
+			Vertex.printChildren(tree.root);
+			Vertex.printEdges(tree.root);
+			System.out.println("logProposalRatio:");
+			System.out.println(logProposalRatio);
+			try{
+				topMoves.write(tree.root.indelLogLike + "\t" + tree.root.orphanLogLike + "\t" + logProposalRatio + "\n");
+			} catch(IOException e){}
+			
+		}
 		
 		return logProposalRatio;
 	}
