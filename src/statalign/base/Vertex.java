@@ -331,6 +331,27 @@ public class Vertex {
         updateHmm3Matrix();
     }
 
+    public void setEdgeLength(double x) {
+		edgeLength = x;
+	}
+    
+	public static void printChildren(Vertex v){
+		if(v.left != null){
+			System.out.println(v.index + " " + v.left.index);
+			System.out.println(v.index + " " + v.right.index);
+			printChildren(v.left);
+			printChildren(v.right);
+		}
+	}
+
+	public static void printEdges(Vertex v){
+		System.out.println(v.index + " " + v.edgeLength);
+		if(v.left != null){
+			printEdges(v.left);
+			printEdges(v.right);
+		}
+	}
+    
     public void edgeChangeUpdate() {
         if (parent != null) {
             updateTransitionMatrix();

@@ -92,36 +92,16 @@ public class TopologyMove extends McmcMove {
 	}
 	@Override
 	public double proposal(Object externalState) {
-		System.out.println("Before: "+tree.printedTree());
+		//System.out.println("Before: "+tree.printedTree());
 		double logProposalRatio = nephewEdgeMove.proposal(externalState);
 		logProposalRatio += parentEdgeMove.proposal(externalState);
 		logProposalRatio += uncleEdgeMove.proposal(externalState);
-//		nephew.calcAllUp();
-//		nephew.parent.calcAllUp();
-//		uncle.calcAllUp();
 		
 		logProposalRatio += nephew.fastSwapWithUncle();
 		// Below is another version, slow but slightly better mixing
 		// double logProposalRatio = nephew.swapWithUncleAlignToParent();
 		
 		return logProposalRatio;
-	}
-	
-	public void printChildren(Vertex v){
-		if(v.left != null){
-			System.out.println(v.index + " " + v.left.index);
-			System.out.println(v.index + " " + v.right.index);
-			printChildren(v.left);
-			printChildren(v.right);
-		}
-	}
-
-	public void printEdges(Vertex v){
-		System.out.println(v.index + " " + v.edgeLength);
-		if(v.left != null){
-			printEdges(v.left);
-			printEdges(v.right);
-		}
 	}
 	
 	
@@ -131,10 +111,10 @@ public class TopologyMove extends McmcMove {
 	}
 	@Override
 	public void updateLikelihood(Object externalState) {
-		System.out.println("After: "+tree.printedTree());
-		System.out.print("LogLikelihood before: "+owner.curLogLike+"\t");
+//		System.out.println("After: "+tree.printedTree());
+//		System.out.print("LogLikelihood before: "+owner.curLogLike+"\t");
 		owner.setLogLike(((CoreMcmcModule) owner).getModelExtMan().logLikeTreeChange(tree, nephew));
-		System.out.println("LogLikelihood after: "+owner.curLogLike);
+//		System.out.println("LogLikelihood after: "+owner.curLogLike);
 	}
 	@Override
 	public void restoreState(Object externalState) {
@@ -147,8 +127,7 @@ public class TopologyMove extends McmcMove {
 		uncleEdgeMove.restoreState(externalState);
 		parentEdgeMove.restoreState(externalState);
 		nephewEdgeMove.restoreState(externalState);
-		
-		
+				
 	}
 	
 	@Override

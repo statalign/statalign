@@ -15,6 +15,7 @@ import statalign.base.mcmc.AllEdgeMove;
 import statalign.base.mcmc.CoreMcmcModule;
 import statalign.base.mcmc.EdgeMove;
 import statalign.base.mcmc.IndelMove;
+import statalign.base.mcmc.LOCALTopologyMove;
 import statalign.base.mcmc.LambdaMove;
 import statalign.base.mcmc.MuMove;
 import statalign.base.mcmc.PhiMove;
@@ -154,6 +155,7 @@ public class Mcmc extends Stoppable {
 	private int edgeWeightIncrement = 0; // Added after half of burnin
 	private int alignWeight = 25;
 	private int topologyWeight = 8;
+	private int localTopologyWeight = 8;
 	private int topologyWeightIncrement = 0; // Added after half of burnin
 	private int topologyWeightDuringRandomisationPeriod = 100; // To use while we're randomising initial config
 	
@@ -263,6 +265,10 @@ public class Mcmc extends Stoppable {
 			TopologyMove topologyMove = new TopologyMove(coreModel,edgePrior,
 					0.5*multiplicativeProposalWidthControlVariable,"Topology");
 			coreModel.addMcmcMove(topologyMove, topologyWeight);
+			
+			LOCALTopologyMove localTopologyMove = new LOCALTopologyMove(coreModel,edgePrior,
+					0.5*multiplicativeProposalWidthControlVariable,"LOCALTopology");
+			coreModel.addMcmcMove(localTopologyMove, localTopologyWeight);
 		}
 		if(!mcmcpars.fixEdge) {
 			//HyperbolicPrior edgePrior = new HyperbolicPrior();
@@ -306,7 +312,7 @@ public class Mcmc extends Stoppable {
 		boolean accepted = coreModel.proposeParamChange(tree);
 		if (accepted) {
 //			if (Utils.DEBUG) {
-				//System.out.println("Move accepted.");
+				System.out.println("Move accepted.");
 //			}
 			totalLogLike = coreModel.curLogLike;
 		}
