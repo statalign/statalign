@@ -312,7 +312,7 @@ public class Mcmc extends Stoppable {
 		boolean accepted = coreModel.proposeParamChange(tree);
 		if (accepted) {
 //			if (Utils.DEBUG) {
-				System.out.println("Move accepted.");
+				//System.out.println("Move accepted.");
 //			}
 			totalLogLike = coreModel.curLogLike;
 		}

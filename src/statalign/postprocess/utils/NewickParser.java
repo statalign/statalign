@@ -73,7 +73,7 @@ public class NewickParser {
 
 	public NewickParser(String string) {
 		this(new StringReader(string));
-		System.out.println(string);
+		//System.out.println(string);
     }
 
 	public NewickParser(Reader reader) {

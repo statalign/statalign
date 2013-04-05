@@ -121,7 +121,7 @@ public class LOCALTopologyMove extends McmcMove {
 		double w_ai_new = r * w_ai;
 		double w_aj_new = u2 * w_ac_new;
 		double logProposalRatio = 3 * Math.log(r);
-		System.out.println("Before LOCAL: "+tree.printedTree());
+		//System.out.println("Before LOCAL: "+tree.printedTree());
 		if (w_aj_new < w_ai_new) { // Then we have a topology switch
 			topologyChange = true;
 			double w_ij_new = w_ai_new - w_aj_new;
@@ -135,13 +135,13 @@ public class LOCALTopologyMove extends McmcMove {
 			// logProposalRatio += nephew.swapWithUncleAlignToParent();
 		}
 		else {
-			System.out.println("Only changing edges.");
+			//System.out.println("Only changing edges.");
 			topologyChange = false;
 			double w_jc_new = w_ac_new - w_aj_new;
 			double w_ij_new = w_aj_new - w_ai_new;
 			logProposalRatio += setEdges(w_jc_new, w_ij_new, w_ai_new);
 		}
-		System.out.println("After LOCAL ("+logProposalRatio+"): "+tree.printedTree());
+		//System.out.println("After LOCAL ("+logProposalRatio+"): "+tree.printedTree());
 		return logProposalRatio;
 	}
 	@Override
