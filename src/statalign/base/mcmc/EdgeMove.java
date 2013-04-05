@@ -36,7 +36,8 @@ public class EdgeMove extends ContinuousPositiveParameterMove {
 		super(m,null,pr,prop,n);
 		index = edgeIndex;
 		param = new EdgeInterface(index);
-		minValue = 0.01;
+		//minValue = 0.01;
+		minValue = Utils.MIN_EDGE_LENGTH;
 	}
 	public EdgeMove (McmcModule m, 
 			int edgeIndex,
@@ -46,7 +47,8 @@ public class EdgeMove extends ContinuousPositiveParameterMove {
 		super(m,null,pr,prop,n);
 		index = edgeIndex;
 		param = new EdgeInterface(index);
-		minValue = 0.01;
+		//minValue = 0.01;
+		minValue = Utils.MIN_EDGE_LENGTH;
 		proposalWidthControlVariable = propVar;
 	}
 	void setEdgeIndex(int i) {

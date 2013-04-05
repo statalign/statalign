@@ -111,6 +111,7 @@ public class Utils{
 	 */
 	public static final double log0 = Double.NEGATIVE_INFINITY;
 	
+	public static final double MIN_EDGE_LENGTH = 0.001;
 	private static double[] tempDoubleArray;
 
 	/**

@@ -15,13 +15,15 @@ public class LOCALTopologyMove extends McmcMove {
 	Vertex nephew, parent, uncle;
 	
 	double w_ij, w_ai, w_aj, w_ac;
-		
-	double edgeProposalWidthControlVariable;
-	
+			
 	double minEdgeLength;
 	
 	boolean topologyChange;
 	boolean invalidProposal;
+	/** Probability of selecting the fast nephew-uncle switch */
+	double fastSwapProb;
+	/** <tt>true</tt> if we used <tt>fastSwapWithUncle</tt>*/
+	boolean didFastSwap;
 	public int nTopologyChanges = 0;
 	
 	PriorDistribution<Double> edgePrior;
@@ -29,11 +31,12 @@ public class LOCALTopologyMove extends McmcMove {
 	public LOCALTopologyMove (McmcModule m, PriorDistribution<Double> pr, double propVar, String n) {
 		owner = m;
 		edgePrior = pr;
-		edgeProposalWidthControlVariable = propVar;
+		proposalWidthControlVariable = propVar;
 		name = n;
 		autoTune = false; 
 		// autoTune = true by default
-		minEdgeLength = 0.001;
+		minEdgeLength = Utils.MIN_EDGE_LENGTH;
+		fastSwapProb = 0.9;
 	}
 	
 	/**
@@ -160,11 +163,16 @@ public class LOCALTopologyMove extends McmcMove {
 		}
 		if (topologyChange && !invalidProposal) {
 			// Do the topology switch:
-			logProposalRatio += nephew.fastSwapWithUncle();
-			// Below is another version, slow and slightly better mixing
-			// logProposalRatio += nephew.swapWithUncleAlignToParent();
+			if (Utils.generator.nextDouble() < fastSwapProb) {
+				logProposalRatio += nephew.fastSwapWithUncle();
+				didFastSwap = true;
+			}
+			else {
+				logProposalRatio += nephew.swapWithUncleAlignToParent();
+				didFastSwap = false;
+			}
 		}
-		//System.out.println("After LOCAL ("+logProposalRatio+"): "+tree.printedTree());
+		//System.out.println("After  LOCAL: "+tree.printedTree()+"\n"+"("+logProposalRatio+")");
 		return logProposalRatio;
 	}
 	@Override
@@ -178,9 +186,12 @@ public class LOCALTopologyMove extends McmcMove {
 	@Override
 	public void restoreState(Object externalState) {
 		if (topologyChange && !invalidProposal) {
-			uncle.fastSwapBackUncle();
-			// If using the alternative move:
-		       // uncle.swapBackUncleAlignToParent();
+			if (didFastSwap) {
+				uncle.fastSwapBackUncle();
+			}
+			else {
+		        uncle.swapBackUncleAlignToParent();
+			}
 		}
 		setEdges(w_ac-w_aj, w_ij, w_ai);
 	}

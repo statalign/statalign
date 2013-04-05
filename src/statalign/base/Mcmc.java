@@ -62,6 +62,8 @@ public class Mcmc extends Stoppable {
 
 	/** Is this a parallel chain? By-default false. */
 	private boolean isParallel = false;
+	
+	private boolean simulatedAnnealing = false;
 
 	/** The number of processes. */
 	private int noOfProcesses;
@@ -263,7 +265,7 @@ public class Mcmc extends Stoppable {
 		double uniformProposalWidthControlVariable = 0.1;
 		double multiplicativeProposalWidthControlVariable = 0.5;
 		
-		if(!mcmcpars.fixTopology) {
+		if(!mcmcpars.fixTopology && !mcmcpars.fixEdge) {
 			TopologyMove topologyMove = new TopologyMove(coreModel,edgePrior,
 					0.5*multiplicativeProposalWidthControlVariable,"Topology");
 			coreModel.addMcmcMove(topologyMove, topologyWeight);
@@ -271,7 +273,7 @@ public class Mcmc extends Stoppable {
 //			LOCALTopologyMove localTopologyMove = new LOCALTopologyMove(coreModel,edgePrior,
 //					0.5*multiplicativeProposalWidthControlVariable,"LOCALTopology");
 			localTopologyMove = new LOCALTopologyMove(coreModel,edgePrior,
-					0.5*multiplicativeProposalWidthControlVariable,"LOCALTopology");
+					1*multiplicativeProposalWidthControlVariable,"LOCALTopology");
 			coreModel.addMcmcMove(localTopologyMove, localTopologyWeight);
 		}
 		if(!mcmcpars.fixEdge) {
@@ -316,13 +318,13 @@ public class Mcmc extends Stoppable {
 		boolean accepted = coreModel.proposeParamChange(tree);
 		if (accepted) {
 //			if (Utils.DEBUG) {
-				//System.out.println("Move accepted.");
+			//	System.out.println("Move accepted.");
 //			}
 			totalLogLike = coreModel.curLogLike;
 		}
 		else {
 			//if (Utils.DEBUG) {
-				//System.out.println("Move rejected.");
+			//	System.out.println("Move rejected.");
 			//}
 			coreModel.setLogLike(totalLogLike);
 		}
@@ -502,6 +504,15 @@ public class Mcmc extends Stoppable {
 						if (topologyWeightIncrement > 0) {
 							coreModel.setWeight("Topology",topologyWeight+topologyWeightIncrement);
 						}
+					}
+					
+					if (simulatedAnnealing) {
+						tree.heat = 1;
+					}
+				}
+				else {
+					if (simulatedAnnealing) {
+						tree.heat = Math.log(i) / Math.log(burnIn / 2); 
 					}
 				}
 				

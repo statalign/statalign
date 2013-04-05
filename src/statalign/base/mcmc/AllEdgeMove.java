@@ -33,7 +33,8 @@ public class AllEdgeMove extends ContinuousPositiveParameterMove {
 			ProposalDistribution<Double> prop, String n) {
 		super(m,null,pr,prop,n);
 		param = new AllEdgeInterface();
-		minValue = 0.01;
+		//minValue = 0.01;
+		minValue = Utils.MIN_EDGE_LENGTH;
 	}
 	@Override
 	public void copyState(Object externalState) {

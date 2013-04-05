@@ -69,6 +69,7 @@ public class TopologyMove extends McmcMove {
 			nephewEdgeMove = new EdgeMove(
 					owner,nephew.index,edgePrior,new MultiplicativeProposal(),
 					edgeProposalWidthControlVariable,"nephewEdge");
+			nephewEdgeMove.setMinValue(Utils.MIN_EDGE_LENGTH);
 		}
 		else {
 			nephewEdgeMove.setEdgeIndex(nephew.index);
@@ -77,6 +78,7 @@ public class TopologyMove extends McmcMove {
 			parentEdgeMove = new EdgeMove(
 					owner,nephew.parent.index,edgePrior,new MultiplicativeProposal(),
 					edgeProposalWidthControlVariable,"parentEdge");
+			parentEdgeMove.setMinValue(Utils.MIN_EDGE_LENGTH);
 		}
 		else {
 			parentEdgeMove.setEdgeIndex(nephew.parent.index);
@@ -85,6 +87,7 @@ public class TopologyMove extends McmcMove {
 			uncleEdgeMove = new EdgeMove(
 					owner,uncle.index,edgePrior,new MultiplicativeProposal(),
 					edgeProposalWidthControlVariable,"uncleEdge");
+			uncleEdgeMove.setMinValue(Utils.MIN_EDGE_LENGTH);
 		}
 		else {
 			uncleEdgeMove.setEdgeIndex(uncle.index);
