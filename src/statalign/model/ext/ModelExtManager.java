@@ -192,8 +192,9 @@ public class ModelExtManager {
 		return selectedPlugin.proposeParamChange(tree);
 	}
 	
-	public boolean modExtParamChangeCallback(double logProposalRatio) {
-		return mcmc.modExtParamChangeCallback(logProposalRatio);
+	public boolean isParamChangeAccepted(double logProposalRatio) {
+		mcmc.coreModel.setLogLike(logLikeModExtParamChange(mcmc.tree));
+		return mcmc.isParamChangeAccepted(logProposalRatio);
 	}
 	
 	public void modifyProposalWidths() {

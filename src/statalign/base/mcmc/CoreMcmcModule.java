@@ -13,6 +13,9 @@ import statalign.model.ext.ModelExtManager;
  * The core McmcMoves need to call functions in modelExtMan
  * before and after execution, and also in order to update 
  * the likelihood contribution from all the ModelExtensions.   
+ * 
+ * @author herman
+ * 
  */
 public class CoreMcmcModule extends McmcModule {
 	
@@ -34,25 +37,21 @@ public class CoreMcmcModule extends McmcModule {
 	}
 	@Override
 	public boolean proposeParamChange(Tree tree) {
+		// Each move will update the curLogLike variable
+		// for `this'
 		boolean accepted = false;
 		int[] weights = new int[2];
 		weights[0] = getParamChangeWeight();
 		weights[1] = modelExtMan.getParamChangeWeight();
 		int choice = Utils.weightedChoose(weights);
-		if (choice == 0) {
+		if (choice == 0) { // Core move selected
 			//System.out.println("Core move.");
 			accepted = super.proposeParamChange(tree);
-			// These moves will update the curLogLike variable
-			// for their owner, i.e. this
 		}
-		else {
+		else { // Model extension move selected
 			//System.out.println("Model extension move.");
 			modelExtMan.beforeModExtParamChange(tree);
 			accepted = modelExtMan.proposeParamChange(tree);
-			// These moves do not have access to this McmcModule
-			// so we need to extract the likelihood via the 
-			// modelExtMan:
-			setLogLike(modelExtMan.logLikeModExtParamChange(tree));
 			modelExtMan.afterModExtParamChange(tree, accepted);
 		}
 		return accepted;

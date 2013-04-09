@@ -95,7 +95,7 @@ public class Mcmc extends Stoppable {
 	 *    accept or reject the final configuration, with Hastings ratio
 	 *    equal to the product of the Hastings ratios along the way.
 	 */
-	boolean acceptAllCoreMoves = false;
+	boolean acceptAllMoves = false;
 	
 	/**
 	 * Number of steps in which the chain will be allowed to move randomly
@@ -130,7 +130,7 @@ public class Mcmc extends Stoppable {
 	 * The coreModel also decides whether to execute MCMC moves from the 
 	 * ModelExtension modules.
 	 */
-	private McmcModule coreModel;
+	public McmcModule coreModel;
 	
 	// TODO Move the parameters below into MCMCPars. Would be nice to have
 	// a set of sliding bars in a menu in the GUI that go from 0 to 100, 
@@ -320,13 +320,13 @@ public class Mcmc extends Stoppable {
 //			if (Utils.DEBUG) {
 			//	System.out.println("Move accepted.");
 //			}
-			totalLogLike = coreModel.curLogLike;
+			totalLogLike = coreModel.curLogLike; // Update likelihood cache
 		}
 		else {
 			//if (Utils.DEBUG) {
 			//	System.out.println("Move rejected.");
 			//}
-			coreModel.setLogLike(totalLogLike);
+			coreModel.setLogLike(totalLogLike); // Restore to previous likelihood
 		}
 		if(Utils.DEBUG) {
 			tree.recomputeCheckLogLike();
@@ -338,33 +338,16 @@ public class Mcmc extends Stoppable {
 	}
 	
 	/**
-	 * This function is called by the McmcMove objects inside <tt>coreModel</tt>
-	 * in order to determine whether the proposed moves are to be accepted.
+	 * This function is called by the McmcMove objects in order to determine whether 
+	 * the proposed moves are to be accepted.
 	 *   
 	 * @param logProposalRatio This also includes the contribution from the prior densities.
-	 * This could be problematic if the priors depend on other parameters, but
-	 * currently we assume that the priors are always independent.
+	 * It is assumed that any dependencies between the priors and other parameters will be
+	 * handled inside the McmcMove objects.
 	 * @return true if the move is accepted
 	 */
 	public boolean isParamChangeAccepted(double logProposalRatio) {
-		double oldLogLikelihood = totalLogLike;
-		double newLogLikelihood = coreModel.curLogLike;
-		return acceptanceDecision(oldLogLikelihood,newLogLikelihood,logProposalRatio,acceptAllCoreMoves);
-	}	
-	
-	/**
-	 * This function is called by the McmcMove objects inside the ModelExtensions
-	 * in order to determine whether the proposed moves are to be accepted.
-	 *   
-	 * @param logProposalRatio This also includes the contribution from the prior densities.
-	 * This could be problematic if the priors depend on other parameters, but
-	 * currently we assume that the priors are always independent.
-	 * @return true if the move is accepted
-	 */
-	public boolean modExtParamChangeCallback(double logProposalRatio) {
-		double oldLogLikelihood = totalLogLike;
-		double newLogLikelihood = modelExtMan.logLikeModExtParamChange(tree);
-		return acceptanceDecision(oldLogLikelihood,newLogLikelihood,logProposalRatio,false);
+		return acceptanceDecision(totalLogLike,coreModel.curLogLike,logProposalRatio,acceptAllMoves);
 	}	
 	
 	public boolean acceptanceDecision(double oldLogLikelihood, double newLogLikelihood, double logProposalRatio,
@@ -480,7 +463,7 @@ public class Mcmc extends Stoppable {
 			// by accepting all moves for a period.
 			if (randomisationPeriod > 0) {
 				System.out.println("Randomising initial configuration for "+randomisationPeriod+" steps.");
-				acceptAllCoreMoves = true;
+				acceptAllMoves = true;
 				coreModel.setWeight("Topology",topologyWeightDuringRandomisationPeriod);
 			}
 			for (int i = 0; i < randomisationPeriod; i++) {						
@@ -489,7 +472,7 @@ public class Mcmc extends Stoppable {
 			coreModel.setWeight("Topology",topologyWeight);
 			coreModel.zeroAllMoveCounts();
 			modelExtMan.zeroAllMoveCounts();
-			acceptAllCoreMoves = false;
+			acceptAllMoves = false;
 			
 			burnin = true;
 			boolean alreadyAddedWeightModifiers = false;
