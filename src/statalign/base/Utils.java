@@ -32,7 +32,7 @@ public class Utils{
 	 * Debugging mode (various consistency checks done if on)
 	 */
 	public static boolean DEBUG = false;
-	
+		
 	/**
 	 * The random number generator used throughout the program.
 	 * A new generator is constructed at each MCMC run using the seed in the

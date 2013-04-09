@@ -104,7 +104,8 @@ public class TopologyMove extends McmcMove {
 	}
 	@Override
 	public double proposal(Object externalState) {
-			
+		System.out.println("Before Topology: "+tree.printedTree());
+
 		if(Utils.DEBUG){
 			System.out.println("Before:");
 			System.out.println("Likelihood:");
@@ -126,11 +127,22 @@ public class TopologyMove extends McmcMove {
 			} catch(IOException e){}
 		}
 		
-		double logProposalRatio = nephewEdgeMove.proposal(externalState);
-		logProposalRatio += parentEdgeMove.proposal(externalState);
-		logProposalRatio += uncleEdgeMove.proposal(externalState);
+//		double logProposalRatio = nephewEdgeMove.proposal(externalState);
+//		System.out.println("logProposalRatio after nephew = "+logProposalRatio);
+//		logProposalRatio += parentEdgeMove.proposal(externalState);
+//		System.out.println("logProposalRatio after parent = "+logProposalRatio);
+//		logProposalRatio += uncleEdgeMove.proposal(externalState);
+//		System.out.println("logProposalRatio after uncle = "+logProposalRatio);
 		
-		logProposalRatio += nephew.fastSwapWithUncle();
+//		logProposalRatio += nephew.fastSwapWithUncle();
+		//double logProposalRatio = nephew.fastSwapWithUncle();
+		String[] s = nephew.printedAlignment();
+		System.out.println(s[0]+"\n"+s[1]);
+		double logProposalRatio = nephew.swapWithUncleAlignToParent();
+		System.out.println("logProposalRatio after swap = "+logProposalRatio);
+		System.out.println("After  Topology: "+tree.printedTree());
+		s = nephew.printedAlignment();
+		System.out.println(s[0]+"\n"+s[1]);
 
 		if(Utils.DEBUG){
 			System.out.println("Proposed:");
@@ -168,9 +180,9 @@ public class TopologyMove extends McmcMove {
 	public void restoreState(Object externalState) {
 		
 		// Note these are restored in the reverse order to the proposal
-		uncle.fastSwapBackUncle();
+	//	uncle.fastSwapBackUncle();
 		// If using the alternative move:
-        // uncle.swapBackUncleAlignToParent();
+       uncle.swapBackUncleAlignToParent();
 		
 		uncleEdgeMove.restoreState(externalState);
 		parentEdgeMove.restoreState(externalState);

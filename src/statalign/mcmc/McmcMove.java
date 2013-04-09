@@ -51,7 +51,7 @@ public abstract class McmcMove {
 	}
 	
 	public void move(Object externalState) {
-		//System.out.println("Executing move:\""+name+"\"");
+		System.out.println("Executing move:\""+name+"\"");
 		time -= System.currentTimeMillis();
 		proposalCount++;
 		moveProposed = true;

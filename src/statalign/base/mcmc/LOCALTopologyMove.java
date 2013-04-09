@@ -36,7 +36,7 @@ public class LOCALTopologyMove extends McmcMove {
 		autoTune = false; 
 		// autoTune = true by default
 		minEdgeLength = Utils.MIN_EDGE_LENGTH;
-		fastSwapProb = 0.9;
+		fastSwapProb = 0.95;
 	}
 	
 	/**
@@ -144,7 +144,7 @@ public class LOCALTopologyMove extends McmcMove {
 		double w_ai_new = r * w_ai;
 		double w_aj_new = u2 * w_ac_new;
 		double logProposalRatio = 3 * Math.log(r);
-		//System.out.println("Before LOCAL: "+tree.printedTree());
+		System.out.println("Before LOCAL: "+tree.printedTree());
 		invalidProposal = false;
 		if (w_aj_new < w_ai_new) { // Then we have a topology switch
 			topologyChange = true;
@@ -172,7 +172,7 @@ public class LOCALTopologyMove extends McmcMove {
 				didFastSwap = false;
 			}
 		}
-		//System.out.println("After  LOCAL: "+tree.printedTree()+"\n"+"("+logProposalRatio+")");
+		System.out.println("After  LOCAL: "+tree.printedTree());
 		return logProposalRatio;
 	}
 	@Override

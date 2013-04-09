@@ -58,6 +58,8 @@ public class Tree extends Stoppable implements DataType {
 
     public CNetwork network;
 
+    //boolean changingTree = false;
+    boolean changingTree = true;
 
     public Tree() {
     }

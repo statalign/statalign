@@ -12,8 +12,11 @@ import statalign.base.Utils;
  */
 public class HmmNonParam extends HmmSilent {
 
-	final double P = 0.99999;
-	final double Q = 0.6;
+	//final double P = 0.9999999;
+	//final double P = 0.99999; // original
+	final double P = 0.99;
+	final double Q = 0.6; // original
+	//final double Q = 0.2;
 	final int SILENT = 7;
 
 	/* transition matrix for 3-sequence alignment HMM, st. 7 is silent, st. 0 is start, st. 6 is end*/

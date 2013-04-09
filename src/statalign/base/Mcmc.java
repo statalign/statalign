@@ -308,6 +308,7 @@ public class Mcmc extends Stoppable {
 	 */
 	private void sample(int samplingMethod) throws StoppedException {
 		stoppable();
+		System.out.println("tree.getLogLike() (BEFORE) = "+tree.getLogLike());
 		if(Utils.DEBUG) {
 			tree.recomputeCheckLogLike();
 			if(Math.abs(modelExtMan.totalLogLike(tree)-totalLogLike) > 1e-5) {
@@ -318,13 +319,13 @@ public class Mcmc extends Stoppable {
 		boolean accepted = coreModel.proposeParamChange(tree);
 		if (accepted) {
 //			if (Utils.DEBUG) {
-			//	System.out.println("Move accepted.");
+				System.out.println("\t\tMove accepted.");
 //			}
 			totalLogLike = coreModel.curLogLike;
 		}
 		else {
 			//if (Utils.DEBUG) {
-			//	System.out.println("Move rejected.");
+				System.out.println("Move rejected.");
 			//}
 			coreModel.setLogLike(totalLogLike);
 		}
@@ -369,6 +370,7 @@ public class Mcmc extends Stoppable {
 	
 	public boolean acceptanceDecision(double oldLogLikelihood, double newLogLikelihood, double logProposalRatio,
 			boolean acceptMoveIfPossible) {
+		System.out.println("old: "+oldLogLikelihood+", new: "+newLogLikelihood+", logProp: "+logProposalRatio);
 		if (logProposalRatio > Double.NEGATIVE_INFINITY) {
 			cumulativeLogProposalRatio += logProposalRatio;
 		}
