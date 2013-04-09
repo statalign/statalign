@@ -1524,11 +1524,11 @@ public class Vertex {
         }
         winLast = actualAC;
         
-       // if (winLength == 33 && index == 3) {
+        if (winLength == 33 && index == 3) {
         	owner.root.calcFelsRecursively();
         	owner.root.calcUpperRecursively();
         	owner.changingTree = false;
-      //  }
+        }
         //double bpp = -Math.log(p.value * (length - winLength == 0 ? 1 : length - winLength));
         double bpp = -Math.log(p.value / (length - winLength + 1));
 
@@ -1591,9 +1591,9 @@ public class Vertex {
     	System.out.println("Total bpp\t "+bpp);
         //System.out.print(" Prop: "+bppProp+" it's doublecheck: "+bppBack+" bpp: "+bpp+" ");
     	printToScreenAlignment(b,b+winLength);
-    //	if (winLength == 33 && index == 3) {
+    	if (winLength == 33 && index == 3) {
         	owner.changingTree = true;
-    //    }
+        }
         return bpp;
     }
     
@@ -3052,7 +3052,11 @@ public class Vertex {
 //    		System.out.println(owner.vertex[ind].name+"\t"+s[ind].substring(start,end));
 //    	}
     	for (int ii=0; ii<s.length; ii++) {
-    		System.out.println(owner.vertex[ii].name+"\t"+s[ii]);
+    		String n = owner.vertex[ii].name;
+    		if (n == null) {
+    			n = String.format("%8.4f",owner.vertex[ii].edgeLength);
+    		}
+    		System.out.println(n+"\t"+s[ii]);
     	}
     }
     
