@@ -1165,7 +1165,7 @@ public class Vertex {
                         if (hmm2Parent[k] != 0) {                // parent present: substitution (* *) or deletion (* -)
                             b = (this == parent.left) ? p.right : p.left;
                             Utils.calcFelsen(felsen, hmm2Child[k] != 0 ? c.seq : null, charTransMatrix, b != null ? b.seq : null, brother.charTransMatrix);
-                            if (parent == owner.root || p.orphan || owner.changingTree) {
+                            if (parent == owner.root || p.orphan || Utils.USE_UPPER) {
                                 emissionProb = Utils.calcEmProb(felsen, equDist);
                             }
                             else {
@@ -1492,6 +1492,10 @@ public class Vertex {
     	System.out.println(owner.hmm2.params[0]+" "+owner.hmm2.params[1]+" "+owner.hmm2.params[2]);
     	System.out.println(owner.printedTree());
     	StringBuffer sb = new StringBuffer();
+    	
+    	System.out.println("root.indelLogLike\t "+owner.root.indelLogLike);
+        System.out.println("root.orphanLogLike\t "+owner.root.orphanLogLike);
+
 //    	if (parent != null) {
 //    		parent.print(sb);
 //    	}
@@ -1524,7 +1528,7 @@ public class Vertex {
         }
         winLast = actualAC;
         
-        if (winLength == 33 && index == 3) {
+        if (Utils.USE_UPPER) {
         	owner.root.calcFelsRecursively();
         	owner.root.calcUpperRecursively();
         	owner.changingTree = false;
@@ -1569,7 +1573,9 @@ public class Vertex {
         }
 
         bpp += bppProp;
-        System.out.println("bpp after proposal\t "+bpp);
+
+        System.out.println("root.indelLogLike\t "+owner.root.indelLogLike);
+        System.out.println("root.orphanLogLike\t "+owner.root.orphanLogLike);
 
         if(Utils.DEBUG) {
         	// check proposal - backproposal consistency
@@ -1581,19 +1587,16 @@ public class Vertex {
         	}
         }
 
-        // backproposal probability for cutting out the window
-        //bpp += Math.log(Utils.linearizerWeightProb(length, winLength, Utils.WINDOW_MULTIPLIER*Math.sqrt(length)) 
-        //		* (length - winLength));
         System.out.println("Final window length\t "+winLength);
-        bpp += Math.log(Utils.linearizerWeightProb(length, winLength, Utils.WINDOW_MULTIPLIER*Math.sqrt(length)) 
-               		/ (length - winLength + 1));
+        double windowProb = Math.log(Utils.linearizerWeightProb(length, winLength, Utils.WINDOW_MULTIPLIER*Math.sqrt(length)) 
+           		/ (length - winLength + 1));
+    
+        System.out.println("final window selection\t "+windowProb);
+        bpp += windowProb;
 
     	System.out.println("Total bpp\t "+bpp);
-        //System.out.print(" Prop: "+bppProp+" it's doublecheck: "+bppBack+" bpp: "+bpp+" ");
     	printToScreenAlignment(b,b+winLength);
-    	if (winLength == 33 && index == 3) {
-        	owner.changingTree = true;
-        }
+    	
         return bpp;
     }
     
@@ -2634,6 +2637,9 @@ public class Vertex {
             v.calcFelsen();
             v.calcOrphan();
             v.calcIndelLogLike(false);
+        }
+        if (Utils.USE_UPPER) {
+        	calcUpperRecursively();
         }
     }
 
