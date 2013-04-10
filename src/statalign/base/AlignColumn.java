@@ -128,6 +128,7 @@ public class AlignColumn {
 		saveLeft(copy);
 		saveRight(copy);
 		seq = copy.seq;
+		upp = copy.upp;
 	}
 
 	void saveParent(AlignColumn copy) {

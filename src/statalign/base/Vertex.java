@@ -1165,7 +1165,7 @@ public class Vertex {
                         if (hmm2Parent[k] != 0) {                // parent present: substitution (* *) or deletion (* -)
                             b = (this == parent.left) ? p.right : p.left;
                             Utils.calcFelsen(felsen, hmm2Child[k] != 0 ? c.seq : null, charTransMatrix, b != null ? b.seq : null, brother.charTransMatrix);
-                            if (parent == owner.root || p.orphan || Utils.USE_UPPER) {
+                            if (parent == owner.root || p.orphan || !Utils.USE_UPPER) {
                                 emissionProb = Utils.calcEmProb(felsen, equDist);
                             }
                             else {
