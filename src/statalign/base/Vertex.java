@@ -435,7 +435,9 @@ public class Vertex {
             left.recomputeCheckLogLike();
             //System.out.println("calling the right child");
             right.recomputeCheckLogLike();
-            calcUpperWithCheck();
+            //calcUpperWithCheck(); 
+            // we shouldn't require all upp vectors to be
+            // recomputed after every move, because that's unnecessary
         }
         calcFelsenWithCheck();
         calcOrphanWithCheck();
@@ -496,8 +498,8 @@ public class Vertex {
         		}
         		if (!match) {
         			String info = "";
-        			for(int i = 0; i < upp_old.length && match; i++){
-        				info += new String(upp_old[i]+"/"+v.upp[i]+" ");
+        			for(int i = 0; i < upp_old.length; i++){
+        				info += (upp_old[i])+"/"+(v.upp[i])+" ";
         			}
         			info += "\n";
         			throw new RuntimeException("Upper probabilities do not match:\n"+info);
