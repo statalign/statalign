@@ -446,6 +446,8 @@ public class Vertex {
     /**
      * This function calculates the upper probability vectors, which contain
      * the partial likelihoods for everything except this subtree.
+     * Requires the felsenstein partial likelihoods to have already been 
+     * computed for everything below.
      */
     public void calcUpperRecursively() {
     	calcUpper();
@@ -457,6 +459,9 @@ public class Vertex {
         }
     }
     void calcUpper() {
+    	calcUpper(false);
+    }
+    void calcUpper(boolean withCheck) {
     	AlignColumn v; 
     	Vertex brother = null;
     	double[][] trans = null;
@@ -466,6 +471,13 @@ public class Vertex {
     	}
     	
         for (v = first; v != last; v = v.next) {
+        	double[] upp_old = null;
+        	if (withCheck) {
+        		upp_old = new double[v.upp.length];
+        		for (int i=0; i<upp_old.length; i++) {
+        			upp_old[i] = v.upp[i];
+        		}
+        	}
         	if (this == owner.root || v.orphan) {
         		v.upp = owner.substitutionModel.e.clone();
         	}
@@ -473,33 +485,23 @@ public class Vertex {
         		AlignColumn p = v.parent;
         		AlignColumn b = (this == parent.left) ? p.right : p.left;
         		v.upp = p.upp.clone();
-//        		System.out.print("v ");
-//        		for (int i=0; i<v.upp.length; i++) {
-//    	          	System.out.print(v.upp[i]+" ");
-//    	        }
-//    	        System.out.println();
         		if (b != null) {
 	        		for (int i=0; i<v.upp.length; i++) {
 	        			for (int j=0; j<v.upp.length; j++) {
 	        				v.upp[i] += b.seq[j] * trans[i][j];
 	        			}
 	        		}
-//	        		System.out.print("b ");
-//	        		for (int i=0; i<v.upp.length; i++) {
-//	    	          	System.out.print(b.seq[i]+" ");
-//	    	        }
-//	    	        System.out.println();
-//	        		System.out.print("bv ");
-//	        		for (int i=0; i<v.upp.length; i++) {
-//	    	          	System.out.print(v.upp[i]+" ");
-//	    	        }
-//	    	        System.out.println();
         		}
         	}
-//    	   for (int i=0; i<v.upp.length; i++) {
-//           	System.out.print(v.upp[i]+" ");
-//           }
-//           System.out.println();
+        	if (withCheck) {
+        		boolean match = true;
+        		for(int i = 0; i < upp_old.length && match; i++){
+        			match = Math.abs(upp_old[i]/v.upp[i] - 1.0) < 0.0001;
+        		}
+        		if (!match) {
+        			throw new RuntimeException("Upper probabilities do not match.");
+        		}
+        	}
         }
      
     }
@@ -514,6 +516,7 @@ public class Vertex {
         }
         calcFelsenWithCheck();
         calcOrphanWithCheck();
+        calcUpper(true);
         calcIndelLogLike(true);
     }
 
