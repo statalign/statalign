@@ -113,7 +113,7 @@ public abstract class IndelMove extends ContinuousPositiveParameterMove {
 			for (int i = 0; i < tree.vertex.length; i++) {
 				tree.vertex[i].updateHmmMatrices();
 			}
-			tree.root.calcIndelLikeRecursively();
+			tree.root.calcIndelLogLikeRecursively();
 			owner.setLogLike(((CoreMcmcModule) owner).getModelExtMan().logLikeIndelParamChange(tree, tree.hmm2, this));
 
 		}
@@ -124,7 +124,7 @@ public abstract class IndelMove extends ContinuousPositiveParameterMove {
 		for (int i = 0; i < tree.vertex.length; i++) {
 			tree.vertex[i].updateHmmMatrices();
 		}
-		tree.root.calcIndelLikeRecursively();
+		tree.root.calcIndelLogLikeRecursively();
 	}
 
 

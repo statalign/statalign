@@ -216,7 +216,7 @@ public class TreeAlgo extends Stoppable {
 		}
 		tree.root = tree.vertex[vnum - 1];
 		tree.root.calcOrphan();
-		tree.root.calcFelsRecursively();
+		tree.root.calcFelsenRecursively();
 		
 		return tree;
 	}

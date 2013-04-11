@@ -95,8 +95,10 @@ public class AlignColumn {
 		orphan = true;
 		this.next = next;
 		next.prev = this;
-		if(newSeq)
+		if(newSeq) {
 			seq = new double[owner.owner.substitutionModel.e.length];
+			upp = new double[owner.owner.substitutionModel.e.length];
+		}
 	}
 
 	void setWinFirst(AlignColumn prev) {

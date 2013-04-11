@@ -429,20 +429,19 @@ public class Vertex {
         }
     }
 
-    /**
-     * This function calculates the Felsenstein likelihood. The result is stored
-     * in the orphanLogLike at the root.
-     */
-    public void calcFelsRecursively() {
+    void recomputeCheckLogLike() {
         if (left != null && right != null) {
             // System.out.println("calling the left child");
-            left.calcFelsRecursively();
+            left.recomputeCheckLogLike();
             //System.out.println("calling the right child");
-            right.calcFelsRecursively();
+            right.recomputeCheckLogLike();
+            calcUpperWithCheck();
         }
-        calcFelsen();
-        calcOrphan();
+        calcFelsenWithCheck();
+        calcOrphanWithCheck();
+        calcIndelLogLikeWithCheck();
     }
+
     /**
      * This function calculates the upper probability vectors, which contain
      * the partial likelihoods for everything except this subtree.
@@ -458,10 +457,7 @@ public class Vertex {
             right.calcUpperRecursively();
         }
     }
-    void calcUpper() {
-    	calcUpper(false);
-    }
-    void calcUpper(boolean withCheck) {
+    void calcUpper(boolean withCheck, boolean withoutBrother) {
     	AlignColumn v; 
     	Vertex brother = null;
     	double[][] trans = null;
@@ -485,7 +481,7 @@ public class Vertex {
         		AlignColumn p = v.parent;
         		AlignColumn b = (this == parent.left) ? p.right : p.left;
         		v.upp = p.upp.clone();
-        		if (b != null) {
+        		if (b != null && !withoutBrother) {
 	        		for (int i=0; i<v.upp.length; i++) {
 	        			for (int j=0; j<v.upp.length; j++) {
 	        				v.upp[i] += b.seq[j] * trans[i][j];
@@ -499,85 +495,111 @@ public class Vertex {
         			match = Math.abs(upp_old[i]/v.upp[i] - 1.0) < 0.0001;
         		}
         		if (!match) {
-        			throw new RuntimeException("Upper probabilities do not match.");
+        			String info = "";
+        			for(int i = 0; i < upp_old.length && match; i++){
+        				info += new String(upp_old[i]+"/"+v.upp[i]+" ");
+        			}
+        			info += "\n";
+        			throw new RuntimeException("Upper probabilities do not match:\n"+info);
         		}
         	}
         }
-     
+    }
+    void calcUpper() {
+    	calcUpper(false,false);
+    }
+    void calcUpperWithCheck() {
+    	calcUpper(true,false);
+    }
+    void calcUpperWithoutBrother() {
+    	calcUpper(false,true);
     }
 
-
-    void recomputeCheckLogLike() {
+    /**
+     * This function calculates the Felsenstein likelihood for the subtree below <code>this</code>. 
+     * When called from the root, the result is stored in <code>orphanLogLike</code> at the root.
+     */
+    public void calcFelsenRecursively() {
         if (left != null && right != null) {
             // System.out.println("calling the left child");
-            left.recomputeCheckLogLike();
+            left.calcFelsenRecursively();
             //System.out.println("calling the right child");
-            right.recomputeCheckLogLike();
+            right.calcFelsenRecursively();
         }
-        calcFelsenWithCheck();
-        calcOrphanWithCheck();
-        calcUpper(true);
-        calcIndelLogLike(true);
+        calcFelsen();
+        calcOrphan();
     }
-
-
-    /** Calculates Felsenstein likelihoods of `this' */
+    /** 
+     * Calculates Felsenstein likelihoods of `this'. 
+     * @param withCheck <code>true</code> if we are just running this function to 
+     * check whether the current stored partial likelihood vectors are consistent.
+     * @param ignoreChild If 0, then both children are considered (if they exist). If
+     * 1, then the left child is ignored, and if 2 then the right child is ignored. 
+     * This is for use during topology switching moves.
+     */
+    void calcFelsen(boolean withCheck, int ignoreChild) {
+        if (left != null && right != null) {
+            AlignColumn p;
+            AlignColumn l = left.first;
+            AlignColumn r = right.first;
+            double[] fel1, fel2;
+            for (p = first; p != last; p = p.next) {
+                fel1 = null;
+                fel2 = null;
+                while (l != left.last && l.orphan)
+                    l = l.next;
+                while (r != right.last && r.orphan)
+                    r = r.next;
+                if (l.parent == p) {
+                    fel1 = l.seq;
+                    l = l.next;
+                }
+                if (r.parent == p) {
+                    fel2 = r.seq;
+                    r = r.next;
+                }
+                if (withCheck) {
+                	 boolean match = Utils.calcFelsenWithCheck(p.seq, fel1, left.charTransMatrix, fel2, right.charTransMatrix);
+                     if (!match) {
+                         new ErrorMessage(null, "Felsenstein does not match! ", true);
+                     }
+                }
+                else { 
+                	if (ignoreChild == 0) {
+                		Utils.calcFelsen(p.seq, fel1, left.charTransMatrix, fel2, right.charTransMatrix);
+                	}
+                	else if (ignoreChild == 1) { // ignore left child
+                		Utils.calcFelsen(p.seq, null, null, fel2, right.charTransMatrix);
+                	}
+                	else if (ignoreChild == 2) { // ignore right child
+                		Utils.calcFelsen(p.seq, fel1, left.charTransMatrix, null, null);
+                	}
+                	else throw new IllegalArgumentException("Argument `ignoreChild' must take value 0, 1 or 2.");                			
+            	}
+            }
+        }
+    }
     void calcFelsen() {
-        if (left != null && right != null) {
-            AlignColumn p;
-            AlignColumn l = left.first;
-            AlignColumn r = right.first;
-            double[] fel1, fel2;
-            for (p = first; p != last; p = p.next) {
-                fel1 = null;
-                fel2 = null;
-                while (l != left.last && l.orphan)
-                    l = l.next;
-                while (r != right.last && r.orphan)
-                    r = r.next;
-                if (l.parent == p) {
-                    fel1 = l.seq;
-                    l = l.next;
-                }
-                if (r.parent == p) {
-                    fel2 = r.seq;
-                    r = r.next;
-                }
-                Utils.calcFelsen(p.seq, fel1, left.charTransMatrix, fel2, right.charTransMatrix);
-            }
-        }
+    	calcFelsen(false,0);
     }
-
-    /** Calculates Felsenstein likelihoods of `this' */
     void calcFelsenWithCheck() {
-        if (left != null && right != null) {
-            AlignColumn p;
-            AlignColumn l = left.first;
-            AlignColumn r = right.first;
-            double[] fel1, fel2;
-            for (p = first; p != last; p = p.next) {
-                fel1 = null;
-                fel2 = null;
-                while (l != left.last && l.orphan)
-                    l = l.next;
-                while (r != right.last && r.orphan)
-                    r = r.next;
-                if (l.parent == p) {
-                    fel1 = l.seq;
-                    l = l.next;
-                }
-                if (r.parent == p) {
-                    fel2 = r.seq;
-                    r = r.next;
-                }
-                boolean match = Utils.calcFelsenWithCheck(p.seq, fel1, left.charTransMatrix, fel2, right.charTransMatrix);
-                if (!match) {
-                    new ErrorMessage(null, "Felsenstein does not match! ", true);
-                }
-            }
-        }
+    	calcFelsen(true,0);
     }
-
+    /**
+     * Computes the Felsenstein likelihood for this, ignoring everything below the 
+     * specified child Vertex (i.e. only considering one side of the descendant tree).
+     * @param child One of the two children of the current Vertex
+     */
+    void calcFelsenWithout(Vertex child) {
+    	if (child == left) {
+    		calcFelsen(false,1);
+    	}
+    	else if (child == right) {
+    		calcFelsen(false,2);
+    	}
+    	else throw new IllegalArgumentException("Vertex "+child.index+" is not a child of "+index+".");
+    }
+    
     /**
      * Calculates the sum of orphan likelihoods in the (inclusive) subtree of `this'
      * which is then stored in `this.orphanLogLikge' (this implies that alignment to
@@ -585,7 +607,7 @@ public class Vertex {
      * Saves previous orphan likelihood into `old' so it shouldn't be called twice in a row.
      * (But does not save previous Felsensteins of `this' in AlignColumn's `seq'.)
      */
-    void calcOrphan() {
+    void calcOrphan(boolean withCheck) {
         old.orphanLogLike = orphanLogLike;
 
         //orphan likelihoods
@@ -597,64 +619,41 @@ public class Vertex {
             }
         }
 
-        if (left != null && right != null)
-            orphanLogLike += left.orphanLogLike + right.orphanLogLike;
-    }
-
-    /**
-     * Calculates the sum of orphan likelihoods in the (inclusive) subtree of `this'
-     * which is then stored in `this.orphanLogLike' (this implies that alignment to
-     * parent must exists at the time of calling)
-     * Saves previous orphan likelihood into `old' so it shouldn't be called twice in a row.
-     * (But does not save previous Felsensteins of `this' in AlignColumn's `seq'.)
-     */
-    void calcOrphanWithCheck() {
-        double oldorphanLogLike = orphanLogLike;
-
-        //orphan likelihoods
-        orphanLogLike = 0.0;
-
-        for (AlignColumn actual = first; actual != last; actual = actual.next) {
-            if (actual.parent == null || actual.orphan) {
-                orphanLogLike += Math.log(Utils.calcEmProb(actual.seq, owner.substitutionModel.e));
-            }
-        }
-
-        if (left != null && right != null)
-            orphanLogLike += left.orphanLogLike + right.orphanLogLike;
-
-        if (oldorphanLogLike - orphanLogLike > 1e-6) {
-            new ErrorMessage(null, "Problem with orphan loglike: fast: " + oldorphanLogLike + " slow: " + orphanLogLike, true);
-            int index = 0;
-            while (owner.vertex[index] != this) {
-                index++;
-            }
-            //System.out.println("We are in vertex "+index+(name == null ? print(0) : "("+name+")"));
-            //System.out.print("Selected vertices: ");
-            //for(int i = 0; i < owner.vertex.length; i++){
-            //	if(owner.vertex[i].selected){
-            //		System.out.print(i+(owner.vertex[i].name == null ? owner.vertex[i].print(0) : "("+owner.vertex[i].name+")")+" ");
-            //	}
-            //}
-            //System.out.println();
-        }
-    }
-
-    void calcRecursivlyOrphanWithCheck() {
         if (left != null && right != null) {
-            left.calcRecursivlyOrphanWithCheck();
-            right.calcRecursivlyOrphanWithCheck();
+            orphanLogLike += left.orphanLogLike + right.orphanLogLike;
+        }
+        if (withCheck) {
+	        if (old.orphanLogLike - orphanLogLike > 1e-6) {
+	            new ErrorMessage(null, "Problem with orphan loglike: fast: " + old.orphanLogLike + " slow: " + orphanLogLike, true);
+	            int index = 0;
+	            while (owner.vertex[index] != this) {
+	                index++;
+	            }
+	        }
+        }
+    }
+    void calcOrphan() {
+    	calcOrphan(false);
+    }
+    void calcOrphanWithCheck() {
+    	calcOrphan(true);
+    }
+
+    void calcOrphanRecursivelyWithCheck() {
+        if (left != null && right != null) {
+            left.calcOrphanRecursivelyWithCheck();
+            right.calcOrphanRecursivelyWithCheck();
         }
         calcOrphanWithCheck();
     }
 
 
-    public void calcIndelLikeRecursively() {
+    public void calcIndelLogLikeRecursively() {
         if (left != null && right != null) {
-            left.calcIndelLikeRecursively();
-            right.calcIndelLikeRecursively();
+            left.calcIndelLogLikeRecursively();
+            right.calcIndelLogLikeRecursively();
         }
-        calcIndelLogLike(false);
+        calcIndelLogLike();
     }
 
     /**
@@ -677,6 +676,12 @@ public class Vertex {
         	indelLogLike = newIndelLogLike;
         else if(Math.abs(indelLogLike - newIndelLogLike) > 1e-5)
         	throw new Error("likelihood inconsistency in calcIndelLogLike - stored likelihood: "+indelLogLike+" recomputed: "+newIndelLogLike);
+    }
+    void calcIndelLogLike() {
+    	calcIndelLogLike(false);
+    }
+    void calcIndelLogLikeWithCheck() {
+    	calcIndelLogLike(true);
     }
 
     /**
@@ -721,6 +726,15 @@ public class Vertex {
         return indelLogLikeUp;
     }
 
+    /**
+     * NB hmm3 currently does not use information about the upper parts of the tree,
+     * because otherwise the recursive realignment moves would involve back-proposal
+     * probabilities that would be impossible to compute. It should be possible to
+     * use information about the parts of the tree above the root of the subtree,
+     * which would involve repeatedly calling calcUpperWithoutBrother on the
+     * downward recursion in doRecAlign, before the back-proposal probabilities are computed.
+     * @return
+     */
     private double[][][] hmm3ProbMatrix() {
         double[] equDist = owner.substitutionModel.e;
         int hmm3Parent[] = owner.hmm3.getStateEmit()[0];
@@ -1121,7 +1135,7 @@ public class Vertex {
         left.calcOrphan();
         right.calcOrphan();
         calcFelsen();
-        calcIndelLogLike(false);
+        calcIndelLogLike();
         //		System.out.println("printing the alignments at the root of this subtree: "+print());
         //		System.out.println("pointers");
         //	String[] s = left.printedAlignment();
@@ -1448,10 +1462,15 @@ public class Vertex {
         for (c = winFirst.prev; c != null && c.parent == parent.old.winFirst; c = c.prev)
             c.parent = parent.winFirst;
 
+        if (Utils.USE_UPPER) { 
+        	// Then we may have modified the Felsenstein vectors
+        	// for `this', so need to restore them.
+        	calcFelsen();
+        }
         calcOrphan();
         parent.calcFelsen();
         parent.calcOrphan();
-        parent.calcIndelLogLike(false);
+        parent.calcIndelLogLike();
 
         return retVal.value;
     }
@@ -1531,11 +1550,10 @@ public class Vertex {
         }
         winLast = actualAC;
         
-        if (Utils.USE_UPPER) {
-        	owner.root.calcFelsRecursively();
-        	owner.root.calcUpperRecursively();
-        	owner.changingTree = false;
-        }
+//        if (Utils.USE_UPPER) {
+//        	owner.root.calcFelsenRecursively();
+//        	owner.root.calcUpperRecursively();
+//        }
         //double bpp = -Math.log(p.value * (length - winLength == 0 ? 1 : length - winLength));
         double bpp = -Math.log(p.value / (length - winLength + 1));
 
@@ -1546,7 +1564,6 @@ public class Vertex {
         	left.selectWindow();
         	right.selectWindow();
         }
-        
         selectWindowUp();
 	
         printToScreenAlignment(b,b+winLength);
@@ -1881,39 +1898,94 @@ public class Vertex {
     public double swapWithUncleAlignToParent() {
     	owner.changingTree = true;
         Vertex uncle = parent.brother(), grandpa = parent.parent;
-        double ret = 0.0;
 
         // make node and window selection
         lastSelected();
         uncle.lastSelected();
+        // Joe: why do we need the above, when this function only uses hmm2?
         
         fullWin();
         parent.fullWin();
         uncle.fullWin();
         grandpa.fullWin();
         
-        // compute alignment backproposal
-        ret += hmm2BackProp();
-        ret += uncle.hmm2BackProp();
+        double ret = 0.0;
 
-        System.out.println("log back proposal probability = "+ret);
+        // Choose whether to realign uncle or nephew first.
+        // We choose according to how large the subtrees are
+        // for the nephew and the uncle, because we want to include
+        // as much information as possible about the rest of the tree
+        // for the second realignment step.
+        // If Utils.USE_UPPER is false, then we always choose to realign
+        // the lower subtree first, because the alternative would
+        // involve no information being used.
+		double[] weights = new double[2];
+		boolean realignLowerFirst = true;
+		if (Utils.USE_UPPER) {
+			owner.countLeaves();
+	        weights[0] = Math.pow(leafCount,Utils.LEAF_COUNT_POW);
+	        weights[1] = Math.pow(uncle.leafCount,Utils.LEAF_COUNT_POW);
+	        realignLowerFirst = (Utils.weightedChoose(weights) == 1);
+		    if (realignLowerFirst) {
+		    	parent.calcUpperWithoutBrother();
+		    	ret += Math.log(weights[1]/weights[0]);
+		    }
+		    else {
+		    	parent.calcFelsenWithout(this);
+		    	ret += Math.log(weights[0]/weights[1]);
+		    }
+		}
+        System.out.println("log move order probability ratio = "+ret);
+        
+        // compute alignment backproposal
+        double bpp = uncle.hmm2BackProp();
+        bpp += hmm2BackProp();
+        
+        System.out.println("log back proposal probability = "+bpp);
+        ret += bpp;
+
         // do the swap
         parentNewChild(uncle);			// order is important here
         uncle.parentNewChild(this);
         uncle.parent = parent;
         parent = grandpa;
 
-        // align the sequences (uncle first, that's now below!)
-        double bppProp = uncle.hmm2AlignWithSave();
-        bppProp += hmm2AlignWithSave();
+        // align the sequences
+        double bppProp = 0.0;
+        if (realignLowerFirst) {
+        	bppProp += uncle.hmm2AlignWithSave(); // This calls parent.calcFelsen()
+        	bppProp += hmm2AlignWithSave();
+        }
+        else {
+        	bppProp += hmm2AlignWithSave();
+        	if (Utils.USE_UPPER) {
+        		parent.calcUpper();
+        	}
+        	bppProp += uncle.hmm2AlignWithSave();
+        }
         System.out.println("log forward proposal probability = "+(-bppProp));
         ret += bppProp;
-        parent.calcAllUp();
+        
+        parent.calcAllUp(); 
+        // After this, all the seq and upp vectors will include
+        // all the relevant contributions.
 
         if(Utils.DEBUG) {
         	// check proposal - backproposal consistency
+        	if (realignLowerFirst) {
+		    	parent.calcUpperWithoutBrother();
+		    }
+		    else {
+		    	parent.calcFelsenWithout(uncle);
+		    }
         	double bppBack = uncle.hmm2BackProp();
         	bppBack += hmm2BackProp();
+        	if (realignLowerFirst) {
+		    	parent.calcUpper();
+		    }
+		    else {
+		    	parent.calcFelsen();
+		    }
         	if(Math.abs(bppProp+bppBack) > 1e-5) {
         	  System.out.println("Proposal - backproposal inconsistent in swapWithUncleAlignToParent! Prop: "+bppProp+" Back: "+bppBack);
         	}
@@ -2639,10 +2711,10 @@ public class Vertex {
         for (Vertex v = parent; v != null; v = v.parent) {
             v.calcFelsen();
             v.calcOrphan();
-            v.calcIndelLogLike(false);
+            v.calcIndelLogLike();
         }
         if (Utils.USE_UPPER) {
-        	calcUpperRecursively();
+        	owner.root.calcUpperRecursively();
         }
     }
 
@@ -2702,15 +2774,7 @@ public class Vertex {
         return felsen;
     }
     
-    private boolean inWindow = false;
-
-    String[] printedAlignmentInWindow() {
-    	inWindow = true;
-    	String[] s = printedAlignment();
-    	inWindow = false;
-    	return s;
-    }
-    public String[] printedAlignment() {
+    public String[] printedAlignment(boolean inWindow) {
         //	try{
         //	printPointers();
         if (parent == null) {
@@ -2808,6 +2872,12 @@ public class Vertex {
 		}
 		 */
         //	return new String[] {" "," "};
+    }
+    public String[] printedAlignment() {
+    	return printedAlignment(false);
+    }
+    String[] printedAlignmentInWindow() {
+    	return printedAlignment(true);
     }
 
     //////////////////////////////////////////////////

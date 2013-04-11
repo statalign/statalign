@@ -105,6 +105,7 @@ public class Tree extends Stoppable implements DataType {
                 //	System.out.println(i+" "+temp);
                 AlignColumn column = new AlignColumn(actual);
                 column.seq = new double[substitutionModel.e.length];
+                column.upp = new double[substitutionModel.e.length];
                 actual.first = column;
                 actual.length = 0;
                 for (int j = 0; j < temp.length(); j++) {
@@ -195,8 +196,8 @@ public class Tree extends Stoppable implements DataType {
             //for(int i = 0; i < check.length; i++){
             //	System.out.println(check[i]);
             //}
-            root.calcFelsRecursively();
-            root.calcIndelLikeRecursively();
+            root.calcFelsenRecursively();
+            root.calcIndelLogLikeRecursively();
             //System.out.println("Log-likelihood: "+getLogLike());
 
             names = new String[(vertex.length + 1) / 2];

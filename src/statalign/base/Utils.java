@@ -32,8 +32,20 @@ public class Utils{
 	 * Debugging mode (various consistency checks done if on)
 	 */
 	public static boolean DEBUG = true;
+	// TODO Change this to an integer, so we can have different levels of 
+	// debug information printed.
 		
+	/**
+	 * Whether to use information from the upper parts of the 
+	 * tree in order to fill out the <code>hmm2</code> and <code>hmm3</code>
+	 * matrices.
+	 */
 	public static boolean USE_UPPER = true;
+	/** Power determining how much we favour realigning
+	 *  the larger subtree first when doing a nearest-neighbour
+	 *  interchange move. 
+	 */
+	public static double LEAF_COUNT_POW = 1.0;
 	/**
 	 * The random number generator used throughout the program.
 	 * A new generator is constructed at each MCMC run using the seed in the
@@ -182,6 +194,26 @@ public class Utils{
 	 * This function returns a random index, weighted by the weights in the array `weights'
 	 */
 	public static int weightedChoose(int[] weights){
+		int sum = 0;
+
+		for(int i = 0; i < weights.length; i++){
+			sum += weights[i];
+		}
+
+		int w = generator.nextInt(sum);
+		int k = 0;
+		sum = 0;
+		while((sum += weights[k]) <= w){
+			k++;
+		}
+
+		return k;
+	}
+	
+	/**
+	 * This function returns a random index, weighted by the weights in the array `weights'
+	 */
+	public static int weightedChoose(double[] weights){
 		int sum = 0;
 
 		for(int i = 0; i < weights.length; i++){

@@ -495,6 +495,7 @@ public class Mcmc extends Stoppable {
 			
 			burnin = true;
 			boolean alreadyAddedWeightModifiers = false;
+			tree.root.calcAllUp(); // For testing
 			for (int i = 0; i < burnIn; i++) {
 				
 				if (i > burnIn / 2) {
