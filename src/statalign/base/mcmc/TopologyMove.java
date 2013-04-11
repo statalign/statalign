@@ -106,26 +106,26 @@ public class TopologyMove extends McmcMove {
 	public double proposal(Object externalState) {
 		System.out.println("Before Topology: "+tree.printedTree());
 
-		if(Utils.DEBUG){
-			System.out.println("Before:");
-			System.out.println("Likelihood:");
-			System.out.println(owner.curLogLike);
-			double[] params = tree.getState().indelParams;
-			for(int i = 0; i < params.length; i++)
-				System.out.println(params[i]);
-			String[] fullAlign = tree.getState().getFullAlign();
-			for(int i = 0; i < fullAlign.length; i++)
-				System.out.println(fullAlign[i]);
-			String printTree = tree.printedTree();
-			Vertex.printChildren(tree.root);
-			Vertex.printEdges(tree.root);
-			System.out.println(printTree);
-			System.out.println(tree.root.indelLogLike);
-			System.out.println(tree.root.orphanLogLike);
-			try{
-				topMoves.write(tree.root.indelLogLike + "\t" + tree.root.orphanLogLike + "\t");
-			} catch(IOException e){}
-		}
+//		if(Utils.DEBUG){
+//			System.out.println("Before:");
+//			System.out.println("Likelihood:");
+//			System.out.println(owner.curLogLike);
+//			double[] params = tree.getState().indelParams;
+//			for(int i = 0; i < params.length; i++)
+//				System.out.println(params[i]);
+//			String[] fullAlign = tree.getState().getFullAlign();
+//			for(int i = 0; i < fullAlign.length; i++)
+//				System.out.println(fullAlign[i]);
+//			String printTree = tree.printedTree();
+//			Vertex.printChildren(tree.root);
+//			Vertex.printEdges(tree.root);
+//			System.out.println(printTree);
+//			System.out.println(tree.root.indelLogLike);
+//			System.out.println(tree.root.orphanLogLike);
+//			try{
+//				topMoves.write(tree.root.indelLogLike + "\t" + tree.root.orphanLogLike + "\t");
+//			} catch(IOException e){}
+//		}
 		
 //		double logProposalRatio = nephewEdgeMove.proposal(externalState);
 //		System.out.println("logProposalRatio after nephew = "+logProposalRatio);
@@ -144,22 +144,22 @@ public class TopologyMove extends McmcMove {
 		s = nephew.printedAlignment();
 		System.out.println(s[0]+"\n"+s[1]);
 
-		if(Utils.DEBUG){
-			System.out.println("Proposed:");
-			String[] fullAlign = tree.getState().getFullAlign();
-			for(int i = 0; i < fullAlign.length; i++)
-				System.out.println(fullAlign[i]);
-			String printTree = tree.printedTree();
-			System.out.println(printTree);
-			Vertex.printChildren(tree.root);
-			Vertex.printEdges(tree.root);
-			System.out.println("logProposalRatio:");
-			System.out.println(logProposalRatio);
-			try{
-				topMoves.write(tree.root.indelLogLike + "\t" + tree.root.orphanLogLike + "\t" + logProposalRatio + "\n");
-			} catch(IOException e){}
-			
-		}
+//		if(Utils.DEBUG){
+//			System.out.println("Proposed:");
+//			String[] fullAlign = tree.getState().getFullAlign();
+//			for(int i = 0; i < fullAlign.length; i++)
+//				System.out.println(fullAlign[i]);
+//			String printTree = tree.printedTree();
+//			System.out.println(printTree);
+//			Vertex.printChildren(tree.root);
+//			Vertex.printEdges(tree.root);
+//			System.out.println("logProposalRatio:");
+//			System.out.println(logProposalRatio);
+//			try{
+//				topMoves.write(tree.root.indelLogLike + "\t" + tree.root.orphanLogLike + "\t" + logProposalRatio + "\n");
+//			} catch(IOException e){}
+//			
+//		}
 		
 		return logProposalRatio;
 	}

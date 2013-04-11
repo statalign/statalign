@@ -385,7 +385,7 @@ public class Vertex {
         // print this node and nodes below in bracket notation
 
         if (left == null && right == null) {
-        	b.append(name.replaceAll(" ", ""));
+        	b.append(name.replaceAll(" ", "")+"["+index+"]");
         	b.append(':');
         	printDf.format(edgeLength, b, new FieldPosition(1));
         } else {
@@ -393,7 +393,7 @@ public class Vertex {
         	left.print(b);
         	b.append(',');
         	right.print(b);
-        	b.append(')');
+        	b.append(')'+"["+index+"]");
             if (parent != null) {
             	b.append(':');
             	printDf.format(edgeLength, b, new FieldPosition(1));
@@ -1552,10 +1552,10 @@ public class Vertex {
         }
         winLast = actualAC;
         
-//        if (Utils.USE_UPPER) {
-//        	owner.root.calcFelsenRecursively();
-//        	owner.root.calcUpperRecursively();
-//        }
+        if (Utils.USE_UPPER) {
+        	//owner.root.calcFelsenRecursively();
+        	owner.root.calcUpperRecursively();
+        }
         //double bpp = -Math.log(p.value * (length - winLength == 0 ? 1 : length - winLength));
         double bpp = -Math.log(p.value / (length - winLength + 1));
 
@@ -1638,7 +1638,7 @@ public class Vertex {
     		throw new Error("realignToParent was called on the root vertex");
     	
     	double bpp = 0;
-    	
+    	owner.root.calcUpperRecursively();
         if(!useCurrentWin) {
         	MuDouble p = new MuDouble(1.0);
 	        winLength = Utils.linearizerWeight(length, p, Utils.WINDOW_MULTIPLIER*Math.sqrt(length));
@@ -1898,9 +1898,14 @@ public class Vertex {
      * @return log-quotient of backproposal and proposal
      */
     public double swapWithUncleAlignToParent() {
-    	owner.changingTree = true;
-        Vertex uncle = parent.brother(), grandpa = parent.parent;
+       	boolean old_USE_UPPER = Utils.USE_UPPER; 
+    	//Utils.USE_UPPER = true;
+       	Utils.USE_UPPER = false;
+    	owner.root.calcUpperRecursively();
+    	Vertex uncle = parent.brother(), grandpa = parent.parent;
 
+        System.out.println("this = "+index+", uncle = "+uncle.index);
+        System.out.println(owner.printedTree());
         // make node and window selection
         lastSelected();
         uncle.lastSelected();
@@ -1928,11 +1933,18 @@ public class Vertex {
 	        weights[0] = Math.pow(leafCount,Utils.LEAF_COUNT_POW);
 	        weights[1] = Math.pow(uncle.leafCount,Utils.LEAF_COUNT_POW);
 	        realignLowerFirst = (Utils.weightedChoose(weights) == 1);
+	        
+	        // CURRENTLY hmm2AlignWithSave operates in such a way 
+	        // that it doesn't work if the upper node is realigned first
+	        realignLowerFirst = true;
+	        
 		    if (realignLowerFirst) {
+		    	System.out.println("Aligning lower first.");
 		    	parent.calcUpperWithoutBrother();
 		    	ret += Math.log(weights[1]/weights[0]);
 		    }
 		    else {
+		    	System.out.println("Aligning upper first.");
 		    	parent.calcFelsenWithout(this);
 		    	ret += Math.log(weights[0]/weights[1]);
 		    }
@@ -1968,31 +1980,33 @@ public class Vertex {
         System.out.println("log forward proposal probability = "+(-bppProp));
         ret += bppProp;
         
-        parent.calcAllUp(); 
+        uncle.parent.calcAllUp(); 
         // After this, all the seq and upp vectors will include
         // all the relevant contributions.
 
         if(Utils.DEBUG) {
+        	System.out.println(owner.printedTree());
         	// check proposal - backproposal consistency
         	if (realignLowerFirst) {
-		    	parent.calcUpperWithoutBrother();
+		    	uncle.parent.calcUpperWithoutBrother();
 		    }
 		    else {
-		    	parent.calcFelsenWithout(uncle);
+		    	uncle.parent.calcFelsenWithout(uncle);
 		    }
         	double bppBack = uncle.hmm2BackProp();
         	bppBack += hmm2BackProp();
         	if (realignLowerFirst) {
-		    	parent.calcUpper();
+		    	uncle.parent.calcUpper();
 		    }
 		    else {
-		    	parent.calcFelsen();
+		    	uncle.parent.calcFelsen();
 		    }
         	if(Math.abs(bppProp+bppBack) > 1e-5) {
         	  System.out.println("Proposal - backproposal inconsistent in swapWithUncleAlignToParent! Prop: "+bppProp+" Back: "+bppBack);
         	}
         }
         //owner.changingTree = false;
+    	Utils.USE_UPPER = old_USE_UPPER;
         return ret;
 	}
 
@@ -2024,6 +2038,8 @@ public class Vertex {
      * @return log-quotient of backproposal and proposal
      */
     public double fastSwapWithUncle() {
+    	boolean old_USE_UPPER = Utils.USE_UPPER; 
+    	Utils.USE_UPPER = false;
         Vertex uncle = parent.brother(), grandpa = parent.parent;
         double ret = 0.0;
         Vertex starter;
@@ -2310,6 +2326,7 @@ public class Vertex {
 
         //	System.out.println("RET after backproposing anchors (final value) "+ret);
 
+        Utils.USE_UPPER = old_USE_UPPER;
         return ret;
     }
 
@@ -2715,9 +2732,9 @@ public class Vertex {
             v.calcOrphan();
             v.calcIndelLogLike();
         }
-        if (Utils.USE_UPPER) {
-        	owner.root.calcUpperRecursively();
-        }
+//        if (Utils.USE_UPPER) {
+//        	owner.root.calcUpperRecursively();
+//        }
     }
 
     void parentNewChild(Vertex child) {
@@ -3135,9 +3152,9 @@ public class Vertex {
     	for (int ii=0; ii<s.length; ii++) {
     		String n = owner.vertex[ii].name;
     		if (n == null) {
-    			n = String.format("%8.4f",owner.vertex[ii].edgeLength);
+    			n = String.format("%-8.4f",owner.vertex[ii].edgeLength);
     		}
-    		System.out.println(n+"\t"+s[ii]);
+    		System.out.println(String.format("%-8s", n)+"\t"+s[ii]);
     	}
     }
     
