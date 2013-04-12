@@ -2099,7 +2099,8 @@ public class Vertex {
      */
     public double fastSwapWithUncle() {
     	boolean old_USE_UPPER = Utils.USE_UPPER; 
-    	Utils.USE_UPPER = false;
+    	boolean USE_HMM3 = !Utils.USE_UPPER;
+    	//Utils.USE_UPPER = false;
         Vertex uncle = parent.brother(), grandpa = parent.parent;
         double ret = 0.0;
         Vertex starter;
@@ -2133,7 +2134,34 @@ public class Vertex {
         //System.out.println("RET after selecting the anchors: "+ret);
         //System.out.println("Backproposing this would be:    "+starter.backproposeAnchors());
 
+        double[] weights = new double[2];
+		boolean realignLowerFirst = true;
+		if (Utils.USE_UPPER) {
+	        owner.root.calcUpperRecursively();
+			owner.countLeaves();
+	        weights[0] = Math.pow(leafCount,Utils.LEAF_COUNT_POW);
+	        weights[1] = Math.pow(uncle.leafCount,Utils.LEAF_COUNT_POW);
+	       // realignLowerFirst = (Utils.weightedChoose(weights) == 1);
+	        
+	        // CURRENTLY hmm2AlignWithSave operates in such a way 
+	        // that it doesn't work if the upper node is realigned first
+	        realignLowerFirst = true;
+	        
+		    if (realignLowerFirst) {
+		    	System.out.println("Aligning lower first.");
+		    	parent.calcUpperWithoutBrother();
+		    	ret += Math.log(weights[1]/weights[0]);
+		    }
+		    else {
+		    	System.out.println("Aligning upper first.");
+		    	parent.calcFelsenWithout(this);
+		    	ret += Math.log(weights[0]/weights[1]);
+		    }
+		}
+		
         //backproposals
+        if (USE_HMM3) {
+
         //for parent
         AlignColumn p = parent.last, pf = parent.last;
         AlignColumn t = last, tf = last;
@@ -2150,7 +2178,7 @@ public class Vertex {
                 winLast = t;
                 brother().winFirst = bf;
                 brother().winLast = b;
-                ret += parent.hmm3BackProp();
+               	ret += parent.hmm3BackProp();
             }
             p = pf.prev;
             pf = pf.prev;
@@ -2176,7 +2204,7 @@ public class Vertex {
                 parent.winLast = p;
                 uncle.winFirst = uf;
                 uncle.winLast = u;
-                ret += grandpa.hmm3BackProp();
+               	ret += grandpa.hmm3BackProp();
             }
             g = gf.prev;
             gf = gf.prev;
@@ -2186,10 +2214,9 @@ public class Vertex {
             uf = uf.prev;
 
         }
-        // if there is a grand-grandpa...
         if (grandpa.parent != null) {
-            g = grandpa.last;
-            gf = grandpa.last;
+        	g = grandpa.last;
+        	gf = grandpa.last;
             AlignColumn gg = grandpa.parent.last, ggf = grandpa.parent.last;
             while (gg != null) {
                 ggf = ggf.findWindowStart();
@@ -2207,6 +2234,45 @@ public class Vertex {
                 ggf = ggf.prev;
             }
         }
+        }
+        else {
+        	AlignColumn t = last, tf = last;
+            AlignColumn p = parent.last, pf = parent.last;
+            while (p != null) {
+                pf = pf.findWindowStart();
+                tf = tf.findWindowStart();
+                if (p.prev != pf || p.emptyWindow || true) {
+                    parent.winFirst = pf;
+                    parent.winLast = p;
+                    winFirst = tf;
+                    winLast = t;
+                    ret += hmm2BackProp();
+                }
+                t = tf.prev;
+                tf = tf.prev;
+                p = pf.prev;
+                pf = pf.prev;
+            }
+        	
+        	AlignColumn u = uncle.last, uf = uncle.last;
+            AlignColumn g = grandpa.last, gf = grandpa.last;
+            while (u != null) {
+                gf = gf.findWindowStart();
+                uf = uf.findWindowStart();
+                if (g.prev != gf || g.emptyWindow || true) {
+                    uncle.parent.winFirst = gf;
+                    uncle.parent.winLast = g;
+                    uncle.winFirst = uf;
+                    uncle.winLast = u;
+                    ret += uncle.hmm2BackProp();
+                }
+                u = uf.prev;
+                uf = uf.prev;
+                g = gf.prev;
+                gf = gf.prev;
+            }
+        }
+              
 
         //System.out.println("RET after alignment backproposal: "+ret);
 
@@ -2283,10 +2349,92 @@ public class Vertex {
         parent = grandpa;
 
         //new parent sequence
-        ret += uncle.parent.alignAllWindows();
-        if (Utils.DEBUG) {
-        	uncle.parent.checkPointers();
+        double bppProp = 0.0;
+        if (USE_HMM3) {
+        	ret += uncle.parent.alignAllWindows();
+        	ret += grandpa.alignAllWindows();
         }
+        else {
+        	 if (realignLowerFirst) {
+             	//bppProp += uncle.hmm2AlignWindows();
+        		 AlignColumn p = uncle.parent.last, pf = p;
+                 AlignColumn u = uncle.last, uf = u;
+                 while (u != null) {
+                     uf = uf.findWindowStart();
+                     pf = pf.findWindowStart();
+                     uncle.winLast = u;
+                     uncle.winFirst = uf;
+                     uncle.parent.winLast = p;
+                     uncle.parent.winFirst = pf;
+                     if (p.emptyWindow || true) {
+                         bppProp += uncle.hmm2Align();
+                     }
+                     u = uf.prev;
+                     uf = u;
+                     uncle.parent.first = pf;
+                     p = pf.prev;
+                     pf = p;
+                     if (u != null) {
+                         u.parent = p;
+                         u.orphan = false;
+                         if (uncle.parent.left == uncle) {
+                             p.left = u;
+                         } else {
+                             p.right = u;
+                         }
+                     }
+                 }
+             	uncle.parent.calcFelsen();
+             	System.out.println("After first realignment = "+bppProp);
+             	//bppProp += hmm2AlignWindows();
+             	 AlignColumn g = parent.last, gf = g;
+                 AlignColumn t = last, tf = t;
+                 while (t != null) {
+                     tf = tf.findWindowStart();
+                     gf = gf.findWindowStart();
+                     winLast = t;
+                     winFirst = tf;
+                     parent.winLast = g;
+                     parent.winFirst = gf;
+                     if (g.emptyWindow || true) {
+                         bppProp += hmm2Align();
+                     }
+                     t = tf.prev;
+                     tf = t;
+                     parent.first = gf;
+                     g = gf.prev;
+                     gf = g;
+                     if (t != null) {
+                         t.parent = g;
+                         t.orphan = false;
+                         if (parent.left == this) {
+                             g.left = t;
+                         } else {
+                             g.right = t;
+                         }
+                     }
+                 }
+             	parent.calcFelsen();
+             }
+             else {
+             	//bppProp += hmm2AlignWindows();
+             	parent.calcFelsen();
+             	if (Utils.USE_UPPER) {
+             		uncle.parent.calcUpper();
+             	}
+             	//bppProp += uncle.hmm2AlignWindows();
+             	uncle.parent.calcFelsen();
+             }
+        }
+        if (Utils.DEBUG) {
+    		if (grandpa.parent != null) {
+	            grandpa.parent.checkPointers();
+            }
+    		grandpa.checkPointers();
+        	uncle.parent.checkPointers();
+    	}
+        ret += bppProp;
+        
 
         // 	System.out.println("Aligned uncle.parent, pointers:");
         // 	System.out.println("Left:");
@@ -2297,11 +2445,7 @@ public class Vertex {
         // 	System.out.println("RET after alignment: "+ret);
 
         //new grandpa
-        ret += grandpa.alignAllWindows();
-
-        if (Utils.DEBUG) {
-        	grandpa.checkPointers();
-        }
+       
         // 	System.out.println("aligned grandpa, RET: "+ret);
 
         // 	System.out.println("Aligned grandpa, pointers:");
@@ -2312,11 +2456,11 @@ public class Vertex {
 
 
         //if there is a greatgrandpa, then we align it...
-        if (grandpa.parent != null) {
+        if (USE_HMM3 && grandpa.parent != null) {
             //System.out.println("Greatgrandpa in fastSwap: "+grandpa.parent);
             AlignColumn gg = grandpa.parent.last, ggf = gg;
-            g = grandpa.last;
-            gf = g;
+            AlignColumn g = grandpa.last;
+            AlignColumn gf = g;
             while (g != null) {
                 gf = gf.findWindowStart();
                 ggf = ggf.findWindowStart();
