@@ -31,7 +31,7 @@ public class Utils{
 	/**
 	 * Debugging mode (various consistency checks done if on)
 	 */
-	public static boolean DEBUG = true;
+	public static boolean DEBUG = false;
 	// TODO Change this to an integer, so we can have different levels of 
 	// debug information printed.
 		
@@ -40,7 +40,7 @@ public class Utils{
 	 * tree in order to fill out the <code>hmm2</code> and <code>hmm3</code>
 	 * matrices.
 	 */
-	public static boolean USE_UPPER = false;
+	public static boolean USE_UPPER = true;
 	/** Power determining how much we favour realigning
 	 *  the larger subtree first when doing a nearest-neighbour
 	 *  interchange move. 

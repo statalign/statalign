@@ -137,13 +137,19 @@ public class TopologyMove extends McmcMove {
 //		logProposalRatio += nephew.fastSwapWithUncle();
 		//double logProposalRatio = nephew.fastSwapWithUncle();
 		String[] s = nephew.printedAlignment();
-		System.out.println(s[0]+"\n"+s[1]);
+		System.out.println(nephew.index+" "+s[1]+"\n"+nephew.parent.index+" "+s[0]);
+		s = uncle.printedAlignment();
+		System.out.println(uncle.index+" "+s[1]+"\n"+uncle.parent.index+" "+s[0]);
 		double logProposalRatio = nephew.swapWithUncleAlignToParent();
 		System.out.println("logProposalRatio after swap = "+logProposalRatio);
 		System.out.println("After  Topology: "+tree.printedTree());
 		s = nephew.printedAlignment();
 		System.out.println(s[0]+"\n"+s[1]);
 
+		if (logProposalRatio == Double.POSITIVE_INFINITY) {
+			System.out.println("Likelihood: "+tree.getLogLike());
+			throw new RuntimeException("Let's stop now and have a rest.");
+		}
 //		if(Utils.DEBUG){
 //			System.out.println("Proposed:");
 //			String[] fullAlign = tree.getState().getFullAlign();
@@ -199,6 +205,7 @@ public class TopologyMove extends McmcMove {
 		if (Utils.DEBUG) {
 			tree.checkPointers();
 		}
+		//throw new RuntimeException("Let's stop now and have a rest.");
 	}
 	
 	 

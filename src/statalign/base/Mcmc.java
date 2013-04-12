@@ -273,7 +273,7 @@ public class Mcmc extends Stoppable {
 //			LOCALTopologyMove localTopologyMove = new LOCALTopologyMove(coreModel,edgePrior,
 //					0.5*multiplicativeProposalWidthControlVariable,"LOCALTopology");
 			localTopologyMove = new LOCALTopologyMove(coreModel,edgePrior,
-					1*multiplicativeProposalWidthControlVariable,"LOCALTopology");
+					0.5*multiplicativeProposalWidthControlVariable,"LOCALTopology");
 			coreModel.addMcmcMove(localTopologyMove, localTopologyWeight);
 		}
 		if(!mcmcpars.fixEdge) {
