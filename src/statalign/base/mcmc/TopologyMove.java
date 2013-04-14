@@ -140,6 +140,7 @@ public class TopologyMove extends McmcMove {
 		System.out.println(nephew.index+" "+s[1]+"\n"+nephew.parent.index+" "+s[0]);
 		s = uncle.printedAlignment();
 		System.out.println(uncle.index+" "+s[1]+"\n"+uncle.parent.index+" "+s[0]);
+		//double logProposalRatio = nephew.fastSwapWithUncle();
 		double logProposalRatio = nephew.swapWithUncleAlignToParent();
 		System.out.println("logProposalRatio after swap = "+logProposalRatio);
 		System.out.println("After  Topology: "+tree.printedTree());

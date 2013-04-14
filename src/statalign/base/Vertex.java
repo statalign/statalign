@@ -1778,13 +1778,25 @@ public class Vertex {
      */
     void doRecRestore() {
         if (left != null && right != null) {
-            if (left.selected && right.selected) {
-                left.doRecRestore();
-                right.doRecRestore();
-            } else {
-                left.toggleUp(false);
-                right.toggleUp(false);
-            }
+        	if (left.selected) {
+        		left.doRecRestore();        		
+        	}
+        	if (right.selected) {
+        		right.doRecRestore();
+        	}
+        	if (!left.selected) {
+        		left.toggleUp(false);
+        	}
+        	if (!right.selected) {
+        		right.toggleUp(false);
+        	}
+//            if (left.selected && right.selected) {
+//                left.doRecRestore();
+//                right.doRecRestore();
+//            } else {
+//                left.toggleUp(false);
+//                right.toggleUp(false);
+//            }
         }
         doRestore();
     }
@@ -2097,8 +2109,9 @@ public class Vertex {
      * @return log-quotient of backproposal and proposal
      */
     public double fastSwapWithUncle() {
-    	boolean old_USE_UPPER = Utils.USE_UPPER; 
-    	boolean USE_HMM3 = !Utils.USE_UPPER;
+    	boolean old_USE_UPPER = Utils.USE_UPPER;
+    	//boolean USE_HMM3 = false;
+    	//boolean USE_HMM3 = !Utils.USE_UPPER;
     	//Utils.USE_UPPER = false;
         Vertex uncle = parent.brother(), grandpa = parent.parent;
         double ret = 0.0;
@@ -2106,24 +2119,26 @@ public class Vertex {
         
         //checkPointers();
         
-//        calcAllUp(); ///
-//       	owner.root.calcUpperRecursively(); ///
+       
        	
         //System.out.println("fast swap here"+grandpa.print());
 
         lastSelected();
-        brother().lastSelected();
+        if (Utils.USE_HMM3) brother().lastSelected();
         uncle.lastSelected();
         parent.selected = true;
         grandpa.selected = true;
 
         setAllAlignColumnsUnselected();
-        brother().setAllAlignColumnsUnselected();
+        if (Utils.USE_HMM3) brother().setAllAlignColumnsUnselected();
         uncle.setAllAlignColumnsUnselected();
         parent.setAllAlignColumnsUnselected();
         grandpa.setAllAlignColumnsUnselected();
+        
+        calcAllUp(); ///
+       	owner.root.calcUpperRecursively(); ///
 
-        if (grandpa.parent != null) {
+        if (Utils.USE_HMM3 && grandpa.parent != null) {
             grandpa.parent.selected = true;
             grandpa.brother().selected = false;
             grandpa.parent.setAllAlignColumnsUnselected();
@@ -2167,7 +2182,7 @@ public class Vertex {
 		}
 		
         //backproposals
-        if (USE_HMM3) {
+        if (Utils.USE_HMM3) {
 
         //for parent
         AlignColumn p = parent.last, pf = parent.last;
@@ -2341,14 +2356,20 @@ public class Vertex {
 
         //saving old alignments
         copySequence();
-        brother().copySequence();
+        if (Utils.USE_HMM3) brother().copySequence();
         uncle.copySequence();
-        parent.fullWin();
-        parent.saveWin();
-        grandpa.fullWin();
-        grandpa.saveWin();
-        if (grandpa.parent != null) {
-            grandpa.copyGreatgrandpaSequence();
+        if (Utils.USE_HMM3) {
+	        parent.fullWin();
+	        parent.saveWin();
+	        grandpa.fullWin();
+	        grandpa.saveWin();
+	        if (grandpa.parent != null) {
+	            grandpa.copyGreatgrandpaSequence();
+	        }
+        }
+        else {
+        	copyGreatgrandpaSequence();
+        	uncle.copyGreatgrandpaSequence();
         }
 
         //checkPointers();
@@ -2361,7 +2382,7 @@ public class Vertex {
 
         //new parent sequence
         double bppProp = 0.0;
-        if (USE_HMM3) {
+        if (Utils.USE_HMM3) {
         	ret += uncle.parent.alignAllWindows();
         	ret += grandpa.alignAllWindows();
         }
@@ -2395,9 +2416,10 @@ public class Vertex {
                          }
                      }
                  }
+                 uncle.calcFelsen();
                  //uncle.parent.toggleUp(true);
              	uncle.parent.calcFelsen();
-             	uncle.parent.calcOrphan();
+             	//uncle.parent.calcOrphan();
              	uncle.parent.calcIndelLogLike();
              	System.out.println("After first realignment = "+bppProp);
              	//bppProp += hmm2AlignWindows();
@@ -2475,7 +2497,7 @@ public class Vertex {
 
 
         //if there is a greatgrandpa, then we align it...
-        if (USE_HMM3 && grandpa.parent != null) {
+        if (Utils.USE_HMM3 && grandpa.parent != null) {
             //System.out.println("Greatgrandpa in fastSwap: "+grandpa.parent);
             AlignColumn gg = grandpa.parent.last, ggf = gg;
             AlignColumn g = grandpa.last;
@@ -2791,14 +2813,15 @@ public class Vertex {
      * Assumes {@code this} has a non-null grandparent.
      */
     public void fastSwapBackUncle() {
+    	
         Vertex uncle = parent.brother(), grandpa = parent.parent;
 
         fullWin();
-        brother().fullWin();
+        if (Utils.USE_HMM3) brother().fullWin();
         parent.fullWin();
         uncle.fullWin();
         grandpa.fullWin();
-        if (grandpa.parent != null) {
+        if (Utils.USE_HMM3 && grandpa.parent != null) {
             grandpa.parent.fullWin();
         }
 
@@ -2810,7 +2833,14 @@ public class Vertex {
 
 
         //	System.out.println("Starting alignment restauration...");
-        grandpa.alignRestore();
+        
+        if (Utils.USE_HMM3) {
+        	grandpa.alignRestore();
+        }
+        else {
+        	alignRestore();
+        	uncle.alignRestore();        	
+        }
         //System.out.println("End alignment restauration...");
     }
 
