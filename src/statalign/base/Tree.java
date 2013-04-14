@@ -225,6 +225,7 @@ public class Tree extends Stoppable implements DataType {
     
     public void checkPointers() {
     	for (int i = 0; i < vertex.length; i++) {
+    		System.out.println("index = "+i);
 			if (vertex[i].left != null && vertex[i].right != null) {
 				vertex[i].checkPointers();
 				AlignColumn p;

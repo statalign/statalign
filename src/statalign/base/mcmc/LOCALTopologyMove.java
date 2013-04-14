@@ -61,21 +61,25 @@ public class LOCALTopologyMove extends McmcMove {
 		nephew.setEdgeLength(a);
 		logPrior += edgePrior.logDensity(nephew.edgeLength);
 		nephew.edgeChangeUpdate();
-		nephew.calcAllUp(); //
+		//nephew.calcAll(); //
 		
 		logPrior -= edgePrior.logDensity(parent.edgeLength);
 		parent.setEdgeLength(b);
 		logPrior += edgePrior.logDensity(parent.edgeLength);
 		parent.edgeChangeUpdate();
-		parent.calcAllUp();// 
+		//parent.calcAll();// 
 		
 		logPrior -= edgePrior.logDensity(uncle.edgeLength);
 		uncle.setEdgeLength(c);
 		logPrior += edgePrior.logDensity(uncle.edgeLength);
 		uncle.edgeChangeUpdate();
-		uncle.calcAllUp();//
+		//uncle.calcAll();//
 //		tree.root.calcFelsRecursively();
 //		tree.root.calcIndelLikeRecursively();
+		
+		nephew.calcAllUp();
+		uncle.calcAllUp();
+		
 		return logPrior;
 	}
 

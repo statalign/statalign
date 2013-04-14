@@ -708,9 +708,8 @@ public class Vertex {
 
         double indelLogLikeUp = indelLogLike;
 
-        //System.out.println("--------------------------------------------------");
-        //printPointers();
-
+//        System.out.println("--------------------------------------------------");
+//        printPointers();
         if (parent != null) {
             AlignColumn c = first, p = parent.first;
             int prevk = START, k;
@@ -2104,7 +2103,12 @@ public class Vertex {
         Vertex uncle = parent.brother(), grandpa = parent.parent;
         double ret = 0.0;
         Vertex starter;
-
+        
+        //checkPointers();
+        
+//        calcAllUp(); ///
+//       	owner.root.calcUpperRecursively(); ///
+       	
         //System.out.println("fast swap here"+grandpa.print());
 
         lastSelected();
@@ -2134,6 +2138,9 @@ public class Vertex {
         //System.out.println("RET after selecting the anchors: "+ret);
         //System.out.println("Backproposing this would be:    "+starter.backproposeAnchors());
 
+        //checkPointers();
+
+        
         double[] weights = new double[2];
 		boolean realignLowerFirst = true;
 		if (Utils.USE_UPPER) {
@@ -2273,7 +2280,9 @@ public class Vertex {
             }
         }
               
-
+//        calcAllUp(); ///
+//       	owner.root.calcUpperRecursively(); ///
+       	
         //System.out.println("RET after alignment backproposal: "+ret);
 
         // 	/////////////////////////////////////////////////
@@ -2342,6 +2351,8 @@ public class Vertex {
             grandpa.copyGreatgrandpaSequence();
         }
 
+        //checkPointers();
+
         //NNI
         parentNewChild(uncle);                    // order is important!
         uncle.parentNewChild(this);
@@ -2371,7 +2382,7 @@ public class Vertex {
                      }
                      u = uf.prev;
                      uf = u;
-                     uncle.parent.first = pf;
+                     //uncle.parent.first = pf;
                      p = pf.prev;
                      pf = p;
                      if (u != null) {
@@ -2384,7 +2395,10 @@ public class Vertex {
                          }
                      }
                  }
+                 //uncle.parent.toggleUp(true);
              	uncle.parent.calcFelsen();
+             	uncle.parent.calcOrphan();
+             	uncle.parent.calcIndelLogLike();
              	System.out.println("After first realignment = "+bppProp);
              	//bppProp += hmm2AlignWindows();
              	 AlignColumn g = parent.last, gf = g;
@@ -2401,7 +2415,7 @@ public class Vertex {
                      }
                      t = tf.prev;
                      tf = t;
-                     parent.first = gf;
+                     //parent.first = gf;
                      g = gf.prev;
                      gf = g;
                      if (t != null) {
@@ -2414,7 +2428,10 @@ public class Vertex {
                          }
                      }
                  }
-             	parent.calcFelsen();
+                //parent.toggleUp(true);
+                parent.calcFelsen();
+              	parent.calcOrphan();
+              	parent.calcIndelLogLike();
              }
              else {
              	//bppProp += hmm2AlignWindows();
@@ -2430,6 +2447,8 @@ public class Vertex {
     		if (grandpa.parent != null) {
 	            grandpa.parent.checkPointers();
             }
+           // checkPointers();
+           // parent.checkPointers();
     		grandpa.checkPointers();
         	uncle.parent.checkPointers();
     	}
@@ -2518,16 +2537,46 @@ public class Vertex {
         // 	} else {
         // 	    grandpa.calcOrphan();
         // 	}
+        parent.checkPointers();
+        uncle.parent.checkPointers();
+
+//        checkPointers();
+//        uncle.checkPointers();
+
+//        calcFelsen();
         calcOrphan();
-        uncle.brother().calcOrphan();
-        uncle.calcOrphan();
-        uncle.calcAllUp();
+//        calcIndelLogLike();
+
+      uncle.brother().calcOrphan();
+      uncle.calcFelsen();
+      uncle.calcOrphan();
+      uncle.calcIndelLogLike();
+      
+      uncle.calcAllUp();
+
+      
+      parent.checkPointers();
+      uncle.parent.checkPointers();
+
+//      checkPointers();
+//      uncle.checkPointers();
+        
+//        calcOrphan();
+//        uncle.brother().calcOrphan();
+//        uncle.calcOrphan();
+//        uncle.calcAllUp();
 
 
         //And finally: the window selecting backproposals...
         //	System.out.println((grandpa.parent == starter ? "grandpa.parent == starter" : "grandpa.parent != starter"));
         ret += starter.backproposeAnchors();
 
+        parent.checkPointers();
+        uncle.parent.checkPointers();
+
+//        checkPointers();
+//        uncle.checkPointers();
+        
         //	System.out.println("RET after backproposing anchors (final value) "+ret);
 
         Utils.USE_UPPER = old_USE_UPPER;
@@ -2932,7 +2981,8 @@ public class Vertex {
     /** Calculates Felsenstein and indel likelihoods up to root, starting from `parent' */
     public void calcAllUp() {
         for (Vertex v = parent; v != null; v = v.parent) {
-            v.calcFelsen();
+            System.out.println(v.index);
+        	v.calcFelsen();
             v.calcOrphan();
             v.calcIndelLogLike();
         }
