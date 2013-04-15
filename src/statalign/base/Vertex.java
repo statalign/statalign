@@ -280,7 +280,8 @@ public class Vertex {
         // Do the same for {@link #updateHmm3Matrix()}.
         
 //        double heat = owner.heat;
-        double heat = PROPOSAL_HEAT;
+        //double heat = PROPOSAL_HEAT;
+        double heat = 1.0;
         hmm2PropTransMatrix = new double[hmm2TransMatrix.length][];
         for (int i = 0; i < hmm2TransMatrix.length; i++) {
             hmm2PropTransMatrix[i] = hmm2TransMatrix[i].clone();
@@ -289,6 +290,7 @@ public class Vertex {
 			for (int j = 0; j < hmm2PropTransMatrix[i].length; j++) {
 
 				hmm2PropTransMatrix[i][j] = hmm2PropTransMatrix[i][j]* heat;
+				//hmm2PropTransMatrix[i][j] = -Math.pow(Math.abs(hmm2PropTransMatrix[i][j]),heat);
 
 				tempSum = Utils.logAdd(tempSum, hmm2TransMatrix[i][j]);
 				
@@ -311,7 +313,8 @@ public class Vertex {
             hmm3RedTransMatrix = owner.hmm3.preCalcRedTransMatrix(hmm3RedTransMatrix, hmm3TransMatrix);
 
             
-			double heat = PROPOSAL_HEAT;
+			//double heat = PROPOSAL_HEAT;
+            double heat = 1.0;
 			
 //			double heat = owner.heat;
 //			
@@ -319,6 +322,7 @@ public class Vertex {
 				double tempSum = Utils.log0;
 				for (int j = 0; j < hmm3RedTransMatrix[i].length; j++) {
 					hmm3RedTransMatrix[i][j] = hmm3RedTransMatrix[i][j] * heat;
+					//hmm3RedTransMatrix[i][j] = -Math.pow(Math.abs(hmm3RedTransMatrix[i][j]),heat);
 					tempSum = Utils.logAdd(tempSum, hmm3RedTransMatrix[i][j]);
 
 				}
@@ -747,6 +751,9 @@ public class Vertex {
      * @return
      */
     private double[][][] hmm3ProbMatrix() {
+    	return hmm3ProbMatrix(1.0);
+    }
+    private double[][][] hmm3ProbMatrix(double heat) {
         double[] equDist = owner.substitutionModel.e;
         int hmm3Parent[] = owner.hmm3.getStateEmit()[0];
         int hmm3Left[] = owner.hmm3.getStateEmit()[1];
@@ -785,7 +792,7 @@ public class Vertex {
                             for (tr = Utils.log0, prevk = START + 1; prevk < END; prevk++)
                                 tr = Utils.logAdd(tr, probMatrix[previ][prevj][prevk] + hmm3RedTransMatrix[prevk][k]);
                         }
-                        probMatrix[i][j][k] = Math.log(emissionProb) + tr;
+                        probMatrix[i][j][k] = heat*(Math.log(emissionProb) + tr);
                     } else
                         probMatrix[i][j][k] = Utils.log0;
                 }
@@ -1158,6 +1165,9 @@ public class Vertex {
     }
 
     private double[][][] hmm2ProbMatrix() {
+    	return hmm2ProbMatrix(1.0);
+    }
+    private double[][][] hmm2ProbMatrix(double heat) {
         double[] equDist = owner.substitutionModel.e;
         int hmm2Parent[] = owner.hmm2.getStateEmit()[0];
         int hmm2Child[] = owner.hmm2.getStateEmit()[1];
@@ -1237,7 +1247,7 @@ public class Vertex {
                             for (tr = Utils.log0, prevk = START + 1; prevk < END; prevk++)
                                 tr = Utils.logAdd(tr, probMatrix[previ][prevj][prevk] + hmm2PropTransMatrix[prevk][k]);
                         }
-                        probMatrix[i][j][k] = Math.log(emissionProb) + tr;
+                        probMatrix[i][j][k] = 1.0*(Math.log(emissionProb) + tr);
                     } else
                         probMatrix[i][j][k] = Utils.log0;
                 }
@@ -1254,6 +1264,9 @@ public class Vertex {
      * @return log of backproposal probability
      */
     double hmm2BackProp() {
+    	return hmm2BackProp(1.0);
+    }
+    double hmm2BackProp(double heat) {
         int emitPatt2State[] = owner.hmm2.getEmitPatt2State();
         final int START = owner.hmm2.getStart();
         final int END = owner.hmm2.getEnd();
@@ -1263,7 +1276,7 @@ public class Vertex {
         int k, previ, prevj, prevk;
         int pattCode;                                    // alignment column pattern's binary code
 
-        double probMatrix[][][] = hmm2ProbMatrix();
+        double probMatrix[][][] = hmm2ProbMatrix(heat);
 
         /* backproposal calculation */
 
@@ -1311,6 +1324,9 @@ public class Vertex {
      * @return log of 1/proposal
      */
     double hmm2Align() {
+    	return hmm2Align(1.0);
+    }
+    double hmm2Align(double heat) {
         int hmm2Parent[] = owner.hmm2.getStateEmit()[0];
         int hmm2Child[] = owner.hmm2.getStateEmit()[1];
         final int START = owner.hmm2.getStart();
@@ -1339,7 +1355,7 @@ public class Vertex {
 
         for (k = END; k != START; k = prevk) {
             for (prevk = START; prevk < END; prevk++)
-                prJump[prevk] = probMatrix[previ][prevj][prevk] + hmm2PropTransMatrix[prevk][k];
+                prJump[prevk] = heat*(probMatrix[previ][prevj][prevk] + hmm2PropTransMatrix[prevk][k]);
             prevk = Utils.logWeightedChoose(prJump, retVal);
 
             if (hmm2Parent[prevk] != 0) {
@@ -1392,6 +1408,9 @@ public class Vertex {
      * @return log of 1/proposal
      */
     public double hmm2AlignWithSave() {
+    	return hmm2AlignWithSave(1.0);
+    }
+    public double hmm2AlignWithSave(double heat) {
         int hmm2Parent[] = owner.hmm2.getStateEmit()[0];
         int hmm2Child[] = owner.hmm2.getStateEmit()[1];
         final int START = owner.hmm2.getStart();
@@ -1424,7 +1443,7 @@ public class Vertex {
 
         for (k = END; k != START; k = prevk) {
             for (prevk = START; prevk < END; prevk++)
-                prJump[prevk] = probMatrix[previ][prevj][prevk] + hmm2PropTransMatrix[prevk][k];
+                prJump[prevk] = heat*(probMatrix[previ][prevj][prevk] + hmm2PropTransMatrix[prevk][k]);
             prevk = Utils.logWeightedChoose(prJump, retVal);
 
             if (hmm2Parent[prevk] != 0) {
@@ -1981,9 +2000,9 @@ public class Vertex {
         System.out.println("log move order probability ratio = "+ret);
         
         // compute alignment backproposal
-        double bpp = uncle.hmm2BackProp();
+        double bpp = uncle.hmm2BackProp(PROPOSAL_HEAT);
 	    System.out.println("After first back prop = "+bpp);    
-        bpp += hmm2BackProp();
+        bpp += hmm2BackProp(PROPOSAL_HEAT);
         System.out.println("log back proposal probability = "+bpp);
         ret += bpp;
 
@@ -1997,21 +2016,21 @@ public class Vertex {
         // align the sequences
         double bppProp = 0.0;
         if (realignLowerFirst) {
-        	bppProp += uncle.hmm2AlignWithSave(); // This calls parent.calcFelsen()
+        	bppProp += uncle.hmm2AlignWithSave(PROPOSAL_HEAT); // This calls parent.calcFelsen()
         	//bppProp += uncle.hmm2Align(); // This calls parent.calcFelsen()
         	uncle.parent.calcFelsenWithCheck();
         	System.out.println("After first realignment = "+bppProp);
-        	bppProp += hmm2AlignWithSave();
+        	bppProp += hmm2AlignWithSave(PROPOSAL_HEAT);
         	//bppProp += hmm2Align();
         	parent.calcFelsenWithCheck();
         	//parent.calcFelsen();
         }
         else {
-        	bppProp += hmm2AlignWithSave();
+        	bppProp += hmm2AlignWithSave(PROPOSAL_HEAT);
         	if (Utils.USE_UPPER) {
         		uncle.parent.calcUpper();
         	}
-        	bppProp += uncle.hmm2AlignWithSave();
+        	bppProp += uncle.hmm2AlignWithSave(PROPOSAL_HEAT);
         }
         
         
@@ -2039,8 +2058,8 @@ public class Vertex {
 		    else {
 		    	uncle.parent.calcFelsenWithout(uncle);
 		    }
-        	double bppBack = uncle.hmm2BackProp();
-        	bppBack += hmm2BackProp();
+        	double bppBack = uncle.hmm2BackProp(PROPOSAL_HEAT);
+        	bppBack += hmm2BackProp(PROPOSAL_HEAT);
         	if (realignLowerFirst) {
 		    	uncle.parent.calcUpper();
 		    }

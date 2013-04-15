@@ -127,11 +127,11 @@ public class TopologyMove extends McmcMove {
 //			} catch(IOException e){}
 //		}
 		
-//		double logProposalRatio = nephewEdgeMove.proposal(externalState);
+		double logProposalRatio = nephewEdgeMove.proposal(externalState);
 //		System.out.println("logProposalRatio after nephew = "+logProposalRatio);
-//		logProposalRatio += parentEdgeMove.proposal(externalState);
+		logProposalRatio += parentEdgeMove.proposal(externalState);
 //		System.out.println("logProposalRatio after parent = "+logProposalRatio);
-//		logProposalRatio += uncleEdgeMove.proposal(externalState);
+		logProposalRatio += uncleEdgeMove.proposal(externalState);
 //		System.out.println("logProposalRatio after uncle = "+logProposalRatio);
 		
 //		logProposalRatio += nephew.fastSwapWithUncle();
@@ -140,7 +140,7 @@ public class TopologyMove extends McmcMove {
 		System.out.println(nephew.index+" "+s[1]+"\n"+nephew.parent.index+" "+s[0]);
 		s = uncle.printedAlignment();
 		System.out.println(uncle.index+" "+s[1]+"\n"+uncle.parent.index+" "+s[0]);
-		double logProposalRatio = nephew.swapWithUncleAlignToParent();
+		logProposalRatio = nephew.swapWithUncleAlignToParent();
 		System.out.println("logProposalRatio after swap = "+logProposalRatio);
 		System.out.println("After  Topology: "+tree.printedTree());
 		s = nephew.printedAlignment();
@@ -166,7 +166,7 @@ public class TopologyMove extends McmcMove {
 //			} catch(IOException e){}
 //			
 //		}
-		
+		//return 0.0;
 		return logProposalRatio;
 	}
 	
