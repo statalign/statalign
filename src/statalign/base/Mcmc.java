@@ -155,7 +155,7 @@ public class Mcmc extends Stoppable {
 	private int edgeWeight = 1; // per edge
 	private int allEdgeWeight = 6;
 	private int edgeWeightIncrement = 0; // Added after half of burnin
-	private int alignWeight = 25;
+	private int alignWeight = 250;
 	private int topologyWeight = 8;
 	private int localTopologyWeight = 8;
 	private int topologyWeightIncrement = 0; // Added after half of burnin
@@ -370,7 +370,10 @@ public class Mcmc extends Stoppable {
 	
 	public boolean acceptanceDecision(double oldLogLikelihood, double newLogLikelihood, double logProposalRatio,
 			boolean acceptMoveIfPossible) {
-		System.out.println("old: "+oldLogLikelihood+", new: "+newLogLikelihood+", logProp: "+logProposalRatio);
+		if (cumulativeLogProposalRatio > 0) {
+			throw new RuntimeException("cumulativeLogProposalRatio = "+cumulativeLogProposalRatio);
+		}
+		System.out.println("logLikRatio: "+(newLogLikelihood-oldLogLikelihood)+", logPropRatio: "+logProposalRatio);
 		if (logProposalRatio > Double.NEGATIVE_INFINITY) {
 			cumulativeLogProposalRatio += logProposalRatio;
 		}

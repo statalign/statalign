@@ -475,11 +475,17 @@ public class Vertex {
     void calcUpper(boolean withCheck, boolean withoutBrother) {
     	AlignColumn v; 
     	Vertex brother = null;
-    	double[][] trans = null;
+    	    	
+    	boolean isLeft = false;
+    	
     	if (this != owner.root) {
     		brother = brother();
-    		trans = brother.charTransMatrix;
-    	}
+    		isLeft = (this == parent.left);
+    		if (Utils.DEBUG) {
+    			parent.calcUpperWithCheck();
+    			brother.calcFelsenWithCheck();
+    		}
+    	}   	
     	
         for (v = first; v != last; v = v.next) {
         	double[] upp_old = null;
@@ -494,13 +500,17 @@ public class Vertex {
         	}
         	else {
         		AlignColumn p = v.parent;
-        		AlignColumn b = (this == parent.left) ? p.right : p.left;
-        		v.upp = p.upp.clone();
+        		AlignColumn b = isLeft ? p.right : p.left;
+        		double[] felsen = new double[ owner.substitutionModel.e.length];       		
         		if (b != null && !withoutBrother) {
-	        		for (int i=0; i<v.upp.length; i++) {
-	        			for (int j=0; j<v.upp.length; j++) {
-	        				v.upp[i] += b.seq[j] * trans[i][j];
-	        			}
+                    Utils.calcFelsen(felsen, null, null, b != null ? b.seq : null, brother.charTransMatrix);
+        		}
+        		else for (int i=0; i<felsen.length; i++)  felsen[i] = 1.0;
+        		
+        		v.upp = new double[ owner.substitutionModel.e.length];
+        		for (int i=0; i<v.upp.length; i++) {
+        			for (int j=0; j<v.upp.length; j++) {
+        				v.upp[j] = felsen[i] * p.upp[i] * charTransMatrix[i][j];
 	        		}
         		}
         	}
@@ -630,7 +640,7 @@ public class Vertex {
 
         for (AlignColumn actual = first; actual != last; actual = actual.next) {
             if (actual.parent == null || actual.orphan) {
-                orphanLogLike += Math.log(Utils.calcEmProb(actual.seq, owner.substitutionModel.e));
+            	orphanLogLike += Math.log(Utils.calcEmProb(actual.seq, owner.substitutionModel.e));
             }
         }
 
@@ -639,11 +649,11 @@ public class Vertex {
         }
         if (withCheck) {
 	        if (old.orphanLogLike - orphanLogLike > 1e-6) {
-	            new ErrorMessage(null, "Problem with orphan loglike: fast: " + old.orphanLogLike + " slow: " + orphanLogLike, true);
-	            int index = 0;
-	            while (owner.vertex[index] != this) {
-	                index++;
-	            }
+	            throw new RuntimeException("Problem with orphan loglike at vertex "+index+": old: " + old.orphanLogLike + " new: " + orphanLogLike);
+//	            int index = 0;
+//	            while (owner.vertex[index] != this) {
+//	                index++;
+//	            }
 	        }
         }
     }
@@ -653,7 +663,13 @@ public class Vertex {
     void calcOrphanWithCheck() {
     	calcOrphan(true);
     }
-
+    void calcOrphanRecursively() {
+        if (left != null && right != null) {
+            left.calcOrphanRecursively();
+            right.calcOrphanRecursively();
+        }
+        calcOrphan();
+    }
     void calcOrphanRecursivelyWithCheck() {
         if (left != null && right != null) {
             left.calcOrphanRecursivelyWithCheck();
@@ -1552,6 +1568,19 @@ public class Vertex {
     	System.out.println(owner.printedTree());
     	StringBuffer sb = new StringBuffer();
     	
+    	 owner.root.calcFelsenRecursively();
+         owner.root.calcOrphanRecursively();
+         owner.root.calcIndelLogLikeRecursively();
+         if (Utils.USE_UPPER) {
+         	//owner.root.calcFelsenRecursively();
+         	owner.root.calcUpperRecursively();
+         }   
+         owner.root.recomputeCheckLogLike();
+        
+    	recomputeCheckLogLike();
+    	System.out.println("root.indelLogLike\t "+owner.root.indelLogLike);
+        System.out.println("root.orphanLogLike\t "+owner.root.orphanLogLike);
+    	calcAllUp();
     	System.out.println("root.indelLogLike\t "+owner.root.indelLogLike);
         System.out.println("root.orphanLogLike\t "+owner.root.orphanLogLike);
 
@@ -1572,6 +1601,7 @@ public class Vertex {
         // select the beginning and end of the window
         MuDouble p = new MuDouble(1.0);
         winLength = Utils.linearizerWeight(length, p, Utils.WINDOW_MULTIPLIER*Math.sqrt(length));
+        if (Utils.DEBUG && Utils.USE_FULL_WINDOWS) winLength = length; p.value = 1.0; 
         //System.out.print("Length: "+length+"\t");
         //System.out.print("Window length: "+winLength+"\t");
         int b = (length - winLength == 0 ? 0 : Utils.generator.nextInt(length - winLength));
@@ -1590,9 +1620,12 @@ public class Vertex {
         if (Utils.USE_UPPER) {
         	//owner.root.calcFelsenRecursively();
         	owner.root.calcUpperRecursively();
+        }        
+
+        double bpp = 0;
+        if (!(Utils.DEBUG && Utils.USE_FULL_WINDOWS)) {
+        	 bpp = -Math.log(p.value / (length - winLength + 1));
         }
-        //double bpp = -Math.log(p.value * (length - winLength == 0 ? 1 : length - winLength));
-        double bpp = -Math.log(p.value / (length - winLength + 1));
 
         System.out.println("bpp after window select\t "+bpp);
 
@@ -1624,11 +1657,21 @@ public class Vertex {
         	double hmm2AlignProp = hmm2AlignWithSave();
         	System.out.println("hmm2AlignProp\t "+hmm2AlignProp);
             bppProp += hmm2AlignProp;
-            parent.calcAllUp();
+//            calcOrphan();
+//            parent.calcAllUp();
         } else {
             calcOrphan();
         }
-
+        
+        owner.root.calcFelsenRecursively();
+        owner.root.calcOrphanRecursively();
+        owner.root.calcIndelLogLikeRecursively();
+        if (Utils.USE_UPPER) {
+        	//owner.root.calcFelsenRecursively();
+        	owner.root.calcUpperRecursively();
+        }   
+        owner.root.recomputeCheckLogLike();
+        
         bpp += bppProp;
 
         System.out.println("root.indelLogLike\t "+owner.root.indelLogLike);
@@ -1645,9 +1688,12 @@ public class Vertex {
         }
 
         System.out.println("Final window length\t "+winLength);
-        double windowProb = Math.log(Utils.linearizerWeightProb(length, winLength, Utils.WINDOW_MULTIPLIER*Math.sqrt(length)) 
+        double windowProb = 0;
+        if (!(Utils.DEBUG && Utils.USE_FULL_WINDOWS)) {
+        	windowProb = Math.log(Utils.linearizerWeightProb(length, winLength, Utils.WINDOW_MULTIPLIER*Math.sqrt(length)) 
            		/ (length - winLength + 1));
-    
+        }
+        
         System.out.println("final window selection\t "+windowProb);
         bpp += windowProb;
 
@@ -1790,6 +1836,14 @@ public class Vertex {
             }
             parent.calcAllUp();
         }
+        owner.root.calcFelsenRecursively();
+        owner.root.calcOrphanRecursively();
+        owner.root.calcIndelLogLikeRecursively();
+        if (Utils.USE_UPPER) {
+        	//owner.root.calcFelsenRecursively();
+        	owner.root.calcUpperRecursively();
+        }   
+        owner.root.recomputeCheckLogLike();
     }
 
     /**
@@ -1925,6 +1979,32 @@ public class Vertex {
     }
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+  /*  public double fiveWayTopologySample() {
+    	double logProposalRatio = 0.0;
+    
+    	int hmm2Parent[] = owner.hmm2.getStateEmit()[0];
+         int hmm2Child[] = owner.hmm2.getStateEmit()[1];
+         final int START = owner.hmm2.getStart();
+         final int END = owner.hmm2.getEnd();
+         int parentLen = parent.winLength, childLen = winLength;
+         boolean isLeft = (this == parent.left);
+         
+    	Vertex brother = brother(), uncle = parent.brother(), grandpa = parent.parent, greatgrandpa = grandpa.parent;
+    	
+    	AlignColumn p = parent.first;
+    	while(p != parent.last) {
+    		AlignColumn t = isLeft ? p.left : p.right;
+    		AlignColumn b = isLeft ? p.right : p.left;
+    		AlignColumn g = parent.parent;
+    		
+    	}
+    	double[] logTopologyWeights = new double[3];
+    	
+    	
+    	return logProposalRatio;
+    } */
+
+    
     /**
      * Swaps {@code this} with its uncle, but proposes new alignments only between this node and its parent, and
      * the uncle node and its parent, every other alignment is kept fixed. Slow because full sequence
