@@ -65,6 +65,13 @@ public class AlignmentMove extends McmcMove {
 	}
 	public void restoreState(Object externalState) {
 		selectedRoot.alignRestore();
+		 tree.root.calcFelsenRecursively();
+         tree.root.calcOrphanRecursively();
+         tree.root.calcIndelLogLikeRecursively();
+         if (Utils.USE_UPPER) {
+         	//owner.root.calcFelsenRecursively();
+         	tree.root.calcUpperRecursively();
+         }   
 	}
 	
 	public void afterMove(Object externalState) {

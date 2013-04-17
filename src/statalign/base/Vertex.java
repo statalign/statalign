@@ -433,7 +433,7 @@ public class Vertex {
         }
     }
 
-    void recomputeCheckLogLike() {
+    public void recomputeCheckLogLike() {
         if (left != null && right != null) {
             // System.out.println("calling the left child");
             left.recomputeCheckLogLike();
@@ -456,6 +456,7 @@ public class Vertex {
      */
     public void calcUpperRecursively() {
     	calcUpper();
+    	updateTransitionMatrix();
     	if (left != null && right != null) {
             // System.out.println("calling the left child");
             left.calcUpperRecursively();
@@ -502,7 +503,7 @@ public class Vertex {
         		AlignColumn p = v.parent;
         		AlignColumn b = isLeft ? p.right : p.left;
         		double[] felsen = new double[ owner.substitutionModel.e.length];       		
-        		if (b != null && !withoutBrother) {
+        		if (!withoutBrother) {
                     Utils.calcFelsen(felsen, null, null, b != null ? b.seq : null, brother.charTransMatrix);
         		}
         		else for (int i=0; i<felsen.length; i++)  felsen[i] = 1.0;
@@ -510,7 +511,7 @@ public class Vertex {
         		v.upp = new double[ owner.substitutionModel.e.length];
         		for (int i=0; i<v.upp.length; i++) {
         			for (int j=0; j<v.upp.length; j++) {
-        				v.upp[j] = felsen[i] * p.upp[i] * charTransMatrix[i][j];
+        				v.upp[j] += felsen[i] * p.upp[i] * charTransMatrix[i][j];
 	        		}
         		}
         	}
@@ -539,6 +540,7 @@ public class Vertex {
     void calcUpperWithoutBrother() {
     	calcUpper(false,true);
     }
+        
 
     /**
      * This function calculates the Felsenstein likelihood for the subtree below <code>this</code>. 
@@ -586,7 +588,7 @@ public class Vertex {
                 if (withCheck) {
                 	 boolean match = Utils.calcFelsenWithCheck(p.seq, fel1, left.charTransMatrix, fel2, right.charTransMatrix);
                      if (!match) {
-                         new ErrorMessage(null, "Felsenstein does not match! ", true);
+                         throw new RuntimeException("Felsenstein does not match!");
                      }
                 }
                 else { 
@@ -663,7 +665,7 @@ public class Vertex {
     void calcOrphanWithCheck() {
     	calcOrphan(true);
     }
-    void calcOrphanRecursively() {
+    public void calcOrphanRecursively() {
         if (left != null && right != null) {
             left.calcOrphanRecursively();
             right.calcOrphanRecursively();
@@ -1228,6 +1230,8 @@ public class Vertex {
 //                            	}
 //                            	System.out.print();
                             	emissionProb = Utils.calcEmProb(felsen, p.upp);
+                            	// If a double deletion (childless parent) then the above
+                            	// should just yield the sum of p.upp
                             }
 //                            	double[] partialLikelihood = p.parent.seq;                             	
 //                            	for (int ii=0; ii<partialLikelihood.length; ii++) {
@@ -1521,9 +1525,9 @@ public class Vertex {
         parent.calcOrphan();
         parent.calcIndelLogLike();
 
-        if (Utils.DEBUG) {
-        	printToScreenAlignment(0,0);
-        }
+//        if (Utils.DEBUG) {
+//        	printToScreenAlignment(0,0);
+//        }
         
         return retVal.value;
     }
@@ -1562,10 +1566,11 @@ public class Vertex {
 
     /** This function cuts out a window and realigns in the selected subtree. */
     public double selectAndResampleAlignment() {
-
+    	
     	System.out.println(index+" "+name+" "+edgeLength);
     	System.out.println(owner.hmm2.params[0]+" "+owner.hmm2.params[1]+" "+owner.hmm2.params[2]);
     	System.out.println(owner.printedTree());
+        printToScreenAlignment(0,0,true);
     	StringBuffer sb = new StringBuffer();
     	
     	 owner.root.calcFelsenRecursively();
@@ -1575,12 +1580,10 @@ public class Vertex {
          	//owner.root.calcFelsenRecursively();
          	owner.root.calcUpperRecursively();
          }   
-         owner.root.recomputeCheckLogLike();
+         //owner.root.recomputeCheckLogLike();
         
-    	recomputeCheckLogLike();
-    	System.out.println("root.indelLogLike\t "+owner.root.indelLogLike);
-        System.out.println("root.orphanLogLike\t "+owner.root.orphanLogLike);
-    	calcAllUp();
+        // if (Utils.USE_UPPER) owner.checkUppFelsProducts();
+         
     	System.out.println("root.indelLogLike\t "+owner.root.indelLogLike);
         System.out.println("root.orphanLogLike\t "+owner.root.orphanLogLike);
 
@@ -1636,7 +1639,15 @@ public class Vertex {
         }
         selectWindowUp();
 	
-        printToScreenAlignment(b,b+winLength);
+        owner.root.calcFelsenRecursively();
+        owner.root.calcOrphanRecursively();
+        owner.root.calcIndelLogLikeRecursively();
+        if (Utils.USE_UPPER) {
+        	//owner.root.calcFelsenRecursively();
+        	owner.root.calcUpperRecursively();
+        }   
+        
+        //printToScreenAlignment(b,b+winLength);
         // compute alignment backproposal
         //bpp += doRecBackprop();
         double recBackprop = doRecBackprop();
@@ -1670,8 +1681,11 @@ public class Vertex {
         	//owner.root.calcFelsenRecursively();
         	owner.root.calcUpperRecursively();
         }   
-        owner.root.recomputeCheckLogLike();
-        
+        //owner.root.recomputeCheckLogLike();
+        //if (Utils.USE_UPPER) owner.checkUppFelsProducts();
+
+        printToScreenAlignment(0,0,true);
+
         bpp += bppProp;
 
         System.out.println("root.indelLogLike\t "+owner.root.indelLogLike);
@@ -1697,8 +1711,8 @@ public class Vertex {
         System.out.println("final window selection\t "+windowProb);
         bpp += windowProb;
 
-    	System.out.println("Total bpp\t "+bpp);
-    	printToScreenAlignment(b,b+winLength);
+    	//System.out.println("Total bpp\t "+bpp);
+    	//printToScreenAlignment(b,b+winLength);
     	
         return bpp;
     }
@@ -1836,14 +1850,17 @@ public class Vertex {
             }
             parent.calcAllUp();
         }
-        owner.root.calcFelsenRecursively();
-        owner.root.calcOrphanRecursively();
-        owner.root.calcIndelLogLikeRecursively();
-        if (Utils.USE_UPPER) {
-        	//owner.root.calcFelsenRecursively();
-        	owner.root.calcUpperRecursively();
-        }   
-        owner.root.recomputeCheckLogLike();
+     
+        //indelLogLike = old.indelLogLike;
+//        calcAllUp();
+//        owner.root.calcFelsenRecursively();
+//        owner.root.calcOrphanRecursively();
+//        owner.root.calcIndelLogLikeRecursively();
+//        if (Utils.USE_UPPER) {
+//        	//owner.root.calcFelsenRecursively();
+//        	owner.root.calcUpperRecursively();
+//        }   
+//        owner.root.recomputeCheckLogLike();
     }
 
     /**
@@ -2069,16 +2086,19 @@ public class Vertex {
 		    if (realignLowerFirst) {
 		    	System.out.println("Aligning lower first.");
 		    	parent.calcUpperWithoutBrother();
-		    	ret += Math.log(weights[1]/weights[0]);
+
+		    	//ret += Math.log(weights[1]/weights[0]);
 		    }
 		    else {
 		    	System.out.println("Aligning upper first.");
 		    	parent.calcFelsenWithout(this);
-		    	ret += Math.log(weights[0]/weights[1]);
+		    	//ret += Math.log(weights[0]/weights[1]);
 		    }
 		}
         System.out.println("log move order probability ratio = "+ret);
         
+        owner.root.calcIndelLogLikeRecursively();
+
         // compute alignment backproposal
         double bpp = uncle.hmm2BackProp(PROPOSAL_HEAT);
 	    System.out.println("After first back prop = "+bpp);    
@@ -2096,13 +2116,15 @@ public class Vertex {
         // align the sequences
         double bppProp = 0.0;
         if (realignLowerFirst) {
-        	bppProp += uncle.hmm2AlignWithSave(PROPOSAL_HEAT); // This calls parent.calcFelsen()
+        	bppProp += uncle.hmm2AlignWithSave(PROPOSAL_HEAT); // This calls uncle.parent.calcFelsen()
+        	//uncle.parent.calcFelsenWithCheck();
+
         	//bppProp += uncle.hmm2Align(); // This calls parent.calcFelsen()
-        	uncle.parent.calcFelsenWithCheck();
+        	//uncle.parent.calcFelsenWithCheck();
         	System.out.println("After first realignment = "+bppProp);
         	bppProp += hmm2AlignWithSave(PROPOSAL_HEAT);
         	//bppProp += hmm2Align();
-        	parent.calcFelsenWithCheck();
+        	//parent.calcFelsenWithCheck();
         	//parent.calcFelsen();
         }
         else {
@@ -2118,6 +2140,8 @@ public class Vertex {
         ret += bppProp;
         
         uncle.calcAllUp();         
+        owner.root.calcIndelLogLikeRecursively();
+
         owner.root.calcUpperRecursively();
         
 //        Utils.USE_UPPER = false;
@@ -2186,6 +2210,15 @@ public class Vertex {
         // restore alignment
         alignRestore();
         uncle.alignRestore();
+        
+        owner.root.calcFelsenRecursively();
+        owner.root.calcOrphanRecursively();
+        owner.root.calcIndelLogLikeRecursively();
+        if (Utils.USE_UPPER) {
+        	//owner.root.calcFelsenRecursively();
+        	owner.root.calcUpperRecursively();
+        }   
+       // owner.root.recomputeCheckLogLike();
     }
 
 	/**

@@ -349,6 +349,79 @@ public class Tree extends Stoppable implements DataType {
     public int countLeaves() {
         return root.countLeaves();
     }
+    
+    void checkUppFelsProducts() {
+    	double[] result = new double[vertex.length];
+    	System.out.println("upp · fels = ");
+VERTEX:	for (Vertex v : vertex) {
+    		boolean isRoot = (v == root);
+    		result[v.index] = 0.0;
+    		AlignColumn p = null, pp = null; 
+    		if (!isRoot) p = v.parent.first;
+    		AlignColumn c = v.first;
+    		double tmp = 0;
+COLUMN:    	while (c != v.last) {
+				
+				tmp = Math.log(Utils.calcEmProb(c.seq,c.upp));		
+				if (v.left!=null && v.right!=null) {
+					//System.out.println(c.seq[0]+" "+c.left.seq[0]+" "+v.left.charTransMatrix[0][0]);
+					boolean match = Utils.calcFelsenWithCheck(c.seq,
+							c.left!=null?c.left.seq:null,v.left.charTransMatrix,
+							c.right!=null?c.right.seq:null,v.right.charTransMatrix);
+					if (!match) {
+						throw new RuntimeException("Didn't match.");
+					}
+				}
+				result[v.index] += tmp;
+				char par = '-', car = ' ';
+				if (c != v.last) car = c.mostLikely();
+				if (p != null && p != v.parent.last) par = p.mostLikely(); else par = '-';
+				System.out.print("\t"+tmp+" ("+par+" -> "+car+") ");
+				for (int i=0; i<c.seq.length; i++) {
+					System.out.print(c.seq[i]+"/"+c.upp[i]+" ");
+				}
+				System.out.println();
+				
+				if (isRoot) { c = c.next; continue COLUMN; }
+				
+				p = c.parent;
+				if (p == null) throw new RuntimeException ("Start p is null.");
+				c = c.next; 	
+    			while (c.orphan) { 
+    				if (c != v.last) car = c.mostLikely(); else car = ' ';
+    				tmp = Math.log(Utils.calcEmProb(c.seq,c.upp));
+    				result[v.index] += tmp; 
+    				System.out.print("\t"+tmp+" ("+"- -> "+car+") ");
+	    			for (int i=0; i<c.seq.length; i++) {
+	    				System.out.print(c.seq[i]+"/"+c.upp[i]+" ");
+	    			}
+	    			System.out.println();
+    				c = c.next;
+    			}
+    			pp = c.parent;
+    			p = p.next;
+    			//if (p != null && p != v.parent.last) System.out.print(" ("+p.mostLikely()+","+pp.mostLikely()+") ");
+	    		// Include contributions from all parent columns that 
+	    		// experience a deletion on this branch.		    	
+	    		while (p != pp) {		 
+    				if (p != null && p != v.parent.last) par = p.mostLikely();
+    				
+    				tmp = Math.log(Utils.calcEmProb(p.seq, p.upp));
+	    			result[v.index] += tmp;
+	    			System.out.print("\t"+tmp+" ("+par+"-> -) ");		
+	    			for (int i=0; i<p.seq.length; i++) {
+	    				System.out.print(p.seq[i]+"/"+p.upp[i]+" ");
+	    			}
+	    			System.out.println();
+	    			p = p.next;
+	    			if (p == v.parent.last) break COLUMN;
+	    		}
+    			    		
+	    	}
+	    	System.out.println("\t"+result[v.index]+" \n");
+    	}
+    	System.out.println();
+    }
 
 
     public int getTopVertexId(int ind) {
