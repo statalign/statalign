@@ -2265,8 +2265,8 @@ public class Vertex {
     	double P = 0.2; // Probability of an additional indel being incorporated
     	double P2 = Math.pow(P,2);
     	// Should really derive this from lambda, mu and R somehow
-		double[] weights2 = {P,1};
-		double[] weights3 = {P2,P,1};
+		double[] weights2 = {1,P};
+		double[] weights3 = {1,P,P2};
         
 		// Swap the pointers between vertices, and the last columns
 		if (isLeft) { parent.left = uncle; parent.last.left = uncle.last; } 
