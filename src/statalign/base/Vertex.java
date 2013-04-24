@@ -2374,9 +2374,7 @@ public class Vertex {
         			logProposalRatio += Math.log(P);
         		}
         		else { // Insert new g column
-        			g = new AlignColumn(g,false); // Is this correct?
-        			g.parent = null;
-        			g.orphan = true;
+        			g = new AlignColumn(g,true); // New orphan column        			
         			gx = true;
         		}
         		if (uncleIsLeft) { g.right = p; g.left = t; }
@@ -2392,7 +2390,7 @@ public class Vertex {
         			logProposalRatio += Math.log(P);
         		}
         		else { // Insert new p column
-        			p = new AlignColumn(p,false); // Is this correct?
+        			p = new AlignColumn(p,true); 
         			p.parent = g;
         			p.orphan = false;
         			px = true;
@@ -2460,9 +2458,7 @@ public class Vertex {
     						// log(bwd/fwd) = -log(fwd) + log(bwd) = log(P) - log(1)
     						logProposalRatio += Math.log(P);
     					}
-    					g = new AlignColumn(g,false); // Is this correct?
-            			g.parent = null;
-            			g.orphan = true;
+    					g = new AlignColumn(g,true); // New orphan column            			
     					gx = true;
     				}
     				t.parent = g;
@@ -2477,16 +2473,14 @@ public class Vertex {
 						// log(bwd/fwd) = 0						     					
     				}
     				else {
-    					g = new AlignColumn(g,false); // Is this correct?
-            			g.parent = null;
-            			g.orphan = true;
+    					g = new AlignColumn(g,true); // New orphan column            			
     					gx = true;
     					if (px) {
     						// log(bwd/fwd) = 2 log(P) - log(P)
     						logProposalRatio += Math.log(P);
     					}
     					else {
-    						p = new AlignColumn(p,false); // Is this correct?
+    						p = new AlignColumn(p,true);
                 			p.parent = g;
                 			p.orphan = false;
                 			px = true;
@@ -2548,7 +2542,7 @@ public class Vertex {
     						// log(bwd/fwd) = -log(fwd) + log(bwd) = log(P) - log(1)
     						logProposalRatio += Math.log(P);
     					}
-    					p = new AlignColumn(p,false); // Is this correct?
+    					p = new AlignColumn(p,true); 
             			p.parent = null;
             			p.orphan = true;
     					px = true;
@@ -2570,14 +2564,12 @@ public class Vertex {
     						logProposalRatio += Math.log(P);
     					}
     					else {
-    						g = new AlignColumn(g,false); // Is this correct?
-                			g.parent = null;
-                			g.orphan = true;
+    						g = new AlignColumn(g,true); // New orphan column                			
         					gx = true;    						
     						// log(bwd/fwd) = -log(fwd) + log(bwd) = 2 log(P) - log(1)
     						logProposalRatio += 2*Math.log(P);
     					}
-    					p = new AlignColumn(p,false); // Is this correct?
+    					p = new AlignColumn(p,true); 
             			p.parent = g;
             			p.orphan = false;
             			px = true;
