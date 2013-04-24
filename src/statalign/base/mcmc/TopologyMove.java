@@ -140,7 +140,10 @@ public class TopologyMove extends McmcMove {
 		System.out.println(nephew.index+" "+s[1]+"\n"+nephew.parent.index+" "+s[0]);
 		s = uncle.printedAlignment();
 		System.out.println(uncle.index+" "+s[1]+"\n"+uncle.parent.index+" "+s[0]);
-		double logProposalRatio = nephew.swapWithUncleAlignToParent();
+		
+		double logProposalRatio = nephew.nephewUncleSwapFixedColumns();
+		
+		// double logProposalRatio = nephew.swapWithUncleAlignToParent();
 		System.out.println("logProposalRatio after swap = "+logProposalRatio);
 		System.out.println("After  Topology: "+tree.printedTree());
 		s = nephew.printedAlignment();
@@ -185,14 +188,15 @@ public class TopologyMove extends McmcMove {
 	@Override
 	public void restoreState(Object externalState) {
 		
-		// Note these are restored in the reverse order to the proposal
 	//	uncle.fastSwapBackUncle();
 		// If using the alternative move:
-       uncle.swapBackUncleAlignToParent();
+       // uncle.swapBackUncleAlignToParent();
+		uncle.nephewUncleRestoreFixedColumns();
 		
-		uncleEdgeMove.restoreState(externalState);
-		parentEdgeMove.restoreState(externalState);
-		nephewEdgeMove.restoreState(externalState);
+		// Note these are restored in the reverse order to the proposal
+//		uncleEdgeMove.restoreState(externalState);
+//		parentEdgeMove.restoreState(externalState);
+//		nephewEdgeMove.restoreState(externalState);
 				
 	}
 	

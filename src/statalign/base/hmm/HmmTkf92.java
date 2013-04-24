@@ -31,7 +31,7 @@ public class HmmTkf92 extends Hmm2 {
 	
 	/* Emission (pattern) of the states: columns are states, 1st row: parent, 2nd row: child */
 	private int stateEmit[][] = {{0,1,1,0,0},
-															 {0,1,0,1,0}};
+								 {0,1,0,1,0}};
 	
 	/* converts states' emission pattern as a binary number (p=2,ch=1) to state # : e.g. 3->1, 2->2
 	    4->4 is virtual, so that end state has a pattern, too */

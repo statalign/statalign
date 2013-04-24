@@ -327,6 +327,77 @@ public class Utils{
 		return k;
 	}
 
+	/**
+	 * For a tree of the form:
+	 * <pre>
+	 *       gg
+	 *       /
+	 *      g
+	 *     / \
+	 *    p   u
+	 *  /  \
+	 * t    b
+	 * </pre>
+	 * 
+	 * this function determines valid possible indel states for <code>p</code> and <code>g</code>
+	 * given fixed states for the neighbouring nodes.
+	 * @param p The presence/absence of node <code>p</code>.
+	 * @param g The presence/absence of node <code>b</code>.
+	 * @param neighb An array indicating the state of the neighbouring nodes, in the order
+	 * <code>{t,b,u,gg}</code>.
+	 * 
+	 * @return A boolean value indicating whether the specified values of <code>p</code>
+	 * and <code>b</code> are compatible with the neighbouring states.
+	 */
+	public static boolean isValidHistory(boolean p, boolean g, boolean[] neighb) {
+    	return isValidHistory(p,g,neighb,false);
+    }	
+	/**
+	 * For a tree of the form:
+	 * <pre>
+	 *       gg
+	 *       /
+	 *      g
+	 *     / \
+	 *    p   u
+	 *  /  \
+	 * t    b
+	 * </pre>
+	 * 
+	 * or, if <code>gIsRoot = true</code>, then for a tree of the form
+	 * <pre>
+	 *      g
+	 *     / \
+	 *    p   u
+	 *  /  \
+	 * t    b
+	 * </pre>
+	 * 
+	 * this function determines valid possible indel states for <code>p</code> and <code>g</code>
+	 * given fixed states for the neighbouring nodes.
+	 * @param gIsRoot This is <code>true</code> if <code>g</code> is the root of the tree.
+	 * @param p The presence/absence of node <code>p</code>.
+	 * @param g The presence/absence of node <code>b</code>.
+	 * @param neighb An array indicating the state of the neighbouring nodes, in the order
+	 * <code>{t,b,u,gg}</code> (if <code>gIsRoot=false</code>), or <code>{t,b,u}</code> 
+	 * (if <code>gIsRoot=true</code>).
+	 * 
+	 * @return A boolean value indicating whether the specified values of <code>p</code>
+	 * and <code>b</code> are compatible with the neighbouring states.
+	 */
+    public static boolean isValidHistory(boolean p, boolean g, boolean[] neighb, boolean gIsRoot) {
+    	
+    	boolean t = neighb[0], b = neighb[1], u = neighb[2], gg = false;
+    	if (!gIsRoot) gg = neighb[3]; 
+    	
+    	boolean result = true;
+    	if ((u|gg)&(t|b)) 	result &= (p&g);
+    	if (result && u&gg)	result &= g;
+    	if (result &&  t&b)	result &= p;
+    	
+    	return result;
+    }
+	    
 	/** 
 	 * Takes a time in milliseconds and converts to a string to be printed.
 	 * 
@@ -353,6 +424,15 @@ public class Utils{
 		return a+Math.log(Math.exp(b-a)+1);
 	}
 
+	/**
+	 * NB this function only overwrites <code>res</code> if fel1 != null, otherwise it multiplies
+	 * the existing elements. 
+	 * @param res
+	 * @param fel1
+	 * @param prob1
+	 * @param fel2
+	 * @param prob2
+	 */
     static void calcFelsen(double[] res, double[] fel1, double[][] prob1, double[] fel2, double[][] prob2) {
 		double s;
 		int i, j, len = res.length;

@@ -60,6 +60,8 @@ public class Tree extends Stoppable implements DataType {
 
     //boolean changingTree = false;
     boolean changingTree = true;
+    
+    public String[] previousFullAlign;
 
     public Tree() {
     }
@@ -441,7 +443,11 @@ COLUMN:    	while (c != v.last) {
      * Returns a {@link State} object representing the current state. Assumes that
      * leaves come first in the {@link #vertex} array.
      */
-	public State getState() {
+    //public State getState() {
+    //	return getState(root);
+    //}
+	//public State getState(Vertex subtreeRoot) {
+    public State getState() {
 		int nn = vertex.length;
 		int nl = (nn+1)/2;
 		State state = new State(nn);

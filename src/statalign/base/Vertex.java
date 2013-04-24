@@ -456,7 +456,7 @@ public class Vertex {
      */
     public void calcUpperRecursively() {
     	calcUpper();
-    	updateTransitionMatrix();
+    	//updateTransitionMatrix();
     	if (left != null && right != null) {
             // System.out.println("calling the left child");
             left.calcUpperRecursively();
@@ -1194,7 +1194,7 @@ public class Vertex {
         final int END = owner.hmm2.getEnd();
         Vertex brother = brother();
 
-        double probMatrix[][][];                                                                    // DP matrix used for 2-seq HMM alignment
+        double probMatrix[][][];                                          // DP matrix used for 2-seq HMM alignment
         probMatrix = new double[parentLen + 1][childLen + 1][END];        // don't reserve space for end state
 
         double emissionProb, felsen[] = new double[equDist.length], tr;
@@ -1205,13 +1205,6 @@ public class Vertex {
 
         /* i: parent prefix length, j: child prefix length, k: state  */
         for (i = 0; i <= parentLen; i++) {
-//        	if (!owner.changingTree && p != null) {
-//	        	double[] partialLikelihood1 = p.upp;
-//	        	for (int iii=0; iii<partialLikelihood1.length; iii++) {
-//	        		System.out.print(partialLikelihood1[iii]+ " ");
-//	        	}
-//	        	System.out.println();
-//        	}
             for (j = 0; j <= childLen; j++) {
                 probMatrix[i][j][START] = (i == 0 && j == 0) ? 0.0 : Utils.log0;        // update matrix for start state
                 for (k = START + 1; k < END; k++) {
@@ -1225,51 +1218,21 @@ public class Vertex {
                                 emissionProb = Utils.calcEmProb(felsen, equDist);
                             }
                             else {
-//                            	for (int ii=0; ii<p.upp.length; ii++) {
-//                            		System.out.print(p.upp[ii]+" ");
-//                            	}
-//                            	System.out.print();
                             	emissionProb = Utils.calcEmProb(felsen, p.upp);
                             	// If a double deletion (childless parent) then the above
                             	// should just yield the sum of p.upp
                             }
-//                            	double[] partialLikelihood = p.parent.seq;                             	
-//                            	for (int ii=0; ii<partialLikelihood.length; ii++) {
-//                            		if (partialLikelihood[ii] == 0 || partialLikelihood[ii] == Double.POSITIVE_INFINITY) {
-//                            			if (p == null) {
-//                            				System.out.println("p is null, don't you know?");
-//                            			}
-//                            			double[] partialLikelihood1 = p.parent.seq;
-//                        	        	for (int iii=0; iii<partialLikelihood1.length; iii++) {
-//                        	        		System.out.print(partialLikelihood1[iii]+ " ");
-//                        	        	}
-//                        	        	System.out.println();
-//                        	        	partialLikelihood1 = p.seq;
-//                        	        	for (int iii=0; iii<partialLikelihood1.length; iii++) {
-//                        	        		System.out.print(partialLikelihood1[iii]+ " ");
-//                        	        	}
-//                        	        	System.out.println();
-//                            			throw new RuntimeException((b==null)+" "+hmm2Child[k]+" "+i+" "+j+" "+k+" "+index+" "+parent.index+"\n");
-//                            		}
-//                            		if (p.seq[ii] == 0 || p.seq[ii] == Double.POSITIVE_INFINITY) {
-//                            			System.out.println("ii = "+ii+", p.seq[ii] = "+p.seq[ii]);
-//                            		}
-//                            		partialLikelihood[ii] /= p.seq[ii];
-//                            	}
-//                                emissionProb = Utils.calcEmProb(felsen, partialLikelihood);
-//                            }
                         } else {                    // insertion (- *)
                             emissionProb = Utils.calcEmProb(c.seq, equDist);
                         }
-                        if (previ == 0 && prevj == 0)
-                            tr = hmm2PropTransMatrix[START][k];
+                        if (previ == 0 && prevj == 0) tr = hmm2PropTransMatrix[START][k];
                         else {
-                            for (tr = Utils.log0, prevk = START + 1; prevk < END; prevk++)
+                            for (tr = Utils.log0, prevk = START + 1; prevk < END; prevk++) {
                                 tr = Utils.logAdd(tr, probMatrix[previ][prevj][prevk] + hmm2PropTransMatrix[prevk][k]);
+                            }
                         }
                         probMatrix[i][j][k] = 1.0*(Math.log(emissionProb) + tr);
-                    } else
-                        probMatrix[i][j][k] = Utils.log0;
+                    } else probMatrix[i][j][k] = Utils.log0;
                 }
                 c = (j > 0) ? c.next : winFirst;
             }
@@ -1570,7 +1533,7 @@ public class Vertex {
     	System.out.println(index+" "+name+" "+edgeLength);
     	System.out.println(owner.hmm2.params[0]+" "+owner.hmm2.params[1]+" "+owner.hmm2.params[2]);
     	System.out.println(owner.printedTree());
-        printToScreenAlignment(0,0,true);
+        //printToScreenAlignment(0,0,true);
     	StringBuffer sb = new StringBuffer();
     	
     	 owner.root.calcFelsenRecursively();
@@ -1604,7 +1567,7 @@ public class Vertex {
         // select the beginning and end of the window
         MuDouble p = new MuDouble(1.0);
         winLength = Utils.linearizerWeight(length, p, Utils.WINDOW_MULTIPLIER*Math.sqrt(length));
-        if (Utils.DEBUG && Utils.USE_FULL_WINDOWS) winLength = length; p.value = 1.0; 
+        if (Utils.USE_FULL_WINDOWS) winLength = length; p.value = 1.0; 
         //System.out.print("Length: "+length+"\t");
         //System.out.print("Window length: "+winLength+"\t");
         int b = (length - winLength == 0 ? 0 : Utils.generator.nextInt(length - winLength));
@@ -1626,7 +1589,7 @@ public class Vertex {
         }        
 
         double bpp = 0;
-        if (!(Utils.DEBUG && Utils.USE_FULL_WINDOWS)) {
+        if (!(Utils.USE_FULL_WINDOWS)) {
         	 bpp = -Math.log(p.value / (length - winLength + 1));
         }
 
@@ -1703,7 +1666,7 @@ public class Vertex {
 
         System.out.println("Final window length\t "+winLength);
         double windowProb = 0;
-        if (!(Utils.DEBUG && Utils.USE_FULL_WINDOWS)) {
+        if (!(Utils.USE_FULL_WINDOWS)) {
         	windowProb = Math.log(Utils.linearizerWeightProb(length, winLength, Utils.WINDOW_MULTIPLIER*Math.sqrt(length)) 
            		/ (length - winLength + 1));
         }
@@ -1995,33 +1958,664 @@ public class Vertex {
         grandpa.alignRestore();
     }
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-  /*  public double fiveWayTopologySample() {
-    	double logProposalRatio = 0.0;
     
-    	int hmm2Parent[] = owner.hmm2.getStateEmit()[0];
-         int hmm2Child[] = owner.hmm2.getStateEmit()[1];
-         final int START = owner.hmm2.getStart();
-         final int END = owner.hmm2.getEnd();
-         int parentLen = parent.winLength, childLen = winLength;
-         boolean isLeft = (this == parent.left);
-         
+    /*
+    public double fixedColumnNephewUncleSwap() {
+    	
+    	double logProposalRatio = 0.0;  
+    	
+        final boolean[] T = {true,false};
+    	final int START = owner.hmm2.getStart();
+    	final int END = owner.hmm2.getEnd();
+    	final int emitPatt2State[] = owner.hmm2.getEmitPatt2State();
+       	final int hmm2Parent[] = owner.hmm2.getStateEmit()[0];
+        final int hmm2Child[] = owner.hmm2.getStateEmit()[1];
+    	
+    	final int[][] perms = {{0,1,2},{0,2,1},{2,1,0}};
+    	
     	Vertex brother = brother(), uncle = parent.brother(), grandpa = parent.parent, greatgrandpa = grandpa.parent;
     	
-    	AlignColumn p = parent.first;
-    	while(p != parent.last) {
-    		AlignColumn t = isLeft ? p.left : p.right;
-    		AlignColumn b = isLeft ? p.right : p.left;
-    		AlignColumn g = parent.parent;
-    		
-    	}
-    	double[] logTopologyWeights = new double[3];
+    	boolean isLeft = (this == parent.left);
+    	boolean uncleIsLeft = (uncle == grandpa.left);
+    	boolean gIsRoot = (grandpa.parent == null);
+    	//int nTopo = gIsRoot ? 3 : 12;
+    	int nTopo = 3;
+    	    	
+    	calcFelsen();
+    	brother.calcFelsen();
+    	uncle.calcFelsen();    	
+    	if (!gIsRoot) grandpa.calcUpper();
     	
+    	ArrayList<double[][]> logMarg = null; // Dynamic programming table
+    	double[] logMargTopo = new double[nTopo]; // log marginal probability for each topology
     	
-    	return logProposalRatio;
-    } */
+    	ArrayList<double[][]> trans = new ArrayList<double[][]>(3);
+    	trans.add(charTransMatrix);
+    	trans.add(brother.charTransMatrix);
+    	trans.add(uncle.charTransMatrix);
+    	
+    	boolean[] neighb = new boolean[4]; 
+    	// Vector indicating presence/absence of neighbouring nodes
+    	// i.e. t, b, u and gg (if the latter exists)
+    	
+    	// Indexing: t=0, b=1, u=2, gg=3
+    	
+    	ArrayList<double[]> partialLike = null;
+    	
+		AlignColumn p = parent.first;
+    	AlignColumn g = grandpa.first;
+    	
+    	double[] fels = new double[owner.substitutionModel.e.length];
+    	double[] pUpp = new double[owner.substitutionModel.e.length];
+    	
+    	AlignColumn t=null, b=null, u=null, gg=null;
+    	int columnIndex = 0;
+    	int prevk;
+        while (p != last || g != grandpa.last) { 
+        	// THIS IS NOT CORRECT -- misses out columns that begin with double
+        	// gaps in the middle.
+        	// -->> would be much easier to first create an array representation of the MSA
 
+        	logMarg.add(new double[nTopo][3]); // Add a new column
+        	
+        	partialLike = new ArrayList<double[]>(3);
+        	
+        	// px: 'parent character exists' gx:  'grandpa character exists'
+        	// tx: 'this character exists'   bx:  'brother character exists'
+        	// ux: 'uncle character exists'  ggx: 'greatgrandpa character exists'
+        	boolean px = false, gx = false;
+        	boolean tx = false, bx = false; 
+        	boolean ux = false, ggx = false;
+        	
+        	
+        	// NEED some more complicated conditions here to ensure that 
+        	// px and gx don't become true until we've considered all the intermediate
+        	// characters at the tips.
+        	if (p.parent != g) { // deletion (* -)
+                gx = true;
+            } 
+        	else if (p.orphan) { // insertion (- *)
+                px = true;
+            } 
+        	else { // substitution (* *)                
+                px = true; gx = true;
+            }
+        	        	
+        	if (px) {
+        		t = isLeft ? p.left : p.right;
+        		tx = (t!=null); 
+        		if (tx) {
+        			Utils.calcFelsen(fels, t.seq, charTransMatrix, null, null);
+        			partialLike.set(0,t.seq);
+        		}
+        		b = isLeft ? p.right : p.left;
+        		bx = (b!=null);
+        		if (bx) {
+        			Utils.calcFelsen(fels, b.seq, brother.charTransMatrix, null, null);
+        			partialLike.set(1,b.seq);
+        		}
+        	}
+        	if (gx) {
+    			u = uncleIsLeft ? g.left : g.right;
+    			ux = (u!=null); 
+    			if (ux) {    				
+    				Utils.calcFelsen(fels, u.seq, uncle.charTransMatrix, null, null);
+    				partialLike.set(2,fels);
+    			}
+    			if (!gIsRoot) {
+    				ggx = !g.orphan; 
+    				if (ggx) {
+    					gg = g.parent;    					
+    				}
+    			}               
+    		}        	
+        	
+        	for (int topo=0; topo<nTopo; topo++) {
+	        	int[] perm = perms[topo]; 	        		
+	        	neighb[perm[0]] = tx;
+	        	neighb[perm[1]] = bx;
+	        	neighb[perm[2]] = ux;
+	        	if (gIsRoot) {
+	        		neighb[3] = false;
+	        	}
+	        	else {
+	        		neighb[3] = ggx;      		
+	        		//neighb[perm[3]] = ggx;
+	        	}
+	        	
+	        	// Compute p.upp, to be used in the cases where gx = true
+	        	pUpp = new double[owner.substitutionModel.e.length];
+	     		for (int i=0; i<pUpp.length; i++) {	     			
+	     			for (int j=0; j<pUpp.length; j++) {
+	     				pUpp[j] +=  partialLike.get(perm[2])[i] * g.upp[i] * parent.charTransMatrix[i][j];	     				
+		        	}
+	     		}	        
+	        	
+    			for (boolean pxx : T) { for (boolean gxx : T) {
+    				int pattern = (pxx?1:0) + 2*(gxx?1:0); // (- -)=0, (* -)=1, (- *)=2, (* *)=3    				
+    				int state = emitPatt2State[pattern]; 
+    				if ((!pxx|px) && (!gxx|gx) && Utils.isValidHistory(pxx,gxx,neighb,gIsRoot)) {    		
+    					double logSum = 0;
+        				double logEmissionProb = 0.0;
+    		        	
+        				if (columnIndex==0) ;// need more complicated test for START condition  /////
+    	                if (previ == 0 && prevj == 0) logSum = hmm2TransMatrix[START][state];   /////
+    	                
+    	                else { 
+    	                	
+    	                	// Sum over possible predecessor indel pair states
+    			        	for (logSum = Utils.log0, prevk = START; prevk < END; prevk++) {
+    		                    
+    			        		double logProb = logMarg.get(columnIndex-1)[topo][prevk];
+    			        		
+    			        		if (pxx|gxx) {
+    			        			// Transition probability of p--g edge  
+    			        			logMarg.get(columnIndex-1)[topo][START] hmm2TransMatrix[][state];
+    			        			
+    			        		    			        		    		                    			        		
+    			        		int tState = (neighb[perm[0]]?1:0) + 2*(pxx?1:0);
+    			        		int tStatePrev = (neighb[perm[0]]?1:0) + 2*hmm2Child[prevk];
+    			        		int bState = (neighb[perm[1]]?1:0) + 2*(pxx?1:0);
+    			        		int bStatePrev = (neighb[perm[1]]?1:0) + 2*hmm2Child[prevk];
+    			        		
+    			        		int uState = (neighb[perm[0]]?1:0) + 2*(gxx?1:0);
+    			        		int uStatePrev = (neighb[perm[0]]?1:0) + 2*hmm2Parent[prevk];    			        		
+    			        		
+    			        		// Add on log probabilities of transitions of the p--t, p--b and g--u branches
+    			        		logProb += hmm2TransMatrix[tStatePrev][tState]
+    			        		              + hmm2TransMatrix[bStatePrev][bState]
+    			        		                 + hmm2TransMatrix[uStatePrev][uState];
+    			        		
+    			        		if (!gIsRoot) {
+    			        			int ggState = (neighb[perm[1]]?1:0) + 2*(gxx?1:0);
+    			        			int ggStatePrev = (neighb[perm[1]]?1:0) + 2*hmm2Parent[prevk];
+    			        			logProb += hmm2TransMatrix[ggStatePrev][ggState];
+    			        		}
+    			        		
+    			        		logSum = Utils.logAdd(logSum,logProb);        						
+    			        	}
+    	                }
+    		        	
+    					if (pxx) { // then either a substitution or an insertion	
+    						double[] em = partialLike.get(perm[0]).clone(), em2 = partialLike.get(perm[1]);
+    						for (int i=0; i<em.length; i++) em[i] *= em2[i];
+    						if (!gxx) { // then an insertion
+    							logEmissionProb += Math.log(Utils.calcEmProb(em,owner.substitutionModel.e));
+    						}
+    						else { // substitution
+    							logEmissionProb += Math.log(Utils.calcEmProb(em,pUpp));
+    						}    						
+    					}
+    					else { // Deletion from g to p
+    						double tmp = 0.0;
+    						for (int i=0; i<g.upp.length; i++) tmp += g.upp[i]; 
+    						logEmissionProb = Utils.logAdd(logEmissionProb,Math.log(tmp));
+    					}
+    		        	logMarg.get(columnIndex)[topo][state] = logEmissionProb + logSum;
+    				}
+    				else {
+    					logMarg.get(columnIndex)[topo][state] = Utils.log0;
+    				}
+    			} } // End of double loop over possible internal indel states     			    			    		
+    		} // End of loop over topologies 
+        	
+        	if (px) p = p.next;
+			if (gx) g = g.next;
+			++columnIndex;
+        } // End of loop over `columns' 
+        
+        
+        // Compute marginals for each topology, summed over internal indel states 
+    	for (int topo=0; topo<nTopo; topo++) {
+        	for (int k = START + 1; k < END; k++) {    	
+        		logMarg.get(columnIndex-1)[topo][k] += hmm2TransMatrix[k][END];
+        		logMargTopo[topo] = Utils.logAdd(logMargTopo[topo],logMarg.get(columnIndex-1)[topo][k]);
+        	}
+    	}
+
+    	// Select one topology according to its marginal 
+    	MuDouble logP = new MuDouble(0.0);
+    	int selectedTopo = Utils.logWeightedChoose(logMargTopo, logP);
+    	
+    	if (selectedTopo == 0) ; // No change to topology
+    	else if (selectedTopo == 1) { 
+    		/* New topology is
+    		        /
+    		       g
+    		      / \
+    		     p   b
+    		    / \
+    		   t   u
+    		   
+    		 * /
+
+    		// Set brother and uncle to new values
+    		parentNewChild(uncle);
+    		parent.parentNewChild(brother);
+    	}
+    	else if (selectedTopo == 2) {
+    		/* New topology is
+	                /
+	               g
+	              / \
+	             p   t
+	            / \
+	           u   b
+	   
+	         * /
+    		
+    		// Set this and uncle to new values
+    		parentNewChild(uncle);
+    		parent.parentNewChild(this);
+    	}
+    	
+    	
+    	// Stochastic backtrack to generate new alignment(s) 
+    	for (int k = END; k != START; k = prevk) {
+            for (prevk = START; prevk < END; prevk++)
+                prJump[prevk] = logMarg.get(columnIndex-1)[topo][prevk] + hmm2TransMatrix[prevk][k];
+            prevk = Utils.logWeightedChoose(prJump, retVal);
+            
+            
+            t = last;
+            b = brother.last;
+            p = parent.last;
+            g = grandpa.last;
+            u = uncle.last;
+            
+            if (hmm2Parent[prevk] != 0) { // then we need a parent column 
+            	p = new AlignColumn(p, true);
+            	if () p.left=t;
+            	if (neighb[perms[selectedTopo][0]]) p.left=t;
+            }
+            if (hmm2Child[prevk] != 0) {
+            	t = t.prev;
+            	b = b.prev;
+            }
+
+            p = new AlignColumn(p, true);
+            p.seq = 
+ 
+    	    	
+    	return logProposalRatio;
+    } 
+    */
     
+    public void nephewUncleRestoreFixedColumns() {
+    	orphanLogLike = old.orphanLogLike;
+        indelLogLike = old.indelLogLike;  
+    }
+    
+    public double nephewUncleSwapFixedColumns() {
+    	double logProposalRatio = 0.0;
+    	
+    	Vertex brother = brother(), uncle = parent.brother(), grandpa = parent.parent, greatgrandpa = grandpa.parent;
+    	boolean gIsRoot = (grandpa==owner.root);
+    	boolean isLeft = (this==parent.left);
+    	boolean uncleIsLeft = (uncle==grandpa.left);
+    	    	
+    	  
+    	old.orphanLogLike = orphanLogLike;
+        old.indelLogLike = indelLogLike;
+        
+    	// Extract full alignment for all nodes.
+    	// NB this also has the effect of saving the old state, which is useful, albeit slow.
+    	String[] ali = owner.getState().getFullAlign();
+    	
+    	double P = 0.2; // Probability of an additional indel being incorporated
+    	double P2 = Math.pow(P,2);
+    	// Should really derive this from lambda, mu and R somehow
+		double[] weights2 = {P,1};
+		double[] weights3 = {P2,P,1};
+        
+		// Swap the pointers between vertices, and the last columns
+		if (isLeft) { parent.left = uncle; parent.last.left = uncle.last; } 
+		else 		{ parent.right = uncle; parent.last.right = uncle.last; }
+		if (uncleIsLeft) { grandpa.left = this; grandpa.last.left = last; } 
+		else 		 	 { grandpa.right = this; grandpa.last.right = last; }
+          
+        // Loop over columns of the initial alignment
+        AlignColumn t=first, p=parent.first, b=brother.first, g=grandpa.first, u=uncle.first;
+        AlignColumn gg = null; if (!gIsRoot) gg=greatgrandpa.first;
+        
+        for (int col=0; col<ali[0].length(); col++) {
+        	boolean tx = (ali[index].charAt(col)!='-'); 		
+        	boolean px = (ali[parent.index].charAt(col)!='-'); 	
+        	boolean bx = (ali[brother.index].charAt(col)!='-'); 
+        	boolean gx = (ali[grandpa.index].charAt(col)!='-'); 
+        	boolean ux = (ali[uncle.index].charAt(col)!='-'); 	
+        	
+        	boolean ggx = false;
+        	if (!gIsRoot) ggx = (ali[greatgrandpa.index].charAt(col)!='-');
+        	
+        	int nTips = (tx?1:0) + (bx?1:0) + (ux?1:0) + (ggx?1:0);
+        	        	
+        	if (nTips == 3 || nTips == 4 || ( nTips == 2 && ((bx&ggx) || (tx&ux)) ) ) {        	
+        		// Then we have a tip present on both sides of the central edge,
+        		// both before and after the move, so we need not do anything
+        		// except for changing the parentage (and recomputing the 
+        		// emission probabilities).
+        		if (tx) {
+	        		t.parent = g;
+	        		if (uncleIsLeft) g.right = t;
+	        		else             g.left = t;
+        		}
+        		if (ux) {
+	        		u.parent = p;
+	        		if (isLeft)      p.right = u;
+	        		else             p.left = u;
+        		}
+        	}        	
+        	else if (tx&ggx) {
+    			// Then:
+    		    //    grandpa exists before and after
+    			//    parent exists before, but possibly not after
+        		//    u does not exist
+    			
+    			// So, with a certain probability, P^2/(P^2+P) = P/(1+P) 
+    			// we will keep the parent and brother columns (such that there
+    			// are then two indel events on this subtree), and with 
+    			// probability P/(P^2+P) = 1/(1+P) we will delete
+    			// the parent column, p, and the brother column, b.
+        		
+        		logProposalRatio += Math.log(1+P);
+        		
+    			if (Utils.weightedChoose(weights2)==1) { // Then we're deleting p
+    				
+    				// Remove the pointers to p
+    				p.prev.next = p.next;
+    				p.next.prev = p.prev;
+    				// We will leave px=true, so that p=p.next will be
+    				// called later. At that point the reference count
+    				// of p will drop to zero and the column will actually
+    				// be deleted.
+    				if (uncleIsLeft)  g.right = null; 
+    				else              g.left = null;     
+    			}   
+    			else logProposalRatio -= Math.log(P);    			   		
+    			
+				// Make the swap        				
+				t.parent = g; 				
+    			if (uncleIsLeft) { g.left = t; }
+				else             { g.right = t; }
+        	}
+        	else if (bx&ux) {
+    			// Then:
+    		    //    parent exists before and after
+    			//    grandpa exists before, but possibly not after
+        		//    t does not exist
+        		logProposalRatio += Math.log(1+P);
+    			if (Utils.weightedChoose(weights2)==1) { // Then we're deleting g
+    				
+    				// Remove the pointers to g
+    				g.prev.next = g.next;
+    				g.next.prev = g.prev;     
+    				// We will leave gx=true, so that g=g.next will be
+    				// called later. At that point the reference count
+    				// of g will drop to zero and the column will actually
+    				// be deleted.
+    				p.parent = null;
+    				p.orphan = true;        				         			
+    			}
+    			else logProposalRatio -= Math.log(P);    			
+    				
+				// Make the swap        				
+				u.parent = p; 
+    			if (isLeft)  p.left = u; 
+				else         p.right = u; 
+        	}
+        	else if (bx&tx) {
+        		// Then:
+    		    //    parent exists before and after
+    			//    grandpa exists after, and possibly before
+        		//    u and gg do not exist
+        		logProposalRatio -= Math.log(1+P);
+        		if (gx) { // If grandpa existed before
+        			logProposalRatio += Math.log(P);
+        		}
+        		else { // Insert new g column
+        			g = new AlignColumn(g,false); // Is this correct?
+        			g.parent = null;
+        			g.orphan = true;
+        			gx = true;
+        		}
+        		if (uncleIsLeft) { g.right = p; g.left = t; }
+        		else             { g.left = p; g.right = t; }
+        	}
+        	else if (ux&ggx) {
+        		// Then:
+    		    //    grandpa exists before and after
+    			//    parent exists after, and possibly before
+        		//    b and t do not exist
+        		logProposalRatio -= Math.log(1+P);
+        		if (px) { // If parent existed before
+        			logProposalRatio += Math.log(P);
+        		}
+        		else { // Insert new p column
+        			p = new AlignColumn(p,false); // Is this correct?
+        			p.parent = g;
+        			p.orphan = false;
+        			px = true;
+        		}
+        		if (isLeft) { p.left = u; p.right = null; } 
+        		else        { p.right = u; p.left = null; } 
+        		 
+        	}
+        	else if (nTips == 2) {
+        		throw new RuntimeException("We missed a case where nTips==2.");
+        	}
+        	
+        	// Now on to the cases where there was only one tip character to 
+        	// begin with:
+        	
+        	else if (bx|ggx) {
+        		// Then the only character in this column was at the brother
+        		// or the greatgrandpa, in which case there are no nephew or
+        		// uncle characters to swap, so there is nothing to do.  
+        		// We could sample new internal states, but it's not necessary,
+        		// so we will leave any such columns as they are.
+        	}
+        	else if (tx) {
+        		// Then:        		
+    		    //    parent exists possibly before and possibly after
+    			//    grandpa exists possibly before and possibly after
+        		
+        		// First sample new internal states        		
+        		int choice = Utils.weightedChoose(weights3);
+        		if (choice == 0) { // Then we're choosing no internals        			
+        			if (px) {
+        				// Remove the pointers to p
+        				p.prev.next = p.next;
+        				p.next.prev = p.prev;
+        				if (gx) {
+        					// Remove the pointers to g
+            				g.prev.next = g.next;
+            				g.next.prev = g.prev;     
+        					logProposalRatio -= 2*Math.log(P);	       					
+        				}
+        				else {
+        					logProposalRatio -= Math.log(P);
+        				}
+        			}        			 	
+        			// Forward proposal contribution is log(1) = 0
+        			t.parent = null;
+    				t.orphan = true;
+        		}
+    			if (choice == 1) { 
+    				// Then we're choosing to impute a character at g
+    				if (gx) {
+    					// Then p must have existed to begin with
+						p.prev.next = p.next;
+        				p.next.prev = p.prev;
+						// log(bwd/fwd) = -log(fwd) + log(bwd) = log(P) - 2 log(P)
+						logProposalRatio -= Math.log(P);     					
+    				}
+    				else {
+    					if (px) {
+    						p.prev.next = p.next;
+            				p.next.prev = p.prev;
+    						// log(bwd/fwd) = -log(fwd) + log(bwd) = log(P) - log(P) = 0     						
+    					}
+    					else {
+    						// log(bwd/fwd) = -log(fwd) + log(bwd) = log(P) - log(1)
+    						logProposalRatio += Math.log(P);
+    					}
+    					g = new AlignColumn(g,false); // Is this correct?
+            			g.parent = null;
+            			g.orphan = true;
+    					gx = true;
+    				}
+    				t.parent = g;
+    				t.orphan = false;
+    				if (uncleIsLeft)  { g.left = t; g.right = null; } 
+					else              { g.right = t; g.left = null; }
+    			}
+    			if (choice == 2) {
+    				// Then we're imputing characters at p and g
+    				if (gx) {
+    					// Then p already existed to begin with						
+						// log(bwd/fwd) = 0						     					
+    				}
+    				else {
+    					g = new AlignColumn(g,false); // Is this correct?
+            			g.parent = null;
+            			g.orphan = true;
+    					gx = true;
+    					if (px) {
+    						// log(bwd/fwd) = 2 log(P) - log(P)
+    						logProposalRatio += Math.log(P);
+    					}
+    					else {
+    						p = new AlignColumn(p,false); // Is this correct?
+                			p.parent = g;
+                			p.orphan = false;
+                			px = true;
+    						// log(bwd/fwd) = 2 log(P) - log(1)
+    						logProposalRatio += 2*Math.log(P);
+    					}
+    					
+    				}
+    				t.parent = g;
+    				t.orphan = false;
+    				if (uncleIsLeft)  { g.left = t; g.right = p; } 
+					else              { g.right = t; g.left = p; }
+    				if (isLeft)  	  { p.left = null; } 
+					else              { p.right = null; }
+    			}
+        	}
+        	else if (ux) {
+        		// Then:        		
+    		    //    parent exists possibly before and possibly after
+    			//    grandpa exists possibly before and possibly after
+        		
+        		// First sample new internal states        		
+        		int choice = Utils.weightedChoose(weights3);
+        		if (choice == 0) { // Then we're choosing no internals            			        			
+        			if (gx) {
+        				// Remove the pointers to g
+        				g.prev.next = g.next;
+        				g.next.prev = g.prev;
+        				if (px) {
+        					// Remove the pointers to p
+            				p.prev.next = p.next;
+            				p.next.prev = p.prev;     
+        					logProposalRatio -= 2*Math.log(P);	       					
+        				}
+        				else {
+        					logProposalRatio -= Math.log(P);
+        				}
+        			}        			 	
+        			// Forward proposal contribution is log(1) = 0
+        			u.parent = null;
+    				u.orphan = true;
+        		}
+    			/// FROM HERE ONWARDS IS CURRENTLY COPIED FROM ABOVE
+    			/// and hence still needs to be changed.
+    			if (choice == 1) { 
+    				// Then we're choosing to impute a character at p
+    				if (px) {
+    					// Then g must have existed to begin with
+						g.prev.next = g.next;
+        				g.next.prev = g.prev;
+						// log(bwd/fwd) = -log(fwd) + log(bwd) = log(P) - 2 log(P)
+						logProposalRatio -= Math.log(P);     					
+    				}
+    				else {
+    					if (gx) {
+    						g.prev.next = g.next;
+            				g.next.prev = g.prev;
+    						// log(bwd/fwd) = -log(fwd) + log(bwd) = log(P) - log(P) = 0     						
+    					}
+    					else {
+    						// log(bwd/fwd) = -log(fwd) + log(bwd) = log(P) - log(1)
+    						logProposalRatio += Math.log(P);
+    					}
+    					p = new AlignColumn(p,false); // Is this correct?
+            			p.parent = null;
+            			p.orphan = true;
+    					px = true;
+    				}
+    				u.parent = p;
+    				u.orphan = false;
+    				if (isLeft)  { p.left = u; p.right = null; } 
+					else         { p.right = u; p.left = null; }
+    			}
+    			if (choice == 2) {
+    				// Then we're imputing characters at p and g
+    				if (px) {
+    					// Then g already existed to begin with						
+						// log(bwd/fwd) = -log(fwd) + log(bwd) = 0						     					
+    				}
+    				else {    					
+    					if (gx) {
+    						// log(bwd/fwd) = -log(fwd) + log(bwd) = 2 log(P) - log(P)
+    						logProposalRatio += Math.log(P);
+    					}
+    					else {
+    						g = new AlignColumn(g,false); // Is this correct?
+                			g.parent = null;
+                			g.orphan = true;
+        					gx = true;    						
+    						// log(bwd/fwd) = -log(fwd) + log(bwd) = 2 log(P) - log(1)
+    						logProposalRatio += 2*Math.log(P);
+    					}
+    					p = new AlignColumn(p,false); // Is this correct?
+            			p.parent = g;
+            			p.orphan = false;
+            			px = true;
+    					
+    				}
+    				u.parent = p;
+    				u.orphan = false;
+    				if (uncleIsLeft)  { g.left = null; g.right = p; } 
+					else              { g.right = null; g.left = p; }
+    				if (isLeft)  	  { p.left = u; } 
+					else              { p.right = u; }
+    			}        		
+        	}
+        	else {
+        		throw new RuntimeException("We reached a case that wasn't handled properly.");
+        	}
+        	
+        	
+        	// Increment the column pointers
+        	if (px) p = p.next;
+        	if (bx) b = b.next;
+        	if (gx) g = g.next;        	
+        	if (ggx) gg = gg.next;       	
+        	
+        }
+
+    	uncle.calcAllUp(); // uncle is now lower
+    	
+//    	if (gIsRoot) grandpa.calcUpperRecursively();
+//    	else         greatgrandpa.calcUpperRecursively();
+    	// The recalculation of upp should only be done inside
+    	// a function that needs those vectors, since they are
+    	// not needed for the computation of the likelihood.    
+    		
+    	return logProposalRatio;
+    }
     /**
      * Swaps {@code this} with its uncle, but proposes new alignments only between this node and its parent, and
      * the uncle node and its parent, every other alignment is kept fixed. Slow because full sequence
@@ -3437,6 +4031,29 @@ public class Vertex {
         }
     }
 
+    public static void main(String[] args){
+//    	boolean[] tips = {true,true,false};
+//    	boolean[] x = {true,false};
+//    	for (boolean p : x) {
+//    		for (boolean g : x) {
+//    			System.out.print(Utils.isValidTopology(p,g,tips,true)+" ");
+//    		}    		
+//    		System.out.println();
+//    	}
+//    	ArrayList<Double> a = new ArrayList<Double>(5);
+//    	System.out.println("a.size() = "+a.size());
+//    	a.add(0.0); a.add(1.0); a.add(2.0);
+//    	ArrayList<ArrayList<Double> > x = new ArrayList<ArrayList<Double> >();
+//    	x.add(a);
+//    	
+//    	ArrayList<Double> b = x.get(0);
+//    	b.set(0,238.0);
+//    	System.out.println("a = "+a.get(0)+" "+a.get(1)+" "+a.get(2));
+//    	System.out.println("b = "+b.get(0)+" "+b.get(1)+" "+b.get(2));
+//    	System.out.println("x.get(0) = "+x.get(0).get(0)+" "+x.get(0).get(1)+" "+x.get(0).get(2));
+    	
+        	
+    }
 //    /**
 //     * This function is merely for testing/debugging purposes
 //     * @param args Arguments are not used, all input is directly written into the
