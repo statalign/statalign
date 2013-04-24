@@ -2320,7 +2320,7 @@ public class Vertex {
         		
         		logProposalRatio += Math.log(1+P);
         		
-    			if (Utils.weightedChoose(weights2)==1) { // Then we're deleting p
+    			if (Utils.weightedChoose(weights2)==0) { // Then we're deleting p
     				
     				// Remove the pointers to p
     				p.prev.next = p.next;
@@ -2345,7 +2345,7 @@ public class Vertex {
     			//    grandpa exists before, but possibly not after
         		//    t does not exist
         		logProposalRatio += Math.log(1+P);
-    			if (Utils.weightedChoose(weights2)==1) { // Then we're deleting g
+    			if (Utils.weightedChoose(weights2)==0) { // Then we're deleting g
     				
     				// Remove the pointers to g
     				g.prev.next = g.next;
