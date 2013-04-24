@@ -2529,8 +2529,6 @@ public class Vertex {
         			u.parent = null;
     				u.orphan = true;
         		}
-    			/// FROM HERE ONWARDS IS CURRENTLY COPIED FROM ABOVE
-    			/// and hence still needs to be changed.
     			if (choice == 1) { 
     				// Then we're choosing to impute a character at p
     				if (px) {
