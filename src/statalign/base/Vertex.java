@@ -2243,32 +2243,43 @@ public class Vertex {
     
     public void nephewUncleRestoreFixedColumns() {
     	
-    	Vertex brother = brother(), uncle = parent.brother(), grandpa = parent.parent;
-
+    	Vertex brother = brother(), uncle = parent.brother(), grandpa = parent.parent, greatgrandpa = grandpa.parent;
+    	boolean gIsRoot = (grandpa==owner.root);
+    	
 		parentNewChild(uncle);                    // order is important!
 	    uncle.parentNewChild(this);
 	    uncle.parent = parent;
 	    parent = grandpa;
          
-    	first = old.first;
+	    first = old.first;
+    	last = old.last;		
     	orphanLogLike = old.orphanLogLike;
         indelLogLike = old.indelLogLike;  
         
-		parent.first = parent.old.first;
+        parent.first = parent.old.first;
+		parent.last = parent.old.last;
 		parent.orphanLogLike = parent.old.orphanLogLike;
 		parent.indelLogLike = parent.old.indelLogLike;
         
-		brother.first = brother.old.first;
+		brother.last = brother.old.last;
+		brother.last = brother.old.last;
 		brother.orphanLogLike = brother.old.orphanLogLike;
 		brother.indelLogLike = brother.old.indelLogLike;
         
-		grandpa.first = grandpa.old.first;
+		grandpa.last = grandpa.old.last;
+		grandpa.last = grandpa.old.last;
 		grandpa.orphanLogLike = grandpa.old.orphanLogLike;
 		grandpa.indelLogLike = grandpa.old.indelLogLike;
         
-		uncle.first = uncle.old.first;
+		uncle.last = uncle.old.last;
+		uncle.last = uncle.old.last;
 		uncle.orphanLogLike = uncle.old.orphanLogLike;
 		uncle.indelLogLike = uncle.old.indelLogLike;
+		
+		if (!gIsRoot) {
+			greatgrandpa.orphanLogLike = greatgrandpa.old.orphanLogLike;
+			greatgrandpa.indelLogLike = greatgrandpa.old.indelLogLike;
+		}
     	
     }
     
@@ -2280,6 +2291,14 @@ public class Vertex {
     	boolean isLeft = (this==parent.left);
     	boolean uncleIsLeft = (uncle==grandpa.left);
         
+    	if (Utils.DEBUG) {
+        	printPointers();
+        	brother.printPointers();
+        	if (!gIsRoot) parent.printPointers();
+        	uncle.printPointers();        	
+        	//owner.checkPointers();
+        }
+    	
     	// Extract full alignment for all nodes.
     	// NB this also has the effect of saving the old state, which is useful, albeit slow.
     	String[] ali = owner.getState().getFullAlign();
@@ -2289,43 +2308,53 @@ public class Vertex {
     	// Should really derive this from lambda, mu and R somehow
 		double[] weights2 = {1,P};
 		double[] weights3 = {1,P,P2};
-        
-		// Swap the pointers between vertices, and the last columns
-		if (isLeft) { parent.left = uncle; parent.last.left = uncle.last; } 
-		else 		{ parent.right = uncle; parent.last.right = uncle.last; }
-		if (uncleIsLeft) { grandpa.left = this; grandpa.last.left = last; } 
-		else 		 	 { grandpa.right = this; grandpa.last.right = last; }
-        
+        		
 		// Begin saving of current Vertex objects
-		old.first = first.clone();
+		old.last = last.clone();
 		old.orphanLogLike = orphanLogLike;
         old.indelLogLike = indelLogLike;
 		
-        parent.old.first = parent.first.clone();
+        parent.old.last = parent.last.clone();
 		parent.old.orphanLogLike = parent.orphanLogLike;
 		parent.old.indelLogLike = parent.indelLogLike;
 		
-        brother.old.first = brother.first.clone();
+        brother.old.last = brother.last.clone();
         brother.old.orphanLogLike = brother.orphanLogLike;
         brother.old.indelLogLike = brother.indelLogLike;
 		
-        grandpa.old.first = grandpa.first.clone();
+        grandpa.old.last = grandpa.last.clone();
         grandpa.old.orphanLogLike = grandpa.orphanLogLike;
         grandpa.old.indelLogLike = grandpa.indelLogLike;
 		
-        uncle.old.first = uncle.first.clone();
+        uncle.old.last = uncle.last.clone();
         uncle.old.orphanLogLike = uncle.orphanLogLike;
-        uncle.old.indelLogLike = uncle.indelLogLike;
-		
-		
-        // Loop over columns of the initial alignment
-        AlignColumn t=first.next, p=parent.first.next, b=brother.first.next, g=grandpa.first.next, u=uncle.first.next;
-        AlignColumn gg = null; if (!gIsRoot) gg=greatgrandpa.first;
+        uncle.old.indelLogLike = uncle.indelLogLike;	
+        
+        if (!gIsRoot) {
+        	greatgrandpa.old.orphanLogLike = greatgrandpa.orphanLogLike;
+        	greatgrandpa.old.indelLogLike = greatgrandpa.indelLogLike;
+        }
+
+        // Swap the pointers between vertices, and the first and last columns
+        // NB the uncle has to be done first, otherwise parent refers to grandpa
+        uncle.parent = parent; 		
+ 		uncle.last.parent = parent.last;
+ 		if (isLeft)		 { parent.left = uncle; parent.last.left = uncle.last; } 
+ 		else 			 { parent.right = uncle; parent.last.right = uncle.last; }
+        parent = grandpa;
+ 		last.parent = grandpa.last;		 				 		
+ 		if (uncleIsLeft) { grandpa.left = this; grandpa.last.left = last; } 
+ 		else 		 	 { grandpa.right = this; grandpa.last.right = last; }
+             
+     		
+        // Loop over columns of the initial alignment, starting from the last (non-virtual) column
+        AlignColumn t=last.prev, p=parent.last.prev, b=brother.last.prev, g=grandpa.last.prev, u=uncle.last.prev;
+        AlignColumn gg = null; if (!gIsRoot) gg=greatgrandpa.last;
         
         // Old columns, for restoration
-        AlignColumn to=old.first, po=parent.old.first, bo=brother.old.first, go=grandpa.old.first, uo=uncle.old.first;        
+        AlignColumn to=old.last, po=parent.old.last, bo=brother.old.last, go=grandpa.old.last, uo=uncle.old.last;        
         
-        for (int col=0; col<ali[0].length(); col++) {
+        for (int col=ali[0].length()-1; col>=0; col--) {
         	
         	boolean tx = (ali[index].charAt(col)!='-'); 		
         	boolean px = (ali[parent.index].charAt(col)!='-'); 	
@@ -2336,13 +2365,15 @@ public class Vertex {
         	boolean ggx = false;
         	if (!gIsRoot) ggx = (ali[greatgrandpa.index].charAt(col)!='-');
         	        
+        	// I JUST CHANGED THE LOOP to start from last rather than first
+        	// so now we need to change the saving accordingly:
         	
         	// Save current columns
-        	if (tx) { to.next = t.clone(); to.next.prev = to; to = to.next; }
-        	if (bx) { bo.next = b.clone(); bo.next.prev = bo; bo = bo.next; }
+        	if (tx) { to.prev = t.clone(); to.prev.next = to; to = to.prev; }
+        	if (bx) { bo.prev = b.clone(); bo.prev.next = bo; bo = bo.prev; }
         	if (px) {
-        		po.next = p.clone(); 
-        		po.next.prev = po; po = po.next;        		
+        		po.prev = p.clone(); 
+        		po.prev.next = po; po = po.prev;        		
     			if (tx) {
     				to.parent = po;
     				if (isLeft)  po.left = to;
@@ -2354,10 +2385,10 @@ public class Vertex {
     				else 		 po.left = bo;
     			}        		
         	}
-        	if (ux) { uo.next = u.clone(); uo.next.prev = uo; uo = uo.next; }
+        	if (ux) { uo.prev = u.clone(); uo.prev.next = uo; uo = uo.prev; }
         	if (gx) {
-        		go.next = g.clone(); 
-        		go.next.prev = go; go = go.next;        		
+        		go.prev = g.clone(); 
+        		go.prev.next = go; go = go.prev;        		
     			if (px) {
     				po.parent = go;
     				if (uncleIsLeft)  go.right = po;
@@ -2369,11 +2400,12 @@ public class Vertex {
     				else 		 	  go.right = uo;
     			}        		
         	}
-        	       	
+        	        	        	       	
         	
         	int nTips = (tx?1:0) + (bx?1:0) + (ux?1:0) + (ggx?1:0);
+        	System.out.println("col = "+col+", nTips = "+nTips);
         	        	
-        	if (nTips == 3 || nTips == 4 || ( nTips == 2 && ((bx&ggx) || (tx&ux)) ) ) {        	
+        	if (nTips == 3 || nTips == 4 || ( nTips == 2 && ((bx&ggx)|(tx&ux)) ) ) {        	
         		// Then we have a tip present on both sides of the central edge,
         		// both before and after the move, so we need not do anything
         		// except for changing the parentage (and recomputing the 
@@ -2406,8 +2438,8 @@ public class Vertex {
     			if (Utils.weightedChoose(weights2)==0) { // Then we're deleting p
     				
     				// Remove the pointers to p
-    				p.prev.next = p.next;
-    				p.next.prev = p.prev;
+    				if (p.prev != null) p.prev.next = p.next;
+    				if (p.next != null) p.next.prev = p.prev;
     				// We will leave px=true, so that p=p.next will be
     				// called later. At that point the reference count
     				// of p will drop to zero and the column will actually
@@ -2431,7 +2463,7 @@ public class Vertex {
     			if (Utils.weightedChoose(weights2)==0) { // Then we're deleting g
     				
     				// Remove the pointers to g
-    				g.prev.next = g.next;
+    				if (g.prev != null) g.prev.next = g.next;
     				if (g.next != null) g.next.prev = g.prev;     
     				// We will leave gx=true, so that g=g.next will be
     				// called later. At that point the reference count
@@ -2460,6 +2492,7 @@ public class Vertex {
         			g = new AlignColumn(g,true); // New orphan column        			
         			gx = true;
         		}
+        		t.parent = g;        		
         		if (uncleIsLeft) { g.right = p; g.left = t; }
         		else             { g.left = p; g.right = t; }
         	}
@@ -2478,6 +2511,7 @@ public class Vertex {
         			p.orphan = false;
         			px = true;
         		}
+        		u.parent = p;
         		if (isLeft) { p.left = u; p.right = null; } 
         		else        { p.right = u; p.left = null; } 
         		 
@@ -2485,11 +2519,12 @@ public class Vertex {
         	else if (nTips == 2) {
         		throw new RuntimeException("We missed a case where nTips==2.");
         	}
-        	
+       	
         	// Now on to the cases where there was only one tip character to 
         	// begin with:
         	
         	else if (bx|ggx) {
+        		System.out.println("bx|ggx");
         		// Then the only character in this column was at the brother
         		// or the greatgrandpa, in which case there are no nephew or
         		// uncle characters to swap, so there is nothing to do.  
@@ -2497,6 +2532,7 @@ public class Vertex {
         		// so we will leave any such columns as they are.
         	}
         	else if (tx) {
+        		System.out.println("tx");
         		// Then:        		
     		    //    parent exists possibly before and possibly after
     			//    grandpa exists possibly before and possibly after
@@ -2506,11 +2542,11 @@ public class Vertex {
         		if (choice == 0) { // Then we're choosing no internals        			
         			if (px) {
         				// Remove the pointers to p
-        				p.prev.next = p.next;
+        				if (p.prev != null) p.prev.next = p.next;
         				if (p.next != null) p.next.prev = p.prev;
         				if (gx) {
         					// Remove the pointers to g
-            				g.prev.next = g.next;
+        					if (g.prev != null) g.prev.next = g.next;
             				if (g.next != null) g.next.prev = g.prev;     
         					logProposalRatio -= 2*Math.log(P);	       					
         				}
@@ -2526,14 +2562,14 @@ public class Vertex {
     				// Then we're choosing to impute a character at g
     				if (gx) {
     					// Then p must have existed to begin with
-						p.prev.next = p.next;
+    					if (p.prev != null) p.prev.next = p.next;
 						if (p.next != null) p.next.prev = p.prev;
 						// log(bwd/fwd) = -log(fwd) + log(bwd) = log(P) - 2 log(P)
 						logProposalRatio -= Math.log(P);     					
     				}
     				else {
     					if (px) {
-    						p.prev.next = p.next;
+    						if (p.prev != null) p.prev.next = p.next;
     						if (p.next != null) p.next.prev = p.prev;
     						// log(bwd/fwd) = -log(fwd) + log(bwd) = log(P) - log(P) = 0     						
     					}
@@ -2581,6 +2617,7 @@ public class Vertex {
     			}
         	}
         	else if (ux) {
+        		System.out.println("ux");
         		// Then:        		
     		    //    parent exists possibly before and possibly after
     			//    grandpa exists possibly before and possibly after
@@ -2590,11 +2627,11 @@ public class Vertex {
         		if (choice == 0) { // Then we're choosing no internals            			        			
         			if (gx) {
         				// Remove the pointers to g
-        				g.prev.next = g.next;
+        				if (g.prev != null) g.prev.next = g.next;
         				if (g.next != null) g.next.prev = g.prev;
         				if (px) {
         					// Remove the pointers to p
-            				p.prev.next = p.next;
+        					if (p.prev != null) p.prev.next = p.next;
             				if (p.next != null) p.next.prev = p.prev;     
         					logProposalRatio -= 2*Math.log(P);	       					
         				}
@@ -2610,14 +2647,14 @@ public class Vertex {
     				// Then we're choosing to impute a character at p
     				if (px) {
     					// Then g must have existed to begin with
-						g.prev.next = g.next;
+    					if (g.prev != null) g.prev.next = g.next;
 						if (g.next != null) g.next.prev = g.prev;
 						// log(bwd/fwd) = -log(fwd) + log(bwd) = log(P) - 2 log(P)
 						logProposalRatio -= Math.log(P);     					
     				}
     				else {
     					if (gx) {
-    						g.prev.next = g.next;
+    						if (g.prev != null) g.prev.next = g.next;
     						if (g.next != null) g.next.prev = g.prev;
     						// log(bwd/fwd) = -log(fwd) + log(bwd) = log(P) - log(P) = 0     						
     					}
@@ -2661,28 +2698,40 @@ public class Vertex {
     				u.parent = p;
     				u.orphan = false;
     				if (uncleIsLeft)  { g.left = null; g.right = p; } 
-					else              { g.right = null; g.left = p; }
+					else              { g.right = null; g.left = p; }    				
     				if (isLeft)  	  { p.left = u; } 
 					else              { p.right = u; }
     			}        		
         	}
         	else {
+        		System.out.println("None of the above");
         		throw new RuntimeException("We reached a case that wasn't handled properly.");
         	}
         	
-        	
+	    	if (col==0) {
+	    		first = t; old.first = to;         		 
+	       		parent.first = p; parent.old.first = po; 
+	      		brother.first = b; brother.old.first = bo; 
+	      		uncle.first = u; uncle.old.first = uo; 
+	      		grandpa.first = g; grandpa.old.first = go;        		
+          	}
+        	  
         	// Increment the column pointers
-        	if (tx) t = t.next; 
-        	if (px) p = p.next;
-        	if (bx) b = b.next;
-        	if (gx) g = g.next;        	
-        	if (ux) u = u.next;
-        	if (ggx) gg = gg.next;       	
+        	if (tx) t = t.prev; 
+        	if (px) p = p.prev;
+        	if (bx) b = b.prev;
+        	if (gx) g = g.prev;        	
+        	if (ux) u = u.prev;
+        	if (ggx) gg = gg.prev;       	
         	
         }
-
+        
         if (Utils.DEBUG) {
-        	owner.checkPointers();
+        	printPointers();
+        	brother.printPointers();
+        	if (!gIsRoot) parent.printPointers();
+        	uncle.printPointers();        	
+        	//owner.checkPointers();
         }
         
     	uncle.calcAllUp(); // uncle is now lower

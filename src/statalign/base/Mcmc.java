@@ -331,6 +331,7 @@ public class Mcmc extends Stoppable {
 		}
 		if(Utils.DEBUG) {
 			tree.recomputeCheckLogLike();
+        	tree.checkPointers();
 			if(Math.abs(modelExtMan.totalLogLike(tree)-totalLogLike) > 1e-5) {
 				System.out.println("After: "+modelExtMan.totalLogLike(tree)+" "+totalLogLike);
 				throw new Error("Log-likelihood inconsistency at end of sample()");
