@@ -2380,13 +2380,13 @@ public class Vertex {
         		// emission probabilities).
         		if (tx) {
 	        		t.parent = g;
-	        		if (uncleIsLeft) g.right = t;
-	        		else             g.left = t;
+	        		if (uncleIsLeft) g.left = t;
+	        		else             g.right = t;
         		}
         		if (ux) {
 	        		u.parent = p;
-	        		if (isLeft)      p.right = u;
-	        		else             p.left = u;
+	        		if (isLeft)      p.left = u;
+	        		else             p.right = u;
         		}
         	}        	
         	else if (tx&ggx) {
