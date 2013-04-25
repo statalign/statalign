@@ -78,6 +78,18 @@ public class AlignColumn {
 		orphan = true;
 	}
 	
+	public AlignColumn clone() {
+		AlignColumn c = new AlignColumn(owner);
+		c.parent = parent;
+		c.orphan = orphan;
+		c.left = left;
+		c.right = right;
+		c.selected = selected;
+		c.emptyWindow = emptyWindow;
+		if (seq==null) c.seq = null;
+		else 		   c.seq = seq.clone();
+		return c;
+	}
 	/**
 	 * It creates a new AlignColumn, chains it to the next column (namely, it is used to
 	 * generate a new ancestral sequence built in a traceback phase of a dynamic programming).

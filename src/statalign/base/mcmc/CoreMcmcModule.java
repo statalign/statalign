@@ -26,7 +26,7 @@ public class CoreMcmcModule extends McmcModule {
 		modelExtMan = m;
 	}
 
-	public double totalLogPrior(Tree tree) {
+	public double totalLogPrior(Tree tree) {		
 		return(tree.getLogPrior());
 	}
 	public double logLikeFactor(Tree tree) {

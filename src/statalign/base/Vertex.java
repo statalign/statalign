@@ -2242,6 +2242,15 @@ public class Vertex {
     */
     
     public void nephewUncleRestoreFixedColumns() {
+    	
+    	Vertex brother = brother(), uncle = parent.brother(), grandpa = parent.parent;
+
+    	first = old.first;
+		parent.first = parent.old.first;
+		brother.first = brother.old.first;
+		grandpa.first = grandpa.old.first;
+		uncle.first = uncle.old.first;
+		
     	orphanLogLike = old.orphanLogLike;
         indelLogLike = old.indelLogLike;  
     }
@@ -2253,10 +2262,6 @@ public class Vertex {
     	boolean gIsRoot = (grandpa==owner.root);
     	boolean isLeft = (this==parent.left);
     	boolean uncleIsLeft = (uncle==grandpa.left);
-    	    	
-    	  
-    	old.orphanLogLike = orphanLogLike;
-        old.indelLogLike = indelLogLike;
         
     	// Extract full alignment for all nodes.
     	// NB this also has the effect of saving the old state, which is useful, albeit slow.
@@ -2273,12 +2278,26 @@ public class Vertex {
 		else 		{ parent.right = uncle; parent.last.right = uncle.last; }
 		if (uncleIsLeft) { grandpa.left = this; grandpa.last.left = last; } 
 		else 		 	 { grandpa.right = this; grandpa.last.right = last; }
-          
+        
+		// Begin saving of current Vertex objects
+		old.first = first.clone();
+		parent.old.first = parent.first.clone();
+		brother.old.first = brother.first.clone();
+		grandpa.old.first = grandpa.first.clone();
+		uncle.old.first = uncle.first.clone();
+		
+		old.orphanLogLike = orphanLogLike;
+        old.indelLogLike = indelLogLike;
+		
         // Loop over columns of the initial alignment
-        AlignColumn t=first, p=parent.first, b=brother.first, g=grandpa.first, u=uncle.first;
+        AlignColumn t=first.next, p=parent.first.next, b=brother.first.next, g=grandpa.first.next, u=uncle.first.next;
         AlignColumn gg = null; if (!gIsRoot) gg=greatgrandpa.first;
         
+        // Old columns, for restoration
+        AlignColumn to=old.first, po=parent.old.first, bo=brother.old.first, go=grandpa.old.first, uo=uncle.old.first;        
+        
         for (int col=0; col<ali[0].length(); col++) {
+        	
         	boolean tx = (ali[index].charAt(col)!='-'); 		
         	boolean px = (ali[parent.index].charAt(col)!='-'); 	
         	boolean bx = (ali[brother.index].charAt(col)!='-'); 
@@ -2287,6 +2306,41 @@ public class Vertex {
         	
         	boolean ggx = false;
         	if (!gIsRoot) ggx = (ali[greatgrandpa.index].charAt(col)!='-');
+        	        
+        	
+        	// Save current columns
+        	if (tx) { to.next = t.clone(); to.next.prev = to; to = to.next; }
+        	if (bx) { bo.next = b.clone(); bo.next.prev = bo; bo = bo.next; }
+        	if (px) {
+        		po.next = p.clone(); 
+        		po.next.prev = po; po = po.next;        		
+    			if (tx) {
+    				to.parent = po;
+    				if (isLeft)  po.left = to;
+    				else 		 po.right = to;
+    			}
+    			if (bx) {
+    				bo.parent = po;
+    				if (isLeft)  po.right = bo;
+    				else 		 po.left = bo;
+    			}        		
+        	}
+        	if (ux) { uo.next = u.clone(); uo.next.prev = uo; uo = uo.next; }
+        	if (gx) {
+        		go.next = g.clone(); 
+        		go.next.prev = go; go = go.next;        		
+    			if (px) {
+    				po.parent = go;
+    				if (uncleIsLeft)  go.right = po;
+    				else 		 	  go.left = po;
+    			}
+    			if (ux) {
+    				uo.parent = go;
+    				if (uncleIsLeft)  go.left = uo;
+    				else 		 	  go.right = uo;
+    			}        		
+        	}
+        	       	
         	
         	int nTips = (tx?1:0) + (bx?1:0) + (ux?1:0) + (ggx?1:0);
         	        	
@@ -2349,7 +2403,7 @@ public class Vertex {
     				
     				// Remove the pointers to g
     				g.prev.next = g.next;
-    				g.next.prev = g.prev;     
+    				if (g.next != null) g.next.prev = g.prev;     
     				// We will leave gx=true, so that g=g.next will be
     				// called later. At that point the reference count
     				// of g will drop to zero and the column will actually
@@ -2424,11 +2478,11 @@ public class Vertex {
         			if (px) {
         				// Remove the pointers to p
         				p.prev.next = p.next;
-        				p.next.prev = p.prev;
+        				if (p.next != null) p.next.prev = p.prev;
         				if (gx) {
         					// Remove the pointers to g
             				g.prev.next = g.next;
-            				g.next.prev = g.prev;     
+            				if (g.next != null) g.next.prev = g.prev;     
         					logProposalRatio -= 2*Math.log(P);	       					
         				}
         				else {
@@ -2444,14 +2498,14 @@ public class Vertex {
     				if (gx) {
     					// Then p must have existed to begin with
 						p.prev.next = p.next;
-        				p.next.prev = p.prev;
+						if (p.next != null) p.next.prev = p.prev;
 						// log(bwd/fwd) = -log(fwd) + log(bwd) = log(P) - 2 log(P)
 						logProposalRatio -= Math.log(P);     					
     				}
     				else {
     					if (px) {
     						p.prev.next = p.next;
-            				p.next.prev = p.prev;
+    						if (p.next != null) p.next.prev = p.prev;
     						// log(bwd/fwd) = -log(fwd) + log(bwd) = log(P) - log(P) = 0     						
     					}
     					else {
@@ -2508,11 +2562,11 @@ public class Vertex {
         			if (gx) {
         				// Remove the pointers to g
         				g.prev.next = g.next;
-        				g.next.prev = g.prev;
+        				if (g.next != null) g.next.prev = g.prev;
         				if (px) {
         					// Remove the pointers to p
             				p.prev.next = p.next;
-            				p.next.prev = p.prev;     
+            				if (p.next != null) p.next.prev = p.prev;     
         					logProposalRatio -= 2*Math.log(P);	       					
         				}
         				else {
@@ -2528,14 +2582,14 @@ public class Vertex {
     				if (px) {
     					// Then g must have existed to begin with
 						g.prev.next = g.next;
-        				g.next.prev = g.prev;
+						if (g.next != null) g.next.prev = g.prev;
 						// log(bwd/fwd) = -log(fwd) + log(bwd) = log(P) - 2 log(P)
 						logProposalRatio -= Math.log(P);     					
     				}
     				else {
     					if (gx) {
     						g.prev.next = g.next;
-            				g.next.prev = g.prev;
+    						if (g.next != null) g.next.prev = g.prev;
     						// log(bwd/fwd) = -log(fwd) + log(bwd) = log(P) - log(P) = 0     						
     					}
     					else {
@@ -2589,13 +2643,19 @@ public class Vertex {
         	
         	
         	// Increment the column pointers
+        	if (tx) t = t.next; 
         	if (px) p = p.next;
         	if (bx) b = b.next;
         	if (gx) g = g.next;        	
+        	if (ux) u = u.next;
         	if (ggx) gg = gg.next;       	
         	
         }
 
+        if (Utils.DEBUG) {
+        	owner.checkPointers();
+        }
+        
     	uncle.calcAllUp(); // uncle is now lower
     	
 //    	if (gIsRoot) grandpa.calcUpperRecursively();

@@ -490,9 +490,8 @@ COLUMN:    	while (c != v.last) {
         return b.toString();
     }
     
-	public double getLogPrior() {
-		return - root.calcSumOfEdges() - Math.log(substitutionModel.getPrior()) - 
-				hmm2.params[1] - hmm2.params[2];
+	public double getLogPrior() {		
+		return 0;
 	}
 
     /**
