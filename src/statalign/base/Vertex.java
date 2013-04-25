@@ -2493,7 +2493,8 @@ public class Vertex {
     				// called later. At that point the reference count
     				// of g will drop to zero and the column will actually
     				// be deleted.
-    				p.parent = null;
+//p.parent = g.next; // IS THIS CORRECT?
+p.parent = p.next.parent; // IS THIS CORRECT?
     				p.orphan = true;        				         			
     			}
     			else logProposalRatio -= Math.log(P);    			
@@ -2513,7 +2514,9 @@ public class Vertex {
         			logProposalRatio += Math.log(P);
         		}
         		else { // Insert new g column
-        			g = new AlignColumn(g,true); // New orphan column        			
+        			g = new AlignColumn(g,true); // New orphan column  
+//if (!gIsRoot) g.parent = gg.next; // IS THIS CORRECT?
+if (!gIsRoot) g.parent = g.next.parent; // IS THIS CORRECT?        			
         			gx = true;
         		}
         		t.parent = g;        		
@@ -2579,7 +2582,8 @@ public class Vertex {
         				}
         			}        			 	
         			// Forward proposal contribution is log(1) = 0
-        			t.parent = null;
+//t.parent = g.next; // IS THIS CORRECT?
+t.parent = t.next.parent; // IS THIS CORRECT?
     				t.orphan = true;
         		}
     			if (choice == 1) { 
@@ -2603,7 +2607,9 @@ public class Vertex {
     						// log(bwd/fwd) = -log(fwd) + log(bwd) = log(P) - log(1)
     						logProposalRatio += Math.log(P);
     					}
-    					g = new AlignColumn(g,true); // New orphan column            			
+    					g = new AlignColumn(g,true); // New orphan column   
+//if (!gIsRoot) g.parent = gg.next; // IS THIS CORRECT?    					
+if (!gIsRoot) g.parent = g.next.parent; // IS THIS CORRECT?
     					gx = true;
     				}
     				t.parent = g;
@@ -2666,7 +2672,8 @@ public class Vertex {
         				}
         			}        			 	
         			// Forward proposal contribution is log(1) = 0
-        			u.parent = null;
+//u.parent = g.next; // IS THIS CORRECT?
+u.parent = u.next.parent; // IS THIS CORRECT?
     				u.orphan = true;
         		}
     			if (choice == 1) { 
@@ -2675,7 +2682,8 @@ public class Vertex {
     					// Then g must have existed to begin with
     					if (g.prev != null) g.prev.next = g.next;
 						if (g.next != null) g.next.prev = g.prev;
-						p.parent = null;
+//p.parent = g.next; // IS THIS CORRECT?
+p.parent = p.next.parent; // IS THIS CORRECT?
 						p.orphan = true;						
 						// log(bwd/fwd) = -log(fwd) + log(bwd) = log(P) - 2 log(P)
 						logProposalRatio -= Math.log(P);     					
@@ -2683,7 +2691,7 @@ public class Vertex {
     				else {
     					if (gx) {
     						if (g.prev != null) g.prev.next = g.next;
-    						if (g.next != null) g.next.prev = g.prev;
+    						if (g.next != null) g.next.prev = g.prev;    						
     						// log(bwd/fwd) = -log(fwd) + log(bwd) = log(P) - log(P) = 0     						
     					}
     					else {
@@ -2691,6 +2699,8 @@ public class Vertex {
     						logProposalRatio += Math.log(P);
     					}
     					p = new AlignColumn(p,true); 
+//p.parent = g.next; // IS THIS CORRECT?
+p.parent = p.next.parent; // IS THIS CORRECT?
     					px = true;
     				}
     				u.parent = p;
@@ -2753,7 +2763,21 @@ public class Vertex {
 		    		System.out.println("AFTER: u's parent is p? Should be true. Actually is "+(u.parent==p));
 		    	}
 	    	}
-	    		    	
+
+        	// Reassign any parent pointers for orphans.
+	    	// Bit dangerous, because we aren't checking whether they are wrong.
+	    	// The legitimate reason is when a column is deleted, and then
+	    	// its direct descendant is successfully re-patriated into the
+	    	// next column, but any orphan predecessors who previously also 
+	    	// shared the same parent will still point to the old column, so they
+	    	// need to be reassigned. A similar issue may occur with insertions.
+        	if (tx&t.orphan) t.parent = t.next.parent; 
+        	if (px&t.orphan) p.parent = p.next.parent;
+        	if (bx&b.orphan) b.parent = b.next.parent; 
+        	if (gx&g.orphan) g.parent = g.next.parent;
+        	if (ux&u.orphan) u.parent = u.next.parent;         	
+    	
+        	
         	// Increment the column pointers
         	if (tx) t = t.prev; 
         	if (px) p = p.prev;
@@ -2787,9 +2811,10 @@ public class Vertex {
         	//owner.checkPointers();
         }
         
-        DEBUG=2;
+        
+        DEBUG=2; // Activate verbose print statements 
     	uncle.calcAllUp(); // uncle is now lower
-    	DEBUG=0;
+    	DEBUG=0; // Deactivate verbose print statements
     	
 //    	if (gIsRoot) grandpa.calcUpperRecursively();
 //    	else         greatgrandpa.calcUpperRecursively();
@@ -4085,8 +4110,8 @@ public class Vertex {
     }
     
     void printPointers2() {
-        AlignColumn c = last.prev;
-        AlignColumn p = parent.last.prev;
+        AlignColumn c = last;
+        AlignColumn p = parent.last;
         while (p != null) {
             System.out.print(p + " ");
             p = p.prev;
