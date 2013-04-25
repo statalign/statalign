@@ -2245,14 +2245,31 @@ public class Vertex {
     	
     	Vertex brother = brother(), uncle = parent.brother(), grandpa = parent.parent;
 
+		parentNewChild(uncle);                    // order is important!
+	    uncle.parentNewChild(this);
+	    uncle.parent = parent;
+	    parent = grandpa;
+         
     	first = old.first;
-		parent.first = parent.old.first;
-		brother.first = brother.old.first;
-		grandpa.first = grandpa.old.first;
-		uncle.first = uncle.old.first;
-		
     	orphanLogLike = old.orphanLogLike;
         indelLogLike = old.indelLogLike;  
+        
+		parent.first = parent.old.first;
+		parent.orphanLogLike = parent.old.orphanLogLike;
+		parent.indelLogLike = parent.old.indelLogLike;
+        
+		brother.first = brother.old.first;
+		brother.orphanLogLike = brother.old.orphanLogLike;
+		brother.indelLogLike = brother.old.indelLogLike;
+        
+		grandpa.first = grandpa.old.first;
+		grandpa.orphanLogLike = grandpa.old.orphanLogLike;
+		grandpa.indelLogLike = grandpa.old.indelLogLike;
+        
+		uncle.first = uncle.old.first;
+		uncle.orphanLogLike = uncle.old.orphanLogLike;
+		uncle.indelLogLike = uncle.old.indelLogLike;
+    	
     }
     
     public double nephewUncleSwapFixedColumns() {
@@ -2281,13 +2298,25 @@ public class Vertex {
         
 		// Begin saving of current Vertex objects
 		old.first = first.clone();
-		parent.old.first = parent.first.clone();
-		brother.old.first = brother.first.clone();
-		grandpa.old.first = grandpa.first.clone();
-		uncle.old.first = uncle.first.clone();
-		
 		old.orphanLogLike = orphanLogLike;
         old.indelLogLike = indelLogLike;
+		
+        parent.old.first = parent.first.clone();
+		parent.old.orphanLogLike = parent.orphanLogLike;
+		parent.old.indelLogLike = parent.indelLogLike;
+		
+        brother.old.first = brother.first.clone();
+        brother.old.orphanLogLike = brother.orphanLogLike;
+        brother.old.indelLogLike = brother.indelLogLike;
+		
+        grandpa.old.first = grandpa.first.clone();
+        grandpa.old.orphanLogLike = grandpa.orphanLogLike;
+        grandpa.old.indelLogLike = grandpa.indelLogLike;
+		
+        uncle.old.first = uncle.first.clone();
+        uncle.old.orphanLogLike = uncle.orphanLogLike;
+        uncle.old.indelLogLike = uncle.indelLogLike;
+		
 		
         // Loop over columns of the initial alignment
         AlignColumn t=first.next, p=parent.first.next, b=brother.first.next, g=grandpa.first.next, u=uncle.first.next;
