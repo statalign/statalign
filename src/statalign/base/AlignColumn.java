@@ -111,8 +111,76 @@ public class AlignColumn {
 			seq = new double[owner.owner.substitutionModel.e.length];
 			upp = new double[owner.owner.substitutionModel.e.length];
 		}
+	}	
+	public AlignColumn(AlignColumn next) {
+		owner = next.owner;
+		parent = null;
+		left = null;
+		right = null;
+		orphan = true;
+		this.next = next;
+		prev = next.prev;
+		next.prev = this;
+		seq = new double[owner.owner.substitutionModel.e.length];
+		upp = new double[owner.owner.substitutionModel.e.length];		
 	}
 
+	/** 
+	 *  Remove all references to a column, <code>p</code> with zero or one descendants. 
+	 *  The column calling this function must be the rightmost
+	 *  descendant of <code>p</code>, either as a child, or an orphan 
+	 *  that calls <code>p</code> its parent.
+	 *  @param p The column to be deleted.
+	 */
+//	void deleteParent(AlignColumn p) {
+//		deleteParentReassign(p,null,false);
+//	}
+//	/** 
+//	 *  Remove all references to a column, <code>p</code> with zero or one descendants, 
+//	 *  and reassign all previous children of <code>p</code> to <code>pnew</code>.
+//	 *  This is to be used during topology swaps, when a column is deleted and its
+//	 *  child is given a new parent.  
+//	 *  The column calling this function must be the rightmost
+//	 *  descendant of <code>p</code>, either as a child, or an adopted orphan
+//	 *  that treats <code>p</code> as its parent.
+//	 *  @param p The column to be deleted.
+//	 *  @param pnew The column which the previous descendants of p will subsequently
+//	 *  call 'parent'. If <code>null</code> then defaults to <code>p.next</code>.
+//	 *  @param left This is <code>true</code> if the non-orphan child (if it exists)
+//	 *  is to be
+//	 */
+	static void delete(AlignColumn p) {
+		
+		if (Utils.DEBUG) {
+			if (p.left!=null && p.right!=null) {
+				throw new IllegalArgumentException("A column cannot be deleted if it has two descendants.");
+			}
+		}
+		
+		if (!p.orphan) {
+			if (p==p.parent.left)  p.parent.left = null;
+			else  				   p.parent.right = null;			
+		}
+
+		// Now skip column p in the parent sequence
+		if (p.prev != null) p.prev.next = p.next;
+		if (p.next != null) p.next.prev = p.prev;     
+	}
+	
+	/**
+	 * Updates the parent/child pointers with a specified parent.
+	 * @param p The parent column.
+	 * @param left Whether <code>this</code> is the left descendant of <code>p</code>.
+	 */
+	void updateParent(AlignColumn p, boolean left) {
+		if (orphan) parent = p.next;
+		else {
+			parent = p;
+			if (left) p.left = this;
+			else 	  p.right = this;
+		}
+	}
+	
 	void setWinFirst(AlignColumn prev) {
 		owner.winFirst = this;
 		this.prev = prev;

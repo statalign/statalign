@@ -4,6 +4,7 @@ import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.FieldPosition;
 import java.util.ArrayList;
+import static statalign.base.AlignColumn.*;
 
 import statalign.ui.ErrorMessage;
 
@@ -2288,6 +2289,8 @@ public class Vertex {
 		uncle.indelLogLike = uncle.old.indelLogLike;
 		
 		if (!gIsRoot) {
+			greatgrandpa.first = greatgrandpa.old.first;
+			greatgrandpa.last = greatgrandpa.old.last;
 			greatgrandpa.orphanLogLike = greatgrandpa.old.orphanLogLike;
 			greatgrandpa.indelLogLike = greatgrandpa.old.indelLogLike;
 		}
@@ -2352,6 +2355,7 @@ public class Vertex {
         uncle.old.indelLogLike = uncle.indelLogLike;	
         
         if (!gIsRoot) {
+            greatgrandpa.old.last = greatgrandpa.last.clone();
         	greatgrandpa.old.orphanLogLike = greatgrandpa.orphanLogLike;
         	greatgrandpa.old.indelLogLike = greatgrandpa.indelLogLike;
         }
@@ -2361,7 +2365,8 @@ public class Vertex {
         AlignColumn gg = null; if (!gIsRoot) gg=greatgrandpa.last;
         
         // Old columns, for restoration
-        AlignColumn to=old.last, po=parent.old.last, bo=brother.old.last, go=grandpa.old.last, uo=uncle.old.last;                       
+        AlignColumn to=old.last, po=parent.old.last, bo=brother.old.last, go=grandpa.old.last, uo=uncle.old.last;   
+        AlignColumn ggo = null; if (!gIsRoot) ggo=greatgrandpa.old.last;
  		
         for (int col=ali[0].length()-1; col>=0; col--) {
         	        	
@@ -2416,6 +2421,15 @@ public class Vertex {
     				else 		 	  go.right = uo;
     			}        		
         	}
+        	if (!gIsRoot & ggx) {
+        		ggo.prev = gg.clone(); 
+        		ggo.prev.next = ggo; gg = ggo.prev;        		
+    			if (gx) {
+    				go.parent = ggo;
+    				if (grandpa == greatgrandpa.left)  ggo.left = go;
+    				else 		 	  				   ggo.left = go;
+    			}    			
+        	}
         	        	   
         	if (Utils.DEBUG) {
 	        	if (px&gx) System.out.println("BEFORE: p == g? Should be false. Actually is "+(p==g));
@@ -2434,116 +2448,64 @@ public class Vertex {
         		// Then we have a tip present on both sides of the central edge,
         		// both before and after the move, so we need not do anything
         		// except for changing the parentage (and recomputing the 
-        		// emission probabilities).
-        		if (tx) {
-	        		t.parent = g;
-	        		if (uncleIsLeft) g.left = t;
-	        		else             g.right = t;
-        		}
-        		if (ux) {
-	        		u.parent = p;
-	        		if (isLeft)      p.left = u;
-	        		else             p.right = u;
-        		}
+        		// emission probabilities).        	
         	}        	
-        	else if (tx&ggx) {
-    			// Then:
+        	else if ((tx&ggx)|(bx&ux)) {
+    			// Case 1:
     		    //    grandpa exists before and after
     			//    parent exists before, but possibly not after
         		//    u does not exist
-    			
-    			// So, with a certain probability, P^2/(P+P^2) = P/(1+P) 
-    			// we will keep the parent and brother columns (such that there
-    			// are then two indel events on this subtree), and with 
-    			// probability P/(P+P^2) = 1/(1+P) we will delete
-    			// the parent column, p, and the brother column, b.
-        		
-        		logProposalRatio += Math.log(1+P);
-        		
-    			if (Utils.weightedChoose(weights2)==0) { // Then we're deleting p
-    				
-    				// Remove the pointers to p
-    				if (p.prev != null) p.prev.next = p.next;
-    				if (p.next != null) p.next.prev = p.prev;
-    				// We will leave px=true, so that p=p.next will be
-    				// called later. At that point the reference count
-    				// of p will drop to zero and the column will actually
-    				// be deleted.
-    				if (uncleIsLeft)  g.right = null; 
-    				else              g.left = null;     
-    			}   
-    			else logProposalRatio -= Math.log(P);    			   		
-    			
-				// Make the swap        				
-				t.parent = g; 				
-    			if (uncleIsLeft) { g.left = t; }
-				else             { g.right = t; }
-        	}
-        	else if (bx&ux) {
-    			// Then:
-    		    //    parent exists before and after
+        		// Case 2:
+        		//    parent exists before and after
     			//    grandpa exists before, but possibly not after
         		//    t does not exist
-        		logProposalRatio += Math.log(1+P);
-    			if (Utils.weightedChoose(weights2)==0) { // Then we're deleting g
-    				
-    				// Remove the pointers to g
-    				if (g.prev != null) g.prev.next = g.next;
-    				if (g.next != null) g.next.prev = g.prev;     
-    				// We will leave gx=true, so that g=g.next will be
-    				// called later. At that point the reference count
-    				// of g will drop to zero and the column will actually
-    				// be deleted.
-//p.parent = g.next; // IS THIS CORRECT?
-p.parent = p.next.parent; // IS THIS CORRECT?
-    				p.orphan = true;        				         			
+        		
+        		//    log(bwd) = 0
+    			      		
+        		logProposalRatio += Math.log(1+P); // denominator for -log(fwd)
+        		
+    			if (Utils.weightedChoose(weights2)==0) {    				
+    				if (tx) delete(p); 
+    				else    delete(g);
+    				// log(fwd) = log(1)
     			}
-    			else logProposalRatio -= Math.log(P);    			
-    				
-				// Make the swap        				
-				u.parent = p; 
-    			if (isLeft)  p.left = u; 
-				else         p.right = u; 
-        	}
-        	else if (bx&tx) {
-        		// Then:
+    			else logProposalRatio -= Math.log(P);    			   			
+        	}        	
+        	else if ((bx&tx)|(ux&ggx)) {
+        		// Case 1:
     		    //    parent exists before and after
     			//    grandpa exists after, and possibly before
         		//    u and gg do not exist
-        		logProposalRatio -= Math.log(1+P);
-        		if (gx) { // If grandpa existed before
-        			logProposalRatio += Math.log(P);
-        		}
-        		else { // Insert new g column
-        			g = new AlignColumn(g,true); // New orphan column  
-//if (!gIsRoot) g.parent = gg.next; // IS THIS CORRECT?
-if (!gIsRoot) g.parent = g.next.parent; // IS THIS CORRECT?        			
-        			gx = true;
-        		}
-        		t.parent = g;        		
-        		if (uncleIsLeft) { g.right = p; g.left = t; }
-        		else             { g.left = p; g.right = t; }
-        	}
-        	else if (ux&ggx) {
-        		// Then:
+        		// Case 2:
     		    //    grandpa exists before and after
     			//    parent exists after, and possibly before
         		//    b and t do not exist
-        		logProposalRatio -= Math.log(1+P);
-        		if (px) { // If parent existed before
-        			logProposalRatio += Math.log(P);
+
+        		// -log(fwd) = 0
+        		        		
+        		logProposalRatio -= Math.log(1+P); // denominator of log(bwd)
+        		
+        		if (bx) {
+        			if (gx) logProposalRatio += Math.log(P); // grandpa existed before
+        			else { // Insert new g column        			
+            			g = new AlignColumn(g); // New orphan column          			
+            			gx = true;
+            			// t is already not marked as orphan because p exists
+            		}
         		}
-        		else { // Insert new p column
-        			p = new AlignColumn(p,true); 
-        			p.parent = g;
-        			p.orphan = false;
-        			px = true;
+        		else {
+        			if (px) { // If parent existed before
+            			logProposalRatio += Math.log(P);
+            		}
+            		else { // Insert new p column
+            			p = new AlignColumn(p); 
+            			p.parent = g;
+            			p.orphan = false;
+            			px = true;
+            		}	
         		}
-        		u.parent = p;
-        		if (isLeft) { p.left = u; p.right = null; } 
-        		else        { p.right = u; p.left = null; } 
-        		 
-        	}
+        		
+        	}        
         	else if (nTips == 2) {
         		throw new RuntimeException("We missed a case where nTips==2.");
         	}
@@ -2559,187 +2521,70 @@ if (!gIsRoot) g.parent = g.next.parent; // IS THIS CORRECT?
         		// We could sample new internal states, but it's not necessary,
         		// so we will leave any such columns as they are.
         	}
-        	else if (tx) {
-        		System.out.println("tx");
+        	else if (tx|ux) {
+        		System.out.println("tx|ux");
         		// Then:        		
     		    //    parent exists possibly before and possibly after
     			//    grandpa exists possibly before and possibly after
         		
+        		// Back proposal probabilities
+        		if (px&gx)  logProposalRatio -= 2*Math.log(P);
+    			if (px&!gx) logProposalRatio -= Math.log(P);
+    			if (!px); //logProposalRatio -= Math.log(1);
+    				
         		// First sample new internal states        		
         		int choice = Utils.weightedChoose(weights3);
-        		if (choice == 0) { // Then we're choosing no internals        			
-        			if (px) {
-        				// Remove the pointers to p
-        				if (p.prev != null) p.prev.next = p.next;
-        				if (p.next != null) p.next.prev = p.prev;
-        				if (gx) {
-        					// Remove the pointers to g
-        					if (g.prev != null) g.prev.next = g.next;
-            				if (g.next != null) g.next.prev = g.prev;     
-        					logProposalRatio -= 2*Math.log(P);	       					
-        				}
-        				else {
-        					logProposalRatio -= Math.log(P);
-        				}
-        			}        			 	
-        			// Forward proposal contribution is log(1) = 0
-//t.parent = g.next; // IS THIS CORRECT?
-t.parent = t.next.parent; // IS THIS CORRECT?
-    				t.orphan = true;
+        		if (choice == 0) { // Then we're choosing no internals
+    			    // -log(fwd) = log(1) = 0
+        			
+        			if (px) delete(p); 
+        			if (gx) delete(g);
+        			// I don't think the order of the above steps matters
+        			
+        			if (tx) t.orphan = true;
+    				if (ux) u.orphan = true;
         		}
-    			if (choice == 1) { 
-    				// Then we're choosing to impute a character at g
-    				if (gx) {
-    					// Then p must have existed to begin with
-    					if (p.prev != null) p.prev.next = p.next;
-						if (p.next != null) p.next.prev = p.prev;
-						if (uncleIsLeft)  g.right = null; 
-						else			  g.left = null;						
-						// log(bwd/fwd) = -log(fwd) + log(bwd) = log(P) - 2 log(P)
-						logProposalRatio -= Math.log(P);     					
+    			if (choice == 1) { // Then we're choosing to impute only one character    				
+    				// -log(fwd) = log(P)
+    				logProposalRatio += Math.log(P);
+    				
+    				if (tx) {
+    					// if we're considering t, then its new parent must be g
+    					delete(p);
+	    				if (!gx) {
+	    					g = new AlignColumn(g); // New orphan column   
+	    					gx = true;
+	    				}    				
+	    				t.orphan = false;
     				}
-    				else {
-    					if (px) {
-    						if (p.prev != null) p.prev.next = p.next;
-    						if (p.next != null) p.next.prev = p.prev;
-    						// log(bwd/fwd) = -log(fwd) + log(bwd) = log(P) - log(P) = 0     						
-    					}
-    					else {
-    						// log(bwd/fwd) = -log(fwd) + log(bwd) = log(P) - log(1)
-    						logProposalRatio += Math.log(P);
-    					}
-    					g = new AlignColumn(g,true); // New orphan column   
-//if (!gIsRoot) g.parent = gg.next; // IS THIS CORRECT?    					
-if (!gIsRoot) g.parent = g.next.parent; // IS THIS CORRECT?
+    				else if (ux) {
+    					// if we're considering u, then its new parent must be p
+    					delete(g);
+	    				if (!px) {
+	    					p = new AlignColumn(p); // New orphan column   
+	    					px = true;
+	    				}    				
+	    				u.orphan = false;
+    				}
+    				
+    			}
+    			if (choice == 2) { //Then we're imputing characters at p and g
+    				// -log(fwd) = 2 log(P) 
+    				logProposalRatio += 2*Math.log(P);
+    				
+    				if (!gx) {
+    					g = new AlignColumn(g); // New orphan column
     					gx = true;
     				}
-    				t.parent = g;
-    				t.orphan = false;
-    				if (uncleIsLeft)  { g.left = t; g.right = null; } 
-					else              { g.right = t; g.left = null; }
-    			}
-    			if (choice == 2) {
-    				// Then we're imputing characters at p and g
-    				if (gx) {
-    					// Then p already existed to begin with						
-						// log(bwd/fwd) = 0						     					
-    				}
-    				else {
-    					g = new AlignColumn(g,true); // New orphan column            			
-    					gx = true;
-    					if (px) {
-    						// log(bwd/fwd) = 2 log(P) - log(P)
-    						logProposalRatio += Math.log(P);
-    					}
-    					else {
-    						p = new AlignColumn(p,true);
-                			p.parent = g;
-                			p.orphan = false;
-                			px = true;
-    						// log(bwd/fwd) = 2 log(P) - log(1)
-    						logProposalRatio += 2*Math.log(P);
-    					}
-    					
-    				}
-    				t.parent = g;
-    				t.orphan = false;
-    				if (uncleIsLeft)  { g.left = t; g.right = p; } 
-					else              { g.right = t; g.left = p; }
-    				if (isLeft)  	  { p.left = null; } 
-					else              { p.right = null; }
-    			}
-        	}
-        	else if (ux) {
-        		System.out.println("ux");
-        		// Then:        		
-    		    //    parent exists possibly before and possibly after
-    			//    grandpa exists possibly before and possibly after
-        		
-        		// First sample new internal states        		
-        		int choice = Utils.weightedChoose(weights3);
-        		if (choice == 0) { // Then we're choosing no internals            			        			
-        			if (gx) {
-        				// Remove the pointers to g
-        				if (g.prev != null) g.prev.next = g.next;
-        				if (g.next != null) g.next.prev = g.prev;
-        				if (px) {
-        					// Remove the pointers to p
-        					if (p.prev != null) p.prev.next = p.next;
-            				if (p.next != null) p.next.prev = p.prev;     
-        					logProposalRatio -= 2*Math.log(P);	       					
-        				}
-        				else {
-        					logProposalRatio -= Math.log(P);
-        				}
-        			}        			 	
-        			// Forward proposal contribution is log(1) = 0
-//u.parent = g.next; // IS THIS CORRECT?
-u.parent = u.next.parent; // IS THIS CORRECT?
-    				u.orphan = true;
-        		}
-    			if (choice == 1) { 
-    				// Then we're choosing to impute a character at p
-    				if (px) {
-    					// Then g must have existed to begin with
-    					if (g.prev != null) g.prev.next = g.next;
-						if (g.next != null) g.next.prev = g.prev;
-//p.parent = g.next; // IS THIS CORRECT?
-p.parent = p.next.parent; // IS THIS CORRECT?
-						p.orphan = true;						
-						// log(bwd/fwd) = -log(fwd) + log(bwd) = log(P) - 2 log(P)
-						logProposalRatio -= Math.log(P);     					
-    				}
-    				else {
-    					if (gx) {
-    						if (g.prev != null) g.prev.next = g.next;
-    						if (g.next != null) g.next.prev = g.prev;    						
-    						// log(bwd/fwd) = -log(fwd) + log(bwd) = log(P) - log(P) = 0     						
-    					}
-    					else {
-    						// log(bwd/fwd) = -log(fwd) + log(bwd) = log(P) - log(1)
-    						logProposalRatio += Math.log(P);
-    					}
-    					p = new AlignColumn(p,true); 
-//p.parent = g.next; // IS THIS CORRECT?
-p.parent = p.next.parent; // IS THIS CORRECT?
-    					px = true;
-    				}
-    				u.parent = p;
-    				u.orphan = false;
-    				if (isLeft)  { p.left = u; p.right = null; } 
-					else         { p.right = u; p.left = null; }
-    			}
-    			if (choice == 2) {
-    				// Then we're imputing characters at p and g
-    				if (px) {
-    					// Then g already existed to begin with						
-						// log(bwd/fwd) = -log(fwd) + log(bwd) = 0						     					
-    				}
-    				else {    					
-    					if (gx) {
-    						// log(bwd/fwd) = -log(fwd) + log(bwd) = 2 log(P) - log(P)
-    						logProposalRatio += Math.log(P);
-    					}
-    					else {
-    						g = new AlignColumn(g,true); // New orphan column                			
-        					gx = true;    						
-    						// log(bwd/fwd) = -log(fwd) + log(bwd) = 2 log(P) - log(1)
-    						logProposalRatio += 2*Math.log(P);
-    					}
-    					p = new AlignColumn(p,true); 
-            			p.parent = g;
+    				if (!px) {
+    					p = new AlignColumn(p);            			
             			p.orphan = false;
             			px = true;
-    					
-    				}
-    				u.parent = p;
-    				u.orphan = false;
-    				if (uncleIsLeft)  { g.left = null; g.right = p; } 
-					else              { g.right = null; g.left = p; }    				
-    				if (isLeft)  	  { p.left = u; } 
-					else              { p.right = u; }
-    			}        		
-        	}
+    				}    				
+    				if (tx) t.orphan = false;
+    				if (ux) u.orphan = false;
+    			}
+        	}        	
         	else {
         		System.out.println("None of the above");
         		throw new RuntimeException("We reached a case that wasn't handled properly.");
@@ -2765,21 +2610,16 @@ p.parent = p.next.parent; // IS THIS CORRECT?
 		    	}
 	    	}
 
-        	// Reassign any parent pointers for orphans.
-	    	// Bit dangerous, because we aren't checking whether they are wrong.
-	    	// The legitimate reason is when a column is deleted, and then
-	    	// its direct descendant is successfully re-patriated into the
-	    	// next column, but any orphan predecessors who previously also 
-	    	// shared the same parent will still point to the old column, so they
-	    	// need to be reassigned. A similar issue may occur with insertions.
-        	if (tx&t.orphan) t.parent = t.next.parent; 
-        	if (px&t.orphan) p.parent = p.next.parent;
-        	if (bx&b.orphan) b.parent = b.next.parent; 
-        	if (gx&g.orphan) g.parent = g.next.parent;
-        	if (ux&u.orphan) u.parent = u.next.parent;         	
-    	
+        	// Reassign any parent pointers. 
+	    	// NB the orphan status will have already been updated, so we don't
+	    	// need to check whether the parents exist.	    	
+        	if (tx) t.updateParent(g,uncleIsLeft);
+        	if (px) p.updateParent(g,!uncleIsLeft);
+        	if (ux) u.updateParent(p,isLeft);
+        	if (bx) b.updateParent(p,!isLeft);			
+        	if (gx & !gIsRoot) g.updateParent(gg,grandpa==greatgrandpa.left);        
         	
-        	// Increment the column pointers
+        	// Decrement the column pointers
         	if (tx) t = t.prev; 
         	if (px) p = p.prev;
         	if (bx) b = b.prev;
