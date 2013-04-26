@@ -126,29 +126,11 @@ public class AlignColumn {
 	}
 
 	/** 
-	 *  Remove all references to a column, <code>p</code> with zero or one descendants. 
-	 *  The column calling this function must be the rightmost
-	 *  descendant of <code>p</code>, either as a child, or an orphan 
-	 *  that calls <code>p</code> its parent.
+	 *  Remove all non-parent references to a column, <code>p</code>.
+	 *  Any columns that call this column 'parent' will still do so
+	 *  after the function is called, and must be tidied up separately. 
 	 *  @param p The column to be deleted.
 	 */
-//	void deleteParent(AlignColumn p) {
-//		deleteParentReassign(p,null,false);
-//	}
-//	/** 
-//	 *  Remove all references to a column, <code>p</code> with zero or one descendants, 
-//	 *  and reassign all previous children of <code>p</code> to <code>pnew</code>.
-//	 *  This is to be used during topology swaps, when a column is deleted and its
-//	 *  child is given a new parent.  
-//	 *  The column calling this function must be the rightmost
-//	 *  descendant of <code>p</code>, either as a child, or an adopted orphan
-//	 *  that treats <code>p</code> as its parent.
-//	 *  @param p The column to be deleted.
-//	 *  @param pnew The column which the previous descendants of p will subsequently
-//	 *  call 'parent'. If <code>null</code> then defaults to <code>p.next</code>.
-//	 *  @param left This is <code>true</code> if the non-orphan child (if it exists)
-//	 *  is to be
-//	 */
 	static void delete(AlignColumn p) {
 		
 		if (Utils.DEBUG) {
