@@ -2550,7 +2550,7 @@ public class Vertex {
     				
     				if (tx) {
     					// if we're considering t, then its new parent must be g
-    					delete(p);
+    					if (px) delete(p);
 	    				if (!gx) {
 	    					g = new AlignColumn(g); // New orphan column   
 	    					gx = true;
@@ -2559,7 +2559,7 @@ public class Vertex {
     				}
     				else if (ux) {
     					// if we're considering u, then its new parent must be p
-    					delete(g);
+    					if (gx) delete(g);
 	    				if (!px) {
 	    					p = new AlignColumn(p); // New orphan column   
 	    					px = true;
@@ -2598,7 +2598,17 @@ public class Vertex {
 	      		grandpa.first = g; grandpa.old.first = go;        		
           	}
         	  
-	    	if (Utils.DEBUG) {
+	    	
+        	// Reassign any parent pointers. 
+	    	// NB the orphan status will have already been updated, so we don't
+	    	// need to check whether the parents exist.	    	
+        	if (tx) t.updateParent(g,uncleIsLeft);
+        	if (px) p.updateParent(g,!uncleIsLeft);
+        	if (ux) u.updateParent(p,isLeft);
+        	if (bx) b.updateParent(p,!isLeft);			
+        	if (gx & !gIsRoot) g.updateParent(gg,grandpa==greatgrandpa.left);        
+        	
+        	if (Utils.DEBUG) {
 		    	if (px&gx) System.out.println("AFTER: p == g? Should be false. Actually is "+(p==g));
 		    	if (tx&gx) {
 		    		if (px) System.out.println("AFTER: t's parent is p? Should be false. Actually is "+(t.parent==p));
@@ -2609,15 +2619,6 @@ public class Vertex {
 		    		System.out.println("AFTER: u's parent is p? Should be true. Actually is "+(u.parent==p));
 		    	}
 	    	}
-
-        	// Reassign any parent pointers. 
-	    	// NB the orphan status will have already been updated, so we don't
-	    	// need to check whether the parents exist.	    	
-        	if (tx) t.updateParent(g,uncleIsLeft);
-        	if (px) p.updateParent(g,!uncleIsLeft);
-        	if (ux) u.updateParent(p,isLeft);
-        	if (bx) b.updateParent(p,!isLeft);			
-        	if (gx & !gIsRoot) g.updateParent(gg,grandpa==greatgrandpa.left);        
         	
         	// Decrement the column pointers
         	if (tx) t = t.prev; 

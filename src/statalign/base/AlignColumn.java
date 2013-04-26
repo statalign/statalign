@@ -133,11 +133,11 @@ public class AlignColumn {
 	 */
 	static void delete(AlignColumn p) {
 		
-		if (Utils.DEBUG) {
-			if (p.left!=null && p.right!=null) {
-				throw new IllegalArgumentException("A column cannot be deleted if it has two descendants.");
-			}
-		}
+//		if (Utils.DEBUG) {
+//			if (p.left!=null && p.right!=null) {
+//				throw new IllegalArgumentException("A column cannot be deleted if it has two descendants.");
+//			}
+//		}
 		
 		if (!p.orphan) {
 			if (p==p.parent.left)  p.parent.left = null;
