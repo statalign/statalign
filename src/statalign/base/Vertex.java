@@ -2311,13 +2311,14 @@ public class Vertex {
     	boolean isLeft = (this==parent.left);
     	boolean uncleIsLeft = (uncle==grandpa.left);
         
-    	if (Utils.DEBUG) {
-        	printPointers();
-        	brother.printPointers();
-        	if (!gIsRoot) parent.printPointers();
-        	uncle.printPointers();        	
-        	//owner.checkPointers();
-        }
+    	  if (Utils.DEBUG) {
+          	printPointers(); printPointers2();        	
+          	brother.printPointers();  brother.printPointers2();
+          	if (!gIsRoot) { parent.printPointers(); parent.printPointers2(); }
+          	uncle.printPointers(); uncle.printPointers2();
+          	parent.printPointers();parent.printPointers2();  
+          	//owner.checkPointers();
+          }
     	
     	// Extract full alignment for all nodes.
     	// NB this also has the effect of saving the old state, which is useful, albeit slow.
