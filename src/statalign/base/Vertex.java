@@ -15,17 +15,20 @@ import statalign.ui.ErrorMessage;
  * opted for efficiency and not readability. You should be able to develop novel
  * functionality of the software package (postprocessing, substitution models, etc.)
  * without touching this class.
- * @author miklos, novak
+ * @author miklos, novak, herman
  */
 public class Vertex {
 
-    static final int ROUNDING = 100; // tells the number of digits in rounding when printing the tree
-    static final double SELECTING = 0.5; /*this is the probability for selecting a 
-    										homologous column not to be changed during topology changing
-	 */
+	/** The number of digits in rounding when printing the tree. */
+    static final int ROUNDING = 100; 
+    /** The probability for selecting a homologous column not to be 
+     *  changed during topology changing 
+     */
+    static final double SELECTING = 0.5; 
     static int DEBUG = 0;
     static final double PROPOSAL_HEAT = 1.0;
-    static final double EMPTY_WINDOW = 0.01; /* this is the probability that an empty window will be realigned*/
+    /** The probability that an empty window will be realigned*/
+    static final double EMPTY_WINDOW = 0.01; 
     
     Tree owner;
 
@@ -742,23 +745,37 @@ public class Vertex {
             AlignColumn c = first, p = parent.first;
             int prevk = START, k;
 
-            while (c != last || p != parent.last) {            	
+            System.out.println(last.toString()+" "+parent.last.toString()+"\n");
+            while (c != last || p != parent.last) {     
+            	if (DEBUG==2)  { 
+            		System.out.print(c.toString()+" "); 
+            		System.out.print(c.parent.toString()+" "); 
+            		System.out.println(p.toString()); 
+            	}      	
                 if (c.parent != p) {                            // deletion (* -), pattern code 2
                     k = emitPatt2State[2];
                     if (DEBUG==2) {
-                		System.out.println(String.valueOf(p.mostLikely())+"-");
+                    	System.out.print("(*-) ");
+                		if (p != parent.last) System.out.println(String.valueOf(p.mostLikely())+"-");
                 	}
                     p = p.next;                   
                 } else if (c.orphan) {                        // insertion (- *), pattern code 1
                     k = emitPatt2State[1];
                     if (DEBUG==2) {
-                		System.out.println("-"+String.valueOf(c.mostLikely()));
+                    	System.out.print("(-*) ");
+                		if (c != last) System.out.println("-"+String.valueOf(c.mostLikely()));
                 	}
                     c = c.next;                   
                 } else {                                                // substitution (* *), pattern code 3
                     k = emitPatt2State[3];
                     if (DEBUG==2) {
+                    	System.out.print("(**) ");
+                    	if (c != last && p != parent.last) {
                 		System.out.println(String.valueOf(p.mostLikely())+String.valueOf(c.mostLikely()));
+                    	}
+                    	else {
+                    		System.out.println(String.valueOf("-"+c.mostLikely()));
+                    	}
                 	}
                     p = p.next;
                     c = c.next;                   
@@ -2296,13 +2313,28 @@ public class Vertex {
 		}
 		
 		uncle.parent = parent; 		
- 		uncle.last.parent = parent.last;
- 		if (isLeft)		 { parent.left = uncle; parent.last.left = uncle.last; } 
- 		else 			 { parent.right = uncle; parent.last.right = uncle.last; }
+ 		//uncle.last.parent = parent.last;
+ 		if (isLeft)		 { parent.left = uncle; }//parent.last.left = uncle.last; } 
+ 		else 			 { parent.right = uncle; }//parent.last.right = uncle.last; }
         parent = grandpa;
- 		last.parent = grandpa.last;		 				 		
- 		if (uncleIsLeft) { grandpa.left = this; grandpa.last.left = last; } 
- 		else 		 	 { grandpa.right = this; grandpa.last.right = last; }
+ 		//last.parent = grandpa.last;		 				 		
+ 		if (uncleIsLeft) { grandpa.left = this; }//grandpa.last.left = last; } 
+ 		else 		 	 { grandpa.right = this; }//grandpa.last.right = last; }
+ 		
+ 		
+ 		if (Utils.DEBUG) {
+         	printPointers(); printPointers2();        	
+         	brother.printPointers();  brother.printPointers2();
+         	if (!gIsRoot) { parent.printPointers(); parent.printPointers2(); }
+         	uncle.printPointers(); uncle.printPointers2();
+         	uncle.parent.printPointers();uncle.parent.printPointers2();  
+         	//owner.checkPointers();
+         }
+         
+         
+        DEBUG=2; // Activate verbose print statements 
+     	uncle.calcAllUp(); // uncle is now lower 
+     	DEBUG=0; // Deactivate verbose print statements
     	
     }
     
@@ -2465,8 +2497,8 @@ public class Vertex {
         		logProposalRatio += Math.log(1+P); // denominator for -log(fwd)
         		
     			if (Utils.weightedChoose(weights2)==0) {    				
-    				if (tx) delete(p); 
-    				else    delete(g);
+    				if (tx) { delete(p); p = p.prev; px = false; }
+    				else    { delete(g); g = g.prev; gx = false; }
     				// log(fwd) = log(1)
     			}
     			else logProposalRatio -= Math.log(P);    			   			
@@ -2537,8 +2569,8 @@ public class Vertex {
         		if (choice == 0) { // Then we're choosing no internals
     			    // -log(fwd) = log(1) = 0
         			
-        			if (px) delete(p); 
-        			if (gx) delete(g);
+        			if (px) { delete(p); p = p.prev; px = false; }  
+        			if (gx) { delete(g); g = g.prev; gx = false; } 
         			// I don't think the order of the above steps matters
         			
         			if (tx) t.orphan = true;
@@ -2550,7 +2582,7 @@ public class Vertex {
     				
     				if (tx) {
     					// if we're considering t, then its new parent must be g
-    					if (px) delete(p);
+    					if (px) { delete(p); p = p.prev; px = false; } 
 	    				if (!gx) {
 	    					g = new AlignColumn(g); // New orphan column   
 	    					gx = true;
@@ -2559,7 +2591,7 @@ public class Vertex {
     				}
     				else if (ux) {
     					// if we're considering u, then its new parent must be p
-    					if (gx) delete(g);
+    					if (gx) { delete(g); g = g.prev; gx = false; }
 	    				if (!px) {
 	    					p = new AlignColumn(p); // New orphan column   
 	    					px = true;
@@ -3971,9 +4003,10 @@ public class Vertex {
             System.out.print(p.mostLikely() + "");
             p = p.prev;
         }
+        System.out.print(p.mostLikely() + "");
         System.out.println();
         while (c != null) {
-            if (c.parent.prev != null) {
+            if (c.parent.next != null) {
                 System.out.print(c.parent.mostLikely() + "");
             }
             c = c.prev;
@@ -3981,7 +4014,7 @@ public class Vertex {
         System.out.println();
         c = last.prev;
         while (c != null) {
-            if (c.parent.prev != null) {
+            if (c.parent.next != null) {
                 System.out.print((c.orphan ? "y" : "n"));
             }
             c = c.prev;
@@ -4096,19 +4129,20 @@ public class Vertex {
     public void checkPointers() {
         //parent
         for (AlignColumn p = first; p != null; p = p.next) {
-            if (p.left != null && (p.left.orphan || p.left.parent != p)) {
-                throw new Error("Problem is vertex " + this + ":\np is: " + p + " p.left is " + p.left + " p.left.orphan: " + p.left.orphan +
+            if (p.left != null && (p.left.orphan || p.left.parent != p)) {            	
+                throw new Error("Problem is vertex " + index + ":\np is: " + p + " p.left is " + p.left + " p.left.orphan: " + p.left.orphan +
                         " p.left.parent: " + p.left.parent);
             }
             if (p.right != null && (p.right.orphan || p.right.parent != p)) {
-                throw new Error("Problem is vertex " + this + ":\np is: " + p + " p.right is " + p.right + " p.right.orphan: " + p.right.orphan +
+            	System.out.println(p.owner.index+" "+p.prev.toString()+" "+p.prev.mostLikely());
+                throw new Error("Problem is vertex " + index + ":\np is: " + p + " p.right is " + p.right + " p.right.orphan: " + p.right.orphan +
                         " p.right.parent: " + p.right.parent);
             }
         }
         for (AlignColumn l = left.first; l != null; l = l.next) {
             if (!l.orphan) {
                 if (l.parent == null || l.parent.left != l) {
-                    throw new Error("Problem in vertex " + this + ":\nl is: " + l + (l.parent == null ? " l does not have a parent" : " l parent is: " + l.parent + " l parent left is: " + l.parent.left));
+                    throw new Error("Problem in vertex " + index + ":\nl is: " + l + (l.parent == null ? " l does not have a parent" : " l parent is: " + l.parent + " l parent left is: " + l.parent.left));
                 }
             }
         }
@@ -4121,29 +4155,29 @@ public class Vertex {
         }
     }
 
-    public static void main(String[] args){
-//    	boolean[] tips = {true,true,false};
-//    	boolean[] x = {true,false};
-//    	for (boolean p : x) {
-//    		for (boolean g : x) {
-//    			System.out.print(Utils.isValidTopology(p,g,tips,true)+" ");
-//    		}    		
-//    		System.out.println();
-//    	}
-//    	ArrayList<Double> a = new ArrayList<Double>(5);
-//    	System.out.println("a.size() = "+a.size());
-//    	a.add(0.0); a.add(1.0); a.add(2.0);
-//    	ArrayList<ArrayList<Double> > x = new ArrayList<ArrayList<Double> >();
-//    	x.add(a);
+//    public static void main(String[] args){
+////    	boolean[] tips = {true,true,false};
+////    	boolean[] x = {true,false};
+////    	for (boolean p : x) {
+////    		for (boolean g : x) {
+////    			System.out.print(Utils.isValidTopology(p,g,tips,true)+" ");
+////    		}    		
+////    		System.out.println();
+////    	}
+////    	ArrayList<Double> a = new ArrayList<Double>(5);
+////    	System.out.println("a.size() = "+a.size());
+////    	a.add(0.0); a.add(1.0); a.add(2.0);
+////    	ArrayList<ArrayList<Double> > x = new ArrayList<ArrayList<Double> >();
+////    	x.add(a);
+////    	
+////    	ArrayList<Double> b = x.get(0);
+////    	b.set(0,238.0);
+////    	System.out.println("a = "+a.get(0)+" "+a.get(1)+" "+a.get(2));
+////    	System.out.println("b = "+b.get(0)+" "+b.get(1)+" "+b.get(2));
+////    	System.out.println("x.get(0) = "+x.get(0).get(0)+" "+x.get(0).get(1)+" "+x.get(0).get(2));
 //    	
-//    	ArrayList<Double> b = x.get(0);
-//    	b.set(0,238.0);
-//    	System.out.println("a = "+a.get(0)+" "+a.get(1)+" "+a.get(2));
-//    	System.out.println("b = "+b.get(0)+" "+b.get(1)+" "+b.get(2));
-//    	System.out.println("x.get(0) = "+x.get(0).get(0)+" "+x.get(0).get(1)+" "+x.get(0).get(2));
-    	
-        	
-    }
+//        	
+//    }
 //    /**
 //     * This function is merely for testing/debugging purposes
 //     * @param args Arguments are not used, all input is directly written into the

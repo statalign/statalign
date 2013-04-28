@@ -147,6 +147,9 @@ public class AlignColumn {
 		// Now skip column p in the parent sequence
 		if (p.prev != null) p.prev.next = p.next;
 		if (p.next != null) p.next.prev = p.prev;     
+		
+		if (p.left != null)  p.left.orphan = true;
+		if (p.right != null) p.right.orphan = true;
 	}
 	
 	/**
