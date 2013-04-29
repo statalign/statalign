@@ -120,7 +120,7 @@ public class AlignColumn {
 		orphan = true;
 		this.next = next;
 		prev = next.prev;
-		prev.next = this;
+		if (prev!=null) prev.next = this;
 		next.prev = this;
 		seq = new double[owner.owner.substitutionModel.e.length];
 		upp = new double[owner.owner.substitutionModel.e.length];		

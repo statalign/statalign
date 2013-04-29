@@ -2570,7 +2570,7 @@ public class Vertex {
         		if (bx) {
         			if (gx) logProposalRatio += Math.log(P); // grandpa existed before
         			else { // Insert new g column        			
-            			g = new AlignColumn(g.next); // New orphan column          			
+            			g = new AlignColumn((g!=null)?g.next:parent.first); // New orphan column          			
             			gx = true;
             			// t is already not marked as orphan because p exists
             		}
@@ -2580,7 +2580,7 @@ public class Vertex {
             			logProposalRatio += Math.log(P);
             		}
             		else { // Insert new p column
-            			p = new AlignColumn(p.next); 
+            			p = new AlignColumn((p!=null)?p.next:parent.first); 
             			p.parent = g;
             			p.orphan = false;
             			px = true;
@@ -2634,7 +2634,7 @@ public class Vertex {
     					// if we're considering t, then its new parent must be g
     					if (px) { delete(p); p = p.prev; px = false; } 
 	    				if (!gx) {
-	    					g = new AlignColumn(g.next); // New orphan column   
+	    					g = new AlignColumn((g!=null)?g.next:parent.first); // New orphan column   
 	    					gx = true;
 	    				}    				
 	    				t.orphan = false;
@@ -2643,7 +2643,7 @@ public class Vertex {
     					// if we're considering u, then its new parent must be p
     					if (gx) { delete(g); g = g.prev; gx = false; }
 	    				if (!px) {
-	    					p = new AlignColumn(p.next); // New orphan column   
+	    					p = new AlignColumn((p!=null)?p.next:parent.first); // New orphan column   
 	    					px = true;
 	    				}    				
 	    				u.orphan = false;
@@ -2661,7 +2661,9 @@ public class Vertex {
     					gx = true;
     				}
     				if (!px) {
-    					p = new AlignColumn(p.next);            			
+    					System.out.println("p = "+p);
+    					//System.out.println("p.next = "+p.next);
+    					p = new AlignColumn((p!=null)?p.next:parent.first);            			
             			p.orphan = false;
             			px = true;
     				}    				
