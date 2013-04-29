@@ -2429,18 +2429,23 @@ public class Vertex {
  		
         for (int col=ali[0].length()-1; col>=0; col--) {
 
-        	System.out.println();
-        	System.out.print(ali[brother.index].charAt(col));        	
-        	System.out.print(ali[index].charAt(col));
-        	System.out.print(ali[uncle.index].charAt(col));
-        	System.out.print(ali[parent.index].charAt(col));
-        	System.out.print(ali[grandpa.index].charAt(col));
-        	System.out.println();
+	System.out.println(ali[brother.index]);
+    System.out.println(ali[index]);
+	System.out.println(ali[uncle.index]);
+	System.out.println(ali[parent.index]);
+	System.out.println(ali[grandpa.index]);        	
+	System.out.println();
+	System.out.print(ali[brother.index].charAt(col));        	
+	System.out.print(ali[index].charAt(col));
+	System.out.print(ali[uncle.index].charAt(col));
+	System.out.print(ali[parent.index].charAt(col));
+	System.out.print(ali[grandpa.index].charAt(col));
+	System.out.println();
         	boolean tx = (ali[index].charAt(col)!='-'); 		
         	boolean px = (ali[parent.index].charAt(col)!='-'); 	
         	boolean bx = (ali[brother.index].charAt(col)!='-'); 
         	boolean gx = (ali[grandpa.index].charAt(col)!='-');
-        	System.out.println(gx+" "+ali[grandpa.index].charAt(col));
+   System.out.println(gx+" "+ali[grandpa.index].charAt(col));
         	boolean ux = (ali[uncle.index].charAt(col)!='-');
           	boolean ggx = false;
         	if (!gIsRoot) ggx = (ali[greatgrandpa.index].charAt(col)!='-');
@@ -2668,34 +2673,34 @@ public class Vertex {
         		System.out.println("None of the above");
         		throw new RuntimeException("We reached a case that wasn't handled properly.");
         	}
-        	
-	    	if (col==0) {
-	    		first = t; old.first = to;         		 
-	       		parent.first = p; parent.old.first = po; 
-	      		brother.first = b; brother.old.first = bo; 
-	      		uncle.first = u; uncle.old.first = uo; 
-	      		grandpa.first = g; grandpa.old.first = go;
-	      		System.out.println("first = "+first.toString()+", t = "+t.toString());
-	      		System.out.println("parent.first = "+parent.first.toString()+", p = "+p.toString());
-	      		System.out.println("brother.first = "+brother.first.toString()+", b = "+b.toString());
-	      		System.out.println("uncle.first = "+uncle.first.toString()+", u = "+u.toString());
-	      		System.out.println("grandpa.first = "+grandpa.first.toString()+", g = "+g.toString());
-          	}
-        	  
-	    	
+        	   	        	  	    	
         	// Reassign any parent pointers. 
 	    	// If the character is to be an orphan, we specify the next column
 	    	// in the parent sequence as the adopted parent.
-	   if (tx) System.out.println("t = "+t.toString()+", t.parent = "+t.parent.toString()+", t.parent.left = "+t.parent.left.toString());
-        	if (tx) t.updateParent(t.orphan?g.next:g,uncleIsLeft);
-       if (tx) System.out.println("t = "+t.toString()+", t.parent = "+t.parent.toString()+", t.parent.left = "+t.parent.left.toString());
-        	if (px) p.updateParent(p.orphan?g.next:g,!uncleIsLeft);
-       if (tx) System.out.println("t = "+t.toString()+", t.parent = "+t.parent.toString()+", t.parent.left = "+t.parent.left.toString());
-        	if (ux) u.updateParent(u.orphan?p.next:p,isLeft);
-       if (tx) System.out.println("t = "+t.toString()+", t.parent = "+t.parent.toString()+", t.parent.left = "+t.parent.left.toString());
-        	if (bx) b.updateParent(b.orphan?p.next:p,!isLeft);
-       if (tx) System.out.println("t = "+t.toString()+", t.parent = "+t.parent.toString()+", t.parent.left = "+t.parent.left.toString());
-        	if (gx & !gIsRoot) g.updateParent(g.orphan?gg.next:gg,grandpaIsLeft);        
+        	if (tx) {
+        		t.updateParent(t.orphan?g.next:g,uncleIsLeft);
+	    		first = t; old.first = to;         		 
+        	}
+       if (tx) System.out.println("t = "+t.toString()+", t.parent = "+t.parent.toString());
+        	if (px) {
+        		p.updateParent(p.orphan?g.next:g,!uncleIsLeft);
+	       		parent.first = p; parent.old.first = po; 
+        	}
+       if (px) System.out.println("p = "+p.toString()+", p.parent = "+p.parent.toString());     
+        	if (ux) {
+        		u.updateParent(u.orphan?p.next:p,isLeft);
+	      		uncle.first = u; uncle.old.first = uo; 
+        	}
+       if (ux) System.out.println("u = "+u.toString()+", u.parent = "+u.parent.toString());       
+        	if (bx) {
+        		b.updateParent(b.orphan?p.next:p,!isLeft);
+	      		brother.first = b; brother.old.first = bo; 
+        	}
+       if (bx) System.out.println("b = "+b.toString()+", b.parent = "+b.parent.toString());
+        	if (gx) {
+        		if (!gIsRoot) g.updateParent(g.orphan?gg.next:gg,grandpaIsLeft);
+	      		grandpa.first = g; grandpa.old.first = go;	      	
+        	}
         	
         	if (Utils.DEBUG) {
 	        	if (px&gx) if (p==g) System.out.println("AFTER: p == g? Should be false. Actually is "+(p==g));
@@ -2711,6 +2716,13 @@ public class Vertex {
 		    		}
 		    	}	   
 	        }
+        	if (col==0) {
+	    		System.out.print("first = "+first.toString());
+	      		System.out.print("parent.first = "+parent.first.toString());
+	      		System.out.print("brother.first = "+brother.first.toString());
+	      		System.out.print("uncle.first = "+uncle.first.toString());
+	      		System.out.print("grandpa.first = "+grandpa.first.toString());
+          	}
         	System.out.println("*"+gx+" "+ali[grandpa.index].charAt(col));
 
         	// Decrement the column pointers
@@ -4021,6 +4033,12 @@ public class Vertex {
         System.out.println();
         while (c != null) {
             System.out.print(c.parent + " ");
+            c = c.next;
+        }
+        System.out.println("\n");
+        c = first;
+        while (c != null) {
+            System.out.print(c + " ");
             c = c.next;
         }
         System.out.println("\n");
