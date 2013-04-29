@@ -757,6 +757,7 @@ public class Vertex {
                     if (DEBUG==2) {
                     	System.out.print("(*-) ");
                 		if (p != parent.last) System.out.println(String.valueOf(p.mostLikely())+"-");
+                		else System.out.println();
                 	}
                     p = p.next;                   
                 } else if (c.orphan) {                        // insertion (- *), pattern code 1
@@ -764,6 +765,7 @@ public class Vertex {
                     if (DEBUG==2) {
                     	System.out.print("(-*) ");
                 		if (c != last) System.out.println("-"+String.valueOf(c.mostLikely()));
+                		else System.out.println();
                 	}
                     c = c.next;                   
                 } else {                                                // substitution (* *), pattern code 3
@@ -2322,12 +2324,14 @@ public class Vertex {
  		else 		 	 { grandpa.right = this; }//grandpa.last.right = last; }
  		
  		
- 		if (Utils.DEBUG) {
-         	printPointers(); printPointers2();        	
-         	brother.printPointers();  brother.printPointers2();
-         	if (!gIsRoot) { parent.printPointers(); parent.printPointers2(); }
-         	uncle.printPointers(); uncle.printPointers2();
-         	uncle.parent.printPointers();uncle.parent.printPointers2();  
+ 		if (Utils.DEBUG) {        	
+ 			uncle.printPointers(); //uncle.printPointers2();
+         	brother.printPointers();  //brother.printPointers2();         	
+         	if (!gIsRoot) { uncle.parent.printPointers(); }//parent.printPointers2(); }
+         	printPointers();
+         	uncle.parent.printPointers();//uncle.parent.printPointers2();
+         	
+         	         	  
          	//owner.checkPointers();
          }
          
@@ -2345,13 +2349,16 @@ public class Vertex {
     	boolean gIsRoot = (grandpa==owner.root);
     	boolean isLeft = (this==parent.left);
     	boolean uncleIsLeft = (uncle==grandpa.left);
+    	boolean grandpaIsLeft = false; 
+    	if (!gIsRoot) grandpaIsLeft = (grandpa==greatgrandpa.left);
+
         
     	  if (Utils.DEBUG) {
-          	printPointers(); printPointers2();        	
-          	brother.printPointers();  brother.printPointers2();
-          	if (!gIsRoot) { parent.printPointers(); parent.printPointers2(); }
-          	uncle.printPointers(); uncle.printPointers2();
-          	parent.printPointers();parent.printPointers2();  
+          	printPointers(); //printPointers2();        	
+          	brother.printPointers();  //brother.printPointers2();
+          	if (!gIsRoot) { parent.printPointers(); }//parent.printPointers2(); }
+          	uncle.printPointers(); //uncle.printPointers2();
+          	parent.printPointers();//parent.printPointers2();  
           	//owner.checkPointers();
           }
     	
@@ -2359,7 +2366,10 @@ public class Vertex {
     	// NB this also has the effect of saving the old state, which is useful, albeit slow.
     	String[] ali = owner.getState().getFullAlign();
     	
-    	double P = 0.2; // Probability of an additional indel being incorporated
+    	double P = 10.2; // Probability of an additional indel being incorporated
+    	// As it stands, P is not really a probability. Also, should rewrite the 
+    	// references to this below in logProposalRatio so that we can have
+    	// more general forms for the weights.
     	double P2 = Math.pow(P,2);
     	// Should really derive this from lambda, mu and R somehow
 		double[] weights2 = {1,P};
@@ -2369,27 +2379,44 @@ public class Vertex {
 		old.last = last.clone();
 		old.orphanLogLike = orphanLogLike;
         old.indelLogLike = indelLogLike;
-		
-        parent.old.last = parent.last.clone();
-		parent.old.orphanLogLike = parent.orphanLogLike;
-		parent.old.indelLogLike = parent.indelLogLike;
+        old.parent = parent.old; // for printing
 		
         brother.old.last = brother.last.clone();
         brother.old.orphanLogLike = brother.orphanLogLike;
         brother.old.indelLogLike = brother.indelLogLike;
+        brother.old.parent = parent.old; // for printing
+        
+        parent.old.last = parent.last.clone();
+        old.last.parent = parent.old.last;
+        brother.old.last.parent = parent.old.last;
+        if (isLeft) { parent.old.last.left = old.last; parent.old.last.right = brother.old.last; }
+        else 	    { parent.old.last.right = old.last; parent.old.last.left = brother.old.last; }
+		parent.old.orphanLogLike = parent.orphanLogLike;
+		parent.old.indelLogLike = parent.indelLogLike;
+		parent.old.parent = grandpa.old; //	for printing
 		
-        grandpa.old.last = grandpa.last.clone();
-        grandpa.old.orphanLogLike = grandpa.orphanLogLike;
-        grandpa.old.indelLogLike = grandpa.indelLogLike;
-		
-        uncle.old.last = uncle.last.clone();
+		uncle.old.last = uncle.last.clone();
         uncle.old.orphanLogLike = uncle.orphanLogLike;
-        uncle.old.indelLogLike = uncle.indelLogLike;	
+        uncle.old.indelLogLike = uncle.indelLogLike;
+        uncle.old.parent = grandpa.old; // for printing
+        
+        grandpa.old.last = grandpa.last.clone();
+        parent.old.last.parent = grandpa.old.last;
+        uncle.old.last.parent = grandpa.old.last;
+        if (uncleIsLeft) { grandpa.old.last.left = uncle.old.last; grandpa.old.last.right = parent.old.last; }
+        else 	         { grandpa.old.last.right = uncle.old.last; grandpa.old.last.left = parent.old.last; }
+        grandpa.old.orphanLogLike = grandpa.orphanLogLike;
+        grandpa.old.indelLogLike = grandpa.indelLogLike;        
+		        
         
         if (!gIsRoot) {
             greatgrandpa.old.last = greatgrandpa.last.clone();
+            grandpa.old.last.parent = greatgrandpa.old.last;
+            if (grandpaIsLeft) greatgrandpa.old.last.left = grandpa.old.last; 
+            else 	           greatgrandpa.old.last.right = grandpa.old.last;
         	greatgrandpa.old.orphanLogLike = greatgrandpa.orphanLogLike;
         	greatgrandpa.old.indelLogLike = greatgrandpa.indelLogLike;
+        	grandpa.old.parent = greatgrandpa.old; // for printing
         }
    		
         // Loop over columns of the initial alignment, starting from the last (non-virtual) column
@@ -2401,11 +2428,19 @@ public class Vertex {
         AlignColumn ggo = null; if (!gIsRoot) ggo=greatgrandpa.old.last;
  		
         for (int col=ali[0].length()-1; col>=0; col--) {
-        	        	
+
+        	System.out.println();
+        	System.out.print(ali[brother.index].charAt(col));        	
+        	System.out.print(ali[index].charAt(col));
+        	System.out.print(ali[uncle.index].charAt(col));
+        	System.out.print(ali[parent.index].charAt(col));
+        	System.out.print(ali[grandpa.index].charAt(col));
+        	System.out.println();
         	boolean tx = (ali[index].charAt(col)!='-'); 		
         	boolean px = (ali[parent.index].charAt(col)!='-'); 	
         	boolean bx = (ali[brother.index].charAt(col)!='-'); 
-        	boolean gx = (ali[grandpa.index].charAt(col)!='-'); 
+        	boolean gx = (ali[grandpa.index].charAt(col)!='-');
+        	System.out.println(gx+" "+ali[grandpa.index].charAt(col));
         	boolean ux = (ali[uncle.index].charAt(col)!='-');
           	boolean ggx = false;
         	if (!gIsRoot) ggx = (ali[greatgrandpa.index].charAt(col)!='-');
@@ -2413,6 +2448,7 @@ public class Vertex {
         	int nTips = (tx?1:0) + (bx?1:0) + (ux?1:0) + (ggx?1:0);
         	System.out.println("col = "+col+", nTips = "+nTips);
         	
+        	System.out.println("g = "+g.toString());
 //        	if (Utils.DEBUG) {
 //        		System.out.println(ali[index].charAt(col));
 //        		System.out.println(ali[parent.index].charAt(col));
@@ -2421,57 +2457,66 @@ public class Vertex {
 //        		System.out.println(ali[uncle.index].charAt(col));
 //        	}        	      
         	
-        	// Save current columns
-        	if (tx) { to.prev = t.clone(); to.prev.next = to; to = to.prev; }
-        	if (bx) { bo.prev = b.clone(); bo.prev.next = bo; bo = bo.prev; }
+        	// Save current columns      	        	        	       	
+        	if (!gIsRoot && ggx) {
+        		ggo.prev = gg.clone(); 
+        		ggo.prev.next = ggo; gg = ggo.prev;        		    			    			
+        	}
+        	if (gx) {        		
+        		go.prev = g.clone(); 
+        		go.prev.next = go; go = go.prev;
+        		go.parent = gIsRoot ? null : ggo;
+        		if (!gIsRoot && ggx) {        			
+    				if (grandpaIsLeft)  ggo.left = go;
+    				else 		 	    ggo.left = go;
+    			}        		
+        	}
+        	if (ux) { 
+        		uo.prev = u.clone(); 
+        		uo.prev.next = uo; uo = uo.prev;
+        		uo.parent = go;
+        		if (gx) {        				
+        			if (uncleIsLeft)  go.left = uo;
+    				else 		 	  go.right = uo;
+        		}
+        	}
         	if (px) {
         		po.prev = p.clone(); 
-        		po.prev.next = po; po = po.prev;        		
-    			if (tx) {
-    				to.parent = po;
-    				if (isLeft)  po.left = to;
-    				else 		 po.right = to;
-    			}
-    			if (bx) {
-    				bo.parent = po;
+        		po.prev.next = po; po = po.prev;
+        		po.parent = go;
+        		if (gx) {        			
+        			if (uncleIsLeft)  go.right = po;
+    				else 		 	  go.left = po;
+        		}        		
+        	}
+        	if (bx) { 
+        		bo.prev = b.clone(); 
+        		bo.prev.next = bo; bo = bo.prev;
+				bo.parent = po;
+        		if (px) {    			
     				if (isLeft)  po.right = bo;
     				else 		 po.left = bo;
+    			}           		
+        	}
+        	if (tx) { 
+        		to.prev = t.clone(); 
+        		to.prev.next = to; to = to.prev;
+        		to.parent = po;
+        		if (px) {        			
+    				if (isLeft)  po.left = to;
+    				else 		 po.right = to;
     			}        		
         	}
-        	if (ux) { uo.prev = u.clone(); uo.prev.next = uo; uo = uo.prev; }
-        	if (gx) {
-        		go.prev = g.clone(); 
-        		go.prev.next = go; go = go.prev;        		
-    			if (px) {
-    				po.parent = go;
-    				if (uncleIsLeft)  go.right = po;
-    				else 		 	  go.left = po;
-    			}
-    			if (ux) {
-    				uo.parent = go;
-    				if (uncleIsLeft)  go.left = uo;
-    				else 		 	  go.right = uo;
-    			}        		
-        	}
-        	if (!gIsRoot & ggx) {
-        		ggo.prev = gg.clone(); 
-        		ggo.prev.next = ggo; gg = ggo.prev;        		
-    			if (gx) {
-    				go.parent = ggo;
-    				if (grandpa == greatgrandpa.left)  ggo.left = go;
-    				else 		 	  				   ggo.left = go;
-    			}    			
-        	}
-        	        	   
+        	
         	if (Utils.DEBUG) {
-	        	if (px&gx) System.out.println("BEFORE: p == g? Should be false. Actually is "+(p==g));
+	        	if (px&gx) if (p==g) System.out.println("BEFORE: p == g? Should be false. Actually is "+(p==g));
 		    	if (tx&gx) {
-		    		if (px) System.out.println("BEFORE: t's parent is p? Should be true. Actually is "+(t.parent==p));
-		    	   	System.out.println("BEFORE: t's parent is g? Should be false. Actually is "+(t.parent==g));
+		    		if (px) if (t.parent!=p) System.out.println("BEFORE: t's parent is p? Should be true. Actually is "+(t.parent==p));
+		    	   	if (t.parent==g) System.out.println("BEFORE: t's parent is g? Should be false. Actually is "+(t.parent==g));
 		    	}
 		    	if (ux&px) {
-		    		if (gx) System.out.println("BEFORE: u's parent is g? Should be true. Actually is "+(u.parent==g));
-		    		System.out.println("BEFORE: u's parent is p? Should be false. Actually is "+(u.parent==p));
+		    		if (gx) if (u.parent!=g) System.out.println("BEFORE: u's parent is g? Should be true. Actually is "+(u.parent==g));
+		    		if (u.parent==p) System.out.println("BEFORE: u's parent is p? Should be false. Actually is "+(u.parent==p));
 		    	}	   
 	        }
 	    	
@@ -2520,7 +2565,7 @@ public class Vertex {
         		if (bx) {
         			if (gx) logProposalRatio += Math.log(P); // grandpa existed before
         			else { // Insert new g column        			
-            			g = new AlignColumn(g); // New orphan column          			
+            			g = new AlignColumn(g.next); // New orphan column          			
             			gx = true;
             			// t is already not marked as orphan because p exists
             		}
@@ -2530,7 +2575,7 @@ public class Vertex {
             			logProposalRatio += Math.log(P);
             		}
             		else { // Insert new p column
-            			p = new AlignColumn(p); 
+            			p = new AlignColumn(p.next); 
             			p.parent = g;
             			p.orphan = false;
             			px = true;
@@ -2576,7 +2621,7 @@ public class Vertex {
         			if (tx) t.orphan = true;
     				if (ux) u.orphan = true;
         		}
-    			if (choice == 1) { // Then we're choosing to impute only one character    				
+        		else if (choice == 1) { // Then we're choosing to impute only one character    				
     				// -log(fwd) = log(P)
     				logProposalRatio += Math.log(P);
     				
@@ -2584,7 +2629,7 @@ public class Vertex {
     					// if we're considering t, then its new parent must be g
     					if (px) { delete(p); p = p.prev; px = false; } 
 	    				if (!gx) {
-	    					g = new AlignColumn(g); // New orphan column   
+	    					g = new AlignColumn(g.next); // New orphan column   
 	    					gx = true;
 	    				}    				
 	    				t.orphan = false;
@@ -2593,23 +2638,25 @@ public class Vertex {
     					// if we're considering u, then its new parent must be p
     					if (gx) { delete(g); g = g.prev; gx = false; }
 	    				if (!px) {
-	    					p = new AlignColumn(p); // New orphan column   
+	    					p = new AlignColumn(p.next); // New orphan column   
 	    					px = true;
 	    				}    				
 	    				u.orphan = false;
     				}
     				
     			}
-    			if (choice == 2) { //Then we're imputing characters at p and g
+        		else if (choice == 2) { //Then we're imputing characters at p and g
     				// -log(fwd) = 2 log(P) 
     				logProposalRatio += 2*Math.log(P);
     				
     				if (!gx) {
-    					g = new AlignColumn(g); // New orphan column
+    					System.out.println("g.prev = "+g.prev.toString());
+    					g = new AlignColumn(g.next); // New orphan column
+    					System.out.println("g.prev = "+g.prev.toString());
     					gx = true;
     				}
     				if (!px) {
-    					p = new AlignColumn(p);            			
+    					p = new AlignColumn(p.next);            			
             			p.orphan = false;
             			px = true;
     				}    				
@@ -2627,31 +2674,45 @@ public class Vertex {
 	       		parent.first = p; parent.old.first = po; 
 	      		brother.first = b; brother.old.first = bo; 
 	      		uncle.first = u; uncle.old.first = uo; 
-	      		grandpa.first = g; grandpa.old.first = go;        		
+	      		grandpa.first = g; grandpa.old.first = go;
+	      		System.out.println("first = "+first.toString()+", t = "+t.toString());
+	      		System.out.println("parent.first = "+parent.first.toString()+", p = "+p.toString());
+	      		System.out.println("brother.first = "+brother.first.toString()+", b = "+b.toString());
+	      		System.out.println("uncle.first = "+uncle.first.toString()+", u = "+u.toString());
+	      		System.out.println("grandpa.first = "+grandpa.first.toString()+", g = "+g.toString());
           	}
         	  
 	    	
         	// Reassign any parent pointers. 
-	    	// NB the orphan status will have already been updated, so we don't
-	    	// need to check whether the parents exist.	    	
-        	if (tx) t.updateParent(g,uncleIsLeft);
-        	if (px) p.updateParent(g,!uncleIsLeft);
-        	if (ux) u.updateParent(p,isLeft);
-        	if (bx) b.updateParent(p,!isLeft);			
-        	if (gx & !gIsRoot) g.updateParent(gg,grandpa==greatgrandpa.left);        
+	    	// If the character is to be an orphan, we specify the next column
+	    	// in the parent sequence as the adopted parent.
+	   if (tx) System.out.println("t = "+t.toString()+", t.parent = "+t.parent.toString()+", t.parent.left = "+t.parent.left.toString());
+        	if (tx) t.updateParent(t.orphan?g.next:g,uncleIsLeft);
+       if (tx) System.out.println("t = "+t.toString()+", t.parent = "+t.parent.toString()+", t.parent.left = "+t.parent.left.toString());
+        	if (px) p.updateParent(p.orphan?g.next:g,!uncleIsLeft);
+       if (tx) System.out.println("t = "+t.toString()+", t.parent = "+t.parent.toString()+", t.parent.left = "+t.parent.left.toString());
+        	if (ux) u.updateParent(u.orphan?p.next:p,isLeft);
+       if (tx) System.out.println("t = "+t.toString()+", t.parent = "+t.parent.toString()+", t.parent.left = "+t.parent.left.toString());
+        	if (bx) b.updateParent(b.orphan?p.next:p,!isLeft);
+       if (tx) System.out.println("t = "+t.toString()+", t.parent = "+t.parent.toString()+", t.parent.left = "+t.parent.left.toString());
+        	if (gx & !gIsRoot) g.updateParent(g.orphan?gg.next:gg,grandpaIsLeft);        
         	
         	if (Utils.DEBUG) {
-		    	if (px&gx) System.out.println("AFTER: p == g? Should be false. Actually is "+(p==g));
+	        	if (px&gx) if (p==g) System.out.println("AFTER: p == g? Should be false. Actually is "+(p==g));
 		    	if (tx&gx) {
-		    		if (px) System.out.println("AFTER: t's parent is p? Should be false. Actually is "+(t.parent==p));
-		    	   	System.out.println("AFTER: t's parent is g? Should be true. Actually is "+(t.parent==g));
+		    		if (px) if (t.parent==p) System.out.println("AFTER: t's parent is p? Should be false. Actually is "+(t.parent==p));
+		    	   	if (t.parent!=g) System.out.println("AFTER: t's parent is g? Should be true. Actually is "+(t.parent==g));
 		    	}
 		    	if (ux&px) {
-		    		if (gx) System.out.println("AFTER: u's parent is g? Should be false. Actually is "+(u.parent==g));
-		    		System.out.println("AFTER: u's parent is p? Should be true. Actually is "+(u.parent==p));
-		    	}
-	    	}
-        	
+		    		if (gx) if (u.parent==g) System.out.println("AFTER: u's parent is g? Should be false. Actually is "+(u.parent==g));
+		    		if (u.parent!=p) {
+		    			System.out.println("AFTER: u's parent is p? Should be true. Actually is "+(u.parent==p));
+		    			System.out.println(u.toString()+" "+u.parent.toString()+" "+p.toString());
+		    		}
+		    	}	   
+	        }
+        	System.out.println("*"+gx+" "+ali[grandpa.index].charAt(col));
+
         	// Decrement the column pointers
         	if (tx) t = t.prev; 
         	if (px) p = p.prev;
@@ -2660,7 +2721,7 @@ public class Vertex {
         	if (ux) u = u.prev;
         	if (ggx) gg = gg.prev;       	
         	
-        }
+        }   
         
         // Swap the pointers between vertices, and the first and last columns
         // NB the uncle has to be done first, otherwise parent refers to grandpa
@@ -2677,12 +2738,19 @@ public class Vertex {
  		else 		 	 { grandpa.right = this; grandpa.last.right = last; }
  		
         if (Utils.DEBUG) {
-        	printPointers(); printPointers2();        	
-        	brother.printPointers();  brother.printPointers2();
-        	if (!gIsRoot) { parent.printPointers(); parent.printPointers2(); }
-        	uncle.printPointers(); uncle.printPointers2();
-        	uncle.parent.printPointers();uncle.parent.printPointers2();  
-        	//owner.checkPointers();
+        	old.printPointers();        	
+        	brother.old.printPointers(); 
+        	if (!gIsRoot) parent.old.printPointers(); 
+        	uncle.old.printPointers(); 
+        	uncle.parent.old.printPointers(); 
+        	System.out.println("------------------");
+        	printPointers(); //printPointers2()
+        	brother.printPointers();  //brother.printPointers2();
+        	if (!gIsRoot) { parent.printPointers(); }//parent.printPointers2(); }
+        	uncle.printPointers(); //uncle.printPointers2();
+        	uncle.parent.printPointers();//uncle.parent.printPointers2();
+        	
+        	owner.checkPointers();        	
         }
         
         
@@ -4141,8 +4209,11 @@ public class Vertex {
         }
         for (AlignColumn l = left.first; l != null; l = l.next) {
             if (!l.orphan) {
+            	System.out.println("l = "+l.toString()+", p = "+l.parent.toString());
                 if (l.parent == null || l.parent.left != l) {
-                    throw new Error("Problem in vertex " + index + ":\nl is: " + l + (l.parent == null ? " l does not have a parent" : " l parent is: " + l.parent + " l parent left is: " + l.parent.left));
+                	System.out.println("An error is about to occur.........");
+                	l.owner.printPointers();
+                    throw new Error("Problem in vertex "+index+"/"+l.owner.index+ ":\nl is: " + l + " ("+l.mostLikely()+") " + (l.parent == null ? " l does not have a parent" : " l parent is: " + l.parent + " l parent left is: " + l.parent.left));
                 }
             }
         }

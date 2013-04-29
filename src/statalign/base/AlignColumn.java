@@ -120,6 +120,7 @@ public class AlignColumn {
 		orphan = true;
 		this.next = next;
 		prev = next.prev;
+		prev.next = this;
 		next.prev = this;
 		seq = new double[owner.owner.substitutionModel.e.length];
 		upp = new double[owner.owner.substitutionModel.e.length];		
@@ -127,8 +128,9 @@ public class AlignColumn {
 
 	/** 
 	 *  Remove all non-parent references to a column, <code>p</code>.
-	 *  Any columns that call this column 'parent' will still do so
-	 *  after the function is called, and must be tidied up separately. 
+	 *  Any columns that called this column 'parent' will have a null
+	 *  parent after this function is called, and must be adopted
+	 *  (unless they belong to the root Vertex).
 	 *  @param p The column to be deleted.
 	 */
 	static void delete(AlignColumn p) {
@@ -139,6 +141,7 @@ public class AlignColumn {
 //			}
 //		}
 		
+		if (Utils.DEBUG) System.out.println("Deleting column "+p.toString()+" at Vertex "+p.owner.index);
 		if (!p.orphan) {
 			if (p==p.parent.left)  p.parent.left = null;
 			else  				   p.parent.right = null;			
@@ -148,20 +151,35 @@ public class AlignColumn {
 		if (p.prev != null) p.prev.next = p.next;
 		if (p.next != null) p.next.prev = p.prev;     
 		
-		if (p.left != null)  p.left.orphan = true;
-		if (p.right != null) p.right.orphan = true;
+		if (p.left != null)  { p.left.orphan = true; p.left.parent = null; }
+		if (p.right != null) { p.right.orphan = true; p.right.parent = null; }
+		// NB the reason for making the new orphan's parent field null
+		// is to allow the memory associated with p to be freed
+		// as soon as possible, rather than waiting for p.left and p.right
+		// to be adopted by another parent.
 	}
 	
 	/**
 	 * Updates the parent/child pointers with a specified parent.
-	 * @param p The parent column.
-	 * @param left Whether <code>this</code> is the left descendant of <code>p</code>.
+	 * @param p The parent column. 
+	 * @param isLeft Whether <code>this</code> is to be the left descendant of <code>p</code>.
 	 */
-	void updateParent(AlignColumn p, boolean left) {
-		if (orphan) parent = p.next;
-		else {
+	void updateParent(AlignColumn p, boolean isLeft) {		
+		
+		// Remove this node from the list of children of its old parent
+		if (p != parent) {
+			if (parent!=null) {
+				if (this==parent.left) parent.left = null;
+				else if (this==parent.right) parent.right = null;
+				else ; // the original parent had already taken a new child
+			}
 			parent = p;
-			if (left) p.left = this;
+		}
+		
+		//if (orphan) parent = p.next; 
+		//else {		
+		if (!orphan) {			
+			if (isLeft) p.left = this;
 			else 	  p.right = this;
 		}
 	}
