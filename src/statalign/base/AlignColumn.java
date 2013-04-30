@@ -78,6 +78,10 @@ public class AlignColumn {
 		orphan = true;
 	}
 	
+	/**
+	 * Creates a new column as a clone of the <code>this</code>,
+	 * copying (or cloning) all fields except <code>prev</code> and <code>next</code>.
+	 */
 	public AlignColumn clone() {
 		AlignColumn c = new AlignColumn(owner);
 		c.parent = parent;
@@ -89,6 +93,23 @@ public class AlignColumn {
 		if (seq==null) c.seq = null;
 		else 		   c.seq = seq.clone();
 		return c;
+	}
+	/**
+	 * Copies all fields from column <code>c</code> into <code>this</code>,
+	 * except for <code>prev</code> and <code>next</code>.
+	 * @param c The column from which the data will be copied.
+	 */
+	void copy(AlignColumn c) {
+		owner = c.owner;
+		parent = c.parent;
+		orphan = c.orphan;
+		seq = c.seq;
+		upp = c.upp;
+		left = c.left;
+		right = c.right;
+		parent = c.parent;
+		selected = c.selected;
+		emptyWindow = c.emptyWindow;	
 	}
 	/**
 	 * It creates a new AlignColumn, chains it to the next column (namely, it is used to
@@ -126,7 +147,7 @@ public class AlignColumn {
 		upp = new double[owner.owner.substitutionModel.e.length];		
 		owner.length++;
 	}
-
+	
 	/** 
 	 *  Remove all non-parent references to a column, <code>p</code>.
 	 *  Any columns that called this column 'parent' will have a null
@@ -168,7 +189,7 @@ public class AlignColumn {
 		
 		p.owner.length--;
 	}
-	
+		
 	/**
 	 * Updates the parent/child pointers with a specified parent.
 	 * @param p The parent column. 

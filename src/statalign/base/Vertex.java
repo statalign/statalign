@@ -2289,7 +2289,35 @@ public class Vertex {
     	return logProposalRatio;
     } 
     */
-    
+    public void restoreVertexReplace() {
+    	restoreVertex(true);
+    }
+    public void restoreVertex() {
+    	restoreVertex(false);
+    }
+    /**
+     * Restore the current Vertex to the state contained in <code>old</code>.
+     * @param replace If <code>true</code> then the columns from <code>old</code>
+     * are copied, otherwise their contents are copied into the existing columns. 
+     * The latter option (<code>replace = false</code>) requires the old length
+     * to be the same as the current length. <code>replace = true</code> this is
+     * <i>O(1)</i>, otherwise <i>O(L)</i>, where <i>L</i> is the sequence length.
+     */
+    public void restoreVertex(boolean replace) {
+    	orphanLogLike = old.orphanLogLike;
+		indelLogLike = old.indelLogLike;		
+    	if (replace) {
+    		first = old.first;
+        	last = old.last;
+    		length = old.length;
+    	}
+    	else {
+    		assert (old.length == length);
+    		for (AlignColumn c=last, co=old.last; c!=null; c=c.prev, co=co.prev) {
+    			c.copy(co);
+    		}
+    	}        
+    }
     public void restoreFiveWay() {
     	
     	Vertex brother = brother(), uncle = parent.brother(), grandpa = parent.parent, greatgrandpa = grandpa.parent;
@@ -2301,43 +2329,49 @@ public class Vertex {
     	owner.root.recomputeLogLike();
        	uncle.calcAllUp(); // uncle is now lower 
        	DEBUG=0; // Deactivate verbose print statements
-    	
-	    first = old.first;
-    	last = old.last;	
-    	length = old.length;
-    	orphanLogLike = old.orphanLogLike;
-        indelLogLike = old.indelLogLike;  
+    		    
+       	grandpa.restoreVertexReplace();
+//		grandpa.first = grandpa.old.first;
+//		grandpa.last = grandpa.old.last;
+//		grandpa.length = grandpa.old.length;
+//		grandpa.orphanLogLike = grandpa.old.orphanLogLike;
+//		grandpa.indelLogLike = grandpa.old.indelLogLike;
+		
+       	parent.restoreVertexReplace();
+//		parent.first = parent.old.first;
+//		parent.last = parent.old.last;
+//		parent.length = parent.old.length;
+//		parent.orphanLogLike = parent.old.orphanLogLike;
+//		parent.indelLogLike = parent.old.indelLogLike;        
+        		
+       	restoreVertex();
+		//first = old.first;
+    	//last = old.last;		
+    	//length = old.length;
+    	//orphanLogLike = old.orphanLogLike;
+        //indelLogLike = old.indelLogLike;  
         
-        parent.first = parent.old.first;
-		parent.last = parent.old.last;
-		parent.length = parent.old.length;
-		parent.orphanLogLike = parent.old.orphanLogLike;
-		parent.indelLogLike = parent.old.indelLogLike;
+       	brother.restoreVertex();
+//      brother.first = brother.old.first;
+//		brother.last = brother.old.last;
+//		brother.length = brother.old.length;
+//		brother.orphanLogLike = brother.old.orphanLogLike;
+//		brother.indelLogLike = brother.old.indelLogLike;
         
-		brother.first = brother.old.first;
-		brother.last = brother.old.last;
-		brother.length = brother.old.length;
-		brother.orphanLogLike = brother.old.orphanLogLike;
-		brother.indelLogLike = brother.old.indelLogLike;
-        
-		grandpa.first = grandpa.old.first;
-		grandpa.last = grandpa.old.last;
-		grandpa.length = grandpa.old.length;
-		grandpa.orphanLogLike = grandpa.old.orphanLogLike;
-		grandpa.indelLogLike = grandpa.old.indelLogLike;
-        
-		uncle.first = uncle.old.first;
-		uncle.last = uncle.old.last;
-		uncle.length = uncle.old.length;
-		uncle.orphanLogLike = uncle.old.orphanLogLike;
-		uncle.indelLogLike = uncle.old.indelLogLike;
+       	uncle.restoreVertex();
+//		uncle.first = uncle.old.first;
+//		uncle.last = uncle.old.last;
+//		uncle.length = uncle.old.length;
+//		uncle.orphanLogLike = uncle.old.orphanLogLike;
+//		uncle.indelLogLike = uncle.old.indelLogLike;
 		
 		if (!gIsRoot) {
-			greatgrandpa.first = greatgrandpa.old.first;
-			greatgrandpa.last = greatgrandpa.old.last;
-			greatgrandpa.length = greatgrandpa.old.length;
-			greatgrandpa.orphanLogLike = greatgrandpa.old.orphanLogLike;
-			greatgrandpa.indelLogLike = greatgrandpa.old.indelLogLike;
+			greatgrandpa.restoreVertex();
+//			greatgrandpa.first = greatgrandpa.old.first;
+//			greatgrandpa.last = greatgrandpa.old.last;
+//			greatgrandpa.length = greatgrandpa.old.length;
+//			greatgrandpa.orphanLogLike = greatgrandpa.old.orphanLogLike;
+//			greatgrandpa.indelLogLike = greatgrandpa.old.indelLogLike;
 		}
 		
 		uncle.parent = parent; 		
@@ -2356,7 +2390,7 @@ public class Vertex {
          	if (!gIsRoot) { uncle.parent.printPointers(); }//parent.printPointers2(); }
          	printPointers();
          	uncle.parent.printPointers();//uncle.parent.printPointers2();
-         	uncle.left.printPointers();
+         	//uncle.left.printPointers();
          	         	  
          	owner.checkPointers();
          }
@@ -2412,8 +2446,7 @@ public class Vertex {
     		old.first.right = right.old.first;
     		old.last.right = right.old.last;    		
     	}
-    }
-    
+    }   
     public void selectBoundary() {
     	Vertex brother = brother(), uncle = parent.brother(), grandpa = parent.parent, greatgrandpa = grandpa.parent;
     	
@@ -2464,10 +2497,12 @@ public class Vertex {
         
         parent.old.last = parent.last.clone();
         parent.old.length = parent.length;
+        
         old.last.parent = parent.old.last;
         brother.old.last.parent = parent.old.last;
-        if (isLeft) { parent.old.last.left = old.last; parent.old.last.right = brother.old.last; }
-        else 	    { parent.old.last.right = old.last; parent.old.last.left = brother.old.last; }
+        
+        //if (isLeft) { parent.old.last.left = old.last; parent.old.last.right = brother.old.last; }
+        //else 	    { parent.old.last.right = old.last; parent.old.last.left = brother.old.last; }
 		parent.old.orphanLogLike = parent.orphanLogLike;
 		parent.old.indelLogLike = parent.indelLogLike;
 		parent.old.parent = grandpa.old; //	for printing
@@ -2482,8 +2517,8 @@ public class Vertex {
         grandpa.old.length = grandpa.length;
         parent.old.last.parent = grandpa.old.last;
         uncle.old.last.parent = grandpa.old.last;
-        if (uncleIsLeft) { grandpa.old.last.left = uncle.old.last; grandpa.old.last.right = parent.old.last; }
-        else 	         { grandpa.old.last.right = uncle.old.last; grandpa.old.last.left = parent.old.last; }
+        if (uncleIsLeft) { grandpa.old.last.right = parent.old.last; }//grandpa.old.last.left = uncle.old.last;  }
+        else 	         { grandpa.old.last.left = parent.old.last; }//grandpa.old.last.right = uncle.old.last; }
         grandpa.old.orphanLogLike = grandpa.orphanLogLike;
         grandpa.old.indelLogLike = grandpa.indelLogLike;        
 		        
@@ -2491,7 +2526,7 @@ public class Vertex {
         if (!gIsRoot) {
             greatgrandpa.old.last = greatgrandpa.last.clone();
             greatgrandpa.old.length = greatgrandpa.length;
-            grandpa.old.last.parent = greatgrandpa.old.last;
+            //grandpa.old.last.parent = greatgrandpa.old.last;
             if (grandpaIsLeft) greatgrandpa.old.last.left = grandpa.old.last; 
             else 	           greatgrandpa.old.last.right = grandpa.old.last;
         	greatgrandpa.old.orphanLogLike = greatgrandpa.orphanLogLike;
