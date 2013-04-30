@@ -763,9 +763,9 @@ public class Vertex {
             System.out.println(last.toString()+" "+parent.last.toString()+"\n");
             while (c != last || p != parent.last) {     
             	if (DEBUG==2)  { 
-            		System.out.print(c.toString()+" "); 
-            		System.out.print(c.parent.toString()+" "); 
-            		System.out.println(p.toString()); 
+            		System.out.print("c = "+c+" "); 
+            		System.out.print("c.parent = "+c.parent+" "); 
+            		System.out.println("p = "+p); 
             	}      	
                 if (c.parent != p) {                            // deletion (* -), pattern code 2
                     k = emitPatt2State[2];
@@ -2494,7 +2494,7 @@ public class Vertex {
         	// Save current columns      	        	        	       	
         	if (!gIsRoot && ggx) {
         		ggo.prev = gg.clone(); 
-        		ggo.prev.next = ggo; gg = ggo.prev;        		    			    			
+        		ggo.prev.next = ggo; ggo = ggo.prev;        		    			    			
         	}
         	if (gx) {        		
         		go.prev = g.clone(); 
