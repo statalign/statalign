@@ -2369,6 +2369,76 @@ public class Vertex {
     	
     }
     
+    public void saveVertex() {
+    	old.last = last.clone();
+		old.first = first.clone();
+		old.length = length;
+		old.orphanLogLike = orphanLogLike;
+        old.indelLogLike = indelLogLike;
+        if (Utils.DEBUG && parent != null) old.parent = parent.old; // for printing
+        
+        AlignColumn c = last.prev, co = old.last;
+        
+//        while (c != null) {
+//        	co.prev = c.clone();
+//        	co.prev.next = co; 
+//        	c = c.prev; co = co.prev;
+//        	co.parent = ....;
+//        	co.left = ....;
+//        	co.right = ....;		
+//        }
+        
+        // ACTUALLY can't do this all in here, because if the parent is selected
+        // then we want to refer to the copy of c.parent rather than the actual c.parent
+        // so it may need to be done all in one sweep.
+    }
+    public void saveBoundary() {
+    	
+    	saveVertex();
+        
+        
+        if (parent!=null && parent.selected) {      	
+        	old.first.parent = parent.old.first;
+        	old.last.parent = parent.old.last;        	
+        	parent.saveBoundary(); // *** Only do this if we haven't done it already
+        }        		
+    	if (left != null && left.selected)  {
+    		left.saveBoundary();
+    		old.first.left = left.old.first;
+    		old.last.left = left.old.last;    		
+    	}
+    	if (right != null && right.selected)  {
+    		right.saveBoundary();
+    		old.first.right = right.old.first;
+    		old.last.right = right.old.last;    		
+    	}
+    }
+    
+    public void selectBoundary() {
+    	Vertex brother = brother(), uncle = parent.brother(), grandpa = parent.parent, greatgrandpa = grandpa.parent;
+    	
+    	boolean gIsRoot = (grandpa==owner.root);
+    	
+    	owner.markAllVerticesUnselected();
+    	
+    	selected = true;
+    	if (left != null) {
+    		left.selected = true;
+    		right.selected = true;
+    	}
+    	brother.selected = true;    	
+    	parent.selected = true;
+    	uncle.selected = true;
+    	if (uncle.left != null) {
+    		uncle.left.selected = true;
+    		uncle.right.selected = true;
+    	}    	
+    	grandpa.selected = true;
+    	if (!gIsRoot) greatgrandpa.selected = true;
+    	
+    	saveBoundary();
+    }
+    
     public void saveFiveWay(String[] ali) {
     	Vertex brother = brother(), uncle = parent.brother(), grandpa = parent.parent, greatgrandpa = grandpa.parent;
     	boolean gIsRoot = (grandpa==owner.root);
@@ -2376,6 +2446,8 @@ public class Vertex {
     	boolean uncleIsLeft = (uncle==grandpa.left);
     	boolean grandpaIsLeft = false; 
     	if (!gIsRoot) grandpaIsLeft = (grandpa==greatgrandpa.left);
+    	
+    	
     	
     	// Begin saving of current Vertex objects
 		old.last = last.clone();
@@ -2427,6 +2499,10 @@ public class Vertex {
         	grandpa.old.parent = greatgrandpa.old; // for printing
         }
         
+/* Instead of the above
+   	selectBoundary();
+   	saveBoundary();
+*/
         
         // Pointers to columns in current alignment
         AlignColumn t=last.prev, p=parent.last.prev, b=brother.last.prev, g=grandpa.last.prev, u=uncle.last.prev;

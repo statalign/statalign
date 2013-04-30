@@ -215,6 +215,11 @@ public class Tree extends Stoppable implements DataType {
         }
     }
 
+    void markAllVerticesUnselected() {
+    	for (Vertex v : vertex) {
+    		v.selected = false;
+    	}
+    }
     void compareLike(Tree tree) {
         System.out.println("this.logli=" + getLogLike());
         System.out.println("tree.logli=" + tree.getLogLike());
