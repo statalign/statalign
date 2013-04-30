@@ -2786,13 +2786,14 @@ public class Vertex {
         	brother.old.printPointers(); 
         	if (!gIsRoot) parent.old.printPointers(); 
         	uncle.old.printPointers(); 
-        	uncle.parent.old.printPointers(); 
+        	if (uncle.old.parent != owner.root) uncle.parent.old.printPointers(); 
         	System.out.println("------------------");
         	printPointers(); //printPointers2()
         	brother.printPointers();  //brother.printPointers2();
         	if (!gIsRoot) { parent.printPointers(); }//parent.printPointers2(); }
         	uncle.printPointers(); //uncle.printPointers2();
-        	uncle.parent.printPointers();//uncle.parent.printPointers2();
+        	System.out.println("this = "+index+", uncle = "+uncle.index+", uncle.parent = "+uncle.parent.index);
+        	if (uncle.parent != owner.root) uncle.parent.printPointers();//uncle.parent.printPointers2();
         	
         	owner.checkPointers();        	
         }
