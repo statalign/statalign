@@ -437,6 +437,21 @@ public class Vertex {
             }
         }
     }
+    
+    public void recomputeLogLike() {
+        if (left != null && right != null) {
+            // System.out.println("calling the left child");
+            left.recomputeLogLike();
+            //System.out.println("calling the right child");
+            right.recomputeLogLike();
+            //calcUpperWithCheck(); 
+            // we shouldn't require all upp vectors to be
+            // recomputed after every move, because that's unnecessary
+        }
+        calcFelsen();
+        calcOrphan();
+        calcIndelLogLike();
+    }
 
     public void recomputeCheckLogLike() {
         if (left != null && right != null) {
@@ -2283,33 +2298,39 @@ public class Vertex {
     	boolean uncleIsLeft = (uncle==grandpa.left);
          
 	    first = old.first;
-    	last = old.last;		
+    	last = old.last;	
+    	length = old.length;
     	orphanLogLike = old.orphanLogLike;
         indelLogLike = old.indelLogLike;  
         
         parent.first = parent.old.first;
 		parent.last = parent.old.last;
+		parent.length = parent.old.length;
 		parent.orphanLogLike = parent.old.orphanLogLike;
 		parent.indelLogLike = parent.old.indelLogLike;
         
 		brother.first = brother.old.first;
 		brother.last = brother.old.last;
+		brother.length = brother.old.length;
 		brother.orphanLogLike = brother.old.orphanLogLike;
 		brother.indelLogLike = brother.old.indelLogLike;
         
 		grandpa.first = grandpa.old.first;
 		grandpa.last = grandpa.old.last;
+		grandpa.length = grandpa.old.length;
 		grandpa.orphanLogLike = grandpa.old.orphanLogLike;
 		grandpa.indelLogLike = grandpa.old.indelLogLike;
         
 		uncle.first = uncle.old.first;
 		uncle.last = uncle.old.last;
+		uncle.length = uncle.old.length;
 		uncle.orphanLogLike = uncle.old.orphanLogLike;
 		uncle.indelLogLike = uncle.old.indelLogLike;
 		
 		if (!gIsRoot) {
 			greatgrandpa.first = greatgrandpa.old.first;
 			greatgrandpa.last = greatgrandpa.old.last;
+			greatgrandpa.length = greatgrandpa.old.length;
 			greatgrandpa.orphanLogLike = greatgrandpa.old.orphanLogLike;
 			greatgrandpa.indelLogLike = greatgrandpa.old.indelLogLike;
 		}
@@ -2337,6 +2358,7 @@ public class Vertex {
          
          
         DEBUG=2; // Activate verbose print statements 
+        owner.root.recomputeLogLike();
      	uncle.calcAllUp(); // uncle is now lower 
      	DEBUG=0; // Deactivate verbose print statements
     	
@@ -2366,7 +2388,7 @@ public class Vertex {
     	// NB this also has the effect of saving the old state, which is useful, albeit slow.
     	String[] ali = owner.getState().getFullAlign();
     	
-    	double P = 10.2; // Probability of an additional indel being incorporated
+    	double P = 0.2; // Probability of an additional indel being incorporated
     	// As it stands, P is not really a probability. Also, should rewrite the 
     	// references to this below in logProposalRatio so that we can have
     	// more general forms for the weights.
@@ -2377,16 +2399,19 @@ public class Vertex {
         		
 		// Begin saving of current Vertex objects
 		old.last = last.clone();
+		old.length = length;
 		old.orphanLogLike = orphanLogLike;
         old.indelLogLike = indelLogLike;
         old.parent = parent.old; // for printing
 		
         brother.old.last = brother.last.clone();
+        brother.old.length = brother.length;
         brother.old.orphanLogLike = brother.orphanLogLike;
         brother.old.indelLogLike = brother.indelLogLike;
         brother.old.parent = parent.old; // for printing
         
         parent.old.last = parent.last.clone();
+        parent.old.length = parent.length;
         old.last.parent = parent.old.last;
         brother.old.last.parent = parent.old.last;
         if (isLeft) { parent.old.last.left = old.last; parent.old.last.right = brother.old.last; }
@@ -2396,11 +2421,13 @@ public class Vertex {
 		parent.old.parent = grandpa.old; //	for printing
 		
 		uncle.old.last = uncle.last.clone();
+		uncle.old.length = uncle.length;
         uncle.old.orphanLogLike = uncle.orphanLogLike;
         uncle.old.indelLogLike = uncle.indelLogLike;
         uncle.old.parent = grandpa.old; // for printing
         
         grandpa.old.last = grandpa.last.clone();
+        grandpa.old.length = grandpa.length;
         parent.old.last.parent = grandpa.old.last;
         uncle.old.last.parent = grandpa.old.last;
         if (uncleIsLeft) { grandpa.old.last.left = uncle.old.last; grandpa.old.last.right = parent.old.last; }
@@ -2411,6 +2438,7 @@ public class Vertex {
         
         if (!gIsRoot) {
             greatgrandpa.old.last = greatgrandpa.last.clone();
+            greatgrandpa.old.length = greatgrandpa.length;
             grandpa.old.last.parent = greatgrandpa.old.last;
             if (grandpaIsLeft) greatgrandpa.old.last.left = grandpa.old.last; 
             else 	           greatgrandpa.old.last.right = grandpa.old.last;
@@ -2420,8 +2448,9 @@ public class Vertex {
         }
    		
         // Loop over columns of the initial alignment, starting from the last (non-virtual) column
+        first=last.prev; parent.first=parent.last.prev; brother.first=brother.last.prev; grandpa.first=grandpa.last.prev; uncle.first=uncle.last.prev;
         AlignColumn t=last.prev, p=parent.last.prev, b=brother.last.prev, g=grandpa.last.prev, u=uncle.last.prev;
-        AlignColumn gg = null; if (!gIsRoot) gg=greatgrandpa.last;
+        AlignColumn gg = null; if (!gIsRoot) { greatgrandpa.first = greatgrandpa.last.prev; gg=greatgrandpa.last;}
         
         // Old columns, for restoration
         AlignColumn to=old.last, po=parent.old.last, bo=brother.old.last, go=grandpa.old.last, uo=uncle.old.last;   
@@ -2453,7 +2482,7 @@ public class Vertex {
         	int nTips = (tx?1:0) + (bx?1:0) + (ux?1:0) + (ggx?1:0);
         	System.out.println("col = "+col+", nTips = "+nTips);
         	
-        	System.out.println("g = "+g.toString());
+        	System.out.println("g = "+g);
 //        	if (Utils.DEBUG) {
 //        		System.out.println(ali[index].charAt(col));
 //        		System.out.println(ali[parent.index].charAt(col));
@@ -2655,9 +2684,9 @@ public class Vertex {
     				logProposalRatio += 2*Math.log(P);
     				
     				if (!gx) {
-    					System.out.println("g.prev = "+g.prev.toString());
-    					g = new AlignColumn(g.next); // New orphan column
-    					System.out.println("g.prev = "+g.prev.toString());
+    					//System.out.println("g.prev = "+g.prev.toString());
+    					g = new AlignColumn((g!=null)?g.next:grandpa.first); // New orphan column
+    					//System.out.println("g.prev = "+g.prev.toString());
     					gx = true;
     				}
     				if (!px) {
@@ -2680,27 +2709,28 @@ public class Vertex {
 	    	// If the character is to be an orphan, we specify the next column
 	    	// in the parent sequence as the adopted parent.
         	if (tx) {
-        		t.updateParent(t.orphan?g.next:g,uncleIsLeft);
+        		t.updateParent(t.orphan?((g==null)?grandpa.first:g.next):g,uncleIsLeft);
 	    		first = t; old.first = to;         		 
         	}
        if (tx) System.out.println("t = "+t.toString()+", t.parent = "+t.parent.toString());
         	if (px) {
-        		p.updateParent(p.orphan?g.next:g,!uncleIsLeft);
+        		p.updateParent(p.orphan?((g==null)?grandpa.first:g.next):g,!uncleIsLeft);
 	       		parent.first = p; parent.old.first = po; 
         	}
        if (px) System.out.println("p = "+p.toString()+", p.parent = "+p.parent.toString());     
         	if (ux) {
-        		u.updateParent(u.orphan?p.next:p,isLeft);
+        		u.updateParent(u.orphan?((p==null)?parent.first:p.next):p,isLeft);
 	      		uncle.first = u; uncle.old.first = uo; 
         	}
        if (ux) System.out.println("u = "+u.toString()+", u.parent = "+u.parent.toString());       
         	if (bx) {
-        		b.updateParent(b.orphan?p.next:p,!isLeft);
+        		System.out.println("p = "+p);
+        		b.updateParent(b.orphan?((p==null)?parent.first:p.next):p,!isLeft);
 	      		brother.first = b; brother.old.first = bo; 
         	}
        if (bx) System.out.println("b = "+b.toString()+", b.parent = "+b.parent.toString());
         	if (gx) {
-        		if (!gIsRoot) g.updateParent(g.orphan?gg.next:gg,grandpaIsLeft);
+        		if (!gIsRoot) g.updateParent(g.orphan?((gg==null)?greatgrandpa.first.next:gg.next):gg,grandpaIsLeft);
 	      		grandpa.first = g; grandpa.old.first = go;	      	
         	}
         	
@@ -2768,7 +2798,8 @@ public class Vertex {
         }
         
         
-        DEBUG=2; // Activate verbose print statements 
+        DEBUG=2; // Activate verbose print statements
+        owner.root.recomputeLogLike();
     	uncle.calcAllUp(); // uncle is now lower
     	DEBUG=0; // Deactivate verbose print statements
     	

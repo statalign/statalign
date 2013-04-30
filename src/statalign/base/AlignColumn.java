@@ -124,6 +124,7 @@ public class AlignColumn {
 		next.prev = this;
 		seq = new double[owner.owner.substitutionModel.e.length];
 		upp = new double[owner.owner.substitutionModel.e.length];		
+		owner.length++;
 	}
 
 	/** 
@@ -157,6 +158,8 @@ public class AlignColumn {
 		// is to allow the memory associated with p to be freed
 		// as soon as possible, rather than waiting for p.left and p.right
 		// to be adopted by another parent.
+		
+		p.owner.length--;
 	}
 	
 	/**
