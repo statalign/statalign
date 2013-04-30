@@ -2599,7 +2599,7 @@ public class Vertex {
         		if (bx) {
         			if (gx) logProposalRatio += Math.log(P); // grandpa existed before
         			else { // Insert new g column        			
-            			g = new AlignColumn((g!=null)?g.next:parent.first); // New orphan column          			
+            			g = new AlignColumn((g!=null)?g.next:grandpa.first); // New orphan column          			
             			gx = true;
             			// t is already not marked as orphan because p exists
             		}
@@ -2663,7 +2663,7 @@ public class Vertex {
     					// if we're considering t, then its new parent must be g
     					if (px) { delete(p); p = p.prev; px = false; } 
 	    				if (!gx) {
-	    					g = new AlignColumn((g!=null)?g.next:parent.first); // New orphan column   
+	    					g = new AlignColumn((g!=null)?g.next:grandpa.first); // New orphan column   
 	    					gx = true;
 	    				}    				
 	    				t.orphan = false;
