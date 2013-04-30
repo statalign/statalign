@@ -142,7 +142,14 @@ public class AlignColumn {
 //			}
 //		}
 		
-		if (Utils.DEBUG) System.out.println("Deleting column "+p.toString()+" at Vertex "+p.owner.index);
+		if (Utils.DEBUG) {
+			if (p.owner.length==1) {
+				throw new RuntimeException("All columns in sequence "+p.owner.index+" have been deleted.");
+			}
+			System.out.println("Deleting column "+p.toString()+" at Vertex "+p.owner.index);
+			System.out.println("p.prev = "+p.prev);
+		}
+		
 		if (!p.orphan) {
 			if (p==p.parent.left)  p.parent.left = null;
 			else  				   p.parent.right = null;			

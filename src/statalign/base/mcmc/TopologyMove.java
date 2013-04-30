@@ -197,7 +197,7 @@ public class TopologyMove extends McmcMove {
 	//	uncle.fastSwapBackUncle();
 		// If using the alternative move:
        // uncle.swapBackUncleAlignToParent();
-		uncle.nephewUncleRestoreFixedColumns();
+		uncle.restoreFiveWay();
 		
 		// Note these are restored in the reverse order to the proposal
 //		uncleEdgeMove.restoreState(externalState);
