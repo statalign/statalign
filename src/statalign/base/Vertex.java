@@ -2297,6 +2297,11 @@ public class Vertex {
     	boolean isLeft = (this==parent.left);
     	boolean uncleIsLeft = (uncle==grandpa.left);
          
+    	DEBUG=2; // Activate verbose print statements 
+    	owner.root.recomputeLogLike();
+       	uncle.calcAllUp(); // uncle is now lower 
+       	DEBUG=0; // Deactivate verbose print statements
+    	
 	    first = old.first;
     	last = old.last;	
     	length = old.length;
@@ -2351,7 +2356,7 @@ public class Vertex {
          	if (!gIsRoot) { uncle.parent.printPointers(); }//parent.printPointers2(); }
          	printPointers();
          	uncle.parent.printPointers();//uncle.parent.printPointers2();
-         	
+         	uncle.left.printPointers();
          	         	  
          	owner.checkPointers();
          }
@@ -2537,7 +2542,7 @@ public class Vertex {
     	// this move, in case it needs to be restored if the move is rejected.
     	saveFiveWay(ali);
     	
-    	double P = 1; // Probability of an additional indel being incorporated
+    	double P = 1; // "Probability" of an additional indel being incorporated
     	// As it stands, P is not really a probability. Also, should rewrite the 
     	// references to this below in logProposalRatio so that we can have
     	// more general forms for the weights.
@@ -2622,8 +2627,8 @@ public class Vertex {
         		logProposalRatio += Math.log(1+P); // denominator for -log(fwd)
         		
     			if (Utils.weightedChoose(weights2)==0) {    				
-    				if (tx) { delete(p); p = p.prev; px = false; t.orphan = false; }
-    				else    { delete(g); g = g.prev; gx = false; u.orphan = false; }
+    				if (tx) { delete(p); parent.first = p.next; p = p.prev; px = false; t.orphan = false; }
+    				else    { delete(g); grandpa.first = g.next; g = g.prev; gx = false; u.orphan = false; }
     				// log(fwd) = log(1)
     			}
     			else logProposalRatio -= Math.log(P);    			   			
@@ -2694,8 +2699,8 @@ public class Vertex {
         		if (choice == 0) { // Then we're choosing no internals
     			    // -log(fwd) = log(1) = 0
         			
-        			if (px) { delete(p); p = p.prev; px = false; }  
-        			if (gx) { delete(g); g = g.prev; gx = false; } 
+        			if (px) { delete(p); parent.first = p.next; p = p.prev; px = false; }  
+        			if (gx) { delete(g); grandpa.first = g.next; g = g.prev; gx = false; } 
         			// I don't think the order of the above steps matters
         			
         			if (tx) t.orphan = true;
@@ -2707,7 +2712,7 @@ public class Vertex {
     				
     				if (tx) {
     					// if we're considering t, then its new parent must be g
-    					if (px) { delete(p); p = p.prev; px = false; } 
+    					if (px) { delete(p); parent.first = p.next; p = p.prev; px = false; } 
 	    				if (!gx) {
 	    					g = new AlignColumn((g!=null)?g.next:grandpa.first); // New orphan column   
 	    					gx = true;
@@ -2716,7 +2721,7 @@ public class Vertex {
     				}
     				else if (ux) {
     					// if we're considering u, then its new parent must be p
-    					if (gx) { delete(g); g = g.prev; gx = false; }
+    					if (gx) { delete(g); grandpa.first = g.next; g = g.prev; gx = false; }
 	    				if (!px) {
 	    					p = new AlignColumn((p!=null)?p.next:parent.first); // New orphan column   
 	    					px = true;
@@ -2770,6 +2775,8 @@ public class Vertex {
         	// If the parent is null, it means that we have already reached the beginning of 
         	// the parent sequence, so the child is to be adopted by the first column in 
         	// the parent.
+        	    
+        	
         	if (tx) {
         		t.updateParent(t.orphan?((g==null)?grandpa.first:g.next):g,uncleIsLeft);
 	    		first = t; //old.first = to;         		 
@@ -2794,7 +2801,7 @@ public class Vertex {
         	}
        if (bx) System.out.println("b = "+b+", b.parent = "+b.parent);
         	if (gx) {
-        		if (!gIsRoot) g.updateParent(g.orphan?((gg==null)?greatgrandpa.first.next:gg.next):gg,grandpaIsLeft);
+        		if (!gIsRoot) g.updateParent(g.orphan?((gg==null)?greatgrandpa.first:gg.next):gg,grandpaIsLeft);
 	      		grandpa.first = g; //grandpa.old.first = go;	      	
         	}        	
         	
@@ -4133,7 +4140,7 @@ public class Vertex {
             System.out.print(c.parent + " ");
             c = c.next;
         }
-        System.out.println("\n");
+        System.out.println();
         c = first;
         while (c != null) {
             System.out.print(c + " ");
@@ -4328,8 +4335,8 @@ public class Vertex {
         }
         for (AlignColumn l = left.first; l != null; l = l.next) {
             if (!l.orphan) {
-            	System.out.println("l = "+l.toString()+", p = "+l.parent.toString());
                 if (l.parent == null || l.parent.left != l) {
+                	System.out.println("l = "+l.toString()+", p = "+l.parent.toString());
                 	System.out.println("An error is about to occur.........");
                 	l.owner.printPointers();
                     throw new Error("Problem in vertex "+index+"/"+l.owner.index+ ":\nl is: " + l + " ("+l.mostLikely()+") " + (l.parent == null ? " l does not have a parent" : " l parent is: " + l.parent + " l parent left is: " + l.parent.left));
