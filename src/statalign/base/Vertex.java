@@ -2330,58 +2330,21 @@ public class Vertex {
        	uncle.calcAllUp(); // uncle is now lower 
        	DEBUG=0; // Deactivate verbose print statements
     		    
-       	grandpa.restoreVertexReplace();
-//		grandpa.first = grandpa.old.first;
-//		grandpa.last = grandpa.old.last;
-//		grandpa.length = grandpa.old.length;
-//		grandpa.orphanLogLike = grandpa.old.orphanLogLike;
-//		grandpa.indelLogLike = grandpa.old.indelLogLike;
-		
+       	// Order of the restoreVertex steps below is not important
+       	grandpa.restoreVertexReplace();		
        	parent.restoreVertexReplace();
-//		parent.first = parent.old.first;
-//		parent.last = parent.old.last;
-//		parent.length = parent.old.length;
-//		parent.orphanLogLike = parent.old.orphanLogLike;
-//		parent.indelLogLike = parent.old.indelLogLike;        
-        		
-       	restoreVertex();
-		//first = old.first;
-    	//last = old.last;		
-    	//length = old.length;
-    	//orphanLogLike = old.orphanLogLike;
-        //indelLogLike = old.indelLogLike;  
-        
+       	restoreVertex();	
        	brother.restoreVertex();
-//      brother.first = brother.old.first;
-//		brother.last = brother.old.last;
-//		brother.length = brother.old.length;
-//		brother.orphanLogLike = brother.old.orphanLogLike;
-//		brother.indelLogLike = brother.old.indelLogLike;
-        
        	uncle.restoreVertex();
-//		uncle.first = uncle.old.first;
-//		uncle.last = uncle.old.last;
-//		uncle.length = uncle.old.length;
-//		uncle.orphanLogLike = uncle.old.orphanLogLike;
-//		uncle.indelLogLike = uncle.old.indelLogLike;
+		if (!gIsRoot) greatgrandpa.restoreVertex();
 		
-		if (!gIsRoot) {
-			greatgrandpa.restoreVertex();
-//			greatgrandpa.first = greatgrandpa.old.first;
-//			greatgrandpa.last = greatgrandpa.old.last;
-//			greatgrandpa.length = greatgrandpa.old.length;
-//			greatgrandpa.orphanLogLike = greatgrandpa.old.orphanLogLike;
-//			greatgrandpa.indelLogLike = greatgrandpa.old.indelLogLike;
-		}
-		
+		// Order of these steps is important
 		uncle.parent = parent; 		
- 		//uncle.last.parent = parent.last;
- 		if (isLeft)		 { parent.left = uncle; }//parent.last.left = uncle.last; } 
- 		else 			 { parent.right = uncle; }//parent.last.right = uncle.last; }
-        parent = grandpa;
- 		//last.parent = grandpa.last;		 				 		
- 		if (uncleIsLeft) { grandpa.left = this; }//grandpa.last.left = last; } 
- 		else 		 	 { grandpa.right = this; }//grandpa.last.right = last; }
+ 		if (isLeft)		 parent.left = uncle;  
+ 		else 			 parent.right = uncle; 
+        parent = grandpa; 				 		
+ 		if (uncleIsLeft) { grandpa.left = this; } 
+ 		else 		 	 { grandpa.right = this; }
  		
  		
  		if (Utils.DEBUG) {        	
@@ -2532,12 +2495,7 @@ public class Vertex {
         	greatgrandpa.old.orphanLogLike = greatgrandpa.orphanLogLike;
         	greatgrandpa.old.indelLogLike = greatgrandpa.indelLogLike;
         	grandpa.old.parent = greatgrandpa.old; // for printing
-        }
-        
-/* Instead of the above
-   	selectBoundary();
-   	saveBoundary();
-*/
+        }        
         
         // Pointers to columns in current alignment
         AlignColumn t=last.prev, p=parent.last.prev, b=brother.last.prev, g=grandpa.last.prev, u=uncle.last.prev;
@@ -2564,20 +2522,20 @@ public class Vertex {
         	if (gx) {        		
         		go.prev = g.clone(); 
         		go.prev.next = go; go = go.prev;
-        		go.parent = gIsRoot ? null : ggo;
-        		if (!gIsRoot && ggx) {        			
-    				if (grandpaIsLeft)  ggo.left = go;
-    				else 		 	    ggo.left = go;
-    			}        		
+//        		go.parent = gIsRoot ? null : ggo;
+//        		if (!gIsRoot && ggx) {        			
+//    				if (grandpaIsLeft)  ggo.left = go;
+//    				else 		 	    ggo.left = go;
+//    			}        		
         	}
         	if (ux) { 
         		uo.prev = u.clone(); 
         		uo.prev.next = uo; uo = uo.prev;
         		uo.parent = go;
-        		if (gx) {        				
-        			if (uncleIsLeft)  go.left = uo;
-    				else 		 	  go.right = uo;
-        		}
+//        		if (gx) {        				
+//        			if (uncleIsLeft)  go.left = uo;
+//    				else 		 	  go.right = uo;
+//        		}
         	}
         	if (px) {
         		po.prev = p.clone(); 
@@ -2592,19 +2550,19 @@ public class Vertex {
         		bo.prev = b.clone(); 
         		bo.prev.next = bo; bo = bo.prev;
 				bo.parent = po;
-        		if (px) {    			
-    				if (isLeft)  po.right = bo;
-    				else 		 po.left = bo;
-    			}           		
+//        		if (px) {    			
+//    				if (isLeft)  po.right = bo;
+//    				else 		 po.left = bo;
+//    			}           		
         	}
         	if (tx) { 
         		to.prev = t.clone(); 
         		to.prev.next = to; to = to.prev;
         		to.parent = po;
-        		if (px) {        			
-    				if (isLeft)  po.left = to;
-    				else 		 po.right = to;
-    			}        		
+//        		if (px) {        			
+//    				if (isLeft)  po.left = to;
+//    				else 		 po.right = to;
+//    			}        		
         	}
         	
         	// Update the first pointer
