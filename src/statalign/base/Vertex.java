@@ -2576,8 +2576,8 @@ public class Vertex {
         		logProposalRatio += Math.log(1+P); // denominator for -log(fwd)
         		
     			if (Utils.weightedChoose(weights2)==0) {    				
-    				if (tx) { delete(p); p = p.prev; px = false; }
-    				else    { delete(g); g = g.prev; gx = false; }
+    				if (tx) { delete(p); p = p.prev; px = false; t.orphan = false; }
+    				else    { delete(g); g = g.prev; gx = false; u.orphan = false; }
     				// log(fwd) = log(1)
     			}
     			else logProposalRatio -= Math.log(P);    			   			
@@ -2735,15 +2735,15 @@ public class Vertex {
         	}
         	
         	if (Utils.DEBUG) {
-	        	if (px&gx) if (p==g) System.out.println("AFTER: p == g? Should be false. Actually is "+(p==g));
+	        	if (px&gx) if (p==g) System.out.println("##### AFTER: p == g? Should be false. Actually is "+(p==g));
 		    	if (tx&gx) {
-		    		if (px) if (t.parent==p) System.out.println("AFTER: t's parent is p? Should be false. Actually is "+(t.parent==p));
-		    	   	if (t.parent!=g) System.out.println("AFTER: t's parent is g? Should be true. Actually is "+(t.parent==g));
+		    		if (px) if (t.parent==p) System.out.println("##### AFTER: t's parent is p? Should be false. Actually is "+(t.parent==p));
+		    	   	if (t.parent!=g) System.out.println("##### AFTER: t's parent is g? Should be true. Actually is "+(t.parent==g));
 		    	}
 		    	if (ux&px) {
-		    		if (gx) if (u.parent==g) System.out.println("AFTER: u's parent is g? Should be false. Actually is "+(u.parent==g));
+		    		if (gx) if (u.parent==g) System.out.println("##### AFTER: u's parent is g? Should be false. Actually is "+(u.parent==g));
 		    		if (u.parent!=p) {
-		    			System.out.println("AFTER: u's parent is p? Should be true. Actually is "+(u.parent==p));
+		    			System.out.println("##### AFTER: u's parent is p? Should be true. Actually is "+(u.parent==p));
 		    			System.out.println(u.toString()+" "+u.parent.toString()+" "+p.toString());
 		    		}
 		    	}	   
