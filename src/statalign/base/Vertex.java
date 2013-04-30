@@ -2364,40 +2364,15 @@ public class Vertex {
     	
     }
     
-    public double nephewUncleSwapFixedColumns() {
-    	double logProposalRatio = 0.0;
-    	
+    public void saveFiveWay(String[] ali) {
     	Vertex brother = brother(), uncle = parent.brother(), grandpa = parent.parent, greatgrandpa = grandpa.parent;
     	boolean gIsRoot = (grandpa==owner.root);
     	boolean isLeft = (this==parent.left);
     	boolean uncleIsLeft = (uncle==grandpa.left);
     	boolean grandpaIsLeft = false; 
     	if (!gIsRoot) grandpaIsLeft = (grandpa==greatgrandpa.left);
-
-        
-    	  if (Utils.DEBUG) {
-          	printPointers(); //printPointers2();        	
-          	brother.printPointers();  //brother.printPointers2();
-          	if (!gIsRoot) { parent.printPointers(); }//parent.printPointers2(); }
-          	uncle.printPointers(); //uncle.printPointers2();
-          	parent.printPointers();//parent.printPointers2();  
-          	//owner.checkPointers();
-          }
     	
-    	// Extract full alignment for all nodes.
-    	// NB this also has the effect of saving the old state, which is useful, albeit slow.
-    	String[] ali = owner.getState().getFullAlign();
-    	
-    	double P = 0.2; // Probability of an additional indel being incorporated
-    	// As it stands, P is not really a probability. Also, should rewrite the 
-    	// references to this below in logProposalRatio so that we can have
-    	// more general forms for the weights.
-    	double P2 = Math.pow(P,2);
-    	// Should really derive this from lambda, mu and R somehow
-		double[] weights2 = {1,P};
-		double[] weights3 = {1,P,P2};
-        		
-		// Begin saving of current Vertex objects
+    	// Begin saving of current Vertex objects
 		old.last = last.clone();
 		old.length = length;
 		old.orphanLogLike = orphanLogLike;
@@ -2446,50 +2421,24 @@ public class Vertex {
         	greatgrandpa.old.indelLogLike = greatgrandpa.indelLogLike;
         	grandpa.old.parent = greatgrandpa.old; // for printing
         }
-   		
-        // Loop over columns of the initial alignment, starting from the last (non-virtual) column
-        first=last.prev; parent.first=parent.last.prev; brother.first=brother.last.prev; grandpa.first=grandpa.last.prev; uncle.first=uncle.last.prev;
-        AlignColumn t=last.prev, p=parent.last.prev, b=brother.last.prev, g=grandpa.last.prev, u=uncle.last.prev;
-        AlignColumn gg = null; if (!gIsRoot) { greatgrandpa.first = greatgrandpa.last.prev; gg=greatgrandpa.last;}
         
+        
+        
+        AlignColumn t=last.prev, p=parent.last.prev, b=brother.last.prev, g=grandpa.last.prev, u=uncle.last.prev;
+        AlignColumn gg = null; if (!gIsRoot) { greatgrandpa.first = greatgrandpa.last.prev; gg=greatgrandpa.last;}               
+ 		      
         // Old columns, for restoration
         AlignColumn to=old.last, po=parent.old.last, bo=brother.old.last, go=grandpa.old.last, uo=uncle.old.last;   
         AlignColumn ggo = null; if (!gIsRoot) ggo=greatgrandpa.old.last;
- 		
+        
         for (int col=ali[0].length()-1; col>=0; col--) {
-
-	System.out.println(ali[brother.index]);
-    System.out.println(ali[index]);
-	System.out.println(ali[uncle.index]);
-	System.out.println(ali[parent.index]);
-	System.out.println(ali[grandpa.index]);        	
-	System.out.println();
-	System.out.print(ali[brother.index].charAt(col));        	
-	System.out.print(ali[index].charAt(col));
-	System.out.print(ali[uncle.index].charAt(col));
-	System.out.print(ali[parent.index].charAt(col));
-	System.out.print(ali[grandpa.index].charAt(col));
-	System.out.println();
         	boolean tx = (ali[index].charAt(col)!='-'); 		
         	boolean px = (ali[parent.index].charAt(col)!='-'); 	
         	boolean bx = (ali[brother.index].charAt(col)!='-'); 
         	boolean gx = (ali[grandpa.index].charAt(col)!='-');
-   System.out.println(gx+" "+ali[grandpa.index].charAt(col));
         	boolean ux = (ali[uncle.index].charAt(col)!='-');
           	boolean ggx = false;
         	if (!gIsRoot) ggx = (ali[greatgrandpa.index].charAt(col)!='-');
-        	        	
-        	int nTips = (tx?1:0) + (bx?1:0) + (ux?1:0) + (ggx?1:0);
-        	System.out.println("col = "+col+", nTips = "+nTips);
-        	
-        	System.out.println("g = "+g);
-//        	if (Utils.DEBUG) {
-//        		System.out.println(ali[index].charAt(col));
-//        		System.out.println(ali[parent.index].charAt(col));
-//        		System.out.println(ali[brother.index].charAt(col));
-//        		System.out.println(ali[grandpa.index].charAt(col));
-//        		System.out.println(ali[uncle.index].charAt(col));
-//        	}        	      
         	
         	// Save current columns      	        	        	       	
         	if (!gIsRoot && ggx) {
@@ -2541,6 +2490,103 @@ public class Vertex {
     				else 		 po.right = to;
     			}        		
         	}
+        	
+        	// Update the first pointer
+        	if (tx) old.first = to;         		         	
+        	if (px) parent.old.first = po; 
+        	if (ux) uncle.old.first = uo; 
+        	if (bx) brother.old.first = bo; 
+        	if (gx) grandpa.old.first = go;
+        	if (ggx) greatgrandpa.old.first = ggo;	      	
+        	
+        	// Decrement the column pointers
+        	if (tx) t = t.prev; 
+        	if (px) p = p.prev;
+        	if (bx) b = b.prev;
+        	if (gx) g = g.prev;        	
+        	if (ux) u = u.prev;
+        	if (ggx) gg = gg.prev; 
+        }        
+    }
+    
+    public double nephewUncleSwapFixedColumns() {
+    	double logProposalRatio = 0.0;
+    	
+    	Vertex brother = brother(), uncle = parent.brother(), grandpa = parent.parent, greatgrandpa = grandpa.parent;
+    	boolean gIsRoot = (grandpa==owner.root);
+    	boolean isLeft = (this==parent.left);
+    	boolean uncleIsLeft = (uncle==grandpa.left);
+    	boolean grandpaIsLeft = false; 
+    	if (!gIsRoot) grandpaIsLeft = (grandpa==greatgrandpa.left);
+
+        
+    	  if (Utils.DEBUG) {
+          	printPointers(); //printPointers2();        	
+          	brother.printPointers();  //brother.printPointers2();
+          	if (!gIsRoot) { parent.printPointers(); }//parent.printPointers2(); }
+          	uncle.printPointers(); //uncle.printPointers2();
+          	parent.printPointers();//parent.printPointers2();  
+          	//owner.checkPointers();
+          }
+    	
+    	// Extract full alignment for all nodes.
+    	// NB this also has the effect of saving the old state, which is useful, albeit slow.
+    	String[] ali = owner.getState().getFullAlign();
+    	
+    	// Save the old alignment associated with the nodes that will be modified by
+    	// this move, in case it needs to be restored if the move is rejected.
+    	saveFiveWay(ali);
+    	
+    	double P = 0.2; // Probability of an additional indel being incorporated
+    	// As it stands, P is not really a probability. Also, should rewrite the 
+    	// references to this below in logProposalRatio so that we can have
+    	// more general forms for the weights.
+    	double P2 = Math.pow(P,2);
+    	// Should really derive this from lambda, mu and R somehow
+		double[] weights2 = {1,P};
+		double[] weights3 = {1,P,P2};
+        		
+		   		
+        // Loop over columns of the initial alignment, starting from the last (non-virtual) column
+        first=last.prev; parent.first=parent.last.prev; brother.first=brother.last.prev; grandpa.first=grandpa.last.prev; uncle.first=uncle.last.prev;
+        AlignColumn t=last.prev, p=parent.last.prev, b=brother.last.prev, g=grandpa.last.prev, u=uncle.last.prev;
+        AlignColumn gg = null; if (!gIsRoot) { greatgrandpa.first = greatgrandpa.last.prev; gg=greatgrandpa.last;}               
+ 		
+        for (int col=ali[0].length()-1; col>=0; col--) {
+
+	System.out.println(ali[brother.index]);
+    System.out.println(ali[index]);
+	System.out.println(ali[uncle.index]);
+	System.out.println(ali[parent.index]);
+	System.out.println(ali[grandpa.index]);        	
+	System.out.println();
+	System.out.print(ali[brother.index].charAt(col));        	
+	System.out.print(ali[index].charAt(col));
+	System.out.print(ali[uncle.index].charAt(col));
+	System.out.print(ali[parent.index].charAt(col));
+	System.out.print(ali[grandpa.index].charAt(col));
+	System.out.println();
+        	boolean tx = (ali[index].charAt(col)!='-'); 		
+        	boolean px = (ali[parent.index].charAt(col)!='-'); 	
+        	boolean bx = (ali[brother.index].charAt(col)!='-'); 
+        	boolean gx = (ali[grandpa.index].charAt(col)!='-');
+   System.out.println(gx+" "+ali[grandpa.index].charAt(col));
+        	boolean ux = (ali[uncle.index].charAt(col)!='-');
+          	boolean ggx = false;
+        	if (!gIsRoot) ggx = (ali[greatgrandpa.index].charAt(col)!='-');
+        	        	
+        	int nTips = (tx?1:0) + (bx?1:0) + (ux?1:0) + (ggx?1:0);
+        	System.out.println("col = "+col+", nTips = "+nTips);
+        	
+        	System.out.println("g = "+g);
+//        	if (Utils.DEBUG) {
+//        		System.out.println(ali[index].charAt(col));
+//        		System.out.println(ali[parent.index].charAt(col));
+//        		System.out.println(ali[brother.index].charAt(col));
+//        		System.out.println(ali[grandpa.index].charAt(col));
+//        		System.out.println(ali[uncle.index].charAt(col));
+//        	}        	      
+        	        	
         	
         	if (Utils.DEBUG) {
 	        	if (px&gx) if (p==g) System.out.println("BEFORE: p == g? Should be false. Actually is "+(p==g));
@@ -2699,7 +2745,11 @@ public class Vertex {
     				if (tx) t.orphan = false;
     				if (ux) u.orphan = false;
     			}
-        	}        	
+        	}
+        	else if (gx|px) { // i.e. parent and/or grandpa character(s) but no leaves
+        		// Do nothing, otherwise difficult to make the move reversible without
+        		// considering the possibility of inserting silent columns.
+        	}
         	else {
         		System.out.println("None of the above");
         		throw new RuntimeException("We reached a case that wasn't handled properly.");
@@ -2708,31 +2758,34 @@ public class Vertex {
         	// Reassign any parent pointers. 
 	    	// If the character is to be an orphan, we specify the next column
 	    	// in the parent sequence as the adopted parent.
+        	// If the parent is null, it means that we have already reached the beginning of 
+        	// the parent sequence, so the child is to be adopted by the first column in 
+        	// the parent.
         	if (tx) {
         		t.updateParent(t.orphan?((g==null)?grandpa.first:g.next):g,uncleIsLeft);
-	    		first = t; old.first = to;         		 
+	    		first = t; //old.first = to;         		 
         	}
        if (tx) System.out.println("t = "+t.toString()+", t.parent = "+t.parent.toString());
         	if (px) {
         		p.updateParent(p.orphan?((g==null)?grandpa.first:g.next):g,!uncleIsLeft);
-	       		parent.first = p; parent.old.first = po; 
+	       		parent.first = p; //parent.old.first = po; 
         	}
        if (px) System.out.println("p = "+p.toString()+", p.parent = "+p.parent.toString());     
         	if (ux) {
         		u.updateParent(u.orphan?((p==null)?parent.first:p.next):p,isLeft);
-	      		uncle.first = u; uncle.old.first = uo; 
+	      		uncle.first = u; //uncle.old.first = uo; 
         	}
        if (ux) System.out.println("u = "+u.toString()+", u.parent = "+u.parent.toString());       
         	if (bx) {
         		System.out.println("p = "+p);
         		b.updateParent(b.orphan?((p==null)?parent.first:p.next):p,!isLeft);
-	      		brother.first = b; brother.old.first = bo; 
+	      		brother.first = b; //brother.old.first = bo; 
         	}
        if (bx) System.out.println("b = "+b.toString()+", b.parent = "+b.parent.toString());
         	if (gx) {
         		if (!gIsRoot) g.updateParent(g.orphan?((gg==null)?greatgrandpa.first.next:gg.next):gg,grandpaIsLeft);
-	      		grandpa.first = g; grandpa.old.first = go;	      	
-        	}
+	      		grandpa.first = g; //grandpa.old.first = go;	      	
+        	}        	
         	
         	if (Utils.DEBUG) {
 	        	if (px&gx) if (p==g) System.out.println("##### AFTER: p == g? Should be false. Actually is "+(p==g));
