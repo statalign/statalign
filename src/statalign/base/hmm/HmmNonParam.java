@@ -13,8 +13,8 @@ import statalign.base.Utils;
 public class HmmNonParam extends HmmSilent {
 
 	//final double P = 0.9999999;
-	//final double P = 0.99999; // original
-	final double P = 0.99;
+	final double P = 0.99999; // original
+	//final double P = 0.99;
 	final double Q = 0.6; // original
 	//final double Q = 0.2;
 	final int SILENT = 7;
