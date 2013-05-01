@@ -167,8 +167,8 @@ public class AlignColumn {
 			if (p.owner.length==1) {
 				throw new RuntimeException("All columns in sequence "+p.owner.index+" have been deleted.");
 			}
-			System.out.println("Deleting column "+p.toString()+" at Vertex "+p.owner.index);
-			System.out.println("p.prev = "+p.prev);
+//			System.out.println("Deleting column "+p.toString()+" at Vertex "+p.owner.index);
+//			System.out.println("p.prev = "+p.prev);
 		}
 		
 		if (!p.orphan) {

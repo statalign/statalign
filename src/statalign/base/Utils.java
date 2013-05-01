@@ -35,7 +35,12 @@ public class Utils{
 	// TODO Change this to an integer, so we can have different levels of 
 	// debug information printed.
 		
-	public static boolean USE_FULL_WINDOWS = true;
+	/** 
+	 * If this is set to <code>true</code> then the alignment moves operate
+	 * on the whole alignment rather than selecting subwindows. This
+	 * is usually much slower.
+	 */
+	public static boolean USE_FULL_WINDOWS = false;
 
 	/**
 	 * Whether to use information from the upper parts of the 
@@ -212,25 +217,25 @@ public class Utils{
 		return k;
 	}
 	
-	/**
-	 * This function returns a random index, weighted by the weights in the array `weights'
-	 */
-	public static int weightedChoose(double[] weights){
-		int sum = 0;
-
-		for(int i = 0; i < weights.length; i++){
-			sum += weights[i];
-		}
-
-		int w = generator.nextInt(sum);
-		int k = 0;
-		sum = 0;
-		while((sum += weights[k]) <= w){
-			k++;
-		}
-
-		return k;
-	}
+//	/**
+//	 * This function returns a random index, weighted by the weights in the array `weights'
+//	 */
+//	public static int weightedChoose(double[] weights){
+//		double sum = 0;
+//
+//		for(int i = 0; i < weights.length; i++){
+//			sum += weights[i];
+//		}
+//
+//		double w = sum*generator.nextDouble();
+//		int k = 0;
+//		sum = 0;
+//		while((sum += weights[k]) <= w){
+//			k++;
+//		}
+//
+//		return k;
+//	}
 	
 	/**
 	 * This function returns a random index, weighted by the weights in the array `weights'
@@ -282,6 +287,9 @@ public class Utils{
 		assert (weights[k] > 1e-5) : "weightedChoose error";
 
 		return k;
+	}
+	public static int weightedChoose(double[] weights){
+		return weightedChoose(weights,null);
 	}
 
 	/**

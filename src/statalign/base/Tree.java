@@ -233,7 +233,7 @@ public class Tree extends Stoppable implements DataType {
     public void checkPointers() {
     	for (int i = 0; i < vertex.length; i++) {
 			if (vertex[i].left != null && vertex[i].right != null) {				
-				System.out.println("Checking vertex "+i);
+				//System.out.println("Checking vertex "+i);
 				vertex[i].checkPointers();				
 				AlignColumn p;
 				// checking pointer integrity
