@@ -194,6 +194,9 @@ public class TopologyMove extends McmcMove {
 	@Override
 	public void restoreState(Object externalState) {
 		
+		// At this point the uncle refers to what was originally
+		// `this'.
+		
 	//	uncle.fastSwapBackUncle();
 		// If using the alternative move:
        // uncle.swapBackUncleAlignToParent();

@@ -2304,10 +2304,14 @@ public class Vertex {
      * <i>O(1)</i>, otherwise <i>O(L)</i>, where <i>L</i> is the sequence length.
      */
     public void restoreVertex(boolean replace) {
+    	System.out.println(index+".restoreVertex()");
     	orphanLogLike = old.orphanLogLike;
-		indelLogLike = old.indelLogLike;		
+		indelLogLike = old.indelLogLike;
+		System.out.println("first = "+first+", old.first = "+old.first);
     	if (replace) {
+    		System.out.println("first = "+first+", old.first = "+old.first);
     		first = old.first;
+    		System.out.println("last = "+last+", old.last = "+old.last);
         	last = old.last;
     		length = old.length;
     	}
@@ -2320,11 +2324,17 @@ public class Vertex {
     }
     public void restoreFiveWay() {
     	
+    	if (Utils.DEBUG) System.out.println(index+".restoreFiveWay()");
+    	
     	Vertex brother = brother(), uncle = parent.brother(), grandpa = parent.parent, greatgrandpa = grandpa.parent;
     	boolean gIsRoot = (grandpa==owner.root);
     	boolean isLeft = (this==parent.left);
     	boolean uncleIsLeft = (uncle==grandpa.left);
-         
+    	boolean grandpaIsLeft = false;
+    	if (!gIsRoot) grandpaIsLeft = (grandpa==greatgrandpa.left);
+
+    	if (!gIsRoot) System.out.println("grandpaIsLeft = "+grandpaIsLeft+", grandpa = "+grandpa.index+", greatgrandpa.left = "+greatgrandpa.left.index);
+    	
     	DEBUG=2; // Activate verbose print statements 
     	owner.root.recomputeLogLike();
        	uncle.calcAllUp(); // uncle is now lower 
@@ -2367,6 +2377,9 @@ public class Vertex {
     }
     
     public void saveFiveWay(String[] ali) {
+    	
+    	if (Utils.DEBUG) System.out.println(index+".nephewUncleSwapFixedColumns()");
+    	
     	Vertex brother = brother(), uncle = parent.brother(), grandpa = parent.parent, greatgrandpa = grandpa.parent;
     	boolean gIsRoot = (grandpa==owner.root);
     	boolean isLeft = (this==parent.left);
@@ -2374,7 +2387,7 @@ public class Vertex {
     	boolean grandpaIsLeft = false; 
     	if (!gIsRoot) grandpaIsLeft = (grandpa==greatgrandpa.left);
     	
-    	
+    	if (!gIsRoot) System.out.println("grandpaIsLeft = "+grandpaIsLeft+", grandpa = "+grandpa.index+", greatgrandpa.left = "+greatgrandpa.left.index);
     	
     	// Begin saving of current Vertex objects
 		old.last = last.clone();
@@ -2456,7 +2469,7 @@ public class Vertex {
 //        		go.parent = gIsRoot ? null : ggo;
         		if (!gIsRoot && ggx) {        			
     				if (grandpaIsLeft)  ggo.left = go;
-    				else 		 	    ggo.left = go;
+    				else 		 	    ggo.right = go;
     			}        		
         	}
         	if (ux) { 
@@ -2526,6 +2539,8 @@ public class Vertex {
     public double nephewUncleSwapFixedColumns() {
     	double logProposalRatio = 0.0;
     	
+    	if (Utils.DEBUG) System.out.println(index+".nephewUncleSwapFixedColumns()");
+    	
     	Vertex brother = brother(), uncle = parent.brother(), grandpa = parent.parent, greatgrandpa = grandpa.parent;
     	boolean gIsRoot = (grandpa==owner.root);
     	boolean isLeft = (this==parent.left);
@@ -2533,7 +2548,8 @@ public class Vertex {
     	boolean grandpaIsLeft = false; 
     	if (!gIsRoot) grandpaIsLeft = (grandpa==greatgrandpa.left);
 
-        
+    	if (!gIsRoot) System.out.println("grandpaIsLeft = "+grandpaIsLeft+", grandpa = "+grandpa.index+", greatgrandpa.left = "+greatgrandpa.left.index);
+    	
     	  if (Utils.DEBUG) {
           	printPointers(); //printPointers2();        	
           	brother.printPointers();  //brother.printPointers2();
@@ -2809,12 +2825,12 @@ public class Vertex {
 	      		brother.first = b; //brother.old.first = bo; 
         	}
        if (bx) System.out.println("b = "+b+", b.parent = "+b.parent);
-       if (ggx) System.out.println("g = "+g+", g.orphan = "+g.orphan+", gg = "+gg+", g.parent = "+g.parent+", g.parent.right = "+g.parent.right);
+       if (ggx&gx) System.out.println("g = "+g+", g.orphan = "+g.orphan+", gg = "+gg+", g.parent = "+g.parent+", g.parent.right = "+g.parent.right);
        		if (gx) {
         		if (!gIsRoot) g.updateParent(g.orphan?((gg==null)?greatgrandpa.first:gg.next):gg,grandpaIsLeft);
 	      		grandpa.first = g; //grandpa.old.first = go;	      	
         	}        	
-       if (ggx) System.out.println("g = "+g+", g.orphan = "+g.orphan+", gg = "+gg+", g.parent = "+g.parent+", g.parent.right = "+g.parent.right);
+       if (ggx&gx) System.out.println("g = "+g+", g.orphan = "+g.orphan+", gg = "+gg+", g.parent = "+g.parent+", g.parent.right = "+g.parent.right);
        		if (ggx) greatgrandpa.first = gg;
         	if (Utils.DEBUG) {
 	        	if (px&gx) if (p==g) System.out.println("##### AFTER: p == g? Should be false. Actually is "+(p==g));
@@ -4345,6 +4361,7 @@ public class Vertex {
                 	System.out.println("l = "+l.toString()+", p = "+l.parent.toString());
                 	System.out.println("An error is about to occur.........");
                 	l.owner.printPointers();
+                	System.out.println("l.owner.parent.first = "+l.owner.parent.first);
                     throw new Error("Problem in vertex "+index+"/"+l.owner.index+ ":\nl is: " + l + " ("+l.mostLikely()+") " + (l.parent == null ? " l does not have a parent" : " l parent is: " + l.parent + " l parent left is: " + l.parent.left));
                 }
             }
