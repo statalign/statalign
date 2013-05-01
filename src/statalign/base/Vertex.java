@@ -760,7 +760,7 @@ public class Vertex {
             AlignColumn c = first, p = parent.first;
             int prevk = START, k;
 
-            System.out.println(last.toString()+" "+parent.last.toString()+"\n");
+            if (DEBUG==2) System.out.println(last.toString()+" "+parent.last.toString()+"\n");
             while (c != last || p != parent.last) {     
             	if (DEBUG==2)  { 
             		System.out.print("c = "+c+" "); 
@@ -2366,75 +2366,6 @@ public class Vertex {
     	
     }
     
-    public void saveVertex() {
-    	old.last = last.clone();
-		old.first = first.clone();
-		old.length = length;
-		old.orphanLogLike = orphanLogLike;
-        old.indelLogLike = indelLogLike;
-        if (Utils.DEBUG && parent != null) old.parent = parent.old; // for printing
-        
-        AlignColumn c = last.prev, co = old.last;
-        
-//        while (c != null) {
-//        	co.prev = c.clone();
-//        	co.prev.next = co; 
-//        	c = c.prev; co = co.prev;
-//        	co.parent = ....;
-//        	co.left = ....;
-//        	co.right = ....;		
-//        }
-        
-        // ACTUALLY can't do this all in here, because if the parent is selected
-        // then we want to refer to the copy of c.parent rather than the actual c.parent
-        // so it may need to be done all in one sweep.
-    }
-    public void saveBoundary() {
-    	
-    	saveVertex();
-        
-        
-        if (parent!=null && parent.selected) {      	
-        	old.first.parent = parent.old.first;
-        	old.last.parent = parent.old.last;        	
-        	parent.saveBoundary(); // *** Only do this if we haven't done it already
-        }        		
-    	if (left != null && left.selected)  {
-    		left.saveBoundary();
-    		old.first.left = left.old.first;
-    		old.last.left = left.old.last;    		
-    	}
-    	if (right != null && right.selected)  {
-    		right.saveBoundary();
-    		old.first.right = right.old.first;
-    		old.last.right = right.old.last;    		
-    	}
-    }   
-    public void selectBoundary() {
-    	Vertex brother = brother(), uncle = parent.brother(), grandpa = parent.parent, greatgrandpa = grandpa.parent;
-    	
-    	boolean gIsRoot = (grandpa==owner.root);
-    	
-    	owner.markAllVerticesUnselected();
-    	
-    	selected = true;
-    	if (left != null) {
-    		left.selected = true;
-    		right.selected = true;
-    	}
-    	brother.selected = true;    	
-    	parent.selected = true;
-    	uncle.selected = true;
-    	if (uncle.left != null) {
-    		uncle.left.selected = true;
-    		uncle.right.selected = true;
-    	}    	
-    	grandpa.selected = true;
-    	if (!gIsRoot) greatgrandpa.selected = true;
-    	
-    	saveBoundary();
-    }
-    
     public void saveFiveWay(String[] ali) {
     	Vertex brother = brother(), uncle = parent.brother(), grandpa = parent.parent, greatgrandpa = grandpa.parent;
     	boolean gIsRoot = (grandpa==owner.root);
@@ -2499,7 +2430,7 @@ public class Vertex {
         
         // Pointers to columns in current alignment
         AlignColumn t=last.prev, p=parent.last.prev, b=brother.last.prev, g=grandpa.last.prev, u=uncle.last.prev;
-        AlignColumn gg = null; if (!gIsRoot) { greatgrandpa.first = greatgrandpa.last.prev; gg=greatgrandpa.last;}               
+        AlignColumn gg = null; if (!gIsRoot) gg=greatgrandpa.last.prev;               
  		      
         // Old columns, for restoration
         AlignColumn to=old.last, po=parent.old.last, bo=brother.old.last, go=grandpa.old.last, uo=uncle.old.last;   
@@ -2523,10 +2454,10 @@ public class Vertex {
         		go.prev = g.clone(); 
         		go.prev.next = go; go = go.prev;
 //        		go.parent = gIsRoot ? null : ggo;
-//        		if (!gIsRoot && ggx) {        			
-//    				if (grandpaIsLeft)  ggo.left = go;
-//    				else 		 	    ggo.left = go;
-//    			}        		
+        		if (!gIsRoot && ggx) {        			
+    				if (grandpaIsLeft)  ggo.left = go;
+    				else 		 	    ggo.left = go;
+    			}        		
         	}
         	if (ux) { 
         		uo.prev = u.clone(); 
@@ -2580,7 +2511,16 @@ public class Vertex {
         	if (gx) g = g.prev;        	
         	if (ux) u = u.prev;
         	if (ggx) gg = gg.prev; 
-        }        
+        }
+        if (Utils.DEBUG) {
+	        old.printPointers();        	
+	    	brother.old.printPointers(); 	    	
+	    	if (!gIsRoot) parent.old.printPointers(); 
+	    	uncle.old.printPointers();
+	    	System.out.println("this = "+index+", uncle = "+uncle.index);
+	     	//owner.checkPointers();
+	    	//if (uncle.old.parent != owner.root) uncle.old.parent.printPointers(); 
+        }
     }
     
     public double nephewUncleSwapFixedColumns() {
@@ -2600,7 +2540,7 @@ public class Vertex {
           	if (!gIsRoot) { parent.printPointers(); }//parent.printPointers2(); }
           	uncle.printPointers(); //uncle.printPointers2();
           	parent.printPointers();//parent.printPointers2();  
-          	//owner.checkPointers();
+          	owner.checkPointers();
           }
     	
     	// Extract full alignment for all nodes.
@@ -2611,7 +2551,7 @@ public class Vertex {
     	// this move, in case it needs to be restored if the move is rejected.
     	saveFiveWay(ali);
     	
-    	double P = 1; // "Probability" of an additional indel being incorporated
+    	double P = 3.2; // "Probability" of an additional indel being incorporated
     	// As it stands, P is not really a probability. Also, should rewrite the 
     	// references to this below in logProposalRatio so that we can have
     	// more general forms for the weights.
@@ -2624,7 +2564,7 @@ public class Vertex {
         // Loop over columns of the initial alignment, starting from the last (non-virtual) column
         first=last; parent.first=parent.last; brother.first=brother.last; grandpa.first=grandpa.last; uncle.first=uncle.last;
         AlignColumn t=last.prev, p=parent.last.prev, b=brother.last.prev, g=grandpa.last.prev, u=uncle.last.prev;
-        AlignColumn gg = null; if (!gIsRoot) { greatgrandpa.first = greatgrandpa.last; gg=greatgrandpa.last;}               
+        AlignColumn gg = null; if (!gIsRoot) { greatgrandpa.first = greatgrandpa.last; gg=greatgrandpa.last.prev;}               
  		
         for (int col=ali[0].length()-1; col>=0; col--) {
 
@@ -2730,7 +2670,7 @@ public class Vertex {
             		}
             		else { // Insert new p column
             			p = new AlignColumn((p!=null)?p.next:parent.first); 
-            			p.parent = g;
+            			//p.parent = g;
             			p.orphan = false;
             			px = true;
             		}	
@@ -2851,12 +2791,12 @@ public class Vertex {
 	    		first = t; //old.first = to;         		 
         	}
        if (tx) System.out.println("t = "+t+", t.parent = "+t.parent);
-	   if (px) System.out.println("p = "+p+", g = "+g+", grandpa.first = "+grandpa.first+", p.parent = "+p.parent+", p.orphan = "+p.orphan);
+	   if (px) System.out.println("p = "+p+", g = "+g+", grandpa.first = "+grandpa.first+", p.parent = "+p.parent+", p.orphan = "+p.orphan);	   
         	if (px) {
         		p.updateParent(p.orphan?((g==null)?grandpa.first:g.next):g,!uncleIsLeft);
 	       		parent.first = p; //parent.old.first = po; 
         	}
-       if (px) System.out.println("p = "+p+", p.parent = "+p.parent+", p.orphan = "+p.orphan);  
+       if (px) System.out.println("p = "+p+", g = "+g+", grandpa.first = "+grandpa.first+", p.parent = "+p.parent+", p.orphan = "+p.orphan);  
        if (ux) System.out.println("u = "+u+", u.parent = "+u.parent+", u.orphan = "+u.orphan);
         	if (ux) {
         		u.updateParent(u.orphan?((p==null)?parent.first:p.next):p,isLeft);
@@ -2869,11 +2809,13 @@ public class Vertex {
 	      		brother.first = b; //brother.old.first = bo; 
         	}
        if (bx) System.out.println("b = "+b+", b.parent = "+b.parent);
-        	if (gx) {
+       if (ggx) System.out.println("g = "+g+", g.orphan = "+g.orphan+", gg = "+gg+", g.parent = "+g.parent+", g.parent.right = "+g.parent.right);
+       		if (gx) {
         		if (!gIsRoot) g.updateParent(g.orphan?((gg==null)?greatgrandpa.first:gg.next):gg,grandpaIsLeft);
 	      		grandpa.first = g; //grandpa.old.first = go;	      	
         	}        	
-        	
+       if (ggx) System.out.println("g = "+g+", g.orphan = "+g.orphan+", gg = "+gg+", g.parent = "+g.parent+", g.parent.right = "+g.parent.right);
+       		if (ggx) greatgrandpa.first = gg;
         	if (Utils.DEBUG) {
 	        	if (px&gx) if (p==g) System.out.println("##### AFTER: p == g? Should be false. Actually is "+(p==g));
 		    	if (tx&gx) {
@@ -2922,18 +2864,13 @@ public class Vertex {
  		else 		 	 { grandpa.right = this; grandpa.last.right = last; }
  		
         if (Utils.DEBUG) {
-        	old.printPointers();        	
-        	brother.old.printPointers(); 
-        	if (!gIsRoot) parent.old.printPointers(); 
-        	uncle.old.printPointers(); 
-        	if (uncle.old.parent != owner.root) uncle.parent.old.printPointers(); 
         	System.out.println("------------------");
-        	printPointers(); //printPointers2()
-        	brother.printPointers();  //brother.printPointers2();
+//        	printPointers(); //printPointers2()
+//        	brother.printPointers();  //brother.printPointers2();
         	if (!gIsRoot) { parent.printPointers(); }//parent.printPointers2(); }
-        	uncle.printPointers(); //uncle.printPointers2();
+//        	uncle.printPointers(); //uncle.printPointers2();
         	System.out.println("this = "+index+", uncle = "+uncle.index+", uncle.parent = "+uncle.parent.index);
-        	if (uncle.parent != owner.root) uncle.parent.printPointers();//uncle.parent.printPointers2();
+//        	if (uncle.parent != owner.root) uncle.parent.printPointers();//uncle.parent.printPointers2();
         	
         	owner.checkPointers();        	
         }
@@ -4415,7 +4352,10 @@ public class Vertex {
         for (AlignColumn r = right.first; r != null; r = r.next) {
             if (!r.orphan) {
                 if (r.parent == null || r.parent.right != r) {
-                    throw new Error("Problem in vertex " + this + ":\nr is: " + r + (r.parent == null ? " r does not have a parent" : " r parent is: " + r.parent + " r parent right is: " + r.parent.right));
+                	System.out.println("r = "+r.toString()+", p = "+r.parent.toString());
+                	System.out.println("An error is about to occur.........");
+                	r.owner.printPointers();
+                    throw new Error("Problem in vertex " + index + ":\nr is: " + r + (r.parent == null ? " r does not have a parent" : " r parent is: " + r.parent + " r parent right is: " + r.parent.right));
                 }
             }
         }
