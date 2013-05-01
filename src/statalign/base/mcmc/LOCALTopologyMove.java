@@ -36,8 +36,8 @@ public class LOCALTopologyMove extends McmcMove {
 		autoTune = false; 
 		// autoTune = true by default
 		minEdgeLength = Utils.MIN_EDGE_LENGTH;
-		//fastSwapProb = 0.95;
-		fastSwapProb = 0.0;
+		fastSwapProb = 0.95;
+		//fastSwapProb = 0.0;
 	}
 	
 	/**

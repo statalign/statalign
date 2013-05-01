@@ -11,8 +11,8 @@ public class AlignmentMove extends McmcMove {
 	Tree tree = null;
 	Vertex selectedRoot;
 	double[] weights;
-	//final static double LEAFCOUNT_POWER = 1.0; 
-	final static double LEAFCOUNT_POWER = -2.0;
+	final static double LEAFCOUNT_POWER = 1.0; // Original
+	//final static double LEAFCOUNT_POWER = -2.0;
 	final static double SELTRLEVPROB[] = { 0.9, 0.6, 0.4, 0.2, 0 };
 	
 	public static final double MIN_WINDOW_MULTIPLIER = 0.1;
