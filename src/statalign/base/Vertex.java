@@ -1616,7 +1616,7 @@ public class Vertex {
         // select the beginning and end of the window
         MuDouble p = new MuDouble(1.0);
         winLength = Utils.linearizerWeight(length, p, Utils.WINDOW_MULTIPLIER*Math.sqrt(length));
-        if (Utils.USE_FULL_WINDOWS) winLength = length; p.value = 1.0; 
+        if (Utils.USE_FULL_WINDOWS) { winLength = length; p.value = 1.0; } 
         //System.out.print("Length: "+length+"\t");
         //System.out.print("Window length: "+winLength+"\t");
         int b = (length - winLength == 0 ? 0 : Utils.generator.nextInt(length - winLength));
