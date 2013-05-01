@@ -130,11 +130,11 @@ public class TopologyMove extends McmcMove {
 //			} catch(IOException e){}
 //		}
 		
-	//	double logProposalRatio = nephewEdgeMove.proposal(externalState);
+		double logProposalRatio = nephewEdgeMove.proposal(externalState);
 //		System.out.println("logProposalRatio after nephew = "+logProposalRatio);
-		//logProposalRatio += parentEdgeMove.proposal(externalState);
+		logProposalRatio += parentEdgeMove.proposal(externalState);
 //		System.out.println("logProposalRatio after parent = "+logProposalRatio);
-	//	logProposalRatio += uncleEdgeMove.proposal(externalState);
+		logProposalRatio += uncleEdgeMove.proposal(externalState);
 //		System.out.println("logProposalRatio after uncle = "+logProposalRatio);
 		
 //		logProposalRatio += nephew.fastSwapWithUncle();
@@ -147,7 +147,7 @@ public class TopologyMove extends McmcMove {
 		s = uncle.printedAlignment();
 		System.out.println(uncle.index+" "+s[1]+"\n"+uncle.parent.index+" "+s[0]);
 		
-		double logProposalRatio = nephew.nephewUncleSwapFixedColumns();
+		logProposalRatio = nephew.nephewUncleSwapFixedColumns();
 		
 		// double logProposalRatio = nephew.swapWithUncleAlignToParent();
 		System.out.println("logProposalRatio after swap = "+logProposalRatio);
@@ -203,9 +203,9 @@ public class TopologyMove extends McmcMove {
 		uncle.restoreFiveWay();
 		
 		// Note these are restored in the reverse order to the proposal
-//		uncleEdgeMove.restoreState(externalState);
-//		parentEdgeMove.restoreState(externalState);
-//		nephewEdgeMove.restoreState(externalState);
+		uncleEdgeMove.restoreState(externalState);
+		parentEdgeMove.restoreState(externalState);
+		nephewEdgeMove.restoreState(externalState);
 				
 	}
 	

@@ -31,7 +31,7 @@ public class Utils{
 	/**
 	 * Debugging mode (various consistency checks done if on)
 	 */
-	public static boolean DEBUG = false;
+	public static boolean DEBUG = true;
 	// TODO Change this to an integer, so we can have different levels of 
 	// debug information printed.
 		

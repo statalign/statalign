@@ -2567,10 +2567,7 @@ public class Vertex {
     	// this move, in case it needs to be restored if the move is rejected.
     	saveFiveWay(ali);
     	
-    	double P = 0.5; // "Probability" of an additional indel being incorporated
-    	// As it stands, P is not really a probability. Also, should rewrite the 
-    	// references to this below in logProposalRatio so that we can have
-    	// more general forms for the weights.
+    	double P = 0.1; // Probability of an additional indel being incorporated
     	// Should really derive this from lambda, mu and R somehow
     	
 		double[] weights2 = {1.0-P,P};		
