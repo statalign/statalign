@@ -2536,6 +2536,10 @@ public class Vertex {
         }
     }
     
+    public void hmm2FiveWayProb() {
+    	owner.updateHmm2FiveWay();
+    	
+    }
     public double nephewUncleSwapFixedColumns() {
     	double logProposalRatio = 0.0;
     	
@@ -2570,13 +2574,15 @@ public class Vertex {
     	double P = 0.1; // Probability of an additional indel being incorporated
     	// Should really derive this from lambda, mu and R somehow
     	
-		double[] weights2 = {1.0-P,P};		
+		//double[] weights2 = {1.0-P,P};		
+    	double[] weights2 = {0.1,0.9};
 		double[] logWeights2 = {Math.log(weights2[0]),Math.log(weights2[1])};
 		double tot2 = weights2[0] + weights2[1];
 		double logTot2 = Math.log(tot2);
 		
     	double P2 = Math.pow(P,2);
-		double[] weights3 = {1.0-P-P2,P,P2};
+		//double[] weights3 = {1.0-P-P2,P,P2};
+    	double[] weights3 = {0.05,0.05,0.9};
 		double[] logWeights3 = {Math.log(weights3[0]),Math.log(weights3[1]),Math.log(weights3[2])};
 		double tot3 = weights3[0] + weights3[1] + weights3[2]; 
 		double logTot3 = Math.log(tot3);		
