@@ -2289,10 +2289,10 @@ public class Vertex {
     	return logProposalRatio;
     } 
     */
-    public void restoreVertexReplace() {
+    private void restoreVertexReplace() {
     	restoreVertex(true);
     }
-    public void restoreVertex() {
+    private void restoreVertex() {
     	restoreVertex(false);
     }
     /**
@@ -2303,7 +2303,7 @@ public class Vertex {
      * to be the same as the current length. <code>replace = true</code> this is
      * <i>O(1)</i>, otherwise <i>O(L)</i>, where <i>L</i> is the sequence length.
      */
-    public void restoreVertex(boolean replace) {
+    private void restoreVertex(boolean replace) {
     	//if (Utils.DEBUG) System.out.println(index+".restoreVertex()");
     	orphanLogLike = old.orphanLogLike;
 		indelLogLike = old.indelLogLike;
@@ -2376,7 +2376,7 @@ public class Vertex {
     	
     }
     
-    public void saveFiveWay(String[] ali) {
+    private void saveFiveWay(String[] ali) {
     	
     	//if (Utils.DEBUG) System.out.println(index+".saveFiveWay()");
     	
@@ -2536,12 +2536,94 @@ public class Vertex {
         }
     }
     
-    public void hmm2FiveWayProb() {
-    	owner.updateHmm2FiveWay();
-    	
+//    public void hmm2FiveWayProb() {
+//    	owner.updateHmm2FiveWay();
+//    	
+//    }
+    
+    /**
+     *  Contains boolean indicators specifying neighbouring
+     *  characters in a particular column. 
+     *  t = this, b = brother, p = parent, u = uncle, g = grandpa, gg = greatgrandpa 
+     */    
+    class Neighbours {
+    	AlignColumn t, b, p, u, g, gg;
+    	boolean tx, bx, px, ux, gx, ggx;
+    }
+    /** 
+     * Computes the probability of all the possible imputations for 
+     * parent and grandpa given the neighbouring AlignColumn objects.
+     * @param prev Neighbours struct corresponding to previous column 
+     * @param curr Neighbours struct corresponding to previous column
+     * @return A vector of log weights for the four possible imputation
+     * patterns for the p--g edge:
+     * 	   (--), (-*), (*-), (**)
+     */
+    public double[] computeWeights(Neighbours curr, Neighbours next) {
+    	// NB when this function is called we should have the current node
+    	// being in the nephew position. This will indeed be the case if
+    	// it is called in the middle of the nephew uncle swap (before the 
+    	// Vertex pointers are reassigned).
+    	final int START = owner.hmm2.getStart();
+    	final int END = owner.hmm2.getEnd();
+    	final int emitPatt2State[] = owner.hmm2.getEmitPatt2State();
+       	final int hmm2Parent[] = owner.hmm2.getStateEmit()[0];
+        final int hmm2Child[] = owner.hmm2.getStateEmit()[1];
+        
+    	Vertex brother = brother(), uncle = parent.brother(), grandpa = parent.parent;
+
+        // States of the five edges at the next column
+        int nextStateG=END, nextStateP=END, nextStateT=END, nextStateB=END, nextStateU=END;       
+        if (next != null) {
+        	nextStateG = (next.gx?0:1) + 2*(next.ggx?0:1);
+        	nextStateP = (next.px?0:1) + 2*(next.gx?0:1);
+        	nextStateU = (next.ux?0:1) + 2*(next.gx?0:1);
+        	nextStateT = (next.tx?0:1) + 2*(next.px?0:1);
+        	nextStateB = (next.bx?0:1) + 2*(next.px?0:1);        	
+        }
+    	double[] logWeights = new double[4];
+    	for (int k : new int[]{0,1,2,3}) { // (--), (-*), (*-), (**)
+    		logWeights[k] = 0;
+    		if (k==0) { 
+    			
+    		}
+    		// Transition probability for the p--g edge
+    		logWeights[k] += parent.hmm2TransMatrix[k][nextStateP];
+    		int gi = (k>1) ? 0 : 1; 
+    		int pi = ((k%2)>0) ? 0 : 1;
+    		// Current state of the g--gg edge if we impute the p--g 
+    		// edge as state k. 
+    		int stateG = gi + 2*(curr.ggx?0:1);  
+    		logWeights[k] += grandpa.hmm2TransMatrix[stateG][nextStateG];
+    		// Current state of the t--p edge if we impute the p--g 
+    		// edge as state k. 
+    		int stateT = (curr.tx?0:1) + 2*pi;  
+    		logWeights[k] += hmm2TransMatrix[stateT][nextStateT];
+    		// Current state of the b--p edge if we impute the p--g 
+    		// edge as state k. 
+    		int stateB = (curr.bx?0:1) + 2*pi;  
+    		logWeights[k] += brother.hmm2TransMatrix[stateB][nextStateB];
+    		// Current state of the u--g edge if we impute the p--g 
+    		// edge as state k. 
+    		int stateU = (curr.ux?0:1) + 2*gi;  
+    		logWeights[k] += uncle.hmm2TransMatrix[stateU][nextStateU];
+    	}
+    	return logWeights;
+    }
+
+    
+    /**
+     * Schemes for imputing the internal character in the five-way topology
+     * sampling move.
+     */
+    enum Scheme {
+    	IND,// independent
+    	ONE,// one-step greedy algorithm
+    	FULL // full dynamic programming, using a simplified HMM
     }
     public double nephewUncleSwapFixedColumns() {
-    	double logProposalRatio = 0.0;
+    	double logProposalRatio = 0.0;    	
+    	Scheme scheme = Scheme.IND;     	    
     	
     	if (Utils.DEBUG) System.out.println(index+".nephewUncleSwapFixedColumns()");
     	
@@ -2571,6 +2653,10 @@ public class Vertex {
     	// this move, in case it needs to be restored if the move is rejected.
     	saveFiveWay(ali);
     	
+    	// Probabilities of imputations at the p--g edge
+    	//         p(--), p(-*), p(*-), p(**)
+    	double[] weights4 = {0.25,0.25,0.25,0.25};
+    	
     	double P = 0.1; // Probability of an additional indel being incorporated
     	// Should really derive this from lambda, mu and R somehow
     	
@@ -2592,29 +2678,78 @@ public class Vertex {
         AlignColumn t=last.prev, p=parent.last.prev, b=brother.last.prev, g=grandpa.last.prev, u=uncle.last.prev;
         AlignColumn gg = null; if (!gIsRoot) { greatgrandpa.first = greatgrandpa.last; gg=greatgrandpa.last.prev;}               
  		
+        
+        // Variables indicating whether a character is present at the current column
+        boolean tx=false, px=false, bx=false, gx=false, ux=false, ggx=false;
+        // Same but in the form of an Neighbours struct, for next and current columns
+        Neighbours next = new Neighbours(), curr = new Neighbours();        
+        
         for (int col=ali[0].length()-1; col>=0; col--) {
-
-//	System.out.println(ali[brother.index]);
-//    System.out.println(ali[index]);
-//	System.out.println(ali[uncle.index]);
-//	System.out.println(ali[parent.index]);
-//	System.out.println(ali[grandpa.index]);        	
-//	System.out.println();
-//	System.out.print(ali[brother.index].charAt(col));        	
-//	System.out.print(ali[index].charAt(col));
-//	System.out.print(ali[uncle.index].charAt(col));
-//	System.out.print(ali[parent.index].charAt(col));
-//	System.out.print(ali[grandpa.index].charAt(col));
-//	System.out.println();
-        	boolean tx = (ali[index].charAt(col)!='-'); 		
-        	boolean px = (ali[parent.index].charAt(col)!='-'); 	
-        	boolean bx = (ali[brother.index].charAt(col)!='-'); 
-        	boolean gx = (ali[grandpa.index].charAt(col)!='-');
+        	
+/*	System.out.println(ali[brother.index]);
+    System.out.println(ali[index]);
+	System.out.println(ali[uncle.index]);
+	System.out.println(ali[parent.index]);
+	System.out.println(ali[grandpa.index]);        	
+	System.out.println();
+	System.out.print(ali[brother.index].charAt(col));        	
+	System.out.print(ali[index].charAt(col));
+	System.out.print(ali[uncle.index].charAt(col));
+	System.out.print(ali[parent.index].charAt(col));
+	System.out.print(ali[grandpa.index].charAt(col));
+	System.out.println();
+*/
+        	next.px = px; next.bx = bx; next.gx = gx; next.ggx = ggx;
+        	// NB the following two are switched round:
+        	next.tx = ux; next.ux = tx; 
+        	
+        	if (col<(ali[0].length()-1)) {
+        		next.t = t.next; next.p = p.next; next.b = b.next; next.g = g.next; next.u = u.next;
+        	}
+        	// else they are null
+        	
+        	if (!gIsRoot) next.gg = gg.next;
+        	
+        	tx = (ali[index].charAt(col)!='-'); 		
+        	px = (ali[parent.index].charAt(col)!='-'); 	
+        	bx = (ali[brother.index].charAt(col)!='-'); 
+        	gx = (ali[grandpa.index].charAt(col)!='-');
 //   System.out.println(gx+" "+ali[grandpa.index].charAt(col));
-        	boolean ux = (ali[uncle.index].charAt(col)!='-');
-          	boolean ggx = false;
+        	ux = (ali[uncle.index].charAt(col)!='-');
+          	ggx = false;
         	if (!gIsRoot) ggx = (ali[greatgrandpa.index].charAt(col)!='-');
-        	        	
+        	    
+        	switch (scheme) {
+    		case IND:
+    			// then leave the weights as they are
+    		case ONE:
+    			curr.px = px; curr.bx = bx; curr.gx = gx; curr.ggx = ggx;
+    			// NB the following two are switched around
+    			curr.tx = ux; 
+    			curr.ux = tx;
+    			
+    			if (col==(ali[0].length()-1)) {
+    				weights4 = computeWeights(curr,null);
+    			}
+    			else {    				
+    				weights4 = computeWeights(curr,next);
+    			}
+    			
+    			// Then here extract weights2 and weights3 from the
+    			// relevant elements of weights4. Actually it will
+    			// depend whether weights2 is for the top or bottom
+    			// insertion -- maybe better to rewrite the rest of 
+    			// the code to operate with weights4 instead.
+    			
+    			weights2 = new double[3]; ///
+    			logWeights2[0] = Math.log(weights2[0]);
+    			logWeights2[1] = Math.log(weights2[1]);
+    			tot2 = weights2[0] + weights2[1];
+    			logTot2 = Math.log(tot2);
+    		case FULL:
+    			throw new RuntimeException("Scheme.FULL not yet implemented.");
+        	}    
+        	    	
         	int nTips = (tx?1:0) + (bx?1:0) + (ux?1:0) + (ggx?1:0);
 //        	System.out.println("col = "+col+", nTips = "+nTips);
         	
