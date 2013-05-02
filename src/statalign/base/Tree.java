@@ -352,7 +352,7 @@ public class Tree extends Stoppable implements DataType {
      */
     public void recomputeCheckLogLike() {
     	root.recomputeCheckLogLike();
-     }
+    }
     
     public int countLeaves() {
         return root.countLeaves();

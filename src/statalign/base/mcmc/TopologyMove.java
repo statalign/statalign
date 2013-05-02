@@ -129,7 +129,8 @@ public class TopologyMove extends McmcMove {
 //				topMoves.write(tree.root.indelLogLike + "\t" + tree.root.orphanLogLike + "\t");
 //			} catch(IOException e){}
 //		}
-		
+    	if (Utils.DEBUG) System.out.println("BEFORE: root.orphanLogLike = "+tree.root.orphanLogLike+", root.indelLogLike = "+tree.root.indelLogLike);
+
 		double logProposalRatio = nephewEdgeMove.proposal(externalState);
 //		System.out.println("logProposalRatio after nephew = "+logProposalRatio);
 		logProposalRatio += parentEdgeMove.proposal(externalState);
@@ -148,6 +149,8 @@ public class TopologyMove extends McmcMove {
 		System.out.println(uncle.index+" "+s[1]+"\n"+uncle.parent.index+" "+s[0]);
 		
 		logProposalRatio = nephew.nephewUncleSwapFixedColumns();
+		
+		if (Utils.DEBUG) System.out.println("AFTER: root.orphanLogLike = "+tree.root.orphanLogLike+", root.indelLogLike = "+tree.root.indelLogLike);
 		
 		// double logProposalRatio = nephew.swapWithUncleAlignToParent();
 		System.out.println("logProposalRatio after swap = "+logProposalRatio);

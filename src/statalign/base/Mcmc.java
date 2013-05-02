@@ -354,13 +354,14 @@ public class Mcmc extends Stoppable {
 	
 	public boolean acceptanceDecision(double oldLogLikelihood, double newLogLikelihood, double logProposalRatio,
 			boolean acceptMoveIfPossible) {
+		System.out.print("logLikelihoodRatio = "+(newLogLikelihood-oldLogLikelihood));
 		if (logProposalRatio > Double.NEGATIVE_INFINITY) {
 			cumulativeLogProposalRatio += logProposalRatio;
 		}
 		else {
 			return false;
 		}
-		//System.out.print("\t"+logProposalRatio+"\t"+cumulativeLogProposalRatio+"\t");
+		System.out.println("\tlogProposalRatio = "+logProposalRatio);
 		if (acceptMoveIfPossible) {						
 			return (newLogLikelihood > Double.NEGATIVE_INFINITY);
 		}
