@@ -93,9 +93,9 @@ public class Utils{
 	 */
 	public static final double SPAN_MULTIPLIER = 0.7;
 	/**
-	 * During the burnin, the proposalWidthControlVariable for all continuous parameters
-	 * is adjusted in order to ensure that the average acceptance rate is between 
-	 * MIN_ACCEPTANCE and MAX_ACCEPTANCE where possible. 
+	 * During the burnin, the proposalWidthControlVariable for all McmcMove objects
+	 * is adjusted (if <code>McmcMove.autoTune=true</code>) in order to ensure that the average 
+	 * acceptance rate is between MIN_ACCEPTANCE and MAX_ACCEPTANCE where possible. 
 	 * This is done by repeatedly multiplying the proposalWidthControlVariable
 	 * by SPAN_MULTIPLIER until the acceptance falls within the desired range.
 	 */
@@ -217,25 +217,6 @@ public class Utils{
 		return k;
 	}
 	
-//	/**
-//	 * This function returns a random index, weighted by the weights in the array `weights'
-//	 */
-//	public static int weightedChoose(double[] weights){
-//		double sum = 0;
-//
-//		for(int i = 0; i < weights.length; i++){
-//			sum += weights[i];
-//		}
-//
-//		double w = sum*generator.nextDouble();
-//		int k = 0;
-//		sum = 0;
-//		while((sum += weights[k]) <= w){
-//			k++;
-//		}
-//
-//		return k;
-//	}
 	
 	/**
 	 * This function returns a random index, weighted by the weights in the array `weights'
@@ -334,6 +315,9 @@ public class Utils{
 
 		return k;
 	}
+	public static int logWeightedChoose(double[] logWeights){
+		return logWeightedChoose(logWeights,null);
+	}
 
 	/**
 	 * For a tree of the form:
@@ -402,6 +386,15 @@ public class Utils{
     	if ((u|gg)&(t|b)) 	result &= (p&g);
     	if (result && u&gg)	result &= g;
     	if (result &&  t&b)	result &= p;
+    	
+    	return result;
+    }    
+    static boolean isValidHistory(Vertex.Neighbours n) {
+   	    	
+    	boolean result = true;
+    	if ((n.ux|n.ggx)&(n.tx|n.bx)) 	result &= (n.px&n.gx);
+    	if (result && n.ux&n.ggx)	result &= n.gx;
+    	if (result &&  n.tx&n.bx)	result &= n.px;
     	
     	return result;
     }

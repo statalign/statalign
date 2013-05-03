@@ -2542,19 +2542,38 @@ public class Vertex {
 //    }
     
     /**
-     *  Contains boolean indicators specifying neighbouring
+     *  Contains information about neighbouring
      *  characters in a particular column. 
      *  t = this, b = brother, p = parent, u = uncle, g = grandpa, gg = greatgrandpa 
      */    
     class Neighbours {
-    	AlignColumn t, b, p, u, g, gg;
+    	AlignColumn t, b, p, u, g, gg; // Not sure if these are needed
     	boolean tx, bx, px, ux, gx, ggx;
+    	int stateG, stateP, stateU, stateT, stateB;
+    	int nextStateG=4, nextStateP=4, nextStateU=4, nextStateT=4, nextStateB=4;
+    	/**
+    	 * Updates the record of what is the next non-silent state for each
+    	 * edge. Assumes state numbering whereby 
+    	 *    0=(--), 1=(-*), 2=(*-), 3=(**), 4=END
+    	 */
+    	void updateStates() {
+    		stateG = (gx?0:1) + 2*(ggx?0:1);
+    		if (stateG!=0) nextStateG = stateG;
+        	stateP = (px?0:1) + 2*(gx?0:1);
+        	if (stateP!=0) nextStateP = stateP;
+        	stateU = (ux?0:1) + 2*(gx?0:1);
+        	if (stateU!=0) nextStateU = stateU;
+        	stateT = (tx?0:1) + 2*(px?0:1);
+        	if (stateT!=0) nextStateT = stateT;
+        	stateB = (bx?0:1) + 2*(px?0:1);
+        	if (stateB!=0) nextStateB = stateB;
+    	}
     }
     /** 
      * Computes the probability of all the possible imputations for 
      * parent and grandpa given the neighbouring AlignColumn objects.
-     * @param prev Neighbours struct corresponding to previous column 
-     * @param curr Neighbours struct corresponding to previous column
+     * @param curr Neighbours struct corresponding to current column 
+     * @param next Neighbours struct corresponding to next column
      * @return A vector of log weights for the four possible imputation
      * patterns for the p--g edge:
      * 	   (--), (-*), (*-), (**)
@@ -2570,43 +2589,38 @@ public class Vertex {
        	final int hmm2Parent[] = owner.hmm2.getStateEmit()[0];
         final int hmm2Child[] = owner.hmm2.getStateEmit()[1];
         
+        // Do checks to ascertain which cases to consider:       
+        
     	Vertex brother = brother(), uncle = parent.brother(), grandpa = parent.parent;
-
-        // States of the five edges at the next column
-        int nextStateG=END, nextStateP=END, nextStateT=END, nextStateB=END, nextStateU=END;       
-        if (next != null) {
-        	nextStateG = (next.gx?0:1) + 2*(next.ggx?0:1);
-        	nextStateP = (next.px?0:1) + 2*(next.gx?0:1);
-        	nextStateU = (next.ux?0:1) + 2*(next.gx?0:1);
-        	nextStateT = (next.tx?0:1) + 2*(next.px?0:1);
-        	nextStateB = (next.bx?0:1) + 2*(next.px?0:1);        	
-        }
+    	boolean gIsRoot = (grandpa==owner.root);
+       
     	double[] logWeights = new double[4];
     	for (int k : new int[]{0,1,2,3}) { // (--), (-*), (*-), (**)
-    		logWeights[k] = 0;
-    		if (k==0) { 
-    			
+    		    		
+    		curr.gx = (k>1);
+    		curr.px = ((k%2)>0);
+    		curr.updateStates();
+    		    		
+    		if (!Utils.isValidHistory(curr)) {
+    			logWeights[k] = Utils.log0;
+    			continue;
     		}
+    		// else
+    		logWeights[k] = 0;
+    	
     		// Transition probability for the p--g edge
-    		logWeights[k] += parent.hmm2TransMatrix[k][nextStateP];
-    		int gi = (k>1) ? 0 : 1; 
-    		int pi = ((k%2)>0) ? 0 : 1;
-    		// Current state of the g--gg edge if we impute the p--g 
-    		// edge as state k. 
-    		int stateG = gi + 2*(curr.ggx?0:1);  
-    		logWeights[k] += grandpa.hmm2TransMatrix[stateG][nextStateG];
-    		// Current state of the t--p edge if we impute the p--g 
-    		// edge as state k. 
-    		int stateT = (curr.tx?0:1) + 2*pi;  
-    		logWeights[k] += hmm2TransMatrix[stateT][nextStateT];
-    		// Current state of the b--p edge if we impute the p--g 
-    		// edge as state k. 
-    		int stateB = (curr.bx?0:1) + 2*pi;  
-    		logWeights[k] += brother.hmm2TransMatrix[stateB][nextStateB];
-    		// Current state of the u--g edge if we impute the p--g 
-    		// edge as state k. 
-    		int stateU = (curr.ux?0:1) + 2*gi;  
-    		logWeights[k] += uncle.hmm2TransMatrix[stateU][nextStateU];
+    		if (k!=0) logWeights[k] += parent.hmm2TransMatrix[k][next.nextStateP];
+    		    		    		
+    		
+    		    		
+    		// Include transition probabilities for all edges that are currently non-silent
+    		if (!gIsRoot && curr.stateG!=0) logWeights[k] += grandpa.hmm2TransMatrix[curr.stateG][next.nextStateG];    		
+    		if (curr.stateT!=0) logWeights[k] += hmm2TransMatrix[curr.stateT][next.nextStateT];  
+    		if (curr.stateB!=0) logWeights[k] += brother.hmm2TransMatrix[curr.stateB][next.nextStateB];
+      		if (curr.stateU!=0) logWeights[k] += uncle.hmm2TransMatrix[curr.stateU][next.nextStateU];
+      		
+      		// Emission probabilities:
+    		//Math.log(Utils.calcEmProb(em,owner.substitutionModel.e));
     	}
     	return logWeights;
     }
@@ -2623,7 +2637,7 @@ public class Vertex {
     }
     public double nephewUncleSwapFixedColumns() {
     	double logProposalRatio = 0.0;    	
-    	Scheme scheme = Scheme.IND;     	    
+    	Scheme scheme = Scheme.ONE;     	    
     	
     	if (Utils.DEBUG) System.out.println(index+".nephewUncleSwapFixedColumns()");
     	
@@ -2653,26 +2667,17 @@ public class Vertex {
     	// this move, in case it needs to be restored if the move is rejected.
     	saveFiveWay(ali);
     	
-    	// Probabilities of imputations at the p--g edge
-    	//         p(--), p(-*), p(*-), p(**)
-    	double[] weights4 = {0.25,0.25,0.25,0.25};
-    	
     	double P = 0.1; // Probability of an additional indel being incorporated
     	// Should really derive this from lambda, mu and R somehow
-    	
-		//double[] weights2 = {1.0-P,P};		
-    	double[] weights2 = {0.1,0.9};
-		double[] logWeights2 = {Math.log(weights2[0]),Math.log(weights2[1])};
-		double tot2 = weights2[0] + weights2[1];
-		double logTot2 = Math.log(tot2);
-		
     	double P2 = Math.pow(P,2);
-		//double[] weights3 = {1.0-P-P2,P,P2};
-    	double[] weights3 = {0.05,0.05,0.9};
-		double[] logWeights3 = {Math.log(weights3[0]),Math.log(weights3[1]),Math.log(weights3[2])};
-		double tot3 = weights3[0] + weights3[1] + weights3[2]; 
-		double logTot3 = Math.log(tot3);		
-		   		
+    	double logP = Math.log(P);
+    	
+    	// Probabilities of imputations at the p--g edge
+    	//         p(--), p(-*), p(*-), p(**)
+    	double[] logWeights4 = {0,logP,logP,2*logP};
+    	// Subsets of the above, for selecting from the acceptable options:
+    	double[] logWeights2=new double[2], logWeights3=new double[3];
+    	   		
         // Loop over columns of the initial alignment, starting from the last (non-virtual) column
         first=last; parent.first=parent.last; brother.first=brother.last; grandpa.first=grandpa.last; uncle.first=uncle.last;
         AlignColumn t=last.prev, p=parent.last.prev, b=brother.last.prev, g=grandpa.last.prev, u=uncle.last.prev;
@@ -2704,11 +2709,17 @@ public class Vertex {
         	next.tx = ux; next.ux = tx; 
         	
         	if (col<(ali[0].length()-1)) {
-        		next.t = t.next; next.p = p.next; next.b = b.next; next.g = g.next; next.u = u.next;
+        		// NOT SURE IF THE LINE BELOW IS CORRECT
+        		next.t = t; next.p = p; next.b = b; next.g = g; next.u = u;
+            	if (!gIsRoot) next.gg = gg;
+        		// Depends what we're going to use these AlignColumn pointers for,
+        		// and when exactly they're updated etc.
+        		
+        		next.updateStates();
         	}
         	// else they are null
         	
-        	if (!gIsRoot) next.gg = gg.next;
+
         	
         	tx = (ali[index].charAt(col)!='-'); 		
         	px = (ali[parent.index].charAt(col)!='-'); 	
@@ -2721,33 +2732,23 @@ public class Vertex {
         	    
         	switch (scheme) {
     		case IND:
-    			// then leave the weights as they are
-    		case ONE:
+    			break;
+    			// then leave the weights as the default values
+    		case ONE:    			
     			curr.px = px; curr.bx = bx; curr.gx = gx; curr.ggx = ggx;
     			// NB the following two are switched around
     			curr.tx = ux; 
     			curr.ux = tx;
     			
     			if (col==(ali[0].length()-1)) {
-    				weights4 = computeWeights(curr,null);
+    				logWeights4 = computeWeights(curr,null);
     			}
     			else {    				
-    				weights4 = computeWeights(curr,next);
+    				logWeights4 = computeWeights(curr,next);
     			}
-    			
-    			// Then here extract weights2 and weights3 from the
-    			// relevant elements of weights4. Actually it will
-    			// depend whether weights2 is for the top or bottom
-    			// insertion -- maybe better to rewrite the rest of 
-    			// the code to operate with weights4 instead.
-    			
-    			weights2 = new double[3]; ///
-    			logWeights2[0] = Math.log(weights2[0]);
-    			logWeights2[1] = Math.log(weights2[1]);
-    			tot2 = weights2[0] + weights2[1];
-    			logTot2 = Math.log(tot2);
+    			break;
     		case FULL:
-    			throw new RuntimeException("Scheme.FULL not yet implemented.");
+    			throw new RuntimeException("Scheme.FULL not yet implemented.");    			
         	}    
         	    	
         	int nTips = (tx?1:0) + (bx?1:0) + (ux?1:0) + (ggx?1:0);
@@ -2795,9 +2796,14 @@ public class Vertex {
         		//    log(bwd) = 0 because only one choice for reverse
     			      		
         		//logProposalRatio += Math.log(1+P); // denominator for -log(fwd)
-        		logProposalRatio += logTot2;
+
+        		// (--), (-*), (*-), (**)
+        		logWeights2[0] = logWeights4[tx?2:1]; // if tx then 2
+        		logWeights2[1] = logWeights4[3];
+        		        		        		
+        		logProposalRatio += logWeights2[0] + logWeights2[1];
         		
-    			if (Utils.weightedChoose(weights2)==0) {    				
+    			if (Utils.logWeightedChoose(logWeights2)==0) {    				
     				if (tx) { delete(p); parent.first = p.next; p = p.prev; px = false; t.orphan = false; }
     				else    { delete(g); grandpa.first = g.next; g = g.prev; gx = false; u.orphan = false; }
     				// log(fwd) = log(1)
@@ -2819,7 +2825,10 @@ public class Vertex {
         		// -log(fwd) = 0 because only one choice
         		        		
         		//logProposalRatio -= Math.log(1+P); // denominator of log(bwd)
-        		logProposalRatio -= logTot2;
+        		logWeights2[0] = logWeights4[tx?1:2]; // NB if tx then 1 (opposite to above)
+        		logWeights2[1] = logWeights4[3];
+        		        		        		
+        		logProposalRatio -= logWeights2[0] + logWeights2[1];
         		
         		if (bx) {
         			//if (gx) logProposalRatio += Math.log(P); // grandpa existed before
@@ -2867,15 +2876,24 @@ public class Vertex {
     		    //    parent exists possibly before and possibly after
     			//    grandpa exists possibly before and possibly after
         		
+        		// (--), (-*), (*-), (**)
+
         		// Back proposal probabilities
-        		// Denominator cancels with numberator, so we ignore it
-        		if (px&gx)  logProposalRatio += logWeights3[2]; //logProposalRatio -= 2*Math.log(P);
-    			if (px&!gx) logProposalRatio += logWeights3[1]; //logProposalRatio -= Math.log(P);
-    			if (!px)    logProposalRatio += logWeights3[0];//logProposalRatio -= Math.log(1);
+
+        		logProposalRatio -= logWeights4[3] + logWeights4[tx?1:2] + logWeights4[0]; 
+        		if (px&gx)  logProposalRatio += logWeights4[3]; //logProposalRatio -= 2*Math.log(P);
+    			if (px&!gx) logProposalRatio += logWeights4[tx?1:2]; //logProposalRatio -= Math.log(P);
+    			if (!px)    logProposalRatio += logWeights4[0];//logProposalRatio -= Math.log(1);
     				
         		// First sample new internal states    
-    			//System.out.println(weights3[0]+" "+weights3[1]+" "+weights3[2]);
-        		int choice = Utils.weightedChoose(weights3);
+    			//System.out.println(weights3[0]+" "+weights3[1]+" "+weights3[2]);   			    				
+    			logWeights3[0] = logWeights4[0];
+    			logWeights3[2] = logWeights4[3];
+    			logWeights3[1] = logWeights3[tx?2:1]; // NB this is the other way round to above
+    			
+    			logProposalRatio += logWeights3[0] + logWeights3[1] + logWeights3[2];
+    			
+        		int choice = Utils.logWeightedChoose(logWeights3);
         		logProposalRatio -= logWeights3[choice];
         		
         		if (choice == 0) { // Then we're choosing no internals
