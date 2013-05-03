@@ -109,6 +109,7 @@ public class TopologyMove extends McmcMove {
 	@Override
 	public double proposal(Object externalState) {
 
+		System.out.println("nephew = "+nephew.index+", uncle = "+uncle.index);
 //		if(Utils.DEBUG){
 //			System.out.println("Before:");
 //			System.out.println("Likelihood:");
@@ -143,20 +144,22 @@ public class TopologyMove extends McmcMove {
         tree.root.printToScreenAlignment(0,0,true);
 
 		
-		String[] s = nephew.printedAlignment();
-		System.out.println(nephew.index+" "+s[1]+"\n"+nephew.parent.index+" "+s[0]);
-		s = uncle.printedAlignment();
-		System.out.println(uncle.index+" "+s[1]+"\n"+uncle.parent.index+" "+s[0]);
+//		String[] s = nephew.printedAlignment();
+//		System.out.println(nephew.index+" "+s[1]+"\n"+nephew.parent.index+" "+s[0]);
+//		s = uncle.printedAlignment();
+//		System.out.println(uncle.index+" "+s[1]+"\n"+uncle.parent.index+" "+s[0]);
 		
 		logProposalRatio = nephew.nephewUncleSwapFixedColumns();
 		
 		if (Utils.DEBUG) System.out.println("AFTER: root.orphanLogLike = "+tree.root.orphanLogLike+", root.indelLogLike = "+tree.root.indelLogLike);
+        tree.root.printToScreenAlignment(0,0,true);
+
 		
 		// double logProposalRatio = nephew.swapWithUncleAlignToParent();
 		System.out.println("logProposalRatio after swap = "+logProposalRatio);
 		System.out.println("After  Topology: "+tree.printedTree());
-		s = nephew.printedAlignment();
-		System.out.println(s[0]+"\n"+s[1]);
+//		s = nephew.printedAlignment();
+//		System.out.println(s[0]+"\n"+s[1]);
 
 		if (logProposalRatio == Double.POSITIVE_INFINITY) {
 			System.out.println("Likelihood: "+tree.getLogLike());

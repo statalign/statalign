@@ -2637,7 +2637,13 @@ public class Vertex {
     }
     public double nephewUncleSwapFixedColumns() {
     	double logProposalRatio = 0.0;    	
-    	Scheme scheme = Scheme.ONE;     	    
+    	Scheme scheme = Scheme.IND;
+    	
+    	/** 
+    	 * If <code>true</code> then we will not attempt to change the
+    	 * internal characters in cases where both p and g exist to begin with.
+    	 */
+    	boolean KEEP_DOUBLES = true;
     	
     	if (Utils.DEBUG) System.out.println(index+".nephewUncleSwapFixedColumns()");
     	
@@ -2674,7 +2680,7 @@ public class Vertex {
     	
     	// Probabilities of imputations at the p--g edge
     	//         p(--), p(-*), p(*-), p(**)
-    	double[] logWeights4 = {0,logP,logP,2*logP};
+    	double[] logWeights4 = {logP,logP,logP,logP};
     	// Subsets of the above, for selecting from the acceptable options:
     	double[] logWeights2=new double[2], logWeights3=new double[3];
     	   		
@@ -2709,7 +2715,7 @@ public class Vertex {
         	next.tx = ux; next.ux = tx; 
         	
         	if (col<(ali[0].length()-1)) {
-        		// NOT SURE IF THE LINE BELOW IS CORRECT
+        		// NOT SURE IF THE TWO LINES BELOW ARE CORRECT
         		next.t = t; next.p = p; next.b = b; next.g = g; next.u = u;
             	if (!gIsRoot) next.gg = gg;
         		// Depends what we're going to use these AlignColumn pointers for,
@@ -2793,6 +2799,7 @@ public class Vertex {
     			//    grandpa exists before, but possibly not after
         		//    t does not exist
         		
+        	
         		//    log(bwd) = 0 because only one choice for reverse
     			      		
         		//logProposalRatio += Math.log(1+P); // denominator for -log(fwd)
@@ -2821,7 +2828,7 @@ public class Vertex {
     		    //    grandpa exists before and after
     			//    parent exists after, and possibly before
         		//    b and t do not exist
-
+        		
         		// -log(fwd) = 0 because only one choice
         		        		
         		//logProposalRatio -= Math.log(1+P); // denominator of log(bwd)
@@ -2870,6 +2877,53 @@ public class Vertex {
         		// We could sample new internal states, but it's not necessary,
         		// so we will leave any such columns as they are.
         	}
+        	else if ((tx|ux)&(px&gx)) {
+        		// In the cases where parent and grandpa exist
+        		// and there is only one leaf node, we will leave
+        		// everything as is, and just change the parent of t.
+        	}
+        	else if (tx&px) {
+        		// Then:
+        		// 		parent exists before, and we will ensure it does not exist after
+        		// 		because before only t and p contain characters, so we want to
+        		// 		keep the same situation afterwards (but then with u and g).
+        		
+        		// get rid of p
+        		delete(p); parent.first = p.next; p = p.prev; px = false;  
+				
+        		// create new g
+				g = new AlignColumn((g!=null)?g.next:grandpa.first); // New orphan column   
+				gx = true;
+				    				
+				t.orphan = false; // t will be adopted by the new g
+				
+				// (-*), (*-)
+				logProposalRatio += logWeights4[1] - logWeights4[2];
+        	}
+        	else if (ux&gx) {
+        		// Then:
+        		// 		grandpa exists before, and we will ensure it does not exist after
+        		// 		because before only u and g contain characters, so we want to
+        		// 		keep the same situation afterwards (but then with t and p).
+        		
+        		// get rid of g
+        		delete(g); grandpa.first = g.next; g = g.prev; gx = false; 
+				
+        		// create new p
+				p = new AlignColumn((p!=null)?p.next:parent.first); // New orphan column   
+				px = true;
+				    				
+				u.orphan = false; // u will be adopted by the new p
+				
+				logProposalRatio += logWeights4[2] - logWeights4[1];
+        	}
+        	else if (tx|ux) {
+        		// Then:
+        		// 		neither parent nor grandpa exist before, and we
+        		//		will ensure that neither exist afterwards.
+        		// 		i.e. no need to do anything
+        	}
+        	/*
         	else if (tx|ux) {
         		//System.out.println("tx|ux");
         		// Then:        		
@@ -2892,6 +2946,10 @@ public class Vertex {
     			logWeights3[1] = logWeights3[tx?2:1]; // NB this is the other way round to above
     			
     			logProposalRatio += logWeights3[0] + logWeights3[1] + logWeights3[2];
+    			
+//    			logWeights2[0] = logWeights4[0];
+//    			logWeights2[1] = 
+//    			logProposalRatio += logWeights2[0] + logWeights2[1];
     			
         		int choice = Utils.logWeightedChoose(logWeights3);
         		logProposalRatio -= logWeights3[choice];
@@ -2951,6 +3009,7 @@ public class Vertex {
     				if (ux) u.orphan = false;
     			}
         	}
+        	*/
         	else if (gx|px) { // i.e. parent and/or grandpa character(s) but no leaves
         		// Do nothing, otherwise difficult to make the move reversible without
         		// considering the possibility of inserting silent columns.
@@ -2979,34 +3038,34 @@ public class Vertex {
         	
         	if (tx) {
         		t.updateParent(t.orphan?((g==null)?grandpa.first:g.next):g,uncleIsLeft);
-	    		first = t; //old.first = to;         		 
+	    		//first = t; //old.first = to;         		 
         	}
 //       if (tx) System.out.println("t = "+t+", t.parent = "+t.parent);
 //	   if (px) System.out.println("p = "+p+", g = "+g+", grandpa.first = "+grandpa.first+", p.parent = "+p.parent+", p.orphan = "+p.orphan);	   
         	if (px) {
         		p.updateParent(p.orphan?((g==null)?grandpa.first:g.next):g,!uncleIsLeft);
-	       		parent.first = p; //parent.old.first = po; 
+	       		//parent.first = p; //parent.old.first = po; 
         	}
 //       if (px) System.out.println("p = "+p+", g = "+g+", grandpa.first = "+grandpa.first+", p.parent = "+p.parent+", p.orphan = "+p.orphan);  
 //       if (ux) System.out.println("u = "+u+", u.parent = "+u.parent+", u.orphan = "+u.orphan);
         	if (ux) {
         		u.updateParent(u.orphan?((p==null)?parent.first:p.next):p,isLeft);
-	      		uncle.first = u; //uncle.old.first = uo; 
+	      		//uncle.first = u; //uncle.old.first = uo; 
         	}
 //       if (ux) System.out.println("u = "+u+", u.parent = "+u.parent+", u.orphan = "+u.orphan);       
         	if (bx) {
         		//System.out.println("p = "+p);
         		b.updateParent(b.orphan?((p==null)?parent.first:p.next):p,!isLeft);
-	      		brother.first = b; //brother.old.first = bo; 
+	      		//brother.first = b; //brother.old.first = bo; 
         	}
 //       if (bx) System.out.println("b = "+b+", b.parent = "+b.parent);
 //       if (ggx&gx) System.out.println("g = "+g+", g.orphan = "+g.orphan+", gg = "+gg+", g.parent = "+g.parent+", g.parent.right = "+g.parent.right);
        		if (gx) {
         		if (!gIsRoot) g.updateParent(g.orphan?((gg==null)?greatgrandpa.first:gg.next):gg,grandpaIsLeft);
-	      		grandpa.first = g; //grandpa.old.first = go;	      	
+	      		//grandpa.first = g; //grandpa.old.first = go;	      	
         	}        	
 //       if (ggx&gx) System.out.println("g = "+g+", g.orphan = "+g.orphan+", gg = "+gg+", g.parent = "+g.parent+", g.parent.right = "+g.parent.right);
-       		if (ggx) greatgrandpa.first = gg;
+       		//if (ggx) greatgrandpa.first = gg;
         	if (Utils.DEBUG) {
 	        	if (px&gx) if (p==g) System.out.println("##### AFTER: p == g? Should be false. Actually is "+(p==g));
 		    	if (tx&gx) {
@@ -3031,12 +3090,12 @@ public class Vertex {
 //        	System.out.println("*"+gx+" "+ali[grandpa.index].charAt(col));
 
         	// Decrement the column pointers
-        	if (tx) t = t.prev; 
-        	if (px) p = p.prev;
-        	if (bx) b = b.prev;
-        	if (gx) g = g.prev;        	
-        	if (ux) u = u.prev;
-        	if (ggx) gg = gg.prev;       	
+        	if (tx) { first = t; t = t.prev;} 
+        	if (px) { parent.first = p; p = p.prev; }
+        	if (bx) { brother.first = b; b = b.prev; }
+        	if (gx) { grandpa.first = g; g = g.prev; }        	
+        	if (ux) { uncle.first = u; u = u.prev; }
+        	if (ggx) { greatgrandpa.first = gg; gg = gg.prev; }       	
         	
         }   
         
