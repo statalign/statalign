@@ -2844,6 +2844,7 @@ public class Vertex {
         				logProposalRatio += logWeights2[0];
             			g = new AlignColumn((g!=null)?g.next:grandpa.first); // New orphan column          			
             			gx = true;
+            			p.orphan = false;
             			// t is already not marked as orphan because p exists
             		}
         		}
@@ -2858,6 +2859,7 @@ public class Vertex {
             			//p.parent = g;
             			p.orphan = false;
             			px = true;
+            			// u is already not marked as orphan
             		}	
         		}
         		
