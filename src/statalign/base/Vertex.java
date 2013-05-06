@@ -2547,82 +2547,109 @@ public class Vertex {
      *  t = this, b = brother, p = parent, u = uncle, g = grandpa, gg = greatgrandpa 
      */    
     class Neighbours {
+    	final int END = owner.hmm2.getEnd();
+
     	AlignColumn t, b, p, u, g, gg; // Not sure if these are needed
     	boolean tx, bx, px, ux, gx, ggx;
-    	int stateG, stateP, stateU, stateT, stateB;
-    	int nextStateG=4, nextStateP=4, nextStateU=4, nextStateT=4, nextStateB=4;
+    	int stateG=END, stateP=END, stateU=END, stateT=END, stateB=END;
+    	int nextStateG=END, nextStateP=END, nextStateU=END, nextStateT=END, nextStateB=END;
     	/**
     	 * Updates the record of what is the next non-silent state for each
     	 * edge. Assumes state numbering whereby 
     	 *    0=(--), 1=(-*), 2=(*-), 3=(**), 4=END
     	 */
     	void updateStates() {
-    		stateG = (gx?0:1) + 2*(ggx?0:1);
     		if (stateG!=0) nextStateG = stateG;
-        	stateP = (px?0:1) + 2*(gx?0:1);
         	if (stateP!=0) nextStateP = stateP;
-        	stateU = (ux?0:1) + 2*(gx?0:1);
         	if (stateU!=0) nextStateU = stateU;
-        	stateT = (tx?0:1) + 2*(px?0:1);
         	if (stateT!=0) nextStateT = stateT;
-        	stateB = (bx?0:1) + 2*(px?0:1);
         	if (stateB!=0) nextStateB = stateB;
+
+    		stateG = (gx?0:1) + 2*(ggx?0:1);
+        	stateP = (px?0:1) + 2*(gx?0:1);
+        	stateU = (ux?0:1) + 2*(gx?0:1);
+        	stateT = (tx?0:1) + 2*(px?0:1);
+        	stateB = (bx?0:1) + 2*(px?0:1);
     	}
     }
     /** 
      * Computes the probability of all the possible imputations for 
      * parent and grandpa given the neighbouring AlignColumn objects.
-     * @param curr Neighbours struct corresponding to current column 
-     * @param next Neighbours struct corresponding to next column
+     * @param curr Neighbours struct corresponding to current state 
+     * @param old Neighbours struct corresponding to original state
      * @return A vector of log weights for the four possible imputation
      * patterns for the p--g edge:
      * 	   (--), (-*), (*-), (**)
      */
-    public double[] computeWeights(Neighbours curr, Neighbours next) {
+    public double computeWeights(Neighbours curr, Neighbours old,
+    											double[] logProbs,
+    											double[] logProbsOld) {
     	// NB when this function is called we should have the current node
     	// being in the nephew position. This will indeed be the case if
     	// it is called in the middle of the nephew uncle swap (before the 
     	// Vertex pointers are reassigned).
-    	final int START = owner.hmm2.getStart();
+    	//final int START = owner.hmm2.getStart();
     	final int END = owner.hmm2.getEnd();
-    	final int emitPatt2State[] = owner.hmm2.getEmitPatt2State();
-       	final int hmm2Parent[] = owner.hmm2.getStateEmit()[0];
-        final int hmm2Child[] = owner.hmm2.getStateEmit()[1];
+//    	final int emitPatt2State[] = owner.hmm2.getEmitPatt2State();
+//       	final int hmm2Parent[] = owner.hmm2.getStateEmit()[0];
+//        final int hmm2Child[] = owner.hmm2.getStateEmit()[1];
         
         // Do checks to ascertain which cases to consider:       
         
     	Vertex brother = brother(), uncle = parent.brother(), grandpa = parent.parent;
     	boolean gIsRoot = (grandpa==owner.root);
-       
-    	double[] logWeights = new double[4];
-    	for (int k : new int[]{0,1,2,3}) { // (--), (-*), (*-), (**)
+ 
+    	double logTotal = Utils.log0, logTotalOld = Utils.log0;
+    	for (int k=0; k<4; k++) { // (--), (-*), (*-), (**)
     		    		
     		curr.gx = (k>1);
     		curr.px = ((k%2)>0);
     		curr.updateStates();
     		    		
     		if (!Utils.isValidHistory(curr)) {
-    			logWeights[k] = Utils.log0;
+    			logProbs[k] = Utils.log0;
+    			logProbsOld[k] = Utils.log0;
     			continue;
     		}
     		// else
-    		logWeights[k] = 0;
+    		logProbs[k] = 0;
+    		logProbsOld[k] = 0;
     	
     		// Transition probability for the p--g edge
-    		if (k!=0) logWeights[k] += parent.hmm2TransMatrix[k][next.nextStateP];
-    		    		    		
-    		
-    		    		
+    		if (k!=0) {
+    			logProbs[k] += parent.hmm2TransMatrix[k][curr.nextStateP];
+    			logProbsOld[k] += parent.hmm2TransMatrix[k][old.nextStateP];
+    		}
+    		    		    		    		    		    	
     		// Include transition probabilities for all edges that are currently non-silent
-    		if (!gIsRoot && curr.stateG!=0) logWeights[k] += grandpa.hmm2TransMatrix[curr.stateG][next.nextStateG];    		
-    		if (curr.stateT!=0) logWeights[k] += hmm2TransMatrix[curr.stateT][next.nextStateT];  
-    		if (curr.stateB!=0) logWeights[k] += brother.hmm2TransMatrix[curr.stateB][next.nextStateB];
-      		if (curr.stateU!=0) logWeights[k] += uncle.hmm2TransMatrix[curr.stateU][next.nextStateU];
+    		if (!gIsRoot && curr.stateG!=0) {
+    			logProbs[k] += grandpa.hmm2TransMatrix[curr.stateG][curr.nextStateG];
+    			logProbsOld[k] += grandpa.hmm2TransMatrix[curr.stateG][old.nextStateG];
+    		}
+    		if (curr.stateT!=0) { 
+    			logProbs[k] += hmm2TransMatrix[curr.stateT][curr.nextStateT];  
+    			logProbsOld[k] += hmm2TransMatrix[curr.stateT][old.nextStateT];  
+    		}
+    		if (curr.stateB!=0) {
+    			logProbs[k] += brother.hmm2TransMatrix[curr.stateB][curr.nextStateB];
+    			logProbsOld[k] += brother.hmm2TransMatrix[curr.stateB][old.nextStateB];
+    		}
+      		if (curr.stateU!=0) {
+      			logProbs[k] += uncle.hmm2TransMatrix[curr.stateU][curr.nextStateU];
+      			logProbsOld[k] += uncle.hmm2TransMatrix[curr.stateU][old.nextStateU];
+      		}
       		
+      		logTotal = Utils.logAdd(logTotal,logProbs[k]);
+      		logTotalOld = Utils.logAdd(logTotalOld,logProbsOld[k]);
       		// Emission probabilities:
     		//Math.log(Utils.calcEmProb(em,owner.substitutionModel.e));
     	}
-    	return logWeights;
+    	
+//    	for (int k=0; k<END; k++) {
+//    		logProbs[k] -= logTotal;
+//    	}
+    	
+    	return logProbsOld[old.stateP] - logTotalOld; // back proposal probability
     }
 
     
@@ -2673,14 +2700,20 @@ public class Vertex {
     	// this move, in case it needs to be restored if the move is rejected.
     	saveFiveWay(ali);
     	
-    	double P = 0.1; // Probability of an additional indel being incorporated
+    	double P = 0.25; // Probability of an additional indel being incorporated
     	// Should really derive this from lambda, mu and R somehow
     	double P2 = Math.pow(P,2);
     	double logP = Math.log(P);
     	
-    	// Probabilities of imputations at the p--g edge
+    	// Ratios of probabilities of imputations at the p--g edge
+    	// (ratio of back proposal to forward proposal).
+    	// When scheme == ONE, the back proposal is computed given 
+    	// th old right-neighbour, whereas the forward proposal is
+    	// conditional on the newly imputed right-neighbour.
     	//         p(--), p(-*), p(*-), p(**)
     	double[] logWeights4 = {logP,logP,logP,logP};
+    	double[] logWeightsOld4 = {logP,logP,logP,logP};
+    	    	
     	// Subsets of the above, for selecting from the acceptable options:
     	double[] logWeights2=new double[2], logWeights3=new double[3];
     	   		
@@ -2692,8 +2725,9 @@ public class Vertex {
         
         // Variables indicating whether a character is present at the current column
         boolean tx=false, px=false, bx=false, gx=false, ux=false, ggx=false;
-        // Same but in the form of an Neighbours struct, for next and current columns
-        Neighbours next = new Neighbours(), curr = new Neighbours();        
+        // Same but in the form of an Neighbours struct, for current columns,
+        // as well as state before the proposal
+        Neighbours before = new Neighbours(), curr = new Neighbours();        
         
         for (int col=ali[0].length()-1; col>=0; col--) {
         	
@@ -2710,18 +2744,19 @@ public class Vertex {
 	System.out.print(ali[grandpa.index].charAt(col));
 	System.out.println();
 */
-        	next.px = px; next.bx = bx; next.gx = gx; next.ggx = ggx;
+        	       	
+        	before.px = px; before.bx = bx; before.gx = gx; before.ggx = ggx;
         	// NB the following two are switched round:
-        	next.tx = ux; next.ux = tx; 
+        	before.tx = ux; before.ux = tx; 
         	
         	if (col<(ali[0].length()-1)) {
-        		// NOT SURE IF THE TWO LINES BELOW ARE CORRECT
-        		next.t = t; next.p = p; next.b = b; next.g = g; next.u = u;
-            	if (!gIsRoot) next.gg = gg;
+        		// NOT SURE IF THE TWO LINES BELOW ARE NEEDED
+        		before.t = t; before.p = p; before.b = b; before.g = g; before.u = u;
+            	if (!gIsRoot) before.gg = gg;
         		// Depends what we're going to use these AlignColumn pointers for,
         		// and when exactly they're updated etc.
         		
-        		next.updateStates();
+        		before.updateStates();
         	}
         	// else they are null
         	
@@ -2747,10 +2782,10 @@ public class Vertex {
     			curr.ux = tx;
     			
     			if (col==(ali[0].length()-1)) {
-    				logWeights4 = computeWeights(curr,null);
+    				computeWeights(curr,null,logWeights4,logWeightsOld4);
     			}
     			else {    				
-    				logWeights4 = computeWeights(curr,next);
+    				computeWeights(curr,before,logWeights4,logWeightsOld4);
     			}
     			break;
     		case FULL:
@@ -2808,7 +2843,7 @@ public class Vertex {
         		logWeights2[0] = logWeights4[tx?2:1]; // if tx then 2
         		logWeights2[1] = logWeights4[3];
         		        		        		
-        		logProposalRatio += logWeights2[0] + logWeights2[1];
+        		logProposalRatio += Utils.logAdd(logWeights2[0],logWeights2[1]);
         		
     			if (Utils.logWeightedChoose(logWeights2)==0) {    				
     				if (tx) { delete(p); parent.first = p.next; p = p.prev; px = false; t.orphan = false; }
@@ -2832,16 +2867,18 @@ public class Vertex {
         		// -log(fwd) = 0 because only one choice
         		        		
         		//logProposalRatio -= Math.log(1+P); // denominator of log(bwd)
-        		logWeights2[0] = logWeights4[tx?1:2]; // NB if tx then 1 (opposite to above)
-        		logWeights2[1] = logWeights4[3];
+        		
+        		
+        		//logWeights2[0] = logWeightsOld4[tx?1:2]; // NB if tx then 1 (opposite to above)
+        		//logWeights2[1] = logWeightsOld4[3];
         		        		        		
-        		logProposalRatio -= logWeights2[0] + logWeights2[1];
+        		//logProposalRatio -= logWeights2[0] + logWeights2[1];
         		
         		if (bx) {
         			//if (gx) logProposalRatio += Math.log(P); // grandpa existed before
-        			if (gx) logProposalRatio += logWeights2[1]; 
+        			if (gx) ;//logProposalRatio += logWeights2[1]; 
         			else { // Insert new g column
-        				logProposalRatio += logWeights2[0];
+        				//logProposalRatio += logWeights2[0];
             			g = new AlignColumn((g!=null)?g.next:grandpa.first); // New orphan column          			
             			gx = true;
             			p.orphan = false;
@@ -2851,10 +2888,10 @@ public class Vertex {
         		else {
         			if (px) { // If parent existed before
             			//logProposalRatio += Math.log(P);
-        				logProposalRatio += logWeights2[1];
+        				//logProposalRatio += logWeights2[1];
             		}
             		else { // Insert new p column
-            			logProposalRatio += logWeights2[0];
+            			//logProposalRatio += logWeights2[0];
             			p = new AlignColumn((p!=null)?p.next:parent.first); 
             			//p.parent = g;
             			p.orphan = false;
@@ -2899,8 +2936,9 @@ public class Vertex {
 				    				
 				t.orphan = false; // t will be adopted by the new g
 				
-				// (-*), (*-)
-				logProposalRatio += logWeights4[1] - logWeights4[2];
+				
+				//                       log p_old(-*) -  log p_new(*-)
+				//logProposalRatio += -logWeightsOld4[1] + logWeights4[2];
         	}
         	else if (ux&gx) {
         		// Then:
@@ -2917,7 +2955,8 @@ public class Vertex {
 				    				
 				u.orphan = false; // u will be adopted by the new p
 				
-				logProposalRatio += logWeights4[2] - logWeights4[1];
+				//                       log p_old(*-) -  log p_new(-*)
+				//logProposalRatio += -logWeightsOld4[2] + logWeights4[1];
         	}
         	else if (tx|ux) {
         		// Then:
@@ -3012,9 +3051,25 @@ public class Vertex {
     			}
         	}
         	*/
-        	else if (gx|px) { // i.e. parent and/or grandpa character(s) but no leaves
+        	else if (px&gx) {
         		// Do nothing, otherwise difficult to make the move reversible without
-        		// considering the possibility of inserting silent columns.
+        		// considering the possibility of inserting silent columns.	
+        	}
+        	else if (gx) { // i.e. only grandpa
+        		// get rid of g
+        		delete(g); grandpa.first = g.next; g = g.prev; gx = false; 
+				
+        		// create new p
+				p = new AlignColumn((p!=null)?p.next:parent.first); // New orphan column   
+				px = true;
+        	}
+        	else if (px) { // i.e. only parent
+        		// get rid of p
+        		delete(p); parent.first = p.next; p = p.prev; px = false;  
+				
+        		// create new g
+				g = new AlignColumn((g!=null)?g.next:grandpa.first); // New orphan column   
+				gx = true;
         	}
         	else if (!gx&!px) { // then we have an all-gapped column
         		// Do nothing. The col counter will be decremented, and all the AlignColumn

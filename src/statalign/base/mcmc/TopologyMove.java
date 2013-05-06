@@ -13,6 +13,8 @@ import statalign.mcmc.UniformProposal;
 
 public class TopologyMove extends McmcMove {
 	
+	final boolean INCLUDE_EDGE_MULTIPLIERS = false;
+	
 	FileWriter topMoves;
 	Tree tree = null;
 	Vertex nephew;
@@ -132,13 +134,17 @@ public class TopologyMove extends McmcMove {
 //		}
     	if (Utils.DEBUG) System.out.println("BEFORE: root.orphanLogLike = "+tree.root.orphanLogLike+", root.indelLogLike = "+tree.root.indelLogLike);
 
-		double logProposalRatio = nephewEdgeMove.proposal(externalState);
-//		System.out.println("logProposalRatio after nephew = "+logProposalRatio);
-		logProposalRatio += parentEdgeMove.proposal(externalState);
-//		System.out.println("logProposalRatio after parent = "+logProposalRatio);
-		logProposalRatio += uncleEdgeMove.proposal(externalState);
-//		System.out.println("logProposalRatio after uncle = "+logProposalRatio);
+    	double logProposalRatio = 0;
 		
+    	if (INCLUDE_EDGE_MULTIPLIERS) {
+			logProposalRatio = nephewEdgeMove.proposal(externalState);
+	//		System.out.println("logProposalRatio after nephew = "+logProposalRatio);
+			logProposalRatio += parentEdgeMove.proposal(externalState);
+	//		System.out.println("logProposalRatio after parent = "+logProposalRatio);
+			logProposalRatio += uncleEdgeMove.proposal(externalState);
+	//		System.out.println("logProposalRatio after uncle = "+logProposalRatio);
+    	}
+    	
 //		logProposalRatio += nephew.fastSwapWithUncle();
 		//double logProposalRatio = nephew.fastSwapWithUncle();
         tree.root.printToScreenAlignment(0,0,true);
@@ -208,11 +214,12 @@ public class TopologyMove extends McmcMove {
        // uncle.swapBackUncleAlignToParent();
 		uncle.restoreFiveWay();
 		
-		// Note these are restored in the reverse order to the proposal
-		uncleEdgeMove.restoreState(externalState);
-		parentEdgeMove.restoreState(externalState);
-		nephewEdgeMove.restoreState(externalState);
-				
+		if (INCLUDE_EDGE_MULTIPLIERS) {
+			// Note these are restored in the reverse order to the proposal
+			uncleEdgeMove.restoreState(externalState);
+			parentEdgeMove.restoreState(externalState);
+			nephewEdgeMove.restoreState(externalState);
+		}
 	}
 	
 	@Override
