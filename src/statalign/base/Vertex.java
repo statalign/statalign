@@ -2572,6 +2572,15 @@ public class Vertex {
         	stateB = (bx?0:1) + 2*(px?0:1);
     	}
     }
+    private double[][] computeImputationProbabilities(String[] ali) {
+    	
+    	final int END = owner.hmm2.getEnd();
+    	double[][] logMarg = new double[ali[0].length()][END];
+    	
+    	
+    	return logMarg;
+    }
+    
     /** 
      * Computes the probability of all the possible imputations for 
      * parent and grandpa given the neighbouring AlignColumn objects.
@@ -2652,7 +2661,43 @@ public class Vertex {
     	return logProbsOld[old.stateP] - logTotalOld; // back proposal probability
     }
 
-    
+    /**
+     * Takes a vector of probabilities for imputing different states at the p--g
+     * edge, and sets to log(0) all of those possibilities that would result in an
+     * invalid history given the neighbouring states.
+     * @param logProbsCol A vector of log probabilities for possible choices
+     * (will be modified).
+     * @param curr A {@link Neighbours} object containing the current state of the 
+     * neighbouring characters for the edge of interest.
+     */
+	private void zeroInvalidChoicesAndRenormalise(double[] logProbsCol, Neighbours curr) {
+		
+		double logTot = Utils.log0;
+		for (int k=0; k<logProbsCol.length; k++) {
+			curr.gx = (k>1);
+    		curr.px = ((k%2)>0);
+    		// NB the above two statements are currently hard-coded using the 
+    		// state labelling used for the TKF92 HMM. 
+			if (!Utils.isValidHistory(curr)) logProbsCol[k] = Utils.log0;
+			else logTot = Utils.logAdd(logTot, logProbsCol[k]);
+		}
+		for (int k=0; k<logProbsCol.length; k++) logProbsCol[k] -= logTot;
+		
+	}
+
+	private void magnifyProbability(double[] logProbsCol,int stateP) {
+		double factor = 2;
+		logProbsCol[stateP] *= factor;
+		double logTot = Utils.log0;
+		double tot = Utils.log0;
+		for (int k=0; k<logProbsCol.length; k++) {
+			logTot = Utils.logAdd(logTot,logProbsCol[k]);
+		}
+		for (int k=0; k<logProbsCol.length; k++) {
+			logProbsCol[k] -= logTot;
+			tot = Utils.logAdd(tot,logProbsCol[k]);
+		}		
+	}
     /**
      * Schemes for imputing the internal character in the five-way topology
      * sampling move.
@@ -2661,6 +2706,191 @@ public class Vertex {
     	IND,// independent
     	ONE,// one-step greedy algorithm
     	FULL // full dynamic programming, using a simplified HMM
+    }
+    public double nephewUncleSwapFixedColumns2() {
+    	double logProposalRatio = 0.0;    	
+    	Scheme scheme = Scheme.IND;
+    	
+    	double[] logProbs = {0.25,0.25,0.25,0.25};
+    	
+    	if (Utils.DEBUG) System.out.println(index+".nephewUncleSwapFixedColumns()");
+    	
+    	Vertex brother = brother(), uncle = parent.brother(), grandpa = parent.parent, greatgrandpa = grandpa.parent;
+    	boolean gIsRoot = (grandpa==owner.root);
+    	boolean isLeft = (this==parent.left);
+    	boolean uncleIsLeft = (uncle==grandpa.left);
+    	boolean grandpaIsLeft = false; 
+    	if (!gIsRoot) grandpaIsLeft = (grandpa==greatgrandpa.left);
+
+    	String[] ali = owner.getState().getFullAlign();
+
+    	// Save the old alignment associated with the nodes that will be modified by
+    	// this move, in case it needs to be restored if the move is rejected.
+    	saveFiveWay(ali);
+    	
+    	
+    	double[][] logMarg = null;
+    	if (scheme != Scheme.IND) logMarg = computeImputationProbabilities(ali);
+    	
+
+    	// Loop over columns of the initial alignment, starting from the last (non-virtual) column
+        first=last; parent.first=parent.last; brother.first=brother.last; grandpa.first=grandpa.last; uncle.first=uncle.last;
+        AlignColumn t=last.prev, p=parent.last.prev, b=brother.last.prev, g=grandpa.last.prev, u=uncle.last.prev;
+        AlignColumn gg = null; if (!gIsRoot) { greatgrandpa.first = greatgrandpa.last; gg=greatgrandpa.last.prev;}               
+ 		
+        
+        // Variables indicating whether a character is present at the current column
+        boolean tx=false, px=false, bx=false, gx=false, ux=false, ggx=false;
+
+        Neighbours curr = new Neighbours();
+		double[] logProbsCol = logProbs.clone();
+		double[] logProbsOld = logProbs.clone();
+
+
+		String ss = new String("");
+        for (int col=ali[0].length()-1; col>=0; col--) {
+
+        	tx = (ali[index].charAt(col)!='-'); 		
+        	px = (ali[parent.index].charAt(col)!='-'); 	
+        	bx = (ali[brother.index].charAt(col)!='-'); 
+        	gx = (ali[grandpa.index].charAt(col)!='-');
+        	ux = (ali[uncle.index].charAt(col)!='-');
+          	ggx = false;
+        	if (!gIsRoot) ggx = (ali[greatgrandpa.index].charAt(col)!='-');
+        
+        	if (!tx&!bx&!ux&!ggx) {
+        		// column with no tips
+        		//if (Utils.DEBUG && (px|gx))  ss += "*"; 
+        		continue;
+        	} 
+        	
+    		int currState = (px?0:1) + 2*(gx?0:1);
+
+        	int state;
+        	
+        	// Compute the probabilities of each imputation for the p--g edge
+        	// under the different possible schemes
+        	switch(scheme) {
+        	case IND:        		
+        		curr.bx = bx; curr.ggx = ggx;
+        		
+        		logProbsOld = logProbs.clone();            	
+        		curr.tx = tx; curr.ux = ux; // NB these are swapped 
+        		zeroInvalidChoicesAndRenormalise(logProbsOld,curr);
+
+            	logProbsCol = logProbs.clone();
+            	curr.tx = ux; curr.ux = tx; // NB these are swapped         		
+        		zeroInvalidChoicesAndRenormalise(logProbsCol,curr);
+        		
+        		int nTips = (tx?1:0) + (bx?1:0) + (ux?1:0) + (ggx?1:0);
+        		if ((!tx&!ux)|(nTips==1)) {
+        			magnifyProbability(logProbsCol,currState);        		
+        			magnifyProbability(logProbsOld,currState);        		
+        		}
+        		break;
+        	case ONE:
+        		logProbsCol = logMarg[col];
+        		break;
+        	case FULL:
+        		throw new RuntimeException("Scheme.FULL has not yet been implemented");
+        	}
+        	
+        	
+        	logProposalRatio += logProbsCol[currState]; // assuming fwd probs = bwd probs
+        	// Select a state for the p--g edge according to its probability
+        	state = Utils.logWeightedChoose(logProbsCol);
+    		logProposalRatio -= logProbsCol[state];
+        	
+    		//if (Utils.DEBUG) ss += state;
+    		
+        	// See whether the newly selected state requires any columns
+        	// to be inserted or deleted
+        	boolean insertG = (state>1)&!gx;
+        	boolean deleteG = (!(state>1))&gx;        	
+    		boolean insertP = ((state%2)>0)&!px;
+    		boolean deleteP = (!((state%2)>0))&px;
+    		// NB currently the above is coded according to the TKF92 state
+    		// coding scheme
+    		
+        	// Insert or delete new columns as necessary
+        	if (insertG) {
+	        	g = new AlignColumn((g!=null)?g.next:grandpa.first); // New orphan column          			
+				gx = true;
+        	}
+        	else if (deleteG) {
+        		delete(g); grandpa.first = g.next; g = g.prev; gx = false; 				
+        	}
+        	if (insertP) {        		        		
+        		p = new AlignColumn((p!=null)?p.next:parent.first);     			
+    			px = true;
+        	}
+        	else if (deleteP) {
+        		delete(p); parent.first = p.next; p = p.prev; px = false;
+        	}
+        	
+        	
+        	// Update orphan status based on whether new parent exists
+			if (px) p.orphan = !gx;
+			if (gx) g.orphan = !ggx;
+			if (ux) u.orphan = !px;
+			if (tx) t.orphan = !gx;
+			if (bx) b.orphan = !px; // This should be done automatically in any case
+			
+        	if (Utils.DEBUG) ss += tx?(t.orphan?"o":"x"):"-";
+      
+			// Reassign parentage
+			if (tx) {
+        		t.updateParent(t.orphan?((g==null)?grandpa.first:g.next):g,uncleIsLeft);
+        	}
+			if (px) {
+        		p.updateParent(p.orphan?((g==null)?grandpa.first:g.next):g,!uncleIsLeft);
+        	}
+			if (ux) {
+        		u.updateParent(u.orphan?((p==null)?parent.first:p.next):p,isLeft);
+        	}
+        	if (bx) {
+        		b.updateParent(b.orphan?((p==null)?parent.first:p.next):p,!isLeft);
+        	}
+       		if (gx) {
+        		if (!gIsRoot) g.updateParent(g.orphan?((gg==null)?greatgrandpa.first:gg.next):gg,grandpaIsLeft);
+        	}
+			
+       		
+       		// Decrement the column pointers
+        	if (tx) { first = t; t = t.prev;} 
+        	if (px) { parent.first = p; p = p.prev; }
+        	if (bx) { brother.first = b; b = b.prev; }
+        	if (gx) { grandpa.first = g; g = g.prev; }        	
+        	if (ux) { uncle.first = u; u = u.prev; }
+        	if (ggx) { greatgrandpa.first = gg; gg = gg.prev; }  
+        }
+        if (Utils.DEBUG) {
+	        ss += "	        ";
+	        System.out.println(new StringBuilder(ss).reverse().toString());
+		}	
+        
+        // Swap the pointers between vertices, and the first and last columns
+        // NB the uncle has to be done first, otherwise parent refers to grandpa
+        // NB this also has to be done after all other references to parent in reference to the old parent
+        // (or otherwise we could instead refer to a pointer to the parent under a different name,
+        // rather than using the member variable `parent')
+        uncle.parent = parent; 		
+ 		uncle.last.parent = parent.last;
+ 		if (isLeft)		 { parent.left = uncle; parent.last.left = uncle.last; } 
+ 		else 			 { parent.right = uncle; parent.last.right = uncle.last; }
+        parent = grandpa;
+ 		last.parent = grandpa.last;		 				 		
+ 		if (uncleIsLeft) { grandpa.left = this; grandpa.last.left = last; } 
+ 		else 		 	 { grandpa.right = this; grandpa.last.right = last; }
+ 		
+ 		if (Utils.DEBUG) {
+ 			owner.checkPointers();
+ 			owner.root.recomputeLogLike();
+ 		}
+ 		
+    	uncle.calcAllUp();
+    	
+    	return logProposalRatio;
     }
     public double nephewUncleSwapFixedColumns() {
     	double logProposalRatio = 0.0;    	
@@ -2919,20 +3149,27 @@ public class Vertex {
         	else if ((tx|ux)&(px&gx)) {
         		// In the cases where parent and grandpa exist
         		// and there is only one leaf node, we will leave
-        		// everything as is, and just change the parent of t.
+        		// everything as is, and just change the parent of t/u
         	}
         	else if (tx&px) {
         		// Then:
         		// 		parent exists before, and we will ensure it does not exist after
         		// 		because before only t and p contain characters, so we want to
         		// 		keep the same situation afterwards (but then with u and g).
-        		
+        		        		
         		// get rid of p
-        		delete(p); parent.first = p.next; p = p.prev; px = false;  
-				
+        		delete(p); parent.first = p.next; p = p.prev; px = false;
+        		
         		// create new g
 				g = new AlignColumn((g!=null)?g.next:grandpa.first); // New orphan column   
 				gx = true;
+				
+				//if (true) {
+	 				// get rid of p
+	        	//	delete(p); parent.first = p.next; p = p.prev; px = false;  
+				//}
+				//else if (gx) p.orphan = false;
+				
 				    				
 				t.orphan = false; // t will be adopted by the new g
 				

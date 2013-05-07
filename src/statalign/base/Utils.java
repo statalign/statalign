@@ -386,6 +386,8 @@ public class Utils{
     	if ((u|gg)&(t|b)) 	result &= (p&g);
     	if (result && u&gg)	result &= g;
     	if (result &&  t&b)	result &= p;
+    	if (result && (p&!g)) result &= !(u|gg);
+    	if (result && (g&!p)) result &= !(t|b);
     	
     	return result;
     }    
@@ -395,6 +397,8 @@ public class Utils{
     	if ((n.ux|n.ggx)&(n.tx|n.bx)) 	result &= (n.px&n.gx);
     	if (result && n.ux&n.ggx)	result &= n.gx;
     	if (result &&  n.tx&n.bx)	result &= n.px;
+    	if (result && (n.px&!n.gx)) result &= !(n.ux|n.ggx);
+    	if (result && (n.gx&!n.px)) result &= !(n.tx|n.bx);
     	
     	return result;
     }
