@@ -190,6 +190,10 @@ public class TopologyMove extends McmcMove {
 //			
 //		}
 		//return 0.0;
+		
+//		if (nephew.index == 3 && uncle.index == 7) {
+//			throw new RuntimeException("Stop for a cup of tea.");
+//		}
 		return logProposalRatio;
 	}
 	

@@ -2548,6 +2548,7 @@ public class Vertex {
      */    
     class Neighbours {
     	final int END = owner.hmm2.getEnd();
+    	//final int END = 4;
 
     	AlignColumn t, b, p, u, g, gg; // Not sure if these are needed
     	boolean tx, bx, px, ux, gx, ggx;
@@ -2686,17 +2687,25 @@ public class Vertex {
 	}
 
 	private void magnifyProbability(double[] logProbsCol,int stateP) {
-		double factor = 2;
-		logProbsCol[stateP] *= factor;
-		double logTot = Utils.log0;
+		//double factor = 20.0; // Inverse power to which selected entry will be raised
+		double newValue = 0.95;
+		double factor = Math.log(1-newValue) - Math.log(1 - Math.exp(logProbsCol[stateP]));
+		// Not numerically the safest thing to do...
+		
+		logProbsCol[stateP] = Math.log(newValue);
+		
+		for (int k=0; k<logProbsCol.length; k++) {
+			if (k==stateP) continue;
+			logProbsCol[k] += factor;
+		}
 		double tot = Utils.log0;
 		for (int k=0; k<logProbsCol.length; k++) {
-			logTot = Utils.logAdd(logTot,logProbsCol[k]);
-		}
-		for (int k=0; k<logProbsCol.length; k++) {
-			logProbsCol[k] -= logTot;
-			tot = Utils.logAdd(tot,logProbsCol[k]);
-		}		
+			if (Utils.DEBUG) tot = Utils.logAdd(tot,logProbsCol[k]);
+		//	System.out.print(logProbsCol[k]+" ");
+		}	
+		if (Utils.DEBUG) assert(tot > -1e-6);
+//		System.out.println();
+		
 	}
     /**
      * Schemes for imputing the internal character in the five-way topology
@@ -2711,7 +2720,11 @@ public class Vertex {
     	double logProposalRatio = 0.0;    	
     	Scheme scheme = Scheme.IND;
     	
-    	double[] logProbs = {0.25,0.25,0.25,0.25};
+    	//double[] logProbs = {Math.log(0.997),Math.log(0.0005),Math.log(0.0005),Math.log(0.002)};
+    	// The above results in decent likelihoods (without magnification), 
+    	// but the back proposal probability is generally very low.
+    	double[] logProbs = {Math.log(0.7),Math.log(0.12),Math.log(0.12),Math.log(0.06)};
+    	//double[] logProbs = {Math.log(0.8),Math.log(0.08),Math.log(0.08),Math.log(0.04)};
     	
     	if (Utils.DEBUG) System.out.println(index+".nephewUncleSwapFixedColumns()");
     	
@@ -2764,7 +2777,7 @@ public class Vertex {
         		continue;
         	} 
         	
-    		int currState = (px?0:1) + 2*(gx?0:1);
+    		int currState = (px?1:0) + 2*(gx?1:0);
 
         	int state;
         	
@@ -2773,20 +2786,17 @@ public class Vertex {
         	switch(scheme) {
         	case IND:        		
         		curr.bx = bx; curr.ggx = ggx;
-        		
-        		logProbsOld = logProbs.clone();            	
-        		curr.tx = tx; curr.ux = ux; // NB these are swapped 
-        		zeroInvalidChoicesAndRenormalise(logProbsOld,curr);
-
+        
             	logProbsCol = logProbs.clone();
-            	curr.tx = ux; curr.ux = tx; // NB these are swapped         		
+            	curr.tx = ux; curr.ux = tx; // NB these are swapped
+            	magnifyProbability(logProbsCol,currState); //     		
         		zeroInvalidChoicesAndRenormalise(logProbsCol,curr);
         		
         		int nTips = (tx?1:0) + (bx?1:0) + (ux?1:0) + (ggx?1:0);
-        		if ((!tx&!ux)|(nTips==1)) {
-        			magnifyProbability(logProbsCol,currState);        		
-        			magnifyProbability(logProbsOld,currState);        		
-        		}
+//        		if ((!tx&!ux)|(nTips==1)) {
+//        			magnifyProbability(logProbsCol,currState);        		
+//        			magnifyProbability(logProbsOld,currState);        		
+//        		}
         		break;
         	case ONE:
         		logProbsCol = logMarg[col];
@@ -2796,11 +2806,35 @@ public class Vertex {
         	}
         	
         	
-        	logProposalRatio += logProbsCol[currState]; // assuming fwd probs = bwd probs
         	// Select a state for the p--g edge according to its probability
         	state = Utils.logWeightedChoose(logProbsCol);
-    		logProposalRatio -= logProbsCol[state];
-        	
+//        	System.out.println("tx="+tx+" bx="+bx+" ux="+ux+" ggx="+ggx);
+
+//        	System.out.println(state+" "+logProbsCol[state]+" "+currState+" "+logProbsOld[currState]);
+    		logProposalRatio -= logProbsCol[state]; // forward proposal probability
+    		
+    		switch(scheme) {
+        	case IND:        		
+        		curr.bx = bx; curr.ggx = ggx;
+        		
+        		logProbsOld = logProbs.clone();            	
+        		curr.tx = tx; curr.ux = ux;  
+    			magnifyProbability(logProbsOld,state); //
+        		zeroInvalidChoicesAndRenormalise(logProbsOld,curr);
+        		break;
+        	default:
+        		break;
+    		}
+        	logProposalRatio += logProbsOld[currState]; // back proposal probability 
+
+//        	System.out.println();
+//        	System.out.println("logProosalRatio = "+(logProbsOld[currState]-logProbsCol[state]));
+//        	for (int k=0; k<logProbsCol.length; k++) System.out.print(logProbsCol[k]+" ");
+//        	System.out.println();
+//        	for (int k=0; k<logProbsCol.length; k++) System.out.print(logProbsOld[k]+" ");
+//        	System.out.println();
+//        	System.out.println("currState="+currState+", bwd="+logProbsOld[currState]+
+//        			", state="+state+", fwd="+logProbsCol[state]);
     		//if (Utils.DEBUG) ss += state;
     		
         	// See whether the newly selected state requires any columns
@@ -4907,27 +4941,44 @@ public class Vertex {
     }
 
 //    public static void main(String[] args){
-////    	boolean[] tips = {true,true,false};
-////    	boolean[] x = {true,false};
-////    	for (boolean p : x) {
-////    		for (boolean g : x) {
-////    			System.out.print(Utils.isValidTopology(p,g,tips,true)+" ");
-////    		}    		
-////    		System.out.println();
-////    	}
-////    	ArrayList<Double> a = new ArrayList<Double>(5);
-////    	System.out.println("a.size() = "+a.size());
-////    	a.add(0.0); a.add(1.0); a.add(2.0);
-////    	ArrayList<ArrayList<Double> > x = new ArrayList<ArrayList<Double> >();
-////    	x.add(a);
-////    	
-////    	ArrayList<Double> b = x.get(0);
-////    	b.set(0,238.0);
-////    	System.out.println("a = "+a.get(0)+" "+a.get(1)+" "+a.get(2));
-////    	System.out.println("b = "+b.get(0)+" "+b.get(1)+" "+b.get(2));
-////    	System.out.println("x.get(0) = "+x.get(0).get(0)+" "+x.get(0).get(1)+" "+x.get(0).get(2));
 //    	
+//    	double[] logProbs = {Math.log(0.97),Math.log(0.01),Math.log(0.01),Math.log(0.01)};
+//    	
+//    	int[] freqs = {0,0,0,0};
+//    	
+//    	Neighbours curr = new Neighbours();
+//    	for (int n=0; n<10000; n++) {
+//    		
+//    		double[] logProbsCol = logProbs.clone();
+//    		
+////    		curr.bx = Utils.generator.nextBoolean();
+////    		curr.tx = Utils.generator.nextBoolean();
+////    		curr.ux = Utils.generator.nextBoolean();
+////    		curr.ggx = Utils.generator.nextBoolean();
+//    		curr.bx = false;
+//    		curr.tx = false;
+//    		curr.ux = false;
+//    		curr.ggx = false;
+//    		
+//    		zeroInvalidChoicesAndRenormalise(logProbsCol,curr);
+//
+//    		curr.px = true;
+//    		curr.gx = true;
+//    		
+//    		int currState = (curr.px?1:0) + 2*(curr.gx?1:0);
+//
+//    		for (int k=0; k<4; k++) System.out.print(logProbsCol[k]+" ");
+//    		System.out.println();
+//    		magnifyProbability(logProbsCol,currState);        		
+//    		for (int k=0; k<4; k++) System.out.print(logProbsCol[k]+" ");
+//    		System.out.println();
+//    			
+//        	int state = Utils.logWeightedChoose(logProbsCol);
+//        	freqs[state]++;
+//    	}
 //        	
+//    	for (int k=0; k<4; k++) System.out.print(freqs[k]+" ");
+//    	System.out.println();
 //    }
 //    /**
 //     * This function is merely for testing/debugging purposes
