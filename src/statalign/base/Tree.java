@@ -344,7 +344,10 @@ public class Tree extends Stoppable implements DataType {
     }
 
     public double getLogLike() {
-        return root.indelLogLike + root.orphanLogLike;
+    	if (Utils.DOWNWEIGHT_INDEL_LIKELIHOOD) {
+    		return (1.0/(((vertex.length+1)/2)-3))*root.indelLogLike + root.orphanLogLike;
+    	}
+    	else return root.indelLogLike + root.orphanLogLike;
     }
     /**
      * Recomputes the likelihood from scratch and checks whether everything was correct before.

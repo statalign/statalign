@@ -132,6 +132,10 @@ public class Utils{
 	public static final double log0 = Double.NEGATIVE_INFINITY;
 	
 	public static final double MIN_EDGE_LENGTH = 0.001;
+	
+	/** If true then we downweight the indel contribution to the overall likelihood. */
+	public static final boolean DOWNWEIGHT_INDEL_LIKELIHOOD = false;
+	
 	private static double[] tempDoubleArray;
 
 	/**
