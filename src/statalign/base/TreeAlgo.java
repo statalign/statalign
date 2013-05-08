@@ -164,7 +164,7 @@ public class TreeAlgo extends Stoppable {
 			newVert.left.edgeLength = dist[i][j] / 2 - (remN > 2 ? (sumDist[i] - sumDist[j]) / (2 * remN - 4) : 0.001);
 			newVert.right.edgeLength = dist[i][j] - newVert.left.edgeLength;
 
-			val = (newVert.left.length + newVert.right.length) / 0.2;
+			val = (newVert.left.getLength() + newVert.right.getLength()) / 0.2;
 			newVert.left.edgeLength /= val;
 			newVert.right.edgeLength /= val;
 

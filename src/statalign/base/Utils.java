@@ -396,7 +396,7 @@ public class Utils{
     	return result;
     }    
     static boolean isValidHistory(Vertex.Neighbours n) {
-   	    	
+   	    	    	
     	boolean result = true;
     	if ((n.ux|n.ggx)&(n.tx|n.bx)) 	result &= (n.px&n.gx);
     	if (result && n.ux&n.ggx)	result &= n.gx;

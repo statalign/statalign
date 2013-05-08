@@ -457,6 +457,7 @@ COLUMN:    	while (c != v.last) {
     //}
 	//public State getState(Vertex subtreeRoot) {
     public State getState() {
+    	
 		int nn = vertex.length;
 		int nl = (nn+1)/2;
 		State state = new State(nn);

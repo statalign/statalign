@@ -2660,6 +2660,8 @@ public class Vertex {
      */
 	private void zeroInvalidChoicesAndRenormalise(double[] logProbsCol, Neighbours curr) {
 		
+//    	System.out.print(curr.stateT+"/"+curr.stateB+"/"+curr.stateP+" "+curr.nextStateT+"/"+curr.nextStateB+"/"+curr.nextStateP+" ");
+
 		double logTot = Utils.log0;
 		for (int k=0; k<logProbsCol.length; k++) {
 			curr.gx = (k>1);
@@ -2670,19 +2672,29 @@ public class Vertex {
 			else logTot = Utils.logAdd(logTot, logProbsCol[k]);
 		}
 		for (int k=0; k<logProbsCol.length; k++) logProbsCol[k] -= logTot;
-		
+//		System.out.println();
+//		System.out.print("*");
+//		for (int k=0; k<logProbsCol.length; k++) {
+//			System.out.print(logProbsCol[k]+" ");
+//			}	
 	}
-
 	private void magnifyProbability(double[] logProbsCol,int stateP) {
-		if (logProbsCol[stateP]==0) return;
-		//double newValue = 0.95; // works well with glob_25		
+		double newValue = 0.95; // works well with glob_25 and IND
+		//double newValue = 0.995;
 		//double newValue = (0.997+Math.exp(logProbsCol[stateP]))/2;
-		double newValue = Math.exp(logProbsCol[stateP]);
+		//double newValue = Math.exp(logProbsCol[stateP]);
+		magnifyProbability(logProbsCol,stateP,newValue);
+	}
+	
+	private void magnifyProbability(double[] logProbsCol,int stateP, double newValue) {
+		if (logProbsCol[stateP]==Utils.log0||logProbsCol[stateP]==0) return;
+
 		
-		//for (int k=0; k<logProbsCol.length; k++) {
-		//System.out.print(logProbsCol[k]+" ");
-		//}	
-		//System.out.println();
+//		for (int k=0; k<logProbsCol.length; k++) {
+//		System.out.print(logProbsCol[k]+" ");
+//		}	
+//		System.out.println();
+		
 		
 		double factor = Math.log(1-newValue) - Math.log(1 - Math.exp(logProbsCol[stateP]));
 		// Not numerically the safest thing to do...
@@ -2696,10 +2708,12 @@ public class Vertex {
 		double tot = Utils.log0;
 		for (int k=0; k<logProbsCol.length; k++) {
 			if (Utils.DEBUG) tot = Utils.logAdd(tot,logProbsCol[k]);
-		//System.out.print(logProbsCol[k]+" ");
+			//if (k==stateP) System.out.print("[");
+		//System.out.print(logProbsCol[k]);
+		//if (k==stateP) System.out.print("]");
+		//System.out.print(" ");
 		}	
 		if (Utils.DEBUG) assert(tot > -1e-6);
-		//System.out.println();
 		
 	}
     /**
@@ -2717,8 +2731,9 @@ public class Vertex {
     	final int[] emitPatt2State = owner.hmm2.getEmitPatt2State();
 
     	double logProposalRatio = 0.0;    	
-    	Scheme scheme = Scheme.ONE;
+    	Scheme scheme = Scheme.ALL;
     	
+    	//double[] logProbs = {Math.log(0.997),Math.log(0.0012),Math.log(0.0012),Math.log(0.0006)};
     	//double[] logProbs = {Math.log(0.997),Math.log(0.0005),Math.log(0.0005),Math.log(0.002)};
     	// The above results in decent likelihoods (without magnification), 
     	// but the back proposal probability is generally very low.
@@ -2776,28 +2791,42 @@ public class Vertex {
           	ggx = false;
         	if (!gIsRoot) ggx = (ali[greatgrandpa.index].charAt(col)!='-');
         
-        	if (!tx&!bx&!ux&!ggx) {
-        		// column with no tips
-        		//if (Utils.DEBUG && (px|gx))  ss += "*"; 
-        		continue;
-        	} 
+//        	if (!tx&!bx&!ux&!ggx) {
+//        		// column with no tips
+//        		//if (Utils.DEBUG && (px|gx))  ss += "*"; 
+//        		continue;
+//        	} 
         	
     		int currStateOld = (px?1:0) + 2*(gx?1:0);    		
     		
-        	int currStateNew;
-        	
-        	// Compute the probabilities of each imputation for the p--g edge
-        	// under the different possible schemes
-        	logProbsNew = logProbs.clone();
+        	int currStateNew = currStateOld;
         	
         	curr.px = px; curr.gx = gx; ///
         	curr.bx = bx; curr.ggx = ggx;
         	// NB the following two are switched round:
         	curr.tx = ux; curr.ux = tx;        
     		curr.updateCurrStates();
+    		
+    		old.px = px; old.gx = gx; ///
+    		old.bx = bx; old.ggx = ggx;        		
+    		old.tx = tx; old.ux = ux;  
+    		old.updateCurrStates();
+    		
+        	int nTips = (tx?1:0) + (bx?1:0) + (ux?1:0) + (ggx?1:0);
+
+        	if (!(tx|bx|ux|ggx) || nTips>=3) ;// then don't change anything
+        	// Could also make the above just !(tx|ux) -- more restrictive
+        	else {
+        	// Compute the probabilities of each imputation for the p--g edge
+        	// under the different possible schemes
+        	logProbsNew = logProbs.clone();
+        	        	
+			int favouredState = currStateOld;
+			if (favouredState==1) favouredState=2;
+			else if (favouredState==2) favouredState=1;
         	switch(scheme) {
         	case IND:        		       		
-            	magnifyProbability(logProbsNew,currStateOld); //     		        		        		
+            	//magnifyProbability(logProbsNew,currStateOld); //     		        		        		
         		break;
         	case ONE:
         		for (int k=0; k<4; k++) {
@@ -2807,7 +2836,6 @@ public class Vertex {
         	case ALL:
         		//System.out.print("new: ");
     			computeWeights(curr,logProbsNew);
-    			int favouredState = currStateOld;
 //    			if (favouredState==1) favouredState=2;
 //    			else if (favouredState==2) favouredState=1;
             	//magnifyProbability(logProbsNew,favouredState); //     		        		        		
@@ -2816,37 +2844,39 @@ public class Vertex {
         		logProbsNew = logMarg[col];
         		throw new RuntimeException("Scheme.FULL has not yet been implemented");
         	}
-    		zeroInvalidChoicesAndRenormalise(logProbsNew,curr); // may be unnecessary for case ALL/FULL
+        	//magnifyProbability(logProbsNew,favouredState,0.95);
+        	zeroInvalidChoicesAndRenormalise(logProbsNew,curr); // may be unnecessary for case ALL/FULL
+        	if (favouredState==0) magnifyProbability(logProbsNew,favouredState,0.95);
+        	//magnifyProbability(logProbsNew,favouredState,0.99);    		
         	currStateNew = Utils.logWeightedChoose(logProbsNew);
+        	
+        	// set curr to the new state for this column
         	curr.gx = (currStateNew>1);
     		curr.px = ((currStateNew%2)>0);
         	curr.updateCurrStates();    		
-        	curr.updateNextStates();
 
+        	//System.out.println();
+        	
     		logProposalRatio -= logProbsNew[currStateNew]; // forward proposal probability
        	
     		// Back proposal probs
     		logProbsOld = logProbs.clone();            	
-
-        	old.px = px; old.gx = gx; ///
-    		old.bx = bx; old.ggx = ggx;        		
-    		old.tx = tx; old.ux = ux;  
-    		old.updateCurrStates();
+    		
+    		favouredState = currStateNew;
+    		if (favouredState==1) favouredState=2;
+			else if (favouredState==2) favouredState=1;
     		switch(scheme) {
         	case IND:        		        		
-    			magnifyProbability(logProbsOld,currStateNew); //
+    			//magnifyProbability(logProbsOld,currStateNew); //
         		break;
         	case ONE:
         		for (int k=0; k<4; k++) {
             		logProbsOld[k] = parent.hmm2TransMatrix[emitPatt2State[k]][emitPatt2State[nextStateOld]];
             	}
-        		if (currStateOld!=0) nextStateOld = currStateOld; // for use in next iteration
-        		if (currStateNew!=0) nextStateNew = currStateNew; // for use in next iteration
         		break;
         	case ALL:
     			//System.out.print("old: ");
         		computeWeights(old,logProbsOld);
-        		int favouredState = currStateNew;
 //    			if (favouredState==1) favouredState=2;
 //    			else if (favouredState==2) favouredState=1;
     			//magnifyProbability(logProbsOld,favouredState); //
@@ -2855,18 +2885,20 @@ public class Vertex {
         		logProbsOld = logMarg[col];
         		throw new RuntimeException("Scheme.FULL has not yet been implemented");
     		}
+    		//magnifyProbability(logProbsOld,favouredState,0.95);
     		zeroInvalidChoicesAndRenormalise(logProbsOld,old); // may be unnecessary for case ALL/FULL
+			if (favouredState==0) magnifyProbability(logProbsOld,favouredState,0.95); //
+			//magnifyProbability(logProbsOld,favouredState,0.99); //
         	logProposalRatio += logProbsOld[currStateOld]; // back proposal probability 
     		
+        	// reset old, because it will be modified by the above
         	old.px = px; old.gx = gx;
     		old.updateCurrStates();
-    		old.updateNextStates();
     		//System.out.println();
 
          	//        	System.out.println("tx="+tx+" bx="+bx+" ux="+ux+" ggx="+ggx);
-        	//System.out.println(currStateNew+" "+logProbsNew[currStateNew]+" "+currStateOld+" "+logProbsOld[currStateOld]);
-        	        	
-
+//        	System.out.println("new: "+currStateNew+" "+logProbsNew[currStateNew]+" old: "+currStateOld+" "+logProbsOld[currStateOld]);
+//        	System.out.println("logProposalRatio = "+logProposalRatio);
 
 //        	System.out.println();
 //        	System.out.println("logProosalRatio = "+(logProbsOld[currState]-logProbsNew[currStateNew]));
@@ -2883,7 +2915,7 @@ public class Vertex {
         	boolean insertG = (currStateNew>1)&!gx;
         	boolean deleteG = (!(currStateNew>1))&gx;        	
     		boolean insertP = ((currStateNew%2)>0)&!px;
-    		boolean deleteP = (!((currStateNew%2)>0))&px;
+    		boolean deleteP = ((currStateNew%2)==0)&px;
     		// NB currently the above is coded according to the TKF92 currStateNew
     		// coding scheme
     		
@@ -2902,6 +2934,12 @@ public class Vertex {
         	else if (deleteP) {
         		delete(p); parent.first = p.next; p = p.prev; px = false;
         	}
+        	} // end if (tx|bx|ux|ggx)
+        	if (currStateOld!=0) nextStateOld = currStateOld; 
+    		if (currStateNew!=0) nextStateNew = currStateNew;     	
+        	curr.updateNextStates();
+    		old.updateNextStates();
+
         	
         	
         	// Update orphan status based on whether new parent exists
@@ -2930,6 +2968,7 @@ public class Vertex {
         		if (!gIsRoot) g.updateParent(g.orphan?((gg==null)?greatgrandpa.first:gg.next):gg,grandpaIsLeft);
         	}
 			
+        	
        		
        		// Decrement the column pointers
         	if (tx) { first = t; t = t.prev;} 
@@ -4755,7 +4794,7 @@ public class Vertex {
         return s;
     }
 
-    void printPointers() {
+    public void printPointers() {
         AlignColumn c = first;
         AlignColumn p = parent.first;
         while (p != null) {
@@ -4959,6 +4998,18 @@ public class Vertex {
                 throw new Error("Problem is vertex " + index + ":\np is: " + p + " p.right is " + p.right + " p.right.orphan: " + p.right.orphan +
                         " p.right.parent: " + p.right.parent);
             }
+            if (p.prev != null) {
+            	if (p.prev.next != p) {
+            		throw new Error("Problem is vertex " + index + ":\np is: " + p +
+            				" p.prev.next = "+p.prev.next);
+            	}
+            }
+            if (p.next != null) {
+            	if (p.next.prev != p) {
+            		throw new Error("Problem is vertex " + index + ":\np is: " + p +
+            				" p.next.prev = "+p.next.prev);
+            	}
+            }
         }
         for (AlignColumn l = left.first; l != null; l = l.next) {
             if (!l.orphan) {
@@ -4981,6 +5032,9 @@ public class Vertex {
                 }
             }
         }
+    }
+    public int getLength() {
+    	return length;
     }
 
 //    public static void main(String[] args){

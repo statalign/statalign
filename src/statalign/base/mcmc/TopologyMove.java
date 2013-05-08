@@ -156,9 +156,13 @@ public class TopologyMove extends McmcMove {
 //		System.out.println(uncle.index+" "+s[1]+"\n"+uncle.parent.index+" "+s[0]);
 		
         
-        //logProposalRatio = nephew.nephewUncleSwapFixedColumns();
-		logProposalRatio = nephew.nephewUncleSwapFixedColumns2();
+        logProposalRatio = nephew.nephewUncleSwapFixedColumns();
+		//logProposalRatio = nephew.nephewUncleSwapFixedColumns2();
 		
+//		if (Utils.DEBUG) tree.checkPointers();		
+//		if (Utils.DEBUG) tree.recomputeCheckLogLike();
+//		if (Utils.DEBUG) tree.root.left.printPointers();
+//		System.out.println("root.length = "+tree.root.getLength());
         tree.root.printToScreenAlignment(0,0,true);
 		if (Utils.DEBUG) System.out.println("AFTER: root.orphanLogLike = "+tree.root.orphanLogLike+", root.indelLogLike = "+tree.root.indelLogLike);
 
@@ -191,7 +195,7 @@ public class TopologyMove extends McmcMove {
 //		}
 		//return 0.0;
 		
-//		if (nephew.index == 5 && uncle.index == 4) {
+//		if (nephew.index == 3 && uncle.index == 0) {
 //			throw new RuntimeException("Stop for a cup of tea.");
 //		}
 		return logProposalRatio;
