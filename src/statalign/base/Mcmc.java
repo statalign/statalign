@@ -310,7 +310,7 @@ public class Mcmc extends Stoppable {
 		stoppable();
 		System.out.println("tree.getLogLike() (BEFORE) = "+tree.getLogLike());
 		if(Utils.DEBUG) {
-			tree.recomputeCheckLogLike();
+			tree.recomputeCheckLogLike(); 
 			if(Math.abs(modelExtMan.totalLogLike(tree)-totalLogLike) > 1e-5) {
 				System.out.println("\nBefore: "+modelExtMan.totalLogLike(tree)+" "+totalLogLike);
 				throw new Error("Log-likelihood inconsistency at start of sample()");
@@ -479,7 +479,8 @@ public class Mcmc extends Stoppable {
 			
 			burnin = true;
 			boolean alreadyAddedWeightModifiers = false;
-			tree.root.calcAllUp(); // For testing
+			tree.root.recomputeLogLike(); // For testing
+			totalLogLike = modelExtMan.totalLogLike(tree);
 			for (int i = 0; i < burnIn; i++) {
 				
 				if (i > burnIn / 2) {

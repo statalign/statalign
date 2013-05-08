@@ -135,6 +135,14 @@ public class Utils{
 	
 	/** If true then we downweight the indel contribution to the overall likelihood. */
 	public static final boolean DOWNWEIGHT_INDEL_LIKELIHOOD = false;
+
+	/** 
+	 * If true then we divide out the stationary probability of the
+	 * internal nodes from the indel likelihood, as per Redelings
+	 * and Suchard (2005), using the TKF92 stationary distribution
+	 * defined in Thorne et al. (1992). 
+	 */
+	public static final boolean USE_INDEL_CORRECTION_FACTOR = true;
 	
 	private static double[] tempDoubleArray;
 

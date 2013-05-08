@@ -138,7 +138,7 @@ public class TopologyMove extends McmcMove {
     	double logProposalRatio = 0;
 		
     	if (INCLUDE_EDGE_MULTIPLIERS) {
-			logProposalRatio = nephewEdgeMove.proposal(externalState);
+			logProposalRatio += nephewEdgeMove.proposal(externalState);
 	//		System.out.println("logProposalRatio after nephew = "+logProposalRatio);
 			logProposalRatio += parentEdgeMove.proposal(externalState);
 	//		System.out.println("logProposalRatio after parent = "+logProposalRatio);
@@ -156,8 +156,8 @@ public class TopologyMove extends McmcMove {
 //		System.out.println(uncle.index+" "+s[1]+"\n"+uncle.parent.index+" "+s[0]);
 		
         
-        logProposalRatio = nephew.nephewUncleSwapFixedColumns();
-		//logProposalRatio = nephew.nephewUncleSwapFixedColumns2();
+        //logProposalRatio += nephew.nephewUncleSwapFixedColumns();
+		logProposalRatio += nephew.nephewUncleSwapFixedColumns2();
 		
 //		if (Utils.DEBUG) tree.checkPointers();		
 //		if (Utils.DEBUG) tree.recomputeCheckLogLike();
@@ -195,9 +195,9 @@ public class TopologyMove extends McmcMove {
 //		}
 		//return 0.0;
 		
-//		if (nephew.index == 3 && uncle.index == 0) {
-//			throw new RuntimeException("Stop for a cup of tea.");
-//		}
+		if (nephew.index == 4 && uncle.index == 7) {
+			throw new RuntimeException("Stop for a cup of tea.");
+		}
 		return logProposalRatio;
 	}
 	

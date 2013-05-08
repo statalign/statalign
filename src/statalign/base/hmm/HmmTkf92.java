@@ -114,6 +114,16 @@ public class HmmTkf92 extends Hmm2 {
 		return transMatrix;
 	}
 
+	@Override
+	public double getLogStationaryProb(int length) {
+		double R = params[0];
+    	double L = params[1];
+    	double M = params[2];
+    	return (Math.log((1-L/M)*(L/M)*(1-R)) + 
+    			(length - 1)*Math.log(((L/M)*(1-R)+R)));
+    	// cf. Thorne et al. (1992)
+	}
+	
 	/**
 	 * For testing purposes.
 	 * @param args No argument is used.

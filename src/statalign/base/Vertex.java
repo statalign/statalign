@@ -706,7 +706,7 @@ public class Vertex {
             left.calcIndelLogLikeRecursively();
             right.calcIndelLogLikeRecursively();
         }
-        calcIndelLogLike();
+        calcIndelLogLike();       
     }
 
     /**
@@ -724,11 +724,29 @@ public class Vertex {
         if (left != null && right != null) {
             newIndelLogLike += left.calcIndelLogLikeUp();
             newIndelLogLike += right.calcIndelLogLikeUp();
-        }
+            
+            // For all edges except one of the edges to the root, change the
+            // joint marginal into a conditional, by dividing by the probability
+            // of the parent using the stationary distribution under hmm2.
+            // For the initial NJ tree we don't have a root, so can't do the 
+            // check below. In that case we'll just leave out the correction factor
+            // to begin with, since that step is just for the purposes of getting
+            // a decent starting position.
+            if (Utils.USE_INDEL_CORRECTION_FACTOR) {
+            	System.out.println(index+" before: "+newIndelLogLike+" ("+length+")");
+            	if (this!=owner.root) {
+            		newIndelLogLike -= 2*owner.hmm2.getLogStationaryProb(length);
+            	}
+            	else {
+            		newIndelLogLike -= owner.hmm2.getLogStationaryProb(length);
+            	}
+            	System.out.println(index+" after: "+newIndelLogLike);
+            }
+        }          
         if(!withCheck)
         	indelLogLike = newIndelLogLike;
         else if(Math.abs(indelLogLike - newIndelLogLike) > 1e-5)
-        	throw new Error("likelihood inconsistency in calcIndelLogLike - stored likelihood: "+indelLogLike+" recomputed: "+newIndelLogLike);
+        	throw new Error("likelihood inconsistency in calcIndelLogLike - stored likelihood: "+indelLogLike+" recomputed: "+newIndelLogLike); 
     }
     void calcIndelLogLike() {
     	calcIndelLogLike(false);
