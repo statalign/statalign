@@ -2715,7 +2715,7 @@ public class Vertex {
 	}
 	
 	private void magnifyProbability(double[] logProbsCol,int stateP) {
-		magnifyProbability(logProbsCol,stateP,10);
+		magnifyProbability(logProbsCol,stateP,5); // 10 works well with glob_25
 	}
 	private void magnifyProbability(double[] logProbsCol,int stateP, double factor) {
 		

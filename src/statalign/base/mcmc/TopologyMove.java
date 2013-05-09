@@ -139,13 +139,19 @@ public class TopologyMove extends McmcMove {
 		
     	if (INCLUDE_EDGE_MULTIPLIERS) {
 			logProposalRatio += nephewEdgeMove.proposal(externalState);
-			System.out.println("logProposalRatio after nephew = "+logProposalRatio);
 			logProposalRatio += parentEdgeMove.proposal(externalState);
-			System.out.println("logProposalRatio after parent = "+logProposalRatio);
-			System.out.println("before uncle edge length "+uncle.edgeLength);
 			logProposalRatio += uncleEdgeMove.proposal(externalState);
-			System.out.println("after uncle edge length "+uncle.edgeLength);
-			System.out.println("logProposalRatio after uncle = "+logProposalRatio);
+			
+			
+//			double tmp = nephew.edgeLength;
+//			
+//			nephew.edgeLength = uncle.edgeLength;			
+//			tree.vertex[nephew.index].edgeChangeUpdate();
+//			tree.vertex[nephew.index].calcAllUp();
+//			
+//			uncle.edgeLength = tmp;
+//			tree.vertex[uncle.index].edgeChangeUpdate();
+//			tree.vertex[uncle.index].calcAllUp();
     	}
     	
 //		logProposalRatio += nephew.fastSwapWithUncle();
@@ -167,7 +173,7 @@ public class TopologyMove extends McmcMove {
 //		System.out.println("root.length = "+tree.root.getLength());
         tree.root.printToScreenAlignment(0,0,true);
 		if (Utils.DEBUG) System.out.println("AFTER: root.orphanLogLike = "+tree.root.orphanLogLike+", root.indelLogLike = "+tree.root.indelLogLike);
-
+		System.out.println("lambda = "+tree.hmm2.params[1]+", mu = "+tree.hmm2.params[2]);
 		
 		// double logProposalRatio = nephew.swapWithUncleAlignToParent();
 		System.out.println("logProposalRatio after swap = "+logProposalRatio);
@@ -197,9 +203,9 @@ public class TopologyMove extends McmcMove {
 //		}
 		//return 0.0;
 		
-//		if (nephew.index == 4 && uncle.index == 7) {
-//			throw new RuntimeException("Stop for a cup of tea.");
-//		}
+		if (tree.root.indelLogLike > 1000 && nephew.index == 0 && uncle.index == 10) {
+			throw new RuntimeException("Stop for a cup of tea.");
+		}
 		return logProposalRatio;
 	}
 	
