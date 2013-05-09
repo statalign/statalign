@@ -2950,7 +2950,7 @@ public class Vertex {
     		//System.out.println();
 
          	//        	System.out.println("tx="+tx+" bx="+bx+" ux="+ux+" ggx="+ggx);
-        	//System.out.println("new: "+currStateNew+" "+logProbsNew[currStateNew]+" old: "+currStateOld+" "+logProbsOld[currStateOld]);
+//        	System.out.println("new: "+currStateNew+" "+logProbsNew[currStateNew]+" old: "+currStateOld+" "+logProbsOld[currStateOld]);
 //        	System.out.println("logProposalRatio = "+logProposalRatio);
 
 //        	System.out.println();
@@ -3766,10 +3766,10 @@ public class Vertex {
     	Utils.USE_UPPER = old_USE_UPPER;
         printToScreenAlignment(0,0,true);
 
-        if (index == INDEX) {
-        	System.out.println("Proposal ratio = "+ret);
-        	return Double.POSITIVE_INFINITY;
-        }
+//        if (index == INDEX) {
+//        	System.out.println("Proposal ratio = "+ret);
+//        	return Double.POSITIVE_INFINITY;
+//        }
         return ret;
 	}
 

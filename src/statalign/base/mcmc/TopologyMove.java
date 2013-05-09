@@ -139,11 +139,13 @@ public class TopologyMove extends McmcMove {
 		
     	if (INCLUDE_EDGE_MULTIPLIERS) {
 			logProposalRatio += nephewEdgeMove.proposal(externalState);
-	//		System.out.println("logProposalRatio after nephew = "+logProposalRatio);
+			System.out.println("logProposalRatio after nephew = "+logProposalRatio);
 			logProposalRatio += parentEdgeMove.proposal(externalState);
-	//		System.out.println("logProposalRatio after parent = "+logProposalRatio);
+			System.out.println("logProposalRatio after parent = "+logProposalRatio);
+			System.out.println("before uncle edge length "+uncle.edgeLength);
 			logProposalRatio += uncleEdgeMove.proposal(externalState);
-	//		System.out.println("logProposalRatio after uncle = "+logProposalRatio);
+			System.out.println("after uncle edge length "+uncle.edgeLength);
+			System.out.println("logProposalRatio after uncle = "+logProposalRatio);
     	}
     	
 //		logProposalRatio += nephew.fastSwapWithUncle();
@@ -173,10 +175,10 @@ public class TopologyMove extends McmcMove {
 //		s = nephew.printedAlignment();
 //		System.out.println(s[0]+"\n"+s[1]);
 
-		if (logProposalRatio == Double.POSITIVE_INFINITY) {
-			System.out.println("Likelihood: "+tree.getLogLike());
-			throw new RuntimeException("Let's stop now and have a rest.");
-		}
+//		if (logProposalRatio == Double.POSITIVE_INFINITY) {
+//			System.out.println("Likelihood: "+tree.getLogLike());
+//			throw new RuntimeException("Let's stop now and have a rest.");
+//		}
 //		if(Utils.DEBUG){
 //			System.out.println("Proposed:");
 //			String[] fullAlign = tree.getState().getFullAlign();

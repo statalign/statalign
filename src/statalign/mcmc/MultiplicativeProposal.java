@@ -14,7 +14,8 @@ public class MultiplicativeProposal extends ProposalDistribution<Double> {
 	 * x to log x.
 	 */
 	public double logDensity(Double x) {
-		return Math.log(n.density(x)) - Math.log(x);
+		//return Math.log(n.density(x)) - Math.log(x);
+		return n.logDensity(x) - Math.log(x);
 	}
 	public Double sample() {
 		return Math.exp(n.sample());

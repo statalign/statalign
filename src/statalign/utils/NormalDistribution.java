@@ -141,6 +141,12 @@ public class NormalDistribution extends AbstractRealDistribution {
         final double x1 = x0 / standardDeviation;
         return FastMath.exp(-0.5 * x1 * x1) / (standardDeviation * SQRT2PI);
     }
+    
+	public double logDensity(double x) {
+        final double x0 = x - mean;
+        final double x1 = x0 / standardDeviation;
+        return -0.5 * x1 * x1 - FastMath.log(standardDeviation * SQRT2PI);
+    }
 
     /**
      * {@inheritDoc}
