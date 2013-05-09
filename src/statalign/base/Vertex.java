@@ -2570,9 +2570,19 @@ public class Vertex {
     	//final int END = 4;
 
     	AlignColumn t, b, p, u, g, gg; // Not sure if these are needed
+    	double[][] trans, bTrans, pTrans, uTrans, gTrans; 
     	boolean tx, bx, px, ux, gx, ggx;
     	int stateG=END, stateP=END, stateU=END, stateT=END, stateB=END;
-    	int nextStateG=END, nextStateP=END, nextStateU=END, nextStateT=END, nextStateB=END;
+    	int nextStateG=END, nextStateP=END, nextStateU=END, nextStateT=END, nextStateB=END;    	
+    	Neighbours(Vertex uncle,boolean swapped) {
+    		if (!swapped) { trans=hmm2TransMatrix; uTrans=uncle.hmm2TransMatrix; }
+    		else          { trans=uncle.hmm2TransMatrix; uTrans=hmm2TransMatrix; }
+    		bTrans=brother().hmm2TransMatrix; 
+    		pTrans=parent.hmm2TransMatrix; gTrans=parent.parent.hmm2TransMatrix;
+    	}    	
+    	Neighbours(Vertex uncle) {
+    		this(uncle,false);
+    	}
     	/**
     	 * Updates the record of what is the next non-silent state for each
     	 * edge. Assumes state numbering whereby 
@@ -2632,37 +2642,42 @@ public class Vertex {
     	boolean gIsRoot = (grandpa==owner.root);
  
     	double logTotal = Utils.log0;
-    	//System.out.print(curr.stateT+"/"+curr.stateB+"/"+curr.stateP+" "+curr.nextStateT+"/"+curr.nextStateB+"/"+curr.nextStateP+" ");
+    	System.out.print(curr.stateT+"/"+curr.stateB+"/"+curr.stateP+" "+curr.nextStateT+"/"+curr.nextStateB+"/"+curr.nextStateP+" ");
     	for (int k=0; k<4; k++) { // (--), (-*), (*-), (**)
     		    		
     		curr.gx = (k>1);
     		curr.px = ((k%2)>0);
     		curr.updateCurrStates(); // but leave next states intact
-    		    		
+
+    		System.out.print("["+Utils.isValidHistory(curr)+"] tx="+curr.tx+" bx="+curr.bx+" px="+curr.px+" ux="+curr.ux+" gx="+curr.gx+" ggx="+curr.ggx+" ");
     		if (!Utils.isValidHistory(curr)) {
     			logProbs[k] = Utils.log0;
     			continue;
     		}
+    		
     		// else
     		logProbs[k] = 0;
     		
     		// Transition probability for the p--g edge
-    		if (k!=0) logProbs[k] += parent.hmm2TransMatrix[e[k]][e[curr.nextStateP]];
+    		if (k!=0) logProbs[k] += curr.pTrans[e[k]][e[curr.nextStateP]];
  		    		    		    		    	    		
     		// Include transition probabilities for all edges that are currently non-silent
-    		if (!gIsRoot && curr.stateG!=0) logProbs[k] += grandpa.hmm2TransMatrix[e[curr.stateG]][e[curr.nextStateG]];
-    		if (curr.stateT!=0) logProbs[k] += hmm2TransMatrix[e[curr.stateT]][e[curr.nextStateT]];  
-    		if (curr.stateB!=0) logProbs[k] += brother.hmm2TransMatrix[e[curr.stateB]][e[curr.nextStateB]];
-      		if (curr.stateU!=0) logProbs[k] += uncle.hmm2TransMatrix[e[curr.stateU]][e[curr.nextStateU]];
+    		if (!gIsRoot && curr.stateG!=0) logProbs[k] += curr.gTrans[e[curr.stateG]][e[curr.nextStateG]];
+    		if (curr.stateT!=0) logProbs[k] += curr.trans[e[curr.stateT]][e[curr.nextStateT]];  
+    		if (curr.stateB!=0) logProbs[k] += curr.bTrans[e[curr.stateB]][e[curr.nextStateB]];
+      		if (curr.stateU!=0) logProbs[k] += curr.uTrans[e[curr.stateU]][e[curr.nextStateU]];
       
       		// Currently no emission probabilities included
       		
       		logTotal = Utils.logAdd(logTotal,logProbs[k]);      		
     	}
-    	
+    	System.out.println();
+    	System.out.print("\tafter computeWeights():\t");
     	for (int k=0; k<END; k++) {
     		logProbs[k] -= logTotal;
+    		System.out.print(logProbs[k]+" ");
     	}
+    	System.out.println();
     	
     	//return logProbsOld[old.stateP] - logTotalOld; // back proposal probability
     }
@@ -2690,11 +2705,13 @@ public class Vertex {
 			else logTot = Utils.logAdd(logTot, logProbsCol[k]);
 		}
 		for (int k=0; k<logProbsCol.length; k++) logProbsCol[k] -= logTot;
-//		System.out.println();
-//		System.out.print("*");
-//		for (int k=0; k<logProbsCol.length; k++) {
-//			System.out.print(logProbsCol[k]+" ");
-//			}	
+
+		System.out.print("\tafter zeroInvalid():\t");
+		for (int k=0; k<logProbsCol.length; k++) {
+			System.out.print(logProbsCol[k]+" ");
+			}	
+		System.out.println();
+
 	}
 	private void magnifyProbability(double[] logProbsCol,int stateP) {
 		double newValue = 0.95; // works well with glob_25 and IND
@@ -2724,15 +2741,16 @@ public class Vertex {
 			logProbsCol[k] += factor;
 		}
 		double tot = Utils.log0;
+		System.out.print("\tafter magnifyProb():\t");
 		for (int k=0; k<logProbsCol.length; k++) {
 			if (Utils.DEBUG) tot = Utils.logAdd(tot,logProbsCol[k]);
-			//if (k==stateP) System.out.print("[");
-		//System.out.print(logProbsCol[k]);
-		//if (k==stateP) System.out.print("]");
-		//System.out.print(" ");
+			if (k==stateP) System.out.print("[");
+		System.out.print(logProbsCol[k]);
+		if (k==stateP) System.out.print("]");
+		System.out.print(" ");
 		}	
 		if (Utils.DEBUG) assert(tot > -1e-6);
-		
+		System.out.println();
 	}
     /**
      * Schemes for imputing the internal character in the five-way topology
@@ -2790,7 +2808,7 @@ public class Vertex {
         // Variables indicating whether a character is present at the current column
         boolean tx=false, px=false, bx=false, gx=false, ux=false, ggx=false;
 
-        Neighbours curr = new Neighbours(), old = new Neighbours();
+        Neighbours curr = new Neighbours(uncle,true), old = new Neighbours(uncle,false);
 		double[] logProbsNew = logProbs.clone();
 		double[] logProbsOld = logProbs.clone();
 
@@ -2852,7 +2870,9 @@ public class Vertex {
             	}
         		break;
         	case ALL:
-        		//System.out.print("new: ");
+        		String s = new String();
+        		for (int i=0; i<ali.length; i++) s+=ali[i].charAt(col);
+        		System.out.print("\n"+s+" new: ");
     			computeWeights(curr,logProbsNew);
 //    			if (favouredState==1) favouredState=2;
 //    			else if (favouredState==2) favouredState=1;
@@ -2864,8 +2884,8 @@ public class Vertex {
         	}
         	//magnifyProbability(logProbsNew,favouredState,0.95);
         	zeroInvalidChoicesAndRenormalise(logProbsNew,curr); // may be unnecessary for case ALL/FULL
-        	if (favouredState==0) magnifyProbability(logProbsNew,favouredState,0.95);
-        	//magnifyProbability(logProbsNew,favouredState,0.99);    		
+        	//if (favouredState==0) magnifyProbability(logProbsNew,favouredState,0.95);
+        	//magnifyProbability(logProbsNew,favouredState,0.95);    		
         	currStateNew = Utils.logWeightedChoose(logProbsNew);
         	
         	// set curr to the new state for this column
@@ -2893,7 +2913,7 @@ public class Vertex {
             	}
         		break;
         	case ALL:
-    			//System.out.print("old: ");
+    			System.out.print("          old: ");
         		computeWeights(old,logProbsOld);
 //    			if (favouredState==1) favouredState=2;
 //    			else if (favouredState==2) favouredState=1;
@@ -2905,7 +2925,7 @@ public class Vertex {
     		}
     		//magnifyProbability(logProbsOld,favouredState,0.95);
     		zeroInvalidChoicesAndRenormalise(logProbsOld,old); // may be unnecessary for case ALL/FULL
-			if (favouredState==0) magnifyProbability(logProbsOld,favouredState,0.95); //
+			//if (favouredState==0) magnifyProbability(logProbsOld,favouredState,0.95); //
 			//magnifyProbability(logProbsOld,favouredState,0.99); //
         	logProposalRatio += logProbsOld[currStateOld]; // back proposal probability 
     		
@@ -2915,7 +2935,7 @@ public class Vertex {
     		//System.out.println();
 
          	//        	System.out.println("tx="+tx+" bx="+bx+" ux="+ux+" ggx="+ggx);
-//        	System.out.println("new: "+currStateNew+" "+logProbsNew[currStateNew]+" old: "+currStateOld+" "+logProbsOld[currStateOld]);
+        	//System.out.println("new: "+currStateNew+" "+logProbsNew[currStateNew]+" old: "+currStateOld+" "+logProbsOld[currStateOld]);
 //        	System.out.println("logProposalRatio = "+logProposalRatio);
 
 //        	System.out.println();
@@ -3091,7 +3111,7 @@ public class Vertex {
         boolean tx=false, px=false, bx=false, gx=false, ux=false, ggx=false;
         // Same but in the form of an Neighbours struct, for current columns,
         // as well as state before the proposal
-        Neighbours before = new Neighbours(), curr = new Neighbours();        
+        Neighbours before = new Neighbours(uncle), curr = new Neighbours(uncle);        
         
         for (int col=ali[0].length()-1; col>=0; col--) {
         	

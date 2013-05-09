@@ -411,7 +411,7 @@ public class Utils{
     	if (result &&  n.tx&n.bx)	result &= n.px;
     	if (result && (n.px&!n.gx)) result &= !(n.ux|n.ggx);
     	if (result && (n.gx&!n.px)) result &= !(n.tx|n.bx);
-    	
+    	    	    	
     	return result;
     }
 	    
