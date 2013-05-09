@@ -733,14 +733,14 @@ public class Vertex {
             // to begin with, since that step is just for the purposes of getting
             // a decent starting position.
             if (Utils.USE_INDEL_CORRECTION_FACTOR) {
-            	System.out.println(index+" before: "+newIndelLogLike+" ("+length+")");
+//            	System.out.println(index+" before: "+newIndelLogLike+" ("+length+")");
             	if (this!=owner.root) {
             		newIndelLogLike -= 2*owner.hmm2.getLogStationaryProb(length);
             	}
             	else {
             		newIndelLogLike -= owner.hmm2.getLogStationaryProb(length);
             	}
-            	System.out.println(index+" after: "+newIndelLogLike);
+//            	System.out.println(index+" after: "+newIndelLogLike);
             }
         }          
         if(!withCheck)
@@ -2642,7 +2642,7 @@ public class Vertex {
     	boolean gIsRoot = (grandpa==owner.root);
  
     	double logTotal = Utils.log0;
-    	System.out.print(curr.stateT+"/"+curr.stateB+"/"+curr.stateP+" "+curr.nextStateT+"/"+curr.nextStateB+"/"+curr.nextStateP+" ");
+//    	System.out.print(curr.stateT+"/"+curr.stateB+"/"+curr.stateP+" "+curr.nextStateT+"/"+curr.nextStateB+"/"+curr.nextStateP+" ");
     	for (int k=0; k<4; k++) { // (--), (-*), (*-), (**)
     		    		
     		curr.gx = (k>1);
@@ -2671,13 +2671,13 @@ public class Vertex {
       		
       		logTotal = Utils.logAdd(logTotal,logProbs[k]);      		
     	}
-    	System.out.println();
-    	System.out.print("\tafter computeWeights():\t");
+//    	System.out.println();
+//    	System.out.print("\tafter computeWeights():\t");
     	for (int k=0; k<END; k++) {
     		logProbs[k] -= logTotal;
-    		System.out.print(logProbs[k]+" ");
+//    		System.out.print(logProbs[k]+" ");
     	}
-    	System.out.println();
+//    	System.out.println();
     	
     	//return logProbsOld[old.stateP] - logTotalOld; // back proposal probability
     }
@@ -2706,22 +2706,37 @@ public class Vertex {
 		}
 		for (int k=0; k<logProbsCol.length; k++) logProbsCol[k] -= logTot;
 
-		System.out.print("\tafter zeroInvalid():\t");
-		for (int k=0; k<logProbsCol.length; k++) {
-			System.out.print(logProbsCol[k]+" ");
-			}	
-		System.out.println();
+//		System.out.print("\tafter zeroInvalid():\t");
+//		for (int k=0; k<logProbsCol.length; k++) {
+//			System.out.print(logProbsCol[k]+" ");
+//			}	
+//		System.out.println();
 
 	}
+	
 	private void magnifyProbability(double[] logProbsCol,int stateP) {
+		magnifyProbability(logProbsCol,stateP,10);
+	}
+	private void magnifyProbability(double[] logProbsCol,int stateP, double factor) {
+		
+		if (logProbsCol[stateP]==Utils.log0||logProbsCol[stateP]==0) return;
+		
+		logProbsCol[stateP] += Math.log(factor); // multiply the probability by factor
+
+		// renormalise
+		double logTot = Utils.log0;
+		for (int k=0; k<logProbsCol.length; k++) logTot = Utils.logAdd(logTot,logProbsCol[k]);
+		for (int k=0; k<logProbsCol.length; k++) logProbsCol[k] -= logTot;
+		
+	}
+	private void resetProbability(double[] logProbsCol,int stateP) {
 		double newValue = 0.95; // works well with glob_25 and IND
 		//double newValue = 0.995;
 		//double newValue = (0.997+Math.exp(logProbsCol[stateP]))/2;
 		//double newValue = Math.exp(logProbsCol[stateP]);
-		magnifyProbability(logProbsCol,stateP,newValue);
+		resetProbability(logProbsCol,stateP,newValue);
 	}
-	
-	private void magnifyProbability(double[] logProbsCol,int stateP, double newValue) {
+	private void resetProbability(double[] logProbsCol,int stateP, double newValue) {
 		if (logProbsCol[stateP]==Utils.log0||logProbsCol[stateP]==0) return;
 
 		
@@ -2741,16 +2756,16 @@ public class Vertex {
 			logProbsCol[k] += factor;
 		}
 		double tot = Utils.log0;
-		System.out.print("\tafter magnifyProb():\t");
+//		System.out.print("\tafter magnifyProb():\t");
 		for (int k=0; k<logProbsCol.length; k++) {
 			if (Utils.DEBUG) tot = Utils.logAdd(tot,logProbsCol[k]);
-			if (k==stateP) System.out.print("[");
-		System.out.print(logProbsCol[k]);
-		if (k==stateP) System.out.print("]");
-		System.out.print(" ");
+//			if (k==stateP) System.out.print("[");
+//		System.out.print(logProbsCol[k]);
+//		if (k==stateP) System.out.print("]");
+//		System.out.print(" ");
 		}	
 		if (Utils.DEBUG) assert(tot > -1e-6);
-		System.out.println();
+//		System.out.println();
 	}
     /**
      * Schemes for imputing the internal character in the five-way topology
@@ -2870,9 +2885,9 @@ public class Vertex {
             	}
         		break;
         	case ALL:
-        		String s = new String();
-        		for (int i=0; i<ali.length; i++) s+=ali[i].charAt(col);
-        		System.out.print("\n"+s+" new: ");
+//        		String s = new String();
+//        		for (int i=0; i<ali.length; i++) s+=ali[i].charAt(col);
+//        		System.out.print("\n"+s+" new: ");
     			computeWeights(curr,logProbsNew);
 //    			if (favouredState==1) favouredState=2;
 //    			else if (favouredState==2) favouredState=1;
@@ -2885,7 +2900,7 @@ public class Vertex {
         	//magnifyProbability(logProbsNew,favouredState,0.95);
         	zeroInvalidChoicesAndRenormalise(logProbsNew,curr); // may be unnecessary for case ALL/FULL
         	//if (favouredState==0) magnifyProbability(logProbsNew,favouredState,0.95);
-        	//magnifyProbability(logProbsNew,favouredState,0.95);    		
+        	magnifyProbability(logProbsNew,favouredState);    		
         	currStateNew = Utils.logWeightedChoose(logProbsNew);
         	
         	// set curr to the new state for this column
@@ -2913,7 +2928,7 @@ public class Vertex {
             	}
         		break;
         	case ALL:
-    			System.out.print("          old: ");
+//    			System.out.print("          old: ");
         		computeWeights(old,logProbsOld);
 //    			if (favouredState==1) favouredState=2;
 //    			else if (favouredState==2) favouredState=1;
@@ -2926,7 +2941,7 @@ public class Vertex {
     		//magnifyProbability(logProbsOld,favouredState,0.95);
     		zeroInvalidChoicesAndRenormalise(logProbsOld,old); // may be unnecessary for case ALL/FULL
 			//if (favouredState==0) magnifyProbability(logProbsOld,favouredState,0.95); //
-			//magnifyProbability(logProbsOld,favouredState,0.99); //
+    		magnifyProbability(logProbsOld,favouredState);
         	logProposalRatio += logProbsOld[currStateOld]; // back proposal probability 
     		
         	// reset old, because it will be modified by the above
