@@ -13,7 +13,7 @@ import statalign.mcmc.UniformProposal;
 
 public class TopologyMove extends McmcMove {
 	
-	final boolean INCLUDE_EDGE_MULTIPLIERS = false;
+	final boolean INCLUDE_EDGE_MULTIPLIERS = true;
 	
 	FileWriter topMoves;
 	Tree tree = null;
@@ -195,9 +195,9 @@ public class TopologyMove extends McmcMove {
 //		}
 		//return 0.0;
 		
-		if (nephew.index == 4 && uncle.index == 7) {
-			throw new RuntimeException("Stop for a cup of tea.");
-		}
+//		if (nephew.index == 4 && uncle.index == 7) {
+//			throw new RuntimeException("Stop for a cup of tea.");
+//		}
 		return logProposalRatio;
 	}
 	

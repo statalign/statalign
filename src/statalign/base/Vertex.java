@@ -2649,7 +2649,7 @@ public class Vertex {
     		curr.px = ((k%2)>0);
     		curr.updateCurrStates(); // but leave next states intact
 
-    		System.out.print("["+Utils.isValidHistory(curr)+"] tx="+curr.tx+" bx="+curr.bx+" px="+curr.px+" ux="+curr.ux+" gx="+curr.gx+" ggx="+curr.ggx+" ");
+    		//System.out.print("["+Utils.isValidHistory(curr)+"] tx="+curr.tx+" bx="+curr.bx+" px="+curr.px+" ux="+curr.ux+" gx="+curr.gx+" ggx="+curr.ggx+" ");
     		if (!Utils.isValidHistory(curr)) {
     			logProbs[k] = Utils.log0;
     			continue;

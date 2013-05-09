@@ -172,7 +172,7 @@ public class LOCALTopologyMove extends McmcMove {
 			}
 			else {
 				//logProposalRatio += nephew.swapWithUncleAlignToParent();
-				logProposalRatio += nephew.nephewUncleSwapFixedColumns();
+				logProposalRatio += nephew.nephewUncleSwapFixedColumns2();
 				didFastSwap = false;
 			}
 		}
