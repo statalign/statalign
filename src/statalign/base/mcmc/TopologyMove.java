@@ -164,8 +164,8 @@ public class TopologyMove extends McmcMove {
 //		System.out.println(uncle.index+" "+s[1]+"\n"+uncle.parent.index+" "+s[0]);
 		
         
-        //logProposalRatio += nephew.nephewUncleSwapFixedColumns();
-		logProposalRatio += nephew.nephewUncleSwapFixedColumns2();
+        logProposalRatio += nephew.nephewUncleSwapFixedColumns();
+		//logProposalRatio += nephew.nephewUncleSwapFixedColumns2();
 		
 //		if (Utils.DEBUG) tree.checkPointers();		
 //		if (Utils.DEBUG) tree.recomputeCheckLogLike();

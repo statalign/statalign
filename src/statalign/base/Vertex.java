@@ -2715,7 +2715,8 @@ public class Vertex {
 	}
 	
 	private void magnifyProbability(double[] logProbsCol,int stateP) {
-		magnifyProbability(logProbsCol,stateP,5); // 10 works well with glob_25
+		//magnifyProbability(logProbsCol,stateP,5); // 10 works well with glob_25
+		magnifyProbability(logProbsCol,stateP,10); // 10 works well with glob_25
 	}
 	private void magnifyProbability(double[] logProbsCol,int stateP, double factor) {
 		
@@ -2782,7 +2783,7 @@ public class Vertex {
     	final int[] emitPatt2State = owner.hmm2.getEmitPatt2State();
 
     	double logProposalRatio = 0.0;    	
-    	Scheme scheme = Scheme.ALL;
+    	Scheme scheme = Scheme.ONE;
     	
     	//double[] logProbs = {Math.log(0.997),Math.log(0.0012),Math.log(0.0012),Math.log(0.0006)};
     	//double[] logProbs = {Math.log(0.997),Math.log(0.0005),Math.log(0.0005),Math.log(0.002)};
