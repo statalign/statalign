@@ -1305,7 +1305,7 @@ public class Vertex {
             }
             p = (i > 0) ? p.next : parent.winFirst;
         }
-        System.out.println();
+       //System.out.println();
         return probMatrix;
     }
 
@@ -1446,9 +1446,9 @@ public class Vertex {
         //parent.calcOrphan();
         //parent.calcIndelLogLike();
 
-        if (Utils.DEBUG) {
-        	printToScreenAlignment(0,0);
-        }
+//        if (Utils.DEBUG) {
+//        	printToScreenAlignment(0,0);
+//        }
         return retVal.value;
     }
 
@@ -1650,10 +1650,10 @@ public class Vertex {
         }
         winLast = actualAC;
         
-        if (Utils.USE_UPPER) {
-        	//owner.root.calcFelsenRecursively();
-        	owner.root.calcUpperRecursively();
-        }        
+//        if (Utils.USE_UPPER) {
+//        	//owner.root.calcFelsenRecursively();
+//        	owner.root.calcUpperRecursively();
+//        }        
 
         double bpp = 0;
         if (!(Utils.USE_FULL_WINDOWS)) {
@@ -2716,7 +2716,7 @@ public class Vertex {
 	
 	private void magnifyProbability(double[] logProbsCol,int stateP) {
 		//magnifyProbability(logProbsCol,stateP,5); // 10 works well with glob_25
-		magnifyProbability(logProbsCol,stateP,10); // 10 works well with glob_25
+		magnifyProbability(logProbsCol,stateP,5); // 10 works well with glob_25
 	}
 	private void magnifyProbability(double[] logProbsCol,int stateP, double factor) {
 		
@@ -2783,7 +2783,7 @@ public class Vertex {
     	final int[] emitPatt2State = owner.hmm2.getEmitPatt2State();
 
     	double logProposalRatio = 0.0;    	
-    	Scheme scheme = Scheme.ONE;
+    	Scheme scheme = Scheme.IND;
     	
     	//double[] logProbs = {Math.log(0.997),Math.log(0.0012),Math.log(0.0012),Math.log(0.0006)};
     	//double[] logProbs = {Math.log(0.997),Math.log(0.0005),Math.log(0.0005),Math.log(0.002)};
@@ -3111,8 +3111,10 @@ public class Vertex {
     	//         p(--), p(-*), p(*-), p(**)
     	//double[] logWeights4 = {logP,logP,logP,logP};
     	double[] logWeights4 = {Math.log(0.7),Math.log(0.12),Math.log(0.12),Math.log(0.06)};
-
-    	double[] logWeightsOld4 = {logP,logP,logP,logP};
+    	//double[] logWeightsOld4 = {Math.log(0.7),Math.log(0.12),Math.log(0.12),Math.log(0.06)};
+    	double[] logWeightsOld4 = logWeights4.clone();
+    	
+    	//double[] logWeightsOld4 = {logP,logP,logP,logP};
     	    	
     	// Subsets of the above, for selecting from the acceptable options:
     	double[] logWeights2=new double[2], logWeights3=new double[3];
@@ -3131,6 +3133,7 @@ public class Vertex {
         
         for (int col=ali[0].length()-1; col>=0; col--) {
         	
+        	//System.out.println("logProposalRatio = "+logProposalRatio);
 /*	System.out.println(ali[brother.index]);
     System.out.println(ali[index]);
 	System.out.println(ali[uncle.index]);
@@ -3235,7 +3238,9 @@ public class Vertex {
         		//    t does not exist
         		
         	
-        		//    log(bwd) = 0 because only one choice for reverse
+        		//    log(bwd) = 0 because only one choice for reverse /// ???
+        		// OR MAYBE:
+        		// logProposalRatio += logWeightsOld4[3]; 
     			      		
         		//logProposalRatio += Math.log(1+P); // denominator for -log(fwd)
 
@@ -3264,21 +3269,23 @@ public class Vertex {
     			//    parent exists after, and possibly before
         		//    b and t do not exist
         		
-        		// -log(fwd) = 0 because only one choice
+        		// -log(fwd) = 0 because only one choice /// ???
+        		// OR MAYBE:
+        		//logProposalRatio -= logWeights4[3]; /// ???
         		        		
         		//logProposalRatio -= Math.log(1+P); // denominator of log(bwd)
         		
         		
-        		//logWeights2[0] = logWeightsOld4[tx?1:2]; // NB if tx then 1 (opposite to above)
-        		//logWeights2[1] = logWeightsOld4[3];
+        		logWeights2[0] = logWeightsOld4[tx?1:2]; // NB if tx then 1 (opposite to above)
+        		logWeights2[1] = logWeightsOld4[3];
         		        		        		
-        		//logProposalRatio -= logWeights2[0] + logWeights2[1];
+        		logProposalRatio -= Utils.logAdd(logWeights2[0],logWeights2[1]);
         		
         		if (bx) {
         			//if (gx) logProposalRatio += Math.log(P); // grandpa existed before
-        			if (gx) ;//logProposalRatio += logWeights2[1]; 
+        			if (gx) logProposalRatio += logWeights2[1]; 
         			else { // Insert new g column
-        				//logProposalRatio += logWeights2[0];
+        				logProposalRatio += logWeights2[0];
             			g = new AlignColumn((g!=null)?g.next:grandpa.first); // New orphan column          			
             			gx = true;
             			p.orphan = false;
@@ -3288,10 +3295,10 @@ public class Vertex {
         		else {
         			if (px) { // If parent existed before
             			//logProposalRatio += Math.log(P);
-        				//logProposalRatio += logWeights2[1];
+        				logProposalRatio += logWeights2[1];
             		}
             		else { // Insert new p column
-            			//logProposalRatio += logWeights2[0];
+            			logProposalRatio += logWeights2[0];
             			p = new AlignColumn((p!=null)?p.next:parent.first); 
             			//p.parent = g;
             			p.orphan = false;
@@ -3316,6 +3323,7 @@ public class Vertex {
         		// We could sample new internal states, but it's not necessary,
         		// so we will leave any such columns as they are.
         	}
+/**/
         	else if ((tx|ux)&(px&gx)) {
         		// In the cases where parent and grandpa exist
         		// and there is only one leaf node, we will leave
@@ -3371,7 +3379,8 @@ public class Vertex {
         		//		will ensure that neither exist afterwards.
         		// 		i.e. no need to do anything
         	}
-        	/*
+/**/        	
+/*
         	else if (tx|ux) {
         		//System.out.println("tx|ux");
         		// Then:        		
@@ -3382,7 +3391,7 @@ public class Vertex {
 
         		// Back proposal probabilities
 
-        		logProposalRatio -= logWeights4[3] + logWeights4[tx?1:2] + logWeights4[0]; 
+        		logProposalRatio -= Utils.logAdd(Utils.logAdd(logWeights4[3],logWeights4[tx?1:2]),logWeights4[0]); 
         		if (px&gx)  logProposalRatio += logWeights4[3]; //logProposalRatio -= 2*Math.log(P);
     			if (px&!gx) logProposalRatio += logWeights4[tx?1:2]; //logProposalRatio -= Math.log(P);
     			if (!px)    logProposalRatio += logWeights4[0];//logProposalRatio -= Math.log(1);
@@ -3391,9 +3400,9 @@ public class Vertex {
     			//System.out.println(weights3[0]+" "+weights3[1]+" "+weights3[2]);   			    				
     			logWeights3[0] = logWeights4[0];
     			logWeights3[2] = logWeights4[3];
-    			logWeights3[1] = logWeights3[tx?2:1]; // NB this is the other way round to above
+    			logWeights3[1] = logWeights4[tx?2:1]; // NB this is the other way round to above
     			
-    			logProposalRatio += logWeights3[0] + logWeights3[1] + logWeights3[2];
+    			logProposalRatio += Utils.logAdd(Utils.logAdd(logWeights3[0],logWeights3[1]),logWeights3[2]);
     			
 //    			logWeights2[0] = logWeights4[0];
 //    			logWeights2[1] = 
@@ -3457,7 +3466,7 @@ public class Vertex {
     				if (ux) u.orphan = false;
     			}
         	}
-        	*/
+*/
         	else if (px&gx) {
         		// Do nothing, otherwise difficult to make the move reversible without
         		// considering the possibility of inserting silent columns.	
@@ -3499,6 +3508,13 @@ public class Vertex {
         	// the parent sequence, so the child is to be adopted by the first column in 
         	// the parent.
         	    
+        	// Update orphan status based on whether new parent exists
+			if (px) p.orphan = !gx;
+			if (gx) g.orphan = !ggx;
+			if (ux) u.orphan = !px;
+			if (tx) t.orphan = !gx;
+			if (bx) b.orphan = !px; // This should be done automatically in any case
+			
         	
         	if (tx) {
         		t.updateParent(t.orphan?((g==null)?grandpa.first:g.next):g,uncleIsLeft);
@@ -3625,8 +3641,14 @@ public class Vertex {
         System.out.println("this = "+index+", uncle = "+uncle.index);
         System.out.println(owner.printedTree());
         
-        calcAllUp(); ///
-       	owner.root.calcUpperRecursively(); ///
+        //calcAllUp(); ///
+        owner.root.calcFelsenRecursively();
+        owner.root.calcOrphanRecursively();
+        owner.root.calcIndelLogLikeRecursively();
+        if (Utils.USE_UPPER) {
+        	//owner.root.calcFelsenRecursively();
+        	owner.root.calcUpperRecursively();
+        }          	
        	
 
         // make node and window selection

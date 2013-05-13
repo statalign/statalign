@@ -36,7 +36,7 @@ public class LOCALTopologyMove extends McmcMove {
 		autoTune = false; 
 		// autoTune = true by default
 		minEdgeLength = Utils.MIN_EDGE_LENGTH;
-		fastSwapProb = 1.0;
+		fastSwapProb = 0.05;
 		//fastSwapProb = 0.0;
 	}
 	
@@ -171,8 +171,8 @@ public class LOCALTopologyMove extends McmcMove {
 		        if (Utils.DEBUG) tree.root.printToScreenAlignment(0,0,true);
 			}
 			else {
-				logProposalRatio += nephew.swapWithUncleAlignToParent();
-				//logProposalRatio += nephew.nephewUncleSwapFixedColumns2();
+				//logProposalRatio += nephew.swapWithUncleAlignToParent();
+				logProposalRatio += nephew.nephewUncleSwapFixedColumns();
 				didFastSwap = false;
 			}
 		}

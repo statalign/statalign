@@ -1,5 +1,6 @@
 package statalign.mcmc;
 
+import statalign.base.Utils;
 import statalign.utils.NormalDistribution;
 public class MultiplicativeProposal extends ProposalDistribution<Double> {
 
@@ -14,6 +15,7 @@ public class MultiplicativeProposal extends ProposalDistribution<Double> {
 	 * x to log x.
 	 */
 	public double logDensity(Double x) {
+		if (Utils.DEBUG) System.out.println("logDensity(x) of "+x);
 		//return Math.log(n.density(x)) - Math.log(x);
 		return n.logDensity(x) - Math.log(x);
 	}
@@ -22,6 +24,7 @@ public class MultiplicativeProposal extends ProposalDistribution<Double> {
 	}
 	public void updateProposal(double proposalWidthControlVariable, 
 			Double currentParam) {
+		if (Utils.DEBUG) System.out.println("New currentParam = "+currentParam+", var = "+proposalWidthControlVariable);
 		n = new NormalDistribution(Math.log(currentParam),proposalWidthControlVariable);
 	}
 	

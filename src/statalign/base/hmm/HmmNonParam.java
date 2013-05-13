@@ -35,8 +35,8 @@ public class HmmNonParam extends HmmSilent {
 
 	/* states' emission descriptor: first dim. is parent/left child/right child, 2nd dim. is state, value is 0/1 */
 	private int stateEmit[][] = {{0,1,1,1,0,0,0,1},
-			{0,1,1,0,1,0,0,0},
-			{0,1,0,1,0,1,0,0}};
+								 {0,1,1,0,1,0,0,0},
+								 {0,1,0,1,0,1,0,0}};
 
 	/* converts states' emission pattern as a binary number (p=4,l=2,r=1) to state # : e.g. 7->1, 6->2
        8->7 is virtual, so that end state has a pattern, too */
