@@ -150,7 +150,6 @@ public class LOCALTopologyMove extends McmcMove {
 		if (w_aj_new < w_ai_new) { // Then we have a topology switch
 	        if (Utils.DEBUG) tree.root.printToScreenAlignment(0,0,true);
 			topologyChange = true;
-			nTopologyChanges++;
 			double w_ij_new = w_ai_new - w_aj_new;
 			double w_ic_new = w_ac_new - w_ai_new;
 			// Add in priorDensity to logProposalRatio
@@ -203,6 +202,7 @@ public class LOCALTopologyMove extends McmcMove {
 	
 	@Override
 	public void afterMove(Object externalState) {
+		if (lastMoveAccepted && topologyChange) nTopologyChanges++;
 		((CoreMcmcModule) owner).getModelExtMan().afterTreeChange(tree,lastMoveAccepted ? uncle : nephew,lastMoveAccepted);
 		// Should also do an afterAlignChange here, but not obvious what to pass
 		// as the selectedRoot argument.

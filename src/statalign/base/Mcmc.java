@@ -692,7 +692,7 @@ public class Mcmc extends Stoppable {
 		modelExtMan.afterSampling();
 		
 		System.out.println(getInfoString());
-		System.out.println("Proportion of LOCAL proposals resulting in topology change = "+
+		System.out.println("Acceptance rate for LOCAL moves resulting in topology change = "+
 				String.format("%8.4f",(double)localTopologyMove.nTopologyChanges/(double)localTopologyMove.proposalCount));
 		
 		if (frame != null) {
