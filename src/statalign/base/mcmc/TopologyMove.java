@@ -231,7 +231,14 @@ public class TopologyMove extends McmcMove {
 	
 	@Override
 	public double logPriorDensity(Object externalState) {
-		return 0.0;
+		double logPriorRatio = 
+			( nephewEdgeMove.logPriorDensity(externalState) +
+			  parentEdgeMove.logPriorDensity(externalState) +
+			  uncleEdgeMove.logPriorDensity(externalState)    
+			 );
+		if (Utils.DEBUG) System.out.println("logPriorRatio = "+logPriorRatio);
+		return logPriorRatio;
+		 
 	}
 	@Override
 	public void updateLikelihood(Object externalState) {
@@ -248,7 +255,7 @@ public class TopologyMove extends McmcMove {
 		
 	//uncle.fastSwapBackUncle();
 		// If using the alternative move:
-        //uncle.swapBackUncleAlignToParent();
+    //  uncle.swapBackUncleAlignToParent();
 		uncle.restoreFiveWay();
 		
 		if (INCLUDE_EDGE_MULTIPLIERS) {
@@ -257,6 +264,9 @@ public class TopologyMove extends McmcMove {
 			parentEdgeMove.restoreState(externalState);
 			nephewEdgeMove.restoreState(externalState);
 		}
+		
+		// If using fastSwapWithUncle the following may be needed
+		//tree.root.recomputeLogLike();
 	}
 	
 	@Override

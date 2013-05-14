@@ -269,16 +269,18 @@ public class Mcmc extends Stoppable {
 		double uniformProposalWidthControlVariable = 0.25;
 		double multiplicativeProposalWidthControlVariable = 0.5;
 		
+		TopologyMove topologyMove = null;
+		
 		if(!mcmcpars.fixTopology && !mcmcpars.fixEdge) {
-			TopologyMove topologyMove = new TopologyMove(coreModel,edgePrior,
+			topologyMove = new TopologyMove(coreModel,edgePrior,
 					//0.5*multiplicativeProposalWidthControlVariable,"Topology"); // works ok with glob_25
-					2*uniformProposalWidthControlVariable,"Topology"); // experimental
+					1*uniformProposalWidthControlVariable,"Topology"); // experimental
 			coreModel.addMcmcMove(topologyMove, topologyWeight);
-			
+						
 //			LOCALTopologyMove localTopologyMove = new LOCALTopologyMove(coreModel,edgePrior,
 //					0.5*multiplicativeProposalWidthControlVariable,"LOCALTopology");
 			localTopologyMove = new LOCALTopologyMove(coreModel,edgePrior,
-					uniformProposalWidthControlVariable,"LOCALTopology");
+					1*uniformProposalWidthControlVariable,"LOCALTopology");
 			coreModel.addMcmcMove(localTopologyMove, localTopologyWeight);
 		}
 		if(!mcmcpars.fixEdge) {
@@ -295,8 +297,9 @@ public class Mcmc extends Stoppable {
 			}		
 			AllEdgeMove allEdgeMove = new AllEdgeMove(coreModel,edgePrior,
 					new MultiplicativeProposal(),"AllEdge");
-					allEdgeMove.proposalWidthControlVariable = multiplicativeProposalWidthControlVariable;			
+			allEdgeMove.proposalWidthControlVariable = multiplicativeProposalWidthControlVariable;			
 			coreModel.addMcmcMove(allEdgeMove, allEdgeWeight);
+						
 		}
 	}
 	
@@ -335,7 +338,7 @@ public class Mcmc extends Stoppable {
 			coreModel.setLogLike(totalLogLike);
 		}
 		if(Utils.DEBUG) {
-			tree.recomputeCheckLogLike();
+			//tree.recomputeCheckLogLike();
         	tree.checkPointers();
 			if(Math.abs(modelExtMan.totalLogLike(tree)-totalLogLike) > 1e-5) {
 				System.out.println("After: "+modelExtMan.totalLogLike(tree)+" "+totalLogLike);
