@@ -3111,6 +3111,7 @@ public class Vertex {
     	//         p(--), p(-*), p(*-), p(**)
     	//double[] logWeights4 = {logP,logP,logP,logP};
     	double[] logWeights4 = {Math.log(0.7),Math.log(0.12),Math.log(0.12),Math.log(0.06)};
+    	//double[] logWeights4 = {Math.log(0.85),Math.log(0.05),Math.log(0.05),Math.log(0.05)};
     	//double[] logWeightsOld4 = {Math.log(0.7),Math.log(0.12),Math.log(0.12),Math.log(0.06)};
     	double[] logWeightsOld4 = logWeights4.clone();
     	
@@ -3412,7 +3413,6 @@ public class Vertex {
         		logProposalRatio -= logWeights3[choice];
         		
         		if (choice == 0) { // Then we're choosing no internals
-    			    // -log(fwd) = log(1) = 0        			
         			
         			if (px) { delete(p); parent.first = p.next; p = p.prev; px = false; }  
         			if (gx) { delete(g); grandpa.first = g.next; g = g.prev; gx = false; } 
@@ -3422,8 +3422,6 @@ public class Vertex {
     				if (ux) u.orphan = true;
         		}
         		else if (choice == 1) { // Then we're choosing to impute only one character    				
-    				// -log(fwd) = log(P)
-    				//logProposalRatio += Math.log(P);        			
         			
     				if (tx) {
     					// if we're considering t, then its new parent must be g
@@ -3446,8 +3444,6 @@ public class Vertex {
     				
     			}
         		else if (choice == 2) { //Then we're imputing characters at p and g
-    				// -log(fwd) = 2 log(P) 
-    				//logProposalRatio += 2*Math.log(P);
     				
     				if (!gx) {
     					//System.out.println("g.prev = "+g.prev.toString());

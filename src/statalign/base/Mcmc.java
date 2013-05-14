@@ -1,5 +1,6 @@
 package statalign.base;
 
+import java.io.FileWriter;
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -42,6 +43,9 @@ import statalign.postprocess.PostprocessManager;
 import statalign.postprocess.plugins.contree.CNetwork;
 import statalign.ui.ErrorMessage;
 import statalign.ui.MainFrame;
+import statalign.utils.BetaDistribution;
+import statalign.utils.GammaDistribution;
+import statalign.utils.NormalDistribution;
 
 import com.ppfold.algo.AlignmentData;
 import com.ppfold.algo.FuzzyAlignment;
@@ -262,19 +266,19 @@ public class Mcmc extends Stoppable {
 		}
 
 		GammaPrior edgePrior = new GammaPrior(1,1);
-		double uniformProposalWidthControlVariable = 0.1;
+		double uniformProposalWidthControlVariable = 0.25;
 		double multiplicativeProposalWidthControlVariable = 0.5;
 		
 		if(!mcmcpars.fixTopology && !mcmcpars.fixEdge) {
 			TopologyMove topologyMove = new TopologyMove(coreModel,edgePrior,
 					//0.5*multiplicativeProposalWidthControlVariable,"Topology"); // works ok with glob_25
-					(2.5/5.0)*multiplicativeProposalWidthControlVariable,"Topology"); // experimental
+					1*uniformProposalWidthControlVariable,"Topology"); // experimental
 			coreModel.addMcmcMove(topologyMove, topologyWeight);
 			
 //			LOCALTopologyMove localTopologyMove = new LOCALTopologyMove(coreModel,edgePrior,
 //					0.5*multiplicativeProposalWidthControlVariable,"LOCALTopology");
 			localTopologyMove = new LOCALTopologyMove(coreModel,edgePrior,
-					0.5*multiplicativeProposalWidthControlVariable,"LOCALTopology");
+					uniformProposalWidthControlVariable,"LOCALTopology");
 			coreModel.addMcmcMove(localTopologyMove, localTopologyWeight);
 		}
 		if(!mcmcpars.fixEdge) {
@@ -291,7 +295,7 @@ public class Mcmc extends Stoppable {
 			}		
 			AllEdgeMove allEdgeMove = new AllEdgeMove(coreModel,edgePrior,
 					new MultiplicativeProposal(),"AllEdge");
-			allEdgeMove.proposalWidthControlVariable = multiplicativeProposalWidthControlVariable;
+					allEdgeMove.proposalWidthControlVariable = multiplicativeProposalWidthControlVariable;			
 			coreModel.addMcmcMove(allEdgeMove, allEdgeWeight);
 		}
 	}
@@ -1462,4 +1466,66 @@ public class Mcmc extends Stoppable {
 //			modelExtMan.afterModExtParamChange(tree, modExtParamChangeAccepted);
 //		}
 
+	/**
+	 * Code to test that various samplers are working correctly.
+	 */
+	public static void main(String[] args) {
+		
+		MultiplicativeProposal proposalDistribution = new MultiplicativeProposal();
+		//LogisticProposal proposalDistribution = new LogisticProposal();
+		//GaussianProposal proposalDistribution = new GaussianProposal();
+		//GammaDistribution n = new GammaDistribution(2,0.5);
+		BetaDistribution n = new BetaDistribution(2,5);
+		
+		int ITERS = 100000;
+		//double var = 3.5; // LogisticProposal
+		//double var = 0.6; // GaussianProposal
+		double var = 2.5; // MultiplicativeProposal
+		double oldParam = 0.5; 
+		double[] params = new double[ITERS]; 
+		double MIN_PARAM = 0;
+		double MAX_PARAM = 1; // Beta
+		//double MAX_PARAM = Double.POSITIVE_INFINITY; // Gamma
+		int acc = 0;
+		
+		for (int i=0; i<ITERS; i++) {						
+			
+			if (i>0) oldParam = params[i-1];
+			
+			proposalDistribution.updateProposal(var,oldParam);
+			
+		    double newParam = proposalDistribution.sample();						
+		    
+		    if (newParam <= MIN_PARAM || newParam > MAX_PARAM) {
+		    	params[i] = oldParam;
+		    	continue;
+		    }
+		    
+		    double logProposalRatio = -proposalDistribution.logDensity(newParam);
+		    
+		    proposalDistribution.updateProposal(var,newParam);
+		
+		    logProposalRatio += proposalDistribution.logDensity(oldParam);
+				    
+		    double logLikeRatio = Math.log(n.density(newParam)) - Math.log(n.density(oldParam));
+		    
+		    //System.out.println(oldParam+"\t"+newParam+"\t"+logProposalRatio+"\t"+logLikeRatio);
+
+		    if (Math.log(Utils.generator.nextDouble())< (logLikeRatio + logProposalRatio)) {
+		    	params[i] = newParam;
+		    	acc++;
+		    }
+		    else {
+		    	params[i] = oldParam; 
+		    }
+		}
+		System.out.println("Acceptance rate = "+((double)acc/(double)ITERS));
+		try {
+			FileWriter output = new FileWriter("multiplicativeTest.txt");
+			for (int i=0; i<ITERS; i++) {
+				output.write(params[i]+"\n");
+			}
+		} catch (IOException e) {}	
+
+	}
 }

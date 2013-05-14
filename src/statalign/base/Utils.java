@@ -284,6 +284,32 @@ public class Utils{
 	public static int weightedChoose(double[] weights){
 		return weightedChoose(weights,null);
 	}
+	
+	public static int weightedChoose(List<Double> weights, MuDouble selectLogLike){
+		double sum = 0.0;
+
+		for(int i = 0; i < weights.size(); i++){
+			sum += weights.get(i);
+		}
+		if(selectLogLike != null)
+			selectLogLike.value += Math.log(sum);
+
+		double w = generator.nextDouble() * sum;
+		int k = 0;
+		sum = 0.0;
+		while(k < weights.size()-1 && (sum += weights.get(k)) <= w){
+			k++;
+		}
+		if(selectLogLike != null)
+			selectLogLike.value -= Math.log(weights.get(k));
+
+		assert (weights.get(k) > 1e-5) : "weightedChoose error";
+
+		return k;
+	}
+//	public static int weightedChoose(List<Double> weights){
+//		return weightedChoose(weights,null);
+//	}
 
 	/**
 	 * Behaves exactly like weightedChoose(new double[]{1-prob,prob}, selectLogLike), but faster
