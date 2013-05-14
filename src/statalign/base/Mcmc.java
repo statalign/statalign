@@ -272,7 +272,7 @@ public class Mcmc extends Stoppable {
 		if(!mcmcpars.fixTopology && !mcmcpars.fixEdge) {
 			TopologyMove topologyMove = new TopologyMove(coreModel,edgePrior,
 					//0.5*multiplicativeProposalWidthControlVariable,"Topology"); // works ok with glob_25
-					1*uniformProposalWidthControlVariable,"Topology"); // experimental
+					2*uniformProposalWidthControlVariable,"Topology"); // experimental
 			coreModel.addMcmcMove(topologyMove, topologyWeight);
 			
 //			LOCALTopologyMove localTopologyMove = new LOCALTopologyMove(coreModel,edgePrior,
@@ -1466,10 +1466,66 @@ public class Mcmc extends Stoppable {
 //			modelExtMan.afterModExtParamChange(tree, modExtParamChangeAccepted);
 //		}
 
+	
+	/**
+	 * Code to test that the moves are being sampled according to the
+	 * correct weights (i.e. that there is not some bias arising from
+	 * the choose function and/or random number generator).
+	 */
+	public static void main(String[] args) {
+		final int rWeight = 8;
+		final int lambdaWeight = 4;
+		final int muWeight = 6;
+		final int lambdaMuWeight = 6;
+		final int phiWeight = 4;
+		final int rhoWeight = 6;
+		final int thetaWeight = 6;
+		
+		final int substWeight = 10;
+		final int edgeWeight = 1; // per edge
+		final int allEdgeWeight = 6;
+		final int edgeWeightIncrement = 0; // Added after half of burnin
+		final int alignWeight = 25;
+		final int topologyWeight = 8;
+		final int localTopologyWeight = 8;
+		
+		int[] weights = {
+				rWeight,
+				lambdaWeight, 
+				rhoWeight,
+				thetaWeight,				
+				edgeWeight,
+				edgeWeight,
+				edgeWeight,
+				edgeWeight,
+				edgeWeight,
+				edgeWeight,
+				edgeWeight,
+				allEdgeWeight,				
+				alignWeight,
+				topologyWeight,
+				localTopologyWeight
+		};
+		
+		final int nSamples = 10000;
+		int[] samples = new int[nSamples];
+		for (int i=0; i<nSamples; i++) {
+			samples[i] = Utils.weightedChoose(weights);
+		}
+		try {
+			FileWriter output = new FileWriter("sampleTest.txt");
+			for (int i=0; i<nSamples; i++) {
+				output.write(samples[i]+"\n");
+			}
+			output.flush();
+		} catch (IOException e) { throw new RuntimeException(e.toString());}
+		System.out.println("Done.");
+	}
+		
 	/**
 	 * Code to test that various samplers are working correctly.
 	 */
-	public static void main(String[] args) {
+	public static void main2(String[] args) {
 		
 		MultiplicativeProposal proposalDistribution = new MultiplicativeProposal();
 		//LogisticProposal proposalDistribution = new LogisticProposal();

@@ -180,8 +180,8 @@ public class TopologyMove extends McmcMove {
     	logProposalRatio += nephew.nephewUncleSwapFixedColumns();        
 		//logProposalRatio += nephew.nephewUncleSwapFixedColumns2();        
         
-//		if (Utils.DEBUG) tree.checkPointers();		
-//		if (Utils.DEBUG) tree.recomputeCheckLogLike();
+		if (Utils.DEBUG) tree.checkPointers();		
+		if (Utils.DEBUG) tree.recomputeCheckLogLike();
 //		if (Utils.DEBUG) tree.root.left.printPointers();
 //		System.out.println("root.length = "+tree.root.getLength());
         tree.root.printToScreenAlignment(0,0,true);
