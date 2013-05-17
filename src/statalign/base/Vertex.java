@@ -2713,6 +2713,31 @@ public class Vertex {
 //		System.out.println();
 
 	}
+	private void zeroInvalidChoicesAndRenormalise(double[] logProbsCol, int neighb) {
+
+//    	System.out.println(neighb+" = "+Utils.bitIsSet(neighb, 0)+", "
+//    								 +Utils.bitIsSet(neighb, 1)+", "
+//    								 +Utils.bitIsSet(neighb, 2)+", "
+//    								 +Utils.bitIsSet(neighb, 3));
+
+		double logTot = Utils.log0;
+		for (int k=0; k<logProbsCol.length; k++) {
+			int state = neighb;
+			if ((k%2)>0) state |= (1<<4);
+			if (k>1) 	 state |= (1<<5);
+    		
+
+			if (!Utils.isValidHistory(state)) logProbsCol[k] = Utils.log0;
+			else logTot = Utils.logAdd(logTot, logProbsCol[k]);
+		}
+		for (int k=0; k<logProbsCol.length; k++) logProbsCol[k] -= logTot;
+		
+//		System.out.print("\tafter zeroInvalid():\t");
+//		for (int k=0; k<logProbsCol.length; k++) {
+//			System.out.print(logProbsCol[k]+" ");
+//			}	
+//		System.out.println();
+	}
 	
 	private void magnifyProbability(double[] logProbsCol,int stateP) {
 		//magnifyProbability(logProbsCol,stateP,5); // 10 works well with glob_25
@@ -2777,6 +2802,160 @@ public class Vertex {
     	ONE,// one-step greedy algorithm using only parent edge transition probability
     	ALL,// one-step greedy algorithm using all neighbour transition probabilities
     	FULL // full dynamic programming, using a simplified HMM
+    }
+    public double nephewUncleSwapFixedColumns3() {
+
+    	double logProposalRatio = 0.0;    	
+    	
+    	double[] logProbs = {Math.log(0.7),Math.log(0.12),Math.log(0.12),Math.log(0.06)};
+    	
+    	if (Utils.DEBUG) System.out.println(index+".nephewUncleSwapFixedColumns3()");
+    	
+    	Vertex brother = brother(), uncle = parent.brother(), grandpa = parent.parent, greatgrandpa = grandpa.parent;
+    	boolean gIsRoot = (grandpa==owner.root);
+    	boolean isLeft = (this==parent.left);
+    	boolean uncleIsLeft = (uncle==grandpa.left);
+    	boolean grandpaIsLeft = false; 
+    	if (!gIsRoot) grandpaIsLeft = (grandpa==greatgrandpa.left);
+
+    	String[] ali = owner.getState().getFullAlign();
+
+    	// Save the old alignment associated with the nodes that will be modified by
+    	// this move, in case it needs to be restored if the move is rejected.
+    	saveFiveWay(ali);
+    	
+
+    	// Loop over columns of the initial alignment, starting from the last (non-virtual) column
+        first=last; parent.first=parent.last; brother.first=brother.last; grandpa.first=grandpa.last; uncle.first=uncle.last;
+        AlignColumn t=last.prev, p=parent.last.prev, b=brother.last.prev, g=grandpa.last.prev, u=uncle.last.prev;
+        AlignColumn gg = null; if (!gIsRoot) { greatgrandpa.first = greatgrandpa.last; gg=greatgrandpa.last.prev;}               
+ 		
+        
+        // Variables indicating whether a character is present at the current column
+        boolean tx=false, px=false, bx=false, gx=false, ux=false, ggx=false;        
+		
+        double[] logProbsOld = null, logProbsNew = null;
+
+		int oldState, newState, prevOldState=-1;
+		int oldImputation=0, newImputation=0;
+		
+        for (int col=ali[0].length()-1; col>=0; col--) {
+        	        	 
+        	tx = (ali[index].charAt(col)!='-'); 		
+        	px = (ali[parent.index].charAt(col)!='-'); 	
+        	bx = (ali[brother.index].charAt(col)!='-'); 
+        	gx = (ali[grandpa.index].charAt(col)!='-');	
+        	ux = (ali[uncle.index].charAt(col)!='-');
+          	ggx = false;
+        	if (!gIsRoot) ggx = (ali[greatgrandpa.index].charAt(col)!='-');
+        
+        	int nTips = (tx?1:0) + (bx?1:0) + (ux?1:0) + (ggx?1:0);
+
+        	if (!(tx|bx|ux|ggx) || nTips>=3) prevOldState = -1; // change nothing
+        	else {
+	        	// integer representation of the neighbour configuration
+	        	oldState = ((tx?1:0)<<0)|((bx?1:0)<<1)|((ux?1:0)<<2)|((ggx?1:0)<<3);
+	        	//System.out.println("oldState = "+oldState);
+	        	
+	        	if (oldState != prevOldState) {
+	        		newState = ((tx?1:0)<<2)|((bx?1:0)<<1)|((ux?1:0)<<0)|((ggx?1:0)<<3);
+
+	        		logProbsOld = logProbs.clone();
+	        		logProbsNew = logProbs.clone();
+	        		zeroInvalidChoicesAndRenormalise(logProbsOld,oldState);
+	        		zeroInvalidChoicesAndRenormalise(logProbsNew,newState);
+	
+	        		oldImputation = (px?1:0) + 2*(gx?1:0);        		
+	        		logProposalRatio += logProbsOld[oldImputation];
+	        		
+	        		newImputation = Utils.logWeightedChoose(logProbsNew);
+	        		logProposalRatio -= logProbsNew[newImputation];
+	        		
+	        		prevOldState = oldState;
+	        	}
+	        	
+	        	// See whether the newly selected currStateNew requires any columns
+	        	// to be inserted or deleted
+	        	boolean insertG = (newImputation>1)&!gx;
+	        	boolean deleteG = (!(newImputation>1))&gx;        	
+	    		boolean insertP = ((newImputation%2)>0)&!px;
+	    		boolean deleteP = ((newImputation%2)==0)&px;
+	    		// NB currently the above is coded according to the TKF92 currStateNew
+	    		// coding scheme
+	    		
+	        	// Insert or delete new columns as necessary
+	        	if (insertG) {
+		        	g = new AlignColumn((g!=null)?g.next:grandpa.first); // New orphan column          			
+					gx = true;
+	        	}
+	        	else if (deleteG) {
+	        		delete(g); grandpa.first = g.next; g = g.prev; gx = false; 				
+	        	}
+	        	if (insertP) {        		        		
+	        		p = new AlignColumn((p!=null)?p.next:parent.first);     			
+	    			px = true;
+	        	}
+	        	else if (deleteP) {
+	        		delete(p); parent.first = p.next; p = p.prev; px = false;
+	        	}
+        	}
+        	
+        	// Update orphan status based on whether new parent exists
+			if (px) p.orphan = !gx;
+			if (gx) g.orphan = !ggx;
+			if (ux) u.orphan = !px;
+			if (tx) t.orphan = !gx;
+			if (bx) b.orphan = !px; // This should be done automatically in any case
+			      
+			// Reassign parentage
+			if (tx) {
+        		t.updateParent(t.orphan?((g==null)?grandpa.first:g.next):g,uncleIsLeft);
+        	}
+			if (px) {
+        		p.updateParent(p.orphan?((g==null)?grandpa.first:g.next):g,!uncleIsLeft);
+        	}
+			if (ux) {
+        		u.updateParent(u.orphan?((p==null)?parent.first:p.next):p,isLeft);
+        	}
+        	if (bx) {
+        		b.updateParent(b.orphan?((p==null)?parent.first:p.next):p,!isLeft);
+        	}
+       		if (gx) {
+        		if (!gIsRoot) g.updateParent(g.orphan?((gg==null)?greatgrandpa.first:gg.next):gg,grandpaIsLeft);
+        	}
+       		
+       		// Decrement the column pointers
+        	if (tx) { first = t; t = t.prev;} 
+        	if (px) { parent.first = p; p = p.prev; }
+        	if (bx) { brother.first = b; b = b.prev; }
+        	if (gx) { grandpa.first = g; g = g.prev; }        	
+        	if (ux) { uncle.first = u; u = u.prev; }
+        	if (ggx) { greatgrandpa.first = gg; gg = gg.prev; }  
+        }
+
+        
+        // Swap the pointers between vertices, and the first and last columns
+        // NB the uncle has to be done first, otherwise parent refers to grandpa
+        // NB this also has to be done after all other references to parent in reference to the old parent
+        // (or otherwise we could instead refer to a pointer to the parent under a different name,
+        // rather than using the member variable `parent')
+        uncle.parent = parent; 		
+ 		uncle.last.parent = parent.last;
+ 		if (isLeft)		 { parent.left = uncle; parent.last.left = uncle.last; } 
+ 		else 			 { parent.right = uncle; parent.last.right = uncle.last; }
+        parent = grandpa;
+ 		last.parent = grandpa.last;		 				 		
+ 		if (uncleIsLeft) { grandpa.left = this; grandpa.last.left = last; } 
+ 		else 		 	 { grandpa.right = this; grandpa.last.right = last; }
+ 		
+ 		if (Utils.DEBUG) {
+ 			owner.checkPointers();
+ 			owner.root.recomputeLogLike();
+ 		}
+ 		
+    	uncle.calcAllUp();
+    	
+    	return logProposalRatio;
     }
     public double nephewUncleSwapFixedColumns2() {
     	final int END = owner.hmm2.getEnd();

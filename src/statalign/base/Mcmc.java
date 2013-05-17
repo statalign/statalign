@@ -1470,12 +1470,27 @@ public class Mcmc extends Stoppable {
 //		}
 
 	
+	public static void main(String[] args) {
+		
+		int x;
+		
+		x = (1 << 1);
+		System.out.println(x);
+		x = (1 << 2);
+		System.out.println(x);
+		x = (1 << 3);
+		System.out.println(x);
+		x = (1 << 1)|(1<<2);
+		System.out.println(x);
+		System.out.println((x & (1<<0))!=0);
+		System.out.println(x);
+	}
 	/**
 	 * Code to test that the moves are being sampled according to the
 	 * correct weights (i.e. that there is not some bias arising from
 	 * the choose function and/or random number generator).
 	 */
-	public static void main(String[] args) {
+	public static void main3(String[] args) {
 		final int rWeight = 8;
 		final int lambdaWeight = 4;
 		final int muWeight = 6;

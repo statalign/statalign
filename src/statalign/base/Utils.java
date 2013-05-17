@@ -440,6 +440,28 @@ public class Utils{
     	    	    	
     	return result;
     }
+    static boolean bitIsSet(int x, int pos) {
+    	return (x & (1<<pos))!=0;
+    }
+    static boolean isValidHistory(int neighb) {
+	    	
+    	boolean tx = bitIsSet(neighb,0);
+		boolean bx = bitIsSet(neighb,1);
+		boolean ux = bitIsSet(neighb,2);
+		boolean ggx = bitIsSet(neighb,3);
+		
+		boolean px = bitIsSet(neighb,4);
+		boolean gx = bitIsSet(neighb,5);
+		
+    	boolean result = true;
+    	if ((ux|ggx)&(tx|bx)) 	result &= (px&gx);
+    	if (result && ux&ggx)	result &= gx;
+    	if (result &&  tx&bx)	result &= px;
+    	if (result && (px&!gx)) result &= !(ux|ggx);
+    	if (result && (gx&!px)) result &= !(tx|bx);
+    	    	    	
+    	return result;
+    }
 	    
 	/** 
 	 * Takes a time in milliseconds and converts to a string to be printed.
