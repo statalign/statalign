@@ -2793,6 +2793,12 @@ public class Vertex {
 		if (Utils.DEBUG) assert(tot > -1e-6);
 //		System.out.println();
 	}
+	public int favouredDestination(int state) {
+		int x = state;
+		if (state==1) 		x = 2;
+		else if (state==2)  x = 1;
+		return x;
+	}
     /**
      * Schemes for imputing the internal character in the five-way topology
      * sampling move.
@@ -2805,9 +2811,14 @@ public class Vertex {
     }
     public double nephewUncleSwapFixedColumns3() {
 
+    	final boolean USE_MAGNIFICATION = true;
+    	double magProb = 0.8;
+    	
     	double logProposalRatio = 0.0;    	
     	
     	double[] logProbs = {Math.log(0.7),Math.log(0.12),Math.log(0.12),Math.log(0.06)};
+    	//double[] logProbs = {Math.log(0.7),Math.log(0.1),Math.log(0.1),Math.log(0.1)};
+    	//double[] logProbs = {Math.log(0.7),Math.log(0.06),Math.log(0.06),Math.log(0.18)};
     	
     	if (Utils.DEBUG) System.out.println(index+".nephewUncleSwapFixedColumns3()");
     	
@@ -2863,12 +2874,22 @@ public class Vertex {
 	        		logProbsOld = logProbs.clone();
 	        		logProbsNew = logProbs.clone();
 	        		zeroInvalidChoicesAndRenormalise(logProbsOld,oldState);
-	        		zeroInvalidChoicesAndRenormalise(logProbsNew,newState);
+	        		zeroInvalidChoicesAndRenormalise(logProbsNew,newState);	        			        		
 	
 	        		oldImputation = (px?1:0) + 2*(gx?1:0);        		
-	        		logProposalRatio += logProbsOld[oldImputation];
-	        		
+	        			    
+	        		double rand = Utils.generator.nextDouble();
+	        		if (USE_MAGNIFICATION && rand<magProb) {
+	        			magnifyProbability(logProbsNew,favouredDestination(oldImputation)); ///
+	        		}
+	        			        			        	
 	        		newImputation = Utils.logWeightedChoose(logProbsNew);
+	        		
+	        		if (USE_MAGNIFICATION && rand<magProb) {
+	        			magnifyProbability(logProbsOld,favouredDestination(newImputation)); ///
+	        		}
+	        		
+	        		logProposalRatio += logProbsOld[oldImputation];
 	        		logProposalRatio -= logProbsNew[newImputation];
 	        		
 	        		prevOldState = oldState;
@@ -2950,10 +2971,10 @@ public class Vertex {
  		
  		if (Utils.DEBUG) {
  			owner.checkPointers();
- 			owner.root.recomputeLogLike();
  		}
+		owner.root.recomputeLogLike();
  		
-    	uncle.calcAllUp();
+    	//uncle.calcAllUp();
     	
     	return logProposalRatio;
     }
