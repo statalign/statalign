@@ -68,6 +68,9 @@ public class AlignmentMove extends McmcMove {
 		 tree.root.calcFelsenRecursively();
          tree.root.calcOrphanRecursively();
          tree.root.calcIndelLogLikeRecursively();
+//		selectedRoot.calcFelsenRecursively();
+//		selectedRoot.calcOrphanRecursively();
+//		selectedRoot.calcIndelLogLikeRecursively();
          if (Utils.USE_UPPER) {
          	//owner.root.calcFelsenRecursively();
          	tree.root.calcUpperRecursively();

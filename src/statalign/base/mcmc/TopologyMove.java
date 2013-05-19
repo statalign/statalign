@@ -27,17 +27,20 @@ public class TopologyMove extends McmcMove {
 	
 	PriorDistribution<Double> edgePrior;
 	
+	double fastSwapProb = 0.05;
+	boolean didFastSwap = false;
+	
 	public TopologyMove (McmcModule m, PriorDistribution<Double> pr, double propVar, String n) {
 		owner = m;
 		edgePrior = pr;
 		edgeProposalWidthControlVariable = propVar;
 		name = n;
 		autoTune = false;
-		//if(Utils.DEBUG){
+		if(Utils.DEBUG){
 			try{
 				topMoves = new FileWriter("topMoves.txt");				
 			} catch (IOException e){ throw new RuntimeException("Problem creating file topMoves.txt.");}
-		//}
+		}
 	}
 
 	@Override
@@ -65,7 +68,7 @@ public class TopologyMove extends McmcMove {
 		
 		//int rnd = 1;
 		
-		System.out.println("Before Topology: "+tree.printedTree());
+		//System.out.println("Before Topology: "+tree.printedTree());
 
 		nephew = tree.vertex[rnd];
 		uncle = nephew.parent.brother();
@@ -113,7 +116,7 @@ public class TopologyMove extends McmcMove {
 	@Override
 	public double proposal(Object externalState) {
 
-		System.out.println("nephew = "+nephew.index+", uncle = "+uncle.index);
+		//System.out.println("nephew = "+nephew.index+", uncle = "+uncle.index);
 //		if(Utils.DEBUG){
 //			System.out.println("Before:");
 //			System.out.println("Likelihood:");
@@ -134,22 +137,25 @@ public class TopologyMove extends McmcMove {
 //				topMoves.write(tree.root.indelLogLike + "\t" + tree.root.orphanLogLike + "\t");
 //			} catch(IOException e){}
 //		}
-        tree.root.printToScreenAlignment(0,0,true);
-    	if (Utils.DEBUG) System.out.println("BEFORE: root.orphanLogLike = "+tree.root.orphanLogLike+", root.indelLogLike = "+tree.root.indelLogLike);
-    	
-    	try{
-    	topMoves.write(tree.root.orphanLogLike + "\t" + tree.root.indelLogLike + "\t");
-    	} catch(IOException e){throw new RuntimeException("Problem writing to file topMoves.txt.");}
+       
+    	if (Utils.DEBUG) {
+    		tree.root.printToScreenAlignment(0,0,true);
+    		System.out.println("BEFORE: root.orphanLogLike = "+tree.root.orphanLogLike+", root.indelLogLike = "+tree.root.indelLogLike);    	
+	    	
+	    	try{
+	    	topMoves.write(tree.root.orphanLogLike + "\t" + tree.root.indelLogLike + "\t");
+	    	} catch(IOException e){throw new RuntimeException("Problem writing to file topMoves.txt.");}
+    	}
     	
     	double logProposalRatio = 0;
 		
     	if (INCLUDE_EDGE_MULTIPLIERS) {
 			logProposalRatio += nephewEdgeMove.proposal(externalState);
-			System.out.println("logProposalRatio after nephew edge = "+logProposalRatio);
+			//System.out.println("logProposalRatio after nephew edge = "+logProposalRatio);
 			logProposalRatio += parentEdgeMove.proposal(externalState);
-			System.out.println("logProposalRatio after parent edge = "+logProposalRatio);
+			//System.out.println("logProposalRatio after parent edge = "+logProposalRatio);
 			logProposalRatio += uncleEdgeMove.proposal(externalState);
-			System.out.println("logProposalRatio after uncle edge = "+logProposalRatio);
+			//System.out.println("logProposalRatio after uncle edge = "+logProposalRatio);
 			
 //			if (logProposalRatio != Double.NEGATIVE_INFINITY) {
 //			double tmp = nephew.edgeLength;
@@ -174,31 +180,41 @@ public class TopologyMove extends McmcMove {
 //		s = uncle.printedAlignment();
 //		System.out.println(uncle.index+" "+s[1]+"\n"+uncle.parent.index+" "+s[0]);
 		
-        
-    	//logProposalRatio += nephew.fastSwapWithUncle();
-    	//logProposalRatio += nephew.swapWithUncleAlignToParent();
-    	//logProposalRatio += nephew.nephewUncleSwapFixedColumns();        
-		//logProposalRatio += nephew.nephewUncleSwapFixedColumns2();        
-    	//logProposalRatio += nephew.nephewUncleSwapFixedColumns3();
-    	logProposalRatio += nephew.nephewUncleSwapFixedColumns3();
+		if (Utils.generator.nextDouble() < fastSwapProb) {
+			logProposalRatio += nephew.fastSwapWithUncle();
+			didFastSwap = true;
+		}
+		else {
+	    	//logProposalRatio += nephew.swapWithUncleAlignToParent();
+	    	//logProposalRatio += nephew.nephewUncleSwapFixedColumns();        
+			//logProposalRatio += nephew.nephewUncleSwapFixedColumns2();        
+	    	//logProposalRatio += nephew.nephewUncleSwapFixedColumns3();
+	    	logProposalRatio += nephew.nephewUncleSwapFixedColumns3();
+	    	didFastSwap = false;
+		}
         
 		if (Utils.DEBUG) tree.checkPointers();		
 		if (Utils.DEBUG) tree.recomputeCheckLogLike();
 //		if (Utils.DEBUG) tree.root.left.printPointers();
 //		System.out.println("root.length = "+tree.root.getLength());
-        tree.root.printToScreenAlignment(0,0,true);
-		if (Utils.DEBUG) System.out.println("AFTER: root.orphanLogLike = "+tree.root.orphanLogLike+", root.indelLogLike = "+tree.root.indelLogLike);
+        
+		if (Utils.DEBUG) {
+			tree.root.printToScreenAlignment(0,0,true);
+			System.out.println("AFTER: root.orphanLogLike = "+tree.root.orphanLogLike+", root.indelLogLike = "+tree.root.indelLogLike);
+			try{
+		    	topMoves.write(tree.root.orphanLogLike+"\t"+tree.root.indelLogLike +"\t"+logProposalRatio+"\n");
+			    topMoves.flush();
+		    } catch(IOException e){throw new RuntimeException("Problem writing to file topMoves.txt.");}
+		    System.out.println("lambda = "+tree.hmm2.params[1]+", mu = "+tree.hmm2.params[2]);
+			
+			// double logProposalRatio = nephew.swapWithUncleAlignToParent();
+			System.out.println("logProposalRatio after swap = "+logProposalRatio);
+			System.out.println("After  Topology: "+tree.printedTree());
+		}
 		
-		try{
-	    	topMoves.write(tree.root.orphanLogLike+"\t"+tree.root.indelLogLike +"\t"+logProposalRatio+"\n");
-		    topMoves.flush();
-	    } catch(IOException e){throw new RuntimeException("Problem writing to file topMoves.txt.");}
+		
 	    		    	
-		System.out.println("lambda = "+tree.hmm2.params[1]+", mu = "+tree.hmm2.params[2]);
 		
-		// double logProposalRatio = nephew.swapWithUncleAlignToParent();
-		System.out.println("logProposalRatio after swap = "+logProposalRatio);
-		System.out.println("After  Topology: "+tree.printedTree());
 //		s = nephew.printedAlignment();
 //		System.out.println(s[0]+"\n"+s[1]);
 
@@ -255,10 +271,13 @@ public class TopologyMove extends McmcMove {
 		// At this point the uncle refers to what was originally
 		// `this'.
 		
-	//uncle.fastSwapBackUncle();
-		// If using the alternative move:
-    //  uncle.swapBackUncleAlignToParent();
-		uncle.restoreFiveWay();
+		if (didFastSwap) {
+			uncle.fastSwapBackUncle();	
+		}
+		else {
+		    // uncle.swapBackUncleAlignToParent();
+			uncle.restoreFiveWay();
+		}
 		
 		if (INCLUDE_EDGE_MULTIPLIERS) {
 			// Note these are restored in the reverse order to the proposal
@@ -268,7 +287,9 @@ public class TopologyMove extends McmcMove {
 		}
 		
 		// If using fastSwapWithUncle the following may be needed
-		//tree.root.recomputeLogLike();
+		if (didFastSwap) {
+			tree.root.recomputeLogLike();
+		}
 	}
 	
 	@Override

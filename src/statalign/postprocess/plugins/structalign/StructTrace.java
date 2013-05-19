@@ -32,11 +32,12 @@ public class StructTrace extends Postprocess {
 	FileWriter rmsdOut;
 	FileWriter radiiOut;
 	
+	boolean PRINT_RMSD = false; // TODO have this set by StructAlign
 	public StructAlign structAlign;
 	List<StructAlignTraceParameters> parameterHistory;
 	
 	public int burninLength; 
-	public final int MAX_HISTORY_SIZE = 1000;
+	public int MAX_HISTORY_SIZE = 1000;
 	public int refreshRate;
 	
 	public List<StructAlignTraceParameters> getParameterHistory() {
@@ -134,39 +135,42 @@ public class StructTrace extends Postprocess {
 		
 		parameterHistory = new ArrayList<StructAlignTraceParameters>();
 		burninLength = inputData.pars.burnIn;
+		MAX_HISTORY_SIZE = Math.min(burninLength, MAX_HISTORY_SIZE);
 		current = 0;
 		//refreshRate = inputData.pars.burnIn / (2*MAX_HISTORY_SIZE);
-		refreshRate = inputData.pars.burnIn / (MAX_HISTORY_SIZE);
+		refreshRate = burninLength / (MAX_HISTORY_SIZE);
 		// Means we will have the whole burnin in one window, but then it
 		// will start to shift.
 		count = 0;
 		
-		try{
-			rmsdOut = new FileWriter("rmsd.txt");
-			radiiOut = new FileWriter("radii.txt");
-		} catch (IOException e){}
-		
-		double[] rad = calcGyration();
-		int leaves = structAlign.coords.length;
-		try {
-			for(int i = 0; i < leaves-1; i++)
-				for(int j = i+1; j < leaves; j++)
-					rmsdOut.write("msd" + i + "_" + j + "\t");
-			for(int i = 0; i < leaves-1; i++)
-				for(int j = i+1; j < leaves; j++)
-					rmsdOut.write("t" + i + "_" + j + "\t");
-			for(int i = 0; i < leaves-1; i++)
-				for(int j = i+1; j < leaves; j++)
-					rmsdOut.write("seqID" + i + "_" + j + "\t");
-			rmsdOut.write("\n");
+		if (PRINT_RMSD) {
+			try{
+				rmsdOut = new FileWriter("rmsd.txt");
+				radiiOut = new FileWriter("radii.txt");
+			} catch (IOException e){}
 			
-			for(int i = 0; i < rad.length; i++)
-				radiiOut.write(mcmc.tree.names[i] + "\t");
-			radiiOut.write("\n");
-			for(int i = 0; i < rad.length; i++)
-				radiiOut.write(rad[i] + "\t"); 
-			radiiOut.close();
-		} catch (IOException e){}
+			double[] rad = calcGyration();
+			int leaves = structAlign.coords.length;
+			try {
+				for(int i = 0; i < leaves-1; i++)
+					for(int j = i+1; j < leaves; j++)
+						rmsdOut.write("msd" + i + "_" + j + "\t");
+				for(int i = 0; i < leaves-1; i++)
+					for(int j = i+1; j < leaves; j++)
+						rmsdOut.write("t" + i + "_" + j + "\t");
+				for(int i = 0; i < leaves-1; i++)
+					for(int j = i+1; j < leaves; j++)
+						rmsdOut.write("seqID" + i + "_" + j + "\t");
+				rmsdOut.write("\n");
+				
+				for(int i = 0; i < rad.length; i++)
+					radiiOut.write(mcmc.tree.names[i] + "\t");
+				radiiOut.write("\n");
+				for(int i = 0; i < rad.length; i++)
+					radiiOut.write(rad[i] + "\t"); 
+				radiiOut.close();
+			} catch (IOException e){}
+		}
 	}
 	
 	@Override
@@ -192,22 +196,24 @@ public class StructTrace extends Postprocess {
 			}
 			//structAlign.setAllMovesNotProposed();
 			
-			double[][] msd = calcMSD();
-			double[][] seqID = calcSeqID();
-			
-			try {
-				for(int i = 0; i < msd.length-1; i++)
-					for(int j = i+1; j < msd.length; j++)
-						rmsdOut.write(msd[i][j] + "\t");
-				for(int i = 0; i < msd.length-1; i++)
-					for(int j = i+1; j < msd.length; j++) 
-						rmsdOut.write(structAlign.distanceMatrix[i][j] + "\t");
-				for(int i = 0; i < msd.length-1; i++)
-					for(int j = i+1; j < msd.length; j++)
-						rmsdOut.write(seqID[i][j] + "\t");
-				rmsdOut.write("\n");
-			} catch (IOException e){
-				e.printStackTrace();
+			if (PRINT_RMSD) {	
+				double[][] msd = calcMSD();
+				double[][] seqID = calcSeqID();
+				
+				try {
+					for(int i = 0; i < msd.length-1; i++)
+						for(int j = i+1; j < msd.length; j++)
+							rmsdOut.write(msd[i][j] + "\t");
+					for(int i = 0; i < msd.length-1; i++)
+						for(int j = i+1; j < msd.length; j++) 
+							rmsdOut.write(structAlign.distanceMatrix[i][j] + "\t");
+					for(int i = 0; i < msd.length-1; i++)
+						for(int j = i+1; j < msd.length; j++)
+							rmsdOut.write(seqID[i][j] + "\t");
+					rmsdOut.write("\n");
+				} catch (IOException e){
+					e.printStackTrace();
+				}
 			}
 		}
 	}
@@ -221,10 +227,12 @@ public class StructTrace extends Postprocess {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		try {
-			rmsdOut.close();
-		} catch (IOException e) {
-			e.printStackTrace();
+		if (PRINT_RMSD) {
+			try {
+				rmsdOut.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 		if(Utils.DEBUG) {
 			System.out.println("final rotation matrices:");

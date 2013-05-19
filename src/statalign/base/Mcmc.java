@@ -316,8 +316,8 @@ public class Mcmc extends Stoppable {
 	 */
 	private void sample(int samplingMethod) throws StoppedException {
 		stoppable();
-		System.out.println("tree.getLogLike() (BEFORE) = "+tree.getLogLike());
 		if(Utils.DEBUG) {
+			System.out.println("tree.getLogLike() (BEFORE) = "+tree.getLogLike());
 			tree.recomputeCheckLogLike(); 
 			if(Math.abs(modelExtMan.totalLogLike(tree)-totalLogLike) > 1e-5) {
 				System.out.println("\nBefore: "+modelExtMan.totalLogLike(tree)+" "+totalLogLike);
@@ -326,15 +326,11 @@ public class Mcmc extends Stoppable {
 		}
 		boolean accepted = coreModel.proposeParamChange(tree);
 		if (accepted) {
-//			if (Utils.DEBUG) {
-				System.out.println("\t\tMove accepted.");
-//			}
+			if (Utils.DEBUG) System.out.println("\t\tMove accepted.");
 			totalLogLike = coreModel.curLogLike;
 		}
 		else {
-			//if (Utils.DEBUG) {
-				System.out.println("Move rejected.");
-			//}
+			if (Utils.DEBUG) System.out.println("Move rejected.");
 			coreModel.setLogLike(totalLogLike);
 		}
 		if(Utils.DEBUG) {
@@ -362,14 +358,14 @@ public class Mcmc extends Stoppable {
 	
 	public boolean acceptanceDecision(double oldLogLikelihood, double newLogLikelihood, double logProposalRatio,
 			boolean acceptMoveIfPossible) {
-		System.out.print("logLikelihoodRatio = "+(newLogLikelihood-oldLogLikelihood));
+		if (Utils.DEBUG) System.out.print("logLikelihoodRatio = "+(newLogLikelihood-oldLogLikelihood));
 		if (logProposalRatio > Double.NEGATIVE_INFINITY) {
 			cumulativeLogProposalRatio += logProposalRatio;
 		}
 		else {
 			return false;
 		}
-		System.out.println("\tlogProposalRatio = "+logProposalRatio);
+		if (Utils.DEBUG) System.out.println("\tlogProposalRatio = "+logProposalRatio);
 		if (acceptMoveIfPossible) {						
 			return (newLogLikelihood > Double.NEGATIVE_INFINITY);
 		}
@@ -514,6 +510,7 @@ public class Mcmc extends Stoppable {
 				
 				// Perform an MCMC move
 				sample(0);
+				
 
 				// Triggers a /new step/ and a /new peek/ (if appropriate) of
 				// the plugins.
@@ -1470,21 +1467,7 @@ public class Mcmc extends Stoppable {
 //		}
 
 	
-	public static void main(String[] args) {
-		
-		int x;
-		
-		x = (1 << 1);
-		System.out.println(x);
-		x = (1 << 2);
-		System.out.println(x);
-		x = (1 << 3);
-		System.out.println(x);
-		x = (1 << 1)|(1<<2);
-		System.out.println(x);
-		System.out.println((x & (1<<0))!=0);
-		System.out.println(x);
-	}
+	
 	/**
 	 * Code to test that the moves are being sampled according to the
 	 * correct weights (i.e. that there is not some bias arising from

@@ -96,6 +96,7 @@ public class MainThread extends StoppableThread {
 			}
 			System.out.println("Stopped.");
 		} catch (IllegalArgumentException e) {
+			System.err.println(owner.fullPath);
 			e.printStackTrace();
 			String msg = e.getMessage();
 			if(msg != null)
@@ -103,13 +104,16 @@ public class MainThread extends StoppableThread {
 		} catch(Exception e) {
 			owner.finished();
 			if(owner.frame != null) {
+				System.err.println(owner.fullPath);
 				e.printStackTrace();
 				System.out.println("Here is the error: " + e.getClass());
 				owner.frame.statusText.setText(MainFrame.IDLE_STATUS_MESSAGE);
 				//ErrorMessage.showPane(owner.frame,e.getLocalizedMessage(),true);
 			}
-			else
+			else {
+				System.err.println(owner.fullPath);
 				e.printStackTrace();
+			}
 		}
 		owner.finished();
 	}

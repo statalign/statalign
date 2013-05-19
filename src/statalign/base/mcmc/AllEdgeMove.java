@@ -59,6 +59,9 @@ public class AllEdgeMove extends ContinuousPositiveParameterMove {
 	public double proposal(Object externalState) {
 		double logProposalRatio = super.proposal(externalState);
 		for (int i=0; i<tree.vertex.length-1; i++) {
+			if (tree.vertex[i].edgeLength < Utils.MIN_EDGE_LENGTH) {
+				logProposalRatio = Double.NEGATIVE_INFINITY;
+			}
 			tree.vertex[i].edgeChangeUpdate();
 		}
 //		tree.root.edgeChangeUpdateRecursively();

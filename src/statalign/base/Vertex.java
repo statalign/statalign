@@ -280,34 +280,34 @@ public class Vertex {
 
     void updateHmm2Matrix() {
         hmm2TransMatrix = owner.hmm2.preCalcTransMatrix(hmm2TransMatrix, edgeLength);
-
+        hmm2PropTransMatrix = hmm2TransMatrix;
         // This is commented out for now. Uncomment to use the rescaling of the transition matrices.
         // Do the same for {@link #updateHmm3Matrix()}.
         
 //        double heat = owner.heat;
         //double heat = PROPOSAL_HEAT;
-        double heat = 1.0;
-        hmm2PropTransMatrix = new double[hmm2TransMatrix.length][];
-        for (int i = 0; i < hmm2TransMatrix.length; i++) {
-            hmm2PropTransMatrix[i] = hmm2TransMatrix[i].clone();
-            /**/
-			double tempSum = Utils.log0;
-			for (int j = 0; j < hmm2PropTransMatrix[i].length; j++) {
-
-				hmm2PropTransMatrix[i][j] = hmm2PropTransMatrix[i][j]* heat;
-				//hmm2PropTransMatrix[i][j] = -Math.pow(Math.abs(hmm2PropTransMatrix[i][j]),heat);
-
-				tempSum = Utils.logAdd(tempSum, hmm2TransMatrix[i][j]);
-				
-			}
-			if(tempSum != Double.NEGATIVE_INFINITY){
-				for (int j = 0; j < hmm2PropTransMatrix[i].length; j++) {
-
-					hmm2PropTransMatrix[i][j] = hmm2PropTransMatrix[i][j]-tempSum;
-				}
-			}
-            /**/
-        }
+//        double heat = 1.0;
+//        hmm2PropTransMatrix = new double[hmm2TransMatrix.length][];
+//        for (int i = 0; i < hmm2TransMatrix.length; i++) {
+//            hmm2PropTransMatrix[i] = hmm2TransMatrix[i].clone();
+//            /**/
+//			double tempSum = Utils.log0;
+//			for (int j = 0; j < hmm2PropTransMatrix[i].length; j++) {
+//
+//				hmm2PropTransMatrix[i][j] = hmm2PropTransMatrix[i][j]* heat;
+//				//hmm2PropTransMatrix[i][j] = -Math.pow(Math.abs(hmm2PropTransMatrix[i][j]),heat);
+//
+//				tempSum = Utils.logAdd(tempSum, hmm2TransMatrix[i][j]);
+//				
+//			}
+//			if(tempSum != Double.NEGATIVE_INFINITY){
+//				for (int j = 0; j < hmm2PropTransMatrix[i].length; j++) {
+//
+//					hmm2PropTransMatrix[i][j] = hmm2PropTransMatrix[i][j]-tempSum;
+//				}
+//			}
+//            /**/
+//        }
 
 
     }
@@ -319,24 +319,24 @@ public class Vertex {
 
             
 			//double heat = PROPOSAL_HEAT;
-            double heat = 1.0;
-			
-//			double heat = owner.heat;
+//            double heat = 1.0;
 //			
-			for (int i = 0; i < hmm3RedTransMatrix.length; i++) {
-				double tempSum = Utils.log0;
-				for (int j = 0; j < hmm3RedTransMatrix[i].length; j++) {
-					hmm3RedTransMatrix[i][j] = hmm3RedTransMatrix[i][j] * heat;
-					//hmm3RedTransMatrix[i][j] = -Math.pow(Math.abs(hmm3RedTransMatrix[i][j]),heat);
-					tempSum = Utils.logAdd(tempSum, hmm3RedTransMatrix[i][j]);
-
-				}
-				if(tempSum != Double.NEGATIVE_INFINITY){
-					for (int j = 0; j < hmm3RedTransMatrix[i].length; j++) {
-						hmm3RedTransMatrix[i][j] = hmm3RedTransMatrix[i][j] - tempSum;
-					}
-				}
-			}
+////			double heat = owner.heat;
+////			
+//			for (int i = 0; i < hmm3RedTransMatrix.length; i++) {
+//				double tempSum = Utils.log0;
+//				for (int j = 0; j < hmm3RedTransMatrix[i].length; j++) {
+//					hmm3RedTransMatrix[i][j] = hmm3RedTransMatrix[i][j] * heat;
+//					//hmm3RedTransMatrix[i][j] = -Math.pow(Math.abs(hmm3RedTransMatrix[i][j]),heat);
+//					tempSum = Utils.logAdd(tempSum, hmm3RedTransMatrix[i][j]);
+//
+//				}
+//				if(tempSum != Double.NEGATIVE_INFINITY){
+//					for (int j = 0; j < hmm3RedTransMatrix[i].length; j++) {
+//						hmm3RedTransMatrix[i][j] = hmm3RedTransMatrix[i][j] - tempSum;
+//					}
+//				}
+//			}
             
         }
     }
@@ -1597,33 +1597,40 @@ public class Vertex {
     /** This function cuts out a window and realigns in the selected subtree. */
     public double selectAndResampleAlignment() {
     	
-    	System.out.println(index+" "+name+" "+edgeLength);
-    	System.out.println(owner.hmm2.params[0]+" "+owner.hmm2.params[1]+" "+owner.hmm2.params[2]);
-    	System.out.println(owner.printedTree());
+    	if (Utils.DEBUG) {
+	    	System.out.println(index+" "+name+" "+edgeLength);
+	    	System.out.println(owner.hmm2.params[0]+" "+owner.hmm2.params[1]+" "+owner.hmm2.params[2]);
+	    	System.out.println(owner.printedTree());
+    	}
         //printToScreenAlignment(0,0,true);
     	StringBuffer sb = new StringBuffer();
     	
-    	 owner.root.calcFelsenRecursively();
-         owner.root.calcOrphanRecursively();
-         owner.root.calcIndelLogLikeRecursively();
-         if (Utils.USE_UPPER) {
-         	//owner.root.calcFelsenRecursively();
-         	owner.root.calcUpperRecursively();
-         }   
+//    	 owner.root.calcFelsenRecursively();
+//         owner.root.calcOrphanRecursively();
+//         owner.root.calcIndelLogLikeRecursively();
+//    	calcFelsenRecursively();
+//    	calcOrphanRecursively();
+//    	calcIndelLogLikeRecursively();
+//         if (Utils.USE_UPPER) {
+//         	//owner.root.calcFelsenRecursively();
+//         	owner.root.calcUpperRecursively();
+//         }   
          //owner.root.recomputeCheckLogLike();
         
         // if (Utils.USE_UPPER) owner.checkUppFelsProducts();
-         
-    	System.out.println("root.indelLogLike\t "+owner.root.indelLogLike);
-        System.out.println("root.orphanLogLike\t "+owner.root.orphanLogLike);
+        
+        if (Utils.DEBUG) {
+	    	System.out.println("root.indelLogLike\t "+owner.root.indelLogLike);
+	        System.out.println("root.orphanLogLike\t "+owner.root.orphanLogLike);
+        }
 
 //    	if (parent != null) {
 //    		parent.print(sb);
 //    	}
 //    	else {
-    		print(sb);
+        if (Utils.DEBUG) 	print(sb);
 //    	}
-        System.out.println(sb.toString());
+        if (Utils.DEBUG) System.out.println(sb.toString());
         
         // this code below checks pointer integrity...
         //    for(int i = 0; i < owner.vertex.length - 1; i++){
@@ -1638,7 +1645,7 @@ public class Vertex {
         //System.out.print("Length: "+length+"\t");
         //System.out.print("Window length: "+winLength+"\t");
         int b = (length - winLength == 0 ? 0 : Utils.generator.nextInt(length - winLength));
-        System.out.println("Initial window length\t "+winLength);
+        if (Utils.DEBUG) System.out.println("Initial window length\t "+winLength);
         //System.out.print("b: "+b+"\t");
         AlignColumn actualAC = first;
         for (int i = 0; i < b; i++) {
@@ -1660,7 +1667,7 @@ public class Vertex {
         	 bpp = -Math.log(p.value / (length - winLength + 1));
         }
 
-        System.out.println("bpp after window select\t "+bpp);
+        if (Utils.DEBUG) System.out.println("bpp after window select\t "+bpp);
 
         // select window down (recursively)
         if (left != null && right != null) {
@@ -1669,9 +1676,13 @@ public class Vertex {
         }
         selectWindowUp();
 	
-        owner.root.calcFelsenRecursively();
-        owner.root.calcOrphanRecursively();
-        owner.root.calcIndelLogLikeRecursively();
+//        owner.root.calcFelsenRecursively();
+//        owner.root.calcOrphanRecursively();
+//        owner.root.calcIndelLogLikeRecursively();
+//        calcFelsenRecursively();
+//        calcOrphanRecursively();
+//        calcIndelLogLikeRecursively();
+        //calcAllUp();
         if (Utils.USE_UPPER) {
         	//owner.root.calcFelsenRecursively();
         	owner.root.calcUpperRecursively();
@@ -1681,22 +1692,22 @@ public class Vertex {
         // compute alignment backproposal
         //bpp += doRecBackprop();
         double recBackprop = doRecBackprop();
-        System.out.println("recBackprop\t "+recBackprop);
+        if (Utils.DEBUG) System.out.println("recBackprop\t "+recBackprop);
         bpp += recBackprop;
         if (parent != null) {
             //bpp += hmm2BackProp();
         	double hmm2BackProp = hmm2BackProp();
-        	System.out.println("hmm2BackProp\t "+hmm2BackProp);
+        	if (Utils.DEBUG) System.out.println("hmm2BackProp\t "+hmm2BackProp);
         	bpp += hmm2BackProp;
         }
 
         // align the sequences
         double bppProp = doRecAlign();
-        System.out.println("bppProp after doRecAlign()\t "+bppProp);
+        if (Utils.DEBUG) System.out.println("bppProp after doRecAlign()\t "+bppProp);
         if (parent != null) {
         	//bppProp += hmm2AlignWithSave();
         	double hmm2AlignProp = hmm2AlignWithSave();
-        	System.out.println("hmm2AlignProp\t "+hmm2AlignProp);
+        	if (Utils.DEBUG) System.out.println("hmm2AlignProp\t "+hmm2AlignProp);
             bppProp += hmm2AlignProp;
 //            calcOrphan();
 //            parent.calcAllUp();
@@ -1704,9 +1715,13 @@ public class Vertex {
             calcOrphan();
         }
         
-        owner.root.calcFelsenRecursively();
-        owner.root.calcOrphanRecursively();
-        owner.root.calcIndelLogLikeRecursively();
+//        owner.root.calcFelsenRecursively();
+//        owner.root.calcOrphanRecursively();
+//        owner.root.calcIndelLogLikeRecursively();
+//        owner.root.calcFelsenRecursively();
+//        owner.root.calcOrphanRecursively();
+//        owner.root.calcIndelLogLikeRecursively();
+        calcAllUp();
         if (Utils.USE_UPPER) {
         	//owner.root.calcFelsenRecursively();
         	owner.root.calcUpperRecursively();
@@ -1714,12 +1729,14 @@ public class Vertex {
         //owner.root.recomputeCheckLogLike();
         //if (Utils.USE_UPPER) owner.checkUppFelsProducts();
 
-        printToScreenAlignment(0,0,true);
+        if (Utils.DEBUG) printToScreenAlignment(0,0,true);
 
         bpp += bppProp;
 
-        System.out.println("root.indelLogLike\t "+owner.root.indelLogLike);
-        System.out.println("root.orphanLogLike\t "+owner.root.orphanLogLike);
+        if (Utils.DEBUG) {
+	        System.out.println("root.indelLogLike\t "+owner.root.indelLogLike);
+	        System.out.println("root.orphanLogLike\t "+owner.root.orphanLogLike);
+        }
 
         if(Utils.DEBUG) {
         	// check proposal - backproposal consistency
@@ -1731,14 +1748,14 @@ public class Vertex {
         	}
         }
 
-        System.out.println("Final window length\t "+winLength);
+        if (Utils.DEBUG) System.out.println("Final window length\t "+winLength);
         double windowProb = 0;
         if (!(Utils.USE_FULL_WINDOWS)) {
         	windowProb = Math.log(Utils.linearizerWeightProb(length, winLength, Utils.WINDOW_MULTIPLIER*Math.sqrt(length)) 
            		/ (length - winLength + 1));
         }
         
-        System.out.println("final window selection\t "+windowProb);
+        if (Utils.DEBUG) System.out.println("final window selection\t "+windowProb);
         bpp += windowProb;
 
     	//System.out.println("Total bpp\t "+bpp);
@@ -2351,7 +2368,7 @@ public class Vertex {
     	boolean grandpaIsLeft = false;
     	if (!gIsRoot) grandpaIsLeft = (grandpa==greatgrandpa.left);
 
-    	if (!gIsRoot) System.out.println("grandpaIsLeft = "+grandpaIsLeft+", grandpa = "+grandpa.index+", greatgrandpa.left = "+greatgrandpa.left.index);
+    	//if (!gIsRoot) System.out.println("grandpaIsLeft = "+grandpaIsLeft+", grandpa = "+grandpa.index+", greatgrandpa.left = "+greatgrandpa.left.index);
     	
     	//DEBUG=2; // Activate verbose print statements 
     	//owner.root.recomputeLogLike();
@@ -3279,7 +3296,7 @@ public class Vertex {
     	boolean grandpaIsLeft = false; 
     	if (!gIsRoot) grandpaIsLeft = (grandpa==greatgrandpa.left);
 
-    	if (!gIsRoot) System.out.println("grandpaIsLeft = "+grandpaIsLeft+", grandpa = "+grandpa.index+", greatgrandpa.left = "+greatgrandpa.left.index);
+    	//if (!gIsRoot) System.out.println("grandpaIsLeft = "+grandpaIsLeft+", grandpa = "+grandpa.index+", greatgrandpa.left = "+greatgrandpa.left.index);
     	
 //    	  if (Utils.DEBUG) {
 //          	printPointers(); //printPointers2();        	

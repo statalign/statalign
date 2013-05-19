@@ -266,11 +266,9 @@ public class ModelExtManager {
 	 */
 	public double logLikeTreeChange(Tree tree, Vertex nephew) {
 		double ll = tree.getLogLike();
-		System.out.println("tree.getLogLike() = "+ll);
 		//double ll = 0.0;
 		for(ModelExtension plugin : activeList) {
-			ll += plugin.logLikeTreeChange(tree, nephew);
-			System.out.println(ll);	
+			ll += plugin.logLikeTreeChange(tree, nephew);	
 		}
 		return ll;
 	}
