@@ -17,7 +17,7 @@ public class TreeAlgo extends Stoppable {
 	public int GAPEXT = 2;
 	public double BIGNUM = 1e100;
 	
-	public static double MINEDGELEN = 0.01;
+	public static double MINEDGELEN = Utils.MIN_EDGE_LENGTH;
 	
 	public TreeAlgo() {
 	}
