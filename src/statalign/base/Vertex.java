@@ -1642,8 +1642,13 @@ public class Vertex {
         MuDouble p = new MuDouble(1.0);
         winLength = Utils.linearizerWeight(length, p, Utils.WINDOW_MULTIPLIER*Math.sqrt(length));
         if (Utils.USE_FULL_WINDOWS) { winLength = length; p.value = 1.0; } 
-        //System.out.print("Length: "+length+"\t");
-        //System.out.print("Window length: "+winLength+"\t");
+        if (Utils.DEBUG) {
+	        if (winLength > length) {
+	        	System.err.println("vertex = "+index);
+	        	System.err.println("Length: "+length+"\t");
+	        	System.err.println("Window length: "+winLength+"\t");
+	        }
+        }
         int b = (length - winLength == 0 ? 0 : Utils.generator.nextInt(length - winLength));
         if (Utils.DEBUG) System.out.println("Initial window length\t "+winLength);
         //System.out.print("b: "+b+"\t");
@@ -2921,20 +2926,28 @@ public class Vertex {
 	    		// NB currently the above is coded according to the TKF92 currStateNew
 	    		// coding scheme
 	    		
-	        	// Insert or delete new columns as necessary
+	        	// Insert or delete new columns as necessary.
+	    		// If we end up trying to delete too many columns, such 
+	    		// that the sequence length drops below a specified minimum,
+	    		// then delete() will return false, and we will reject this
+	    		// proposal.
 	        	if (insertG) {
 		        	g = new AlignColumn((g!=null)?g.next:grandpa.first); // New orphan column          			
 					gx = true;
 	        	}
 	        	else if (deleteG) {
-	        		delete(g); grandpa.first = g.next; g = g.prev; gx = false; 				
+	        		boolean deleted = delete(g); 
+	        		if (deleted) { grandpa.first = g.next; g = g.prev; gx = false; }
+	        		else logProposalRatio = Double.NEGATIVE_INFINITY;
 	        	}
 	        	if (insertP) {        		        		
 	        		p = new AlignColumn((p!=null)?p.next:parent.first);     			
 	    			px = true;
 	        	}
 	        	else if (deleteP) {
-	        		delete(p); parent.first = p.next; p = p.prev; px = false;
+	        		boolean deleted = delete(p); 
+	        		if (deleted) { parent.first = p.next; p = p.prev; px = false; }
+	        		else logProposalRatio = Double.NEGATIVE_INFINITY;
 	        	}
         	}
         	

@@ -133,6 +133,9 @@ public class Utils{
 	
 	public static final double MIN_EDGE_LENGTH = 0.001;
 	
+	/** Minimum length for internal node sequence. */
+	public static final int MIN_SEQ_LENGTH = 1; 
+	
 	/** If true then we downweight the indel contribution to the overall likelihood. */
 	public static final boolean DOWNWEIGHT_INDEL_LIKELIHOOD = false;
 

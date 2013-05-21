@@ -155,7 +155,7 @@ public class AlignColumn {
 	 *  (unless they belong to the root Vertex).
 	 *  @param p The column to be deleted.
 	 */
-	static void delete(AlignColumn p) {
+	static boolean delete(AlignColumn p) {
 		
 //		if (Utils.DEBUG) {
 //			if (p.left!=null && p.right!=null) {
@@ -163,13 +163,14 @@ public class AlignColumn {
 //			}
 //		}
 		
-		if (Utils.DEBUG) {
-			if (p.owner.length==1) {
-				throw new RuntimeException("All columns in sequence "+p.owner.index+" have been deleted.");
+		//if (Utils.DEBUG) {
+			if (p.owner.length<=Utils.MIN_SEQ_LENGTH) {
+				return false; // Don't allow it to delete if we have so few columns already
+				//throw new RuntimeException("All columns in sequence "+p.owner.index+" have been deleted.");
 			}
 //			System.out.println("Deleting column "+p.toString()+" at Vertex "+p.owner.index);
 //			System.out.println("p.prev = "+p.prev);
-		}
+		//}
 		
 		if (!p.orphan) {
 			if (p==p.parent.left)  p.parent.left = null;
@@ -188,6 +189,8 @@ public class AlignColumn {
 		// to be adopted by another parent.
 		
 		p.owner.length--;
+		
+		return true;
 	}
 		
 	/**
