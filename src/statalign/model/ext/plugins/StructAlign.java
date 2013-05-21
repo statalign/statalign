@@ -594,6 +594,24 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	
 	@Override
 	public void beforeSampling(Tree tree) {
+		/* check for protein with no residues aligned to reference protein, resample alignment if any found */
+		boolean stop = false;
+		while(!stop){
+			String[] align = tree.getState().getLeafAlign();
+			String ref = align[0];
+			proteinLoop:
+			for(int i = 1; i < align.length; i++){
+				String other = align[i];
+				int countAligned = 0;
+				for(int j = 0; j < align[0].length(); j++)
+					countAligned += (ref.charAt(j) != '-' & other.charAt(j) != '-') ? 1 : 0;
+				if(countAligned == 0){
+					tree.root.selectAndResampleAlignment();
+					break proteinLoop;
+				} else if (i == align.length - 1) {stop = true;}
+			}
+		}
+
 		Funcs.initLSRotations(tree,coords,xlats,axes,angles);
 	}
 	
