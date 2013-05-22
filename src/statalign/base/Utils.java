@@ -447,9 +447,24 @@ public class Utils{
     	    	    	
     	return result;
     }
+    /** 
+     * Determines whether a particular bit is set in the binary representation
+     * of an integer.
+     * @param x The integer to be queried.
+     * @param pos The bit to be queried.
+     * @return <code>true</code> if the bit as position <code>pos</code> is set.
+     */
     static boolean bitIsSet(int x, int pos) {
     	return (x & (1<<pos))!=0;
     }
+    /**
+     * Determines whether a particular indel history is valid given the 
+     * rule that a character cannot be inserted more than once in a particular
+     * column (which is a definition of homology).
+     * @param neighb An integer representation of the presence/absence of the 
+     * six nodes involved in a nearest-neighbour interchange.
+     * @return <code>true</code> if the neighbourhood structure is valid
+     */
     static boolean isValidHistory(int neighb) {
 	    	
     	boolean tx = bitIsSet(neighb,0);
