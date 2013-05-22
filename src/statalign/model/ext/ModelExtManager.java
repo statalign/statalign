@@ -192,9 +192,9 @@ public class ModelExtManager {
 		return selectedPlugin.proposeParamChange(tree);
 	}
 	
-	public boolean isParamChangeAccepted(double logProposalRatio) {
+	public boolean isParamChangeAccepted(double logProposalRatio,McmcMove m) {
 		mcmc.coreModel.setLogLike(logLikeModExtParamChange(mcmc.tree));
-		return mcmc.isParamChangeAccepted(logProposalRatio);
+		return mcmc.isParamChangeAccepted(logProposalRatio,m);
 	}
 	
 	public void modifyProposalWidths() {

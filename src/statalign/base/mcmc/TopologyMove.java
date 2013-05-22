@@ -27,7 +27,7 @@ public class TopologyMove extends McmcMove {
 	
 	PriorDistribution<Double> edgePrior;
 	
-	double fastSwapProb = 0.05;
+	double fastSwapProb = 0.05;	
 	boolean didFastSwap = false;
 	
 	public TopologyMove (McmcModule m, PriorDistribution<Double> pr, double propVar, String n) {
@@ -35,7 +35,8 @@ public class TopologyMove extends McmcMove {
 		edgePrior = pr;
 		edgeProposalWidthControlVariable = propVar;
 		name = n;
-		autoTune = false;
+		autoTune = true;
+		//autoTune = true;
 		if(Utils.DEBUG){
 			try{
 				topMoves = new FileWriter("topMoves.txt");				

@@ -181,8 +181,8 @@ public abstract class ModelExtension extends McmcModule {
 	 * @return <code>true</code> if the change was accepted
 	 */
 	@Override
-	public final boolean isParamChangeAccepted(double logProposalRatio) {
-		return manager.isParamChangeAccepted(logProposalRatio);
+	public final boolean isParamChangeAccepted(double logProposalRatio,McmcMove m) {
+		return manager.isParamChangeAccepted(logProposalRatio,m);
 	}
 	
 	public double logLikeModExtParamChange(Tree tree, ModelExtension ext) {

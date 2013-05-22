@@ -146,6 +146,10 @@ public class Utils{
 	 * defined in Thorne et al. (1992). 
 	 */
 	public static final boolean USE_INDEL_CORRECTION_FACTOR = true;
+
+	public static final int LOW_COUNT_THRESHOLD = 10;
+
+	public static final double LOW_COUNT_MULTIPLIER = 0.999;
 	
 	private static double[] tempDoubleArray;
 

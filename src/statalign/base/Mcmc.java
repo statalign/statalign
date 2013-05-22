@@ -169,6 +169,8 @@ public class Mcmc extends Stoppable {
 	
 	/** True while the MCMC is in the burn-in phase. */
 	public boolean burnin;
+	/** True while the MCMC is in the first half of burn-in phase. */
+	public boolean firstHalfBurnin;
 
 	public Mcmc(Tree tree, MCMCPars pars, PostprocessManager ppm, ModelExtManager modelExtMan) {
 		postprocMan = ppm;
@@ -352,12 +354,20 @@ public class Mcmc extends Stoppable {
 	 * handled inside the McmcMove objects.
 	 * @return true if the move is accepted
 	 */
-	public boolean isParamChangeAccepted(double logProposalRatio) {
-		return acceptanceDecision(totalLogLike,coreModel.curLogLike,logProposalRatio,acceptAllMoves);
+	public boolean isParamChangeAccepted(double logProposalRatio,McmcMove m) {
+		double newLogLike = coreModel.curLogLike;
+		//if (m.name.contains("Topology")) System.out.println(m.lowCounts);
+		if (firstHalfBurnin && (m.lowCounts > Utils.LOW_COUNT_THRESHOLD)) {			
+			newLogLike *= Math.pow(Utils.LOW_COUNT_MULTIPLIER,m.lowCounts-Utils.LOW_COUNT_THRESHOLD);			
+			//System.out.println(m.name+" "+m.lowCounts+" "+coreModel.curLogLike+" "+newLogLike);
+		}
+		boolean accept = acceptanceDecision(totalLogLike,newLogLike,logProposalRatio,acceptAllMoves);
+		if (accept) m.lowCounts = 0;		
+		return accept;
 	}	
 	
 	public boolean acceptanceDecision(double oldLogLikelihood, double newLogLikelihood, double logProposalRatio,
-			boolean acceptMoveIfPossible) {
+			boolean acceptMoveIfPossible) {		
 		if (Utils.DEBUG) System.out.print("logLikelihoodRatio = "+(newLogLikelihood-oldLogLikelihood));
 		if (logProposalRatio > Double.NEGATIVE_INFINITY) {
 			cumulativeLogProposalRatio += logProposalRatio;
@@ -482,12 +492,14 @@ public class Mcmc extends Stoppable {
 			acceptAllMoves = false;
 			
 			burnin = true;
+			firstHalfBurnin = true;
 			boolean alreadyAddedWeightModifiers = false;
 			tree.root.recomputeLogLike(); // For testing
 			totalLogLike = modelExtMan.totalLogLike(tree);
 			for (int i = 0; i < burnIn; i++) {
 				
 				if (i > burnIn / 2) {
+					firstHalfBurnin = false;
 					if (!alreadyAddedWeightModifiers) {
 						alreadyAddedWeightModifiers = true;
 						if (edgeWeightIncrement > 0) {
