@@ -69,7 +69,7 @@ public class MainThread extends StoppableThread {
 
 			TreeAlgo treeAlgo = new TreeAlgo();
 			Tree tree;
-			if(owner.inputData.useTree > 0) {
+			if(owner.inputData.useTree > 0) {				
 				tree = treeAlgo.rearrangeTree(owner.inputData.tree, names);
 				treeAlgo.addAlignSeqsToTree(tree, nongapped, names,
 						owner.inputData.model, new File(owner.fullPath).getName());

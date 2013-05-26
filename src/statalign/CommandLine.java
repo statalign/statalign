@@ -302,6 +302,7 @@ public class CommandLine {
 					return error("bad format for parameter -usetree: "+useTree);
 				if(manager.inputData.useTree > 0 && manager.inputData.tree == null)
 					return error("a tree must be given when -usetree="+useTree+" is used");
+				manager.modelExtMan.addToFilenameExtension("useTree"+manager.inputData.useTree);
 			} else {
 				// default depends on whether a tree file was provided
 				manager.inputData.useTree = manager.inputData.tree == null ? 0 : 1;
@@ -434,14 +435,14 @@ public class CommandLine {
 			
 			if (isParallel) {
 				sb.append("    -mcmc=burn,cycl,samprate[,randomisationPeriod],swaprate\n");
-				sb.append("        Sets MCMC parameters: burn-in, cycles after burn-in, sampling rate, swap rate,\n" +
-						           "and (optionally) initial randomisation period.\n");
+				sb.append("        Sets MCMC parameters: burn-in, cycles after burn-in, sampling rate, swap rate,\n");
+				sb.append("        and (optionally) initial randomisation period.\n");
 				sb.append("          Abbreviations k and m mean 1e3 and 1e6 factors.\n");
 				sb.append("        Default: 20k,50k,100,0,100\n\n");
 			} else {
 				sb.append("    -mcmc=burn,cycl,rate[,randomisationPeriod]\n");
-				sb.append("        Sets MCMC parameters: burn-in, cycles after burn-in, sampling rate,\n" +
-						           "and (optionally) initial randomisation period.\n");
+				sb.append("        Sets MCMC parameters: burn-in, cycles after burn-in, sampling rate,\n");
+				sb.append("        and (optionally) initial randomisation period.\n");
 				sb.append("          Abbreviations k and m mean 1e3 and 1e6 factors.\n");
 				sb.append("        Default: 20k,50k,100,0\n\n");
 			}

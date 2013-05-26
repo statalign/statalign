@@ -389,12 +389,19 @@ public class Vertex {
     	printDf = new DecimalFormat("0.#####", dfs);
     }
 
+    public void printWithNumbers(StringBuffer b) {
+    	print(b,true);
+    }
     public void print(StringBuffer b) {
+    	print(b,false);
+    }
+    public void print(StringBuffer b,boolean withNumbers) {
 
         // print this node and nodes below in bracket notation
 
         if (left == null && right == null) {
-        	b.append(name.replaceAll(" ", "")+"["+index+"]");
+        	if (withNumbers) b.append(name.replaceAll(" ", "")+"["+index+"]");
+        	else b.append(name.replaceAll(" ", ""));
         	b.append(':');
         	printDf.format(edgeLength, b, new FieldPosition(1));
         } else {
@@ -402,7 +409,8 @@ public class Vertex {
         	left.print(b);
         	b.append(',');
         	right.print(b);
-        	b.append(')'+"["+index+"]");
+        	b.append(')');
+        	if (withNumbers) b.append("["+index+"]");
             if (parent != null) {
             	b.append(':');
             	printDf.format(edgeLength, b, new FieldPosition(1));
