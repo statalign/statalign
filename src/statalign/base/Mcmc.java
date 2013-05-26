@@ -356,10 +356,8 @@ public class Mcmc extends Stoppable {
 	 */
 	public boolean isParamChangeAccepted(double logProposalRatio,McmcMove m) {
 		double newLogLike = coreModel.curLogLike;
-		//if (m.name.contains("Topology")) System.out.println(m.lowCounts);
-		if (firstHalfBurnin && (m.lowCounts > Utils.LOW_COUNT_THRESHOLD)) {			
+		if (Utils.SHAKE_IF_STUCK && firstHalfBurnin && (m.lowCounts > Utils.LOW_COUNT_THRESHOLD)) {			
 			newLogLike *= Math.pow(Utils.LOW_COUNT_MULTIPLIER,m.lowCounts-Utils.LOW_COUNT_THRESHOLD);			
-			//System.out.println(m.name+" "+m.lowCounts+" "+coreModel.curLogLike+" "+newLogLike);
 		}
 		boolean accept = acceptanceDecision(totalLogLike,newLogLike,logProposalRatio,acceptAllMoves);
 		if (accept) m.lowCounts = 0;		

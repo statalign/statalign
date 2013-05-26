@@ -150,6 +150,19 @@ public class Utils{
 	public static final int LOW_COUNT_THRESHOLD = 10;
 
 	public static final double LOW_COUNT_MULTIPLIER = 0.999;
+
+	/** 
+	 * If <code>true</code> then during the first half of the burnin
+	 * if a particular McmcMove has been below its minimum acceptance
+	 * rate for at least (LOW_COUNT_THRESHOLD * MIN_SAMPLES_FOR_ACC_ESTIMATE) 
+	 * iterations, then for the purposes of computing the acceptance 
+	 * ratio, we multiply the new log likelihood by LOW_COUNT_MULTIPLIER
+	 * raised to a power that increases with the number of iterations
+	 * beyond the threshold. This gradually favours the state jumping,
+	 * which may be useful to avoid getting stuck in local modes during the
+	 * burnin. Ideally such a scheme should not be needed, however.
+	 */
+	public static final boolean SHAKE_IF_STUCK = false;
 	
 	private static double[] tempDoubleArray;
 
