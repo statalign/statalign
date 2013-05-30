@@ -634,7 +634,7 @@ public class Vertex {
             }
         }
     }
-    void calcFelsen() {
+    public void calcFelsen() {
     	calcFelsen(false,0);
     }
     void calcFelsenWithCheck() {
@@ -687,7 +687,7 @@ public class Vertex {
 	        }
         }
     }
-    void calcOrphan() {
+    public void calcOrphan() {
     	calcOrphan(false);
     }
     void calcOrphanWithCheck() {
@@ -2833,17 +2833,29 @@ public class Vertex {
 		else if (state==2)  x = 1;
 		return x;
 	}
+	public void saveData() {
+		old.length = length;
+        old.orphanLogLike = orphanLogLike;
+        old.indelLogLike = indelLogLike;
+	}
+	public void restoreData() {
+		length = old.length;
+        orphanLogLike = old.orphanLogLike;
+        indelLogLike = old.indelLogLike;
+	}
 	public double insertSilentIndel() {
 		return insertSilentIndel(null);
-	}	
+	}		
 	public double insertSilentIndel(AlignColumn c) {
 		final int MAX_LENGTH = Utils.MAX_SILENT_LENGTH;
 		double logProposalRatio = Math.log((1-Utils.SILENT_INSERT_PROB)/Utils.SILENT_INSERT_PROB);
 		
-		// save old alignment
-		// this method is unnecessarily expensive, but easy option for now
-		String[] ali = owner.getState().getFullAlign();    	
-		saveFiveWay(ali);
+		if (c==null) {
+			// save old alignment
+			// this method is unnecessarily expensive, but easy option for now
+//			String[] ali = owner.getState().getFullAlign();    	
+//			saveFiveWay(ali);
+		}
 			
 		int silentLength = 0;
 		if (c==null) {
@@ -2856,19 +2868,31 @@ public class Vertex {
 			silentLength = old.winLength;
 		}
 		
+		printPointers();
+		owner.root.printToScreenAlignment(0,0,true);
+
 		// find columns that previously had this as parent		
 		AlignColumn l = left.last.prev;
     	AlignColumn r = right.last.prev;
     	while ((l!=null) && (l.parent != c)) l = l.prev;
 		while ((r!=null) && (r.parent != c)) r = r.prev;
 		
-		old.winLast = c;
+		old.winLast = c; 
+		old.winFirst = c.prev; 
 		old.winLength = silentLength;
 		for (int i=0; i<silentLength; i++) {
 			c = new AlignColumn(c); // New silent column
 		}
-		l.parent = c;
-		r.parent = c;
+		while ((l!=null) && (l.parent == old.winLast)) { 
+			if (l.orphan) l.parent = c; 
+			l = l.prev; 
+		}
+		while ((r!=null) && (r.parent == old.winLast)) { 
+			if (r.orphan) r.parent = c; 
+			r = r.prev; 
+		}
+		
+		owner.root.printToScreenAlignment(0,0,true);
 		
 		// back proposal probability
 		logProposalRatio += exciseSilentIndel(c); 
@@ -2876,14 +2900,10 @@ public class Vertex {
 		return logProposalRatio;
 	}
 	public void undoInsertSilentIndel() {	
-		AlignColumn c = old.winLast.prev;
-    	for(int deletedLength = 0; deletedLength<old.winLength; deletedLength++) {		    		
-    		delete(c);    		
-    		c = c.prev;	
-    	}
+		exciseSilentIndel(old.winLast,true);		
 	}
 	public void undoExciseSilentIndel() {
-		insertSilentIndel(old.winLast);		    
+		insertSilentIndel(old.winLast);				
 	}
 	public double exciseSilentIndel() {
 		return exciseSilentIndel(null,false);
@@ -2897,8 +2917,10 @@ public class Vertex {
 
 		// save old alignment
 		// this method is unnecessarily expensive, but easy option for now
-		String[] ali = owner.getState().getFullAlign();    	
-		saveFiveWay(ali); 
+		if (insert == null) {
+//			String[] ali = owner.getState().getFullAlign();    	
+//			saveFiveWay(ali);
+		}
 		
     	
     	AlignColumn c = last.prev;
@@ -2919,8 +2941,8 @@ public class Vertex {
     	int region = 0;
     	int regionContainingInsert = 0;
     	for (;;) {
-    		while ((l!=null) && (l.parent == c)) l = l.prev;
-    		while ((r!=null) && (r.parent == c) && (r.parent!=l.parent)) r = r.prev;
+    		while ((l.prev!=null) && (l.parent == c)) l = l.prev;
+    		while ((r.prev!=null) && (r.parent == c) && (r.parent!=l.parent)) r = r.prev;
     		if (c!=begin && c.orphan && c.left == null && c.right == null) {
     			if (end == null) { end = c; begin = l.parent; silentLength = 1; }
     			else silentLength++;    			
