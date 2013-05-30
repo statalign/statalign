@@ -135,7 +135,7 @@ public class AlignColumn {
 	}	
 	public AlignColumn(AlignColumn next) {
 		owner = next.owner;
-		parent = null;
+		parent = next.parent;
 		left = null;
 		right = null;
 		orphan = true;
