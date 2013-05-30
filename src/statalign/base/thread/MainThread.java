@@ -96,16 +96,17 @@ public class MainThread extends StoppableThread {
 			}
 			System.out.println("Stopped.");
 		} catch (IllegalArgumentException e) {
-			printStateInfo();
 			e.printStackTrace();
+			printStateInfo();
+
 			String msg = e.getMessage();
 			if(msg != null)
 				System.err.println("Plugin error: "+msg);
 		} catch(Exception e) {
 			owner.finished();
-			printStateInfo();
 			e.printStackTrace();
-			
+			printStateInfo();
+
 			if(owner.frame != null) {				
 				System.out.println("Here is the error: " + e.getClass());
 				owner.frame.statusText.setText(MainFrame.IDLE_STATUS_MESSAGE);
@@ -116,13 +117,13 @@ public class MainThread extends StoppableThread {
 	}
 	
 	private void printStateInfo() {
-		System.err.println(owner.modelExtMan.getMcmc().tree.printedTree());
+		System.err.println(owner.modelExtMan.getMcmc().tree.printedTree());	
+		owner.modelExtMan.getMcmc().tree.checkPointers();
+		owner.modelExtMan.getMcmc().tree.root.recomputeCheckLogLike();
+		System.err.println(owner.fullPath);		
 		String align[] = owner.modelExtMan.getMcmc().getState().getFullAlign();
 		for (int i=0; i<align.length; i++) {
 			System.err.println(align[i]);				
 		}
-		owner.modelExtMan.getMcmc().tree.checkPointers();
-		owner.modelExtMan.getMcmc().tree.root.recomputeCheckLogLike();
-		System.err.println(owner.fullPath);		
 	}
 }

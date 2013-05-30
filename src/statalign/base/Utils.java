@@ -31,7 +31,7 @@ public class Utils{
 	/**
 	 * Debugging mode (various consistency checks done if on)
 	 */
-	public static boolean DEBUG = false;
+	public static boolean DEBUG = true;
 	// TODO Change this to an integer, so we can have different levels of 
 	// debug information printed.
 		
@@ -163,6 +163,10 @@ public class Utils{
 	 * burnin. Ideally such a scheme should not be needed, however.
 	 */
 	public static final boolean SHAKE_IF_STUCK = false;
+
+	public static final int MAX_SILENT_LENGTH = 10;
+
+	public static final double SILENT_INSERT_PROB = 0.1;	
 	
 	private static double[] tempDoubleArray;
 

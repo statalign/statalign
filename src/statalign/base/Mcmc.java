@@ -22,6 +22,7 @@ import statalign.base.mcmc.MuMove;
 import statalign.base.mcmc.PhiMove;
 import statalign.base.mcmc.RMove;
 import statalign.base.mcmc.RhoMove;
+import statalign.base.mcmc.SilentIndelMove;
 import statalign.base.mcmc.SubstMove;
 import statalign.base.mcmc.ThetaMove;
 import statalign.base.mcmc.TopologyMove;
@@ -160,6 +161,7 @@ public class Mcmc extends Stoppable {
 	private int allEdgeWeight = 6;
 	private int edgeWeightIncrement = 0; // Added after half of burnin
 	private int alignWeight = 25;
+	private int silentIndelWeight = 20;
 	private int topologyWeight = 8;
 	private int localTopologyWeight = 8;
 	private int topologyWeightIncrement = 0; // Added after half of burnin
@@ -265,6 +267,9 @@ public class Mcmc extends Stoppable {
 		if(!mcmcpars.fixAlign) {
 			AlignmentMove alignMove = new AlignmentMove(coreModel,"Alignment");
 			coreModel.addMcmcMove(alignMove, alignWeight);
+			
+			SilentIndelMove silentIndelMove = new SilentIndelMove(coreModel,"SilentIndel");
+			coreModel.addMcmcMove(silentIndelMove, silentIndelWeight);
 		}
 
 		GammaPrior edgePrior = new GammaPrior(1,1);

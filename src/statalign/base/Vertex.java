@@ -756,7 +756,7 @@ public class Vertex {
         else if(Math.abs(indelLogLike - newIndelLogLike) > 1e-5)
         	throw new Error("likelihood inconsistency in calcIndelLogLike - stored likelihood: "+indelLogLike+" recomputed: "+newIndelLogLike); 
     }
-    void calcIndelLogLike() {
+    public void calcIndelLogLike() {
     	calcIndelLogLike(false);
     }
     void calcIndelLogLikeWithCheck() {
@@ -2371,6 +2371,9 @@ public class Vertex {
     	}        
     }
     public void restoreFiveWay() {
+    	restoreFiveWay(true);
+    }
+    public void restoreFiveWay(boolean swapNephewUncle) {
     	
     	//if (Utils.DEBUG) System.out.println(index+".restoreFiveWay()");
     	
@@ -2396,14 +2399,15 @@ public class Vertex {
        	uncle.restoreVertex();
 		if (!gIsRoot) greatgrandpa.restoreVertex();
 		
-		// Order of these steps is important
-		uncle.parent = parent; 		
- 		if (isLeft)		 parent.left = uncle;  
- 		else 			 parent.right = uncle; 
-        parent = grandpa; 				 		
- 		if (uncleIsLeft) { grandpa.left = this; } 
- 		else 		 	 { grandpa.right = this; }
- 		
+		if (swapNephewUncle) {
+			// Order of these steps is important
+			uncle.parent = parent; 		
+	 		if (isLeft)		 parent.left = uncle;  
+	 		else 			 parent.right = uncle; 
+	        parent = grandpa; 				 		
+	 		if (uncleIsLeft) { grandpa.left = this; } 
+	 		else 		 	 { grandpa.right = this; }
+		} 		
  		
  		if (Utils.DEBUG) {        	
 // 			uncle.printPointers(); //uncle.printPointers2();
@@ -2828,6 +2832,167 @@ public class Vertex {
 		if (state==1) 		x = 2;
 		else if (state==2)  x = 1;
 		return x;
+	}
+	public double insertSilentIndel() {
+		return insertSilentIndel(null);
+	}	
+	public double insertSilentIndel(AlignColumn c) {
+		final int MAX_LENGTH = Utils.MAX_SILENT_LENGTH;
+		double logProposalRatio = Math.log((1-Utils.SILENT_INSERT_PROB)/Utils.SILENT_INSERT_PROB);
+		
+		// save old alignment
+		// this method is unnecessarily expensive, but easy option for now
+		String[] ali = owner.getState().getFullAlign();    	
+		saveFiveWay(ali);
+			
+		int silentLength = 0;
+		if (c==null) {
+			int pos = Utils.generator.nextInt(length);
+			silentLength = Utils.generator.nextInt(MAX_LENGTH);
+			c = last.prev;		 
+			while (pos-- > 0) c = c.prev;
+		}
+		else {
+			silentLength = old.winLength;
+		}
+		
+		// find columns that previously had this as parent		
+		AlignColumn l = left.last.prev;
+    	AlignColumn r = right.last.prev;
+    	while ((l!=null) && (l.parent != c)) l = l.prev;
+		while ((r!=null) && (r.parent != c)) r = r.prev;
+		
+		old.winLast = c;
+		old.winLength = silentLength;
+		for (int i=0; i<silentLength; i++) {
+			c = new AlignColumn(c); // New silent column
+		}
+		l.parent = c;
+		r.parent = c;
+		
+		// back proposal probability
+		logProposalRatio += exciseSilentIndel(c); 
+		
+		return logProposalRatio;
+	}
+	public void undoInsertSilentIndel() {	
+		AlignColumn c = old.winLast.prev;
+    	for(int deletedLength = 0; deletedLength<old.winLength; deletedLength++) {		    		
+    		delete(c);    		
+    		c = c.prev;	
+    	}
+	}
+	public void undoExciseSilentIndel() {
+		insertSilentIndel(old.winLast);		    
+	}
+	public double exciseSilentIndel() {
+		return exciseSilentIndel(null,false);
+	}
+	public double exciseSilentIndel(AlignColumn c) {
+		return exciseSilentIndel(c,false);
+	}
+	public double exciseSilentIndel(AlignColumn insert, boolean remove) {
+		int MAX_LENGTH = Utils.MAX_SILENT_LENGTH;
+		double logProposalRatio = Math.log(Utils.SILENT_INSERT_PROB/(1-Utils.SILENT_INSERT_PROB));		
+
+		// save old alignment
+		// this method is unnecessarily expensive, but easy option for now
+		String[] ali = owner.getState().getFullAlign();    	
+		saveFiveWay(ali); 
+		
+    	
+    	AlignColumn c = last.prev;
+    	AlignColumn l = left.last.prev;
+    	AlignColumn r = right.last.prev;
+    	AlignColumn begin = null, end = null;    	
+    	int silentLength = 0;
+    	int totalLength = 0;
+    	ArrayList<AlignColumn> begins = new ArrayList<AlignColumn>();
+    	ArrayList<AlignColumn> ends = new ArrayList<AlignColumn>();
+    	ArrayList<AlignColumn> lEnds = new ArrayList<AlignColumn>();
+    	ArrayList<AlignColumn> rEnds = new ArrayList<AlignColumn>();
+    	ArrayList<Integer> lengths = new ArrayList<Integer>();
+
+    	// find the silent indels, up to break points defined by 
+    	// places where one of the children has one of the nodes
+    	// as its surrogate or real parent.
+    	int region = 0;
+    	int regionContainingInsert = 0;
+    	for (;;) {
+    		while ((l!=null) && (l.parent == c)) l = l.prev;
+    		while ((r!=null) && (r.parent == c) && (r.parent!=l.parent)) r = r.prev;
+    		if (c!=begin && c.orphan && c.left == null && c.right == null) {
+    			if (end == null) { end = c; begin = l.parent; silentLength = 1; }
+    			else silentLength++;    			
+    			if (c==insert) regionContainingInsert = region;    				
+    		}
+    		else if (silentLength > 0) { // store info for this silent indel and move on    			
+    			begins.add(begin); begin = null;
+    			ends.add(end); end = null;
+    			lEnds.add(l.next);
+    			rEnds.add(r.next);
+    			totalLength += silentLength;
+    			lengths.add(silentLength); silentLength = 0;
+    			region++;
+    		}    		 
+    		if (c.prev != null) c = c.prev;
+    		else break;
+    	}
+    	if (begins.size() == 0) {
+    		if (Utils.DEBUG) System.out.println("Nothing to excise.");
+    		logProposalRatio = Double.NEGATIVE_INFINITY; 
+    	}
+    	else {    	
+	    	if (insert == null || remove) { // we're actually doing the excision
+	    		if (Utils.DEBUG) for (int len : lengths) System.out.println(len);
+		    	int indel = Utils.weightedChoose(lengths);
+		    	logProposalRatio -= Math.log(lengths.get(indel)/totalLength);
+		    	int possibleEndPositions = Math.max(MAX_LENGTH,lengths.get(indel))-MAX_LENGTH+1;    	
+		    	int offsetFromEnd = Utils.generator.nextInt(possibleEndPositions);
+		    	logProposalRatio -= -Math.log(possibleEndPositions);
+		    	
+		    	if (insert == null) {
+			    	c = ends.get(indel);
+			    	int skipped = 0;
+			    	while (skipped < offsetFromEnd) { c = c.prev; skipped++; } 
+			    	old.winLast = c.next;
+		    	}
+		    	else {
+		    		c = insert;
+		    		MAX_LENGTH = old.winLength;
+		    	}
+		    	int deletedLength = 0;	    		
+		    	
+		    	l = lEnds.get(indel); 
+	    		while (l.parent == begins.get(indel)) { l.parent = c.next; l = l.prev; }
+	    		r = rEnds.get(indel); 
+	    		while (r.parent == begins.get(indel)) { r.parent = c.next; r = r.prev; }
+	    		
+		    	for(;;) {		    				    		
+		    		boolean successfullyDeleted = delete(c);
+		    		deletedLength++;
+		    		if (!successfullyDeleted) logProposalRatio = Double.NEGATIVE_INFINITY;
+		    		if (deletedLength==MAX_LENGTH || c==begins.get(indel)) break;
+		    		c = c.prev;		    		
+		    	}
+		    	old.winLength = deletedLength;
+		    	if (remove) MAX_LENGTH = Utils.MAX_SILENT_LENGTH;
+		    	
+		    	// back proposal prob
+		    	// consists of probability of choosing insertion site
+		    	// and the probability of choosing the insertion length 
+		    	// which are both uniform
+		    	logProposalRatio += -Math.log(length) - Math.log(MAX_LENGTH);
+	    	}	    	
+	    	else { // we just called this function to compute a 
+	    		   // (negative log) back proposal prob 
+		    	logProposalRatio -= Math.log(lengths.get(regionContainingInsert)/totalLength);
+		    	int possibleEndPositions = Math.max(MAX_LENGTH,lengths.get(regionContainingInsert))-MAX_LENGTH+1;    	
+		    	logProposalRatio -= -Math.log(possibleEndPositions);
+	    	}
+    	}
+    	
+    	return logProposalRatio;
 	}
     /**
      * Schemes for imputing the internal character in the five-way topology
