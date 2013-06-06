@@ -2843,10 +2843,43 @@ public class Vertex {
         orphanLogLike = old.orphanLogLike;
         indelLogLike = old.indelLogLike;
 	}
+	private void reassignParentage(AlignColumn oldParent, AlignColumn newParent) {
+		AlignColumn l = left.last;
+    	AlignColumn r = right.last;    	
+    	// Decrement l and r until either they reach the beginning
+    	// of their respective sequences, or they reach a column
+    	// whose parent is c
+    	while (l != null && l.parent != oldParent) l = l.prev;
+    	while (r != null && r.parent != oldParent) r = r.prev;
+    	    	
+    	while (l != null && l.orphan && l.parent == oldParent) {
+    		l.parent = newParent;
+    		l = l.prev;
+    	}
+    	while (r != null && r.orphan && r.parent == oldParent) {
+    		r.parent = newParent;
+    		r = r.prev;
+    	}
+	}
 	public double insertSilentIndel() {
 		return insertSilentIndel(null);
 	}		
 	public double insertSilentIndel(AlignColumn c) {
+		double logProposalRatio = Math.log((1-Utils.SILENT_INSERT_PROB)/Utils.SILENT_INSERT_PROB);
+		
+		if (c==null) {
+			int pos = Utils.generator.nextInt(length);
+			c = last.prev;		 
+			while (pos-- > 0) c = c.prev;
+			logProposalRatio -= -Math.log(length); // log (1 / fwd)
+		}
+		c = new AlignColumn(c);
+		reassignParentage(c.next,c);
+		old.winLast = c;
+		
+		return logProposalRatio;
+	}
+	public double insertSilentIndelBlock(AlignColumn c) {
 		final int MAX_LENGTH = Utils.MAX_SILENT_LENGTH;
 		double logProposalRatio = Math.log((1-Utils.SILENT_INSERT_PROB)/Utils.SILENT_INSERT_PROB);
 		
@@ -2860,6 +2893,8 @@ public class Vertex {
 		int silentLength = 0;
 		if (c==null) {
 			int pos = Utils.generator.nextInt(length);
+			// Also need to incorporate a factor from this into the Hastings ratio?
+			
 			silentLength = Utils.generator.nextInt(MAX_LENGTH);
 			c = last.prev;		 
 			while (pos-- > 0) c = c.prev;
@@ -2899,10 +2934,12 @@ public class Vertex {
 		
 		return logProposalRatio;
 	}
-	public void undoInsertSilentIndel() {	
+	public void undoInsertSilentIndel() {
+		if (old.winLast == null) return;
 		exciseSilentIndel(old.winLast,true);		
 	}
 	public void undoExciseSilentIndel() {
+		if (old.winLast == null) return;
 		insertSilentIndel(old.winLast);				
 	}
 	public double exciseSilentIndel() {
@@ -2910,8 +2947,35 @@ public class Vertex {
 	}
 	public double exciseSilentIndel(AlignColumn c) {
 		return exciseSilentIndel(c,false);
+	}	
+	public double exciseSilentIndel(AlignColumn c, boolean remove) {
+		double logProposalRatio = Math.log(Utils.SILENT_INSERT_PROB/(1-Utils.SILENT_INSERT_PROB));		
+
+    	ArrayList<AlignColumn> silentColumns = new ArrayList<AlignColumn>();
+    	
+    	if (c == null) {
+			for (c = last.prev; c!=null; c = c.prev) {    		
+	    		if (c.orphan && c.left == null && c.right == null) {
+	    			silentColumns.add(c);
+	    		}
+			}
+			int nSilent = silentColumns.size(); 
+			if (nSilent == 0) { old.winLast = null; return Double.NEGATIVE_INFINITY; }
+			else logProposalRatio += Math.log(nSilent) - Math.log(length-1);
+			int choice = Utils.generator.nextInt(nSilent);
+			c = silentColumns.get(choice);
+    	}    	
+		reassignParentage(c,c.next);
+    	
+    	old.winLast = c.next;
+    	
+		boolean deleted = delete(c);
+		if (!deleted) { old.winLast = null; return Double.NEGATIVE_INFINITY; }
+		
+		
+		return logProposalRatio;
 	}
-	public double exciseSilentIndel(AlignColumn insert, boolean remove) {
+	public double exciseSilentIndelBlock(AlignColumn insert, boolean remove) {
 		int MAX_LENGTH = Utils.MAX_SILENT_LENGTH;
 		double logProposalRatio = Math.log(Utils.SILENT_INSERT_PROB/(1-Utils.SILENT_INSERT_PROB));		
 
