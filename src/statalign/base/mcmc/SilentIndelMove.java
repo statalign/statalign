@@ -21,43 +21,53 @@ public class SilentIndelMove extends McmcMove {
 		owner = m;
 		name = n;				
 		autoTune = false;
+		acceptAllDuringFirstHalfBurnin = true;
 	}
 
-	public void copyState(Object externalState) {
-		Utils.DEBUG = true;
+	public void copyState(Object externalState) {		
+		//Utils.DEBUG = true;
 		if (externalState instanceof Tree) {
 			if (tree == null) {
 				tree = (Tree) externalState;
 			}
 		}
 		else throw new IllegalArgumentException("SilentIndelMove.copyState must take an argument of type Tree.");
-		weights = new double[tree.vertex.length];		
+		weights = new double[tree.vertex.length];			
 		tree.countLeaves();
 		tree.countSilentIndels();
+		int tot = 0;
 		for (int i = 0; i < weights.length; i++) {
 			//weights[i] = Math.pow(tree.vertex[i].leafCount, LEAFCOUNT_POWER);
-			//weights[i] = (tree.vertex[i].nSilentIndels > 0) ? 1 : 0;
-			weights[i] = (tree.vertex[i].nSilentIndels > 1) ? 1 : 0;
+			//weights[i] = (tree.vertex[i].nSilentIndels > 0) ? 1 : 0;	
+			weights[i] = (tree.vertex[i].leafCount>1 && tree.vertex[i].nSilentIndels>0) ? 1 : 0;
+			tot += weights[i];
 		}
 		int k = 0;
 		v = null;
-		if (Utils.DEBUG) System.out.println("Root = "+tree.root);
-		while (v==null || v.leafCount==1) { // misbehaves with saveFiveWay -- may be no uncle
+		if (tot!=0) validProposal = true;
+		while (v==null || v.leafCount==1) { 
 		//while (v==null || v == tree.root || v.parent == tree.root || v.leafCount==1) {
 			k = Utils.weightedChoose(weights, null);			
 			v = tree.vertex[k];
 			if (Utils.DEBUG) System.out.println(k+" "+v.parent);			
 		}
 		if (Utils.DEBUG) System.out.println("Vertex = "+k);
-		v.saveData();
+		//v.saveData();
 		((CoreMcmcModule) owner).getModelExtMan().beforeAlignChange(tree, v);				
 	}
 	public double proposal(Object externalState) {
 				
-		if (Utils.DEBUG) tree.root.printToScreenAlignment(0,0,true);
+		//if (Utils.DEBUG) tree.root.printToScreenAlignment(0,0,true);
 		
-		double logProposalRatio = 0;		
-		if (Utils.generator.nextDouble() < Utils.SILENT_INSERT_PROB) {
+		double logProposalRatio = 0;	
+		if (validProposal && owner.isFirstHalfBurnin() && acceptAllDuringFirstHalfBurnin) {
+			// In first half of burnin we'll only excise silent indels 
+			//v.modifySilentIndel(false);
+			v.exciseAllSilentIndels();
+			return 0;
+		}
+		if (!validProposal) return Double.NEGATIVE_INFINITY;
+		if (v.nSilentIndels==1 || Utils.generator.nextDouble() < Utils.SILENT_INSERT_PROB) {
 			if (Utils.DEBUG) System.out.println("Inserting silent indel.");
 			didInsertion = true;			
 			//logProposalRatio = v.insertSilentIndel();
@@ -74,7 +84,7 @@ public class SilentIndelMove extends McmcMove {
 		}
 		else validProposal = true;
 
-		if (Utils.DEBUG) tree.root.printToScreenAlignment(0,0,true);
+		//if (Utils.DEBUG) tree.root.printToScreenAlignment(0,0,true);
 		
 		return logProposalRatio;
 	}
@@ -104,8 +114,8 @@ public class SilentIndelMove extends McmcMove {
 		// this could be problematic if the proposal failed
 	}
 	
-	public void afterMove(Object externalState) {
-		Utils.DEBUG = false;
+	public void afterMove(Object externalState) {	
+		//Utils.DEBUG = false;
 		((CoreMcmcModule) owner).getModelExtMan().afterAlignChange(tree, v,lastMoveAccepted);
 	}
 	

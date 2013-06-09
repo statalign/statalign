@@ -22,7 +22,9 @@ public abstract class McmcModule {
 	public void setMcmc(Mcmc m) {
 		mcmc = m;
 	}
-	
+	public boolean isFirstHalfBurnin() {
+		return mcmc.firstHalfBurnin;
+	}
 	/** Current log-likelihood contribution */
 	public double curLogLike = 0;
 	

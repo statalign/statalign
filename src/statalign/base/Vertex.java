@@ -57,7 +57,7 @@ public class Vertex {
     public Vertex right;
 
     int length;					// sequence length
-    public int nSilentIndels; 
+    public int nSilentIndels = -1;
     public AlignColumn first;			// first alignment column of Vertex
     AlignColumn last;			// last, virtual alignment column of Vertex (always present)
     String seq;					// original sequence of this Vertex (given for leaves only)
@@ -2874,6 +2874,7 @@ public class Vertex {
 			while (pos-- > 0) c = c.prev;
 			logProposalRatio -= exciseSilentIndel(c,false);
 		}
+		
 		c = new AlignColumn(c);		
 		logProposalRatio -= -Math.log(length); 	// log (1 / fwd)					
 		
@@ -2882,6 +2883,7 @@ public class Vertex {
 		if (Utils.DEBUG) owner.checkPointers();
 		
 		old.winLast = c;
+		++nSilentIndels;
 		
 		return logProposalRatio;
 	}
@@ -2954,14 +2956,17 @@ public class Vertex {
 	public double exciseSilentIndel(AlignColumn c) {
 		return exciseSilentIndel(c,false);
 	}	
-	int countSilentIndels() {
-		int n=0;
-		for (AlignColumn c = last.prev; c!=null; c = c.prev, ++n);
-		return n;
+	void countSilentIndels() {
+		//if (nSilentIndels==-1) {
+			nSilentIndels = 0;
+			for (AlignColumn c = last.prev; c!=null; c = c.prev) {
+	    		if (c.orphan && c.left == null && c.right == null) nSilentIndels++;
+			}			
+		//}
 	}
 	public double exciseSilentIndel(AlignColumn c, boolean remove) {
 		double logProposalRatio = Math.log(Utils.SILENT_INSERT_PROB/(1-Utils.SILENT_INSERT_PROB));		
-    	
+    			
     	if (c == null) {
         	ArrayList<AlignColumn> silentColumns = new ArrayList<AlignColumn>();
 			for (c = last.prev; c!=null; c = c.prev) {    		
@@ -2975,7 +2980,7 @@ public class Vertex {
 			int choice = Utils.generator.nextInt(nSilent);
 			if (Utils.DEBUG) System.out.println("Excising column "+choice+".");
 			c = silentColumns.get(choice);
-    	}    	
+    	}   
     	if (remove) logProposalRatio += -Math.log(length-1); // + log bwd
     	if (Utils.DEBUG) owner.checkPointers();
 		if (remove) reassignParentage(c,c.next);
@@ -2986,12 +2991,23 @@ public class Vertex {
     	boolean deleted = true;
     	if (remove) deleted = delete(c);
 		if (!deleted) { old.winLast = null; return Double.NEGATIVE_INFINITY; }
-		
+				
+		--nSilentIndels;
 		
 		return logProposalRatio;
 	}
+	public void exciseAllSilentIndels() {
+		for (AlignColumn c = last.prev; c!=null; c = c.prev) {    		
+    		if (c.orphan && c.left == null && c.right == null) {
+    			reassignParentage(c,c.next);
+    			delete(c);
+    		}
+		}
+	}
 	public double modifySilentIndel(boolean insert) {
-		double logProposalRatio = Math.log(Utils.SILENT_INSERT_PROB/(1-Utils.SILENT_INSERT_PROB));	
+		double logProposalRatio = 0;
+		if (insert) logProposalRatio += Math.log((1-Utils.SILENT_INSERT_PROB)/Utils.SILENT_INSERT_PROB);	
+		else logProposalRatio += Math.log(Utils.SILENT_INSERT_PROB/(1-Utils.SILENT_INSERT_PROB));
 		
     	AlignColumn c = null;
     	ArrayList<AlignColumn> silentColumns = new ArrayList<AlignColumn>();
@@ -3002,7 +3018,8 @@ public class Vertex {
 		}
 		int nSilent = silentColumns.size(); 
 		
-		if (nSilent == 0 || (nSilent==1 && !insert)) { 
+		if (nSilent == 0) { // || (nSilent==1 && !insert)) { 
+			// Assume parent move handles the latter condition
 			old.winLast = null; 
 			return Double.NEGATIVE_INFINITY; 
 		}
@@ -3018,13 +3035,15 @@ public class Vertex {
 			c = new AlignColumn(c);	
 			reassignParentage(c.next,c);
 			old.winLast = c;
+			nSilentIndels = nSilent+1;
 		}
 		else {
-			logProposalRatio += -Math.log(nSilent-1); // + log bwd
+			if (nSilent > 1) logProposalRatio += -Math.log(nSilent-1); // + log bwd
 			reassignParentage(c,c.next);
 			old.winLast = c.next;
 			boolean deleted = delete(c);
 			if (!deleted) { old.winLast = null; return Double.NEGATIVE_INFINITY; }
+			nSilentIndels = nSilent-1;
 		}
 		if (Utils.DEBUG) owner.checkPointers();
 		

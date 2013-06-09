@@ -162,7 +162,7 @@ public class Utils{
 	 * which may be useful to avoid getting stuck in local modes during the
 	 * burnin. Ideally such a scheme should not be needed, however.
 	 */
-	public static final boolean SHAKE_IF_STUCK = false;
+	public static final boolean SHAKE_IF_STUCK = true;
 
 	public static final int MAX_SILENT_LENGTH = 10;
 

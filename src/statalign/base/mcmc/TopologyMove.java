@@ -35,8 +35,8 @@ public class TopologyMove extends McmcMove {
 		edgePrior = pr;
 		edgeProposalWidthControlVariable = propVar;
 		name = n;
-		//autoTune = true;
-		autoTune = false;
+		autoTune = true;
+		//autoTune = false;
 		if(Utils.DEBUG){
 			try{
 				topMoves = new FileWriter("topMoves.txt");				

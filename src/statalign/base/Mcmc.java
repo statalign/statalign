@@ -161,7 +161,8 @@ public class Mcmc extends Stoppable {
 	private int allEdgeWeight = 6;
 	private int edgeWeightIncrement = 0; // Added after half of burnin
 	private int alignWeight = 25;
-	private int silentIndelWeight = 5;
+	private int silentIndelWeight = 10;
+	private int silentIndelWeightIncrement = -8; // Added after half of burnin
 	private int topologyWeight = 8;
 	private int localTopologyWeight = 8;
 	private int topologyWeightIncrement = 0; // Added after half of burnin
@@ -364,6 +365,7 @@ public class Mcmc extends Stoppable {
 		if (Utils.SHAKE_IF_STUCK && firstHalfBurnin && (m.lowCounts > Utils.LOW_COUNT_THRESHOLD)) {			
 			newLogLike *= Math.pow(Utils.LOW_COUNT_MULTIPLIER,m.lowCounts-Utils.LOW_COUNT_THRESHOLD);			
 		}
+		acceptAllMoves = firstHalfBurnin && m.acceptAllDuringFirstHalfBurnin; 
 		boolean accept = acceptanceDecision(totalLogLike,newLogLike,logProposalRatio,acceptAllMoves);
 		if (accept) m.lowCounts = 0;		
 		return accept;
@@ -510,6 +512,9 @@ public class Mcmc extends Stoppable {
 						}
 						if (topologyWeightIncrement > 0) {
 							coreModel.setWeight("Topology",topologyWeight+topologyWeightIncrement);
+						}
+						if (silentIndelWeightIncrement != 0) {
+							coreModel.setWeight("Silent",silentIndelWeight+silentIndelWeightIncrement);
 						}
 					}
 					
