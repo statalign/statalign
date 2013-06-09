@@ -145,7 +145,7 @@ public class LOCALTopologyMove extends McmcMove {
 		double w_ai_new = r * w_ai;
 		double w_aj_new = u2 * w_ac_new;
 		double logProposalRatio = 3 * Math.log(r);
-		if (Utils.DEBUG) System.out.println("Before LOCAL: "+tree.printedTree());
+		if (Utils.DEBUG) System.out.println("Before LOCAL: "+tree.printedTreeWithNumbers());
 		invalidProposal = false;
 		if (w_aj_new < w_ai_new) { // Then we have a topology switch
 	        if (Utils.DEBUG) tree.root.printToScreenAlignment(0,0,true);
@@ -176,7 +176,7 @@ public class LOCALTopologyMove extends McmcMove {
 				didFastSwap = false;
 			}
 		}
-		if (Utils.DEBUG) System.out.println("After  LOCAL: "+tree.printedTree());
+		if (Utils.DEBUG) System.out.println("After  LOCAL: "+tree.printedTreeWithNumbers());
 		return logProposalRatio;
 	}
 	@Override

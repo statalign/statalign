@@ -161,7 +161,7 @@ public class Mcmc extends Stoppable {
 	private int allEdgeWeight = 6;
 	private int edgeWeightIncrement = 0; // Added after half of burnin
 	private int alignWeight = 25;
-	private int silentIndelWeight = 20;
+	private int silentIndelWeight = 5;
 	private int topologyWeight = 8;
 	private int localTopologyWeight = 8;
 	private int topologyWeightIncrement = 0; // Added after half of burnin

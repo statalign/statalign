@@ -360,7 +360,9 @@ public class Tree extends Stoppable implements DataType {
     public int countLeaves() {
         return root.countLeaves();
     }
-    
+    public void countSilentIndels() {
+        for (Vertex v : vertex) v.countSilentIndels();
+    }
     void checkUppFelsProducts() {
     	double[] result = new double[vertex.length];
     	System.out.println("upp · fels = ");
@@ -497,6 +499,11 @@ COLUMN:    	while (c != v.last) {
     public String printedTree() {
     	StringBuffer b = new StringBuffer();
         root.print(b);
+        return b.toString();
+    }
+    public String printedTreeWithNumbers() {
+    	StringBuffer b = new StringBuffer();
+        root.printWithNumbers(b);
         return b.toString();
     }
     

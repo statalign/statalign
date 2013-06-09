@@ -57,6 +57,7 @@ public class Vertex {
     public Vertex right;
 
     int length;					// sequence length
+    public int nSilentIndels; 
     public AlignColumn first;			// first alignment column of Vertex
     AlignColumn last;			// last, virtual alignment column of Vertex (always present)
     String seq;					// original sequence of this Vertex (given for leaves only)
@@ -406,9 +407,9 @@ public class Vertex {
         	printDf.format(edgeLength, b, new FieldPosition(1));
         } else {
         	b.append('(');
-        	left.print(b);
+        	left.print(b,withNumbers);
         	b.append(',');
-        	right.print(b);
+        	right.print(b,withNumbers);
         	b.append(')');
         	if (withNumbers) b.append("["+index+"]");
             if (parent != null) {
@@ -2869,12 +2870,17 @@ public class Vertex {
 		
 		if (c==null) {
 			int pos = Utils.generator.nextInt(length);
-			c = last.prev;		 
+			c = last;		 
 			while (pos-- > 0) c = c.prev;
-			logProposalRatio -= -Math.log(length); // log (1 / fwd)
+			logProposalRatio -= exciseSilentIndel(c,false);
 		}
-		c = new AlignColumn(c);
+		c = new AlignColumn(c);		
+		logProposalRatio -= -Math.log(length); 	// log (1 / fwd)					
+		
+		if (Utils.DEBUG) owner.checkPointers();
 		reassignParentage(c.next,c);
+		if (Utils.DEBUG) owner.checkPointers();
+		
 		old.winLast = c;
 		
 		return logProposalRatio;
@@ -2943,17 +2949,21 @@ public class Vertex {
 		insertSilentIndel(old.winLast);				
 	}
 	public double exciseSilentIndel() {
-		return exciseSilentIndel(null,false);
+		return exciseSilentIndel(null,true);
 	}
 	public double exciseSilentIndel(AlignColumn c) {
 		return exciseSilentIndel(c,false);
 	}	
+	int countSilentIndels() {
+		int n=0;
+		for (AlignColumn c = last.prev; c!=null; c = c.prev, ++n);
+		return n;
+	}
 	public double exciseSilentIndel(AlignColumn c, boolean remove) {
 		double logProposalRatio = Math.log(Utils.SILENT_INSERT_PROB/(1-Utils.SILENT_INSERT_PROB));		
-
-    	ArrayList<AlignColumn> silentColumns = new ArrayList<AlignColumn>();
     	
     	if (c == null) {
+        	ArrayList<AlignColumn> silentColumns = new ArrayList<AlignColumn>();
 			for (c = last.prev; c!=null; c = c.prev) {    		
 	    		if (c.orphan && c.left == null && c.right == null) {
 	    			silentColumns.add(c);
@@ -2961,17 +2971,62 @@ public class Vertex {
 			}
 			int nSilent = silentColumns.size(); 
 			if (nSilent == 0) { old.winLast = null; return Double.NEGATIVE_INFINITY; }
-			else logProposalRatio += Math.log(nSilent) - Math.log(length-1);
+			else logProposalRatio -= -Math.log(nSilent); // - log fwd
 			int choice = Utils.generator.nextInt(nSilent);
+			if (Utils.DEBUG) System.out.println("Excising column "+choice+".");
 			c = silentColumns.get(choice);
     	}    	
-		reassignParentage(c,c.next);
+    	if (remove) logProposalRatio += -Math.log(length-1); // + log bwd
+    	if (Utils.DEBUG) owner.checkPointers();
+		if (remove) reassignParentage(c,c.next);
+		if (Utils.DEBUG) owner.checkPointers();
+		
+    	if (remove) old.winLast = c.next;
     	
-    	old.winLast = c.next;
-    	
-		boolean deleted = delete(c);
+    	boolean deleted = true;
+    	if (remove) deleted = delete(c);
 		if (!deleted) { old.winLast = null; return Double.NEGATIVE_INFINITY; }
 		
+		
+		return logProposalRatio;
+	}
+	public double modifySilentIndel(boolean insert) {
+		double logProposalRatio = Math.log(Utils.SILENT_INSERT_PROB/(1-Utils.SILENT_INSERT_PROB));	
+		
+    	AlignColumn c = null;
+    	ArrayList<AlignColumn> silentColumns = new ArrayList<AlignColumn>();
+		for (c = last.prev; c!=null; c = c.prev) {    		
+    		if (c.orphan && c.left == null && c.right == null) {
+    			silentColumns.add(c);
+    		}
+		}
+		int nSilent = silentColumns.size(); 
+		
+		if (nSilent == 0 || (nSilent==1 && !insert)) { 
+			old.winLast = null; 
+			return Double.NEGATIVE_INFINITY; 
+		}
+		else logProposalRatio -= -Math.log(nSilent); // - log fwd
+		
+		int choice = Utils.generator.nextInt(nSilent);
+		if (Utils.DEBUG) System.out.println("Selected column "+choice+".");
+		c = silentColumns.get(choice);
+      	
+    	if (Utils.DEBUG) owner.checkPointers();		
+		if (insert)  {
+			logProposalRatio += -Math.log(nSilent+1); // + log bwd
+			c = new AlignColumn(c);	
+			reassignParentage(c.next,c);
+			old.winLast = c;
+		}
+		else {
+			logProposalRatio += -Math.log(nSilent-1); // + log bwd
+			reassignParentage(c,c.next);
+			old.winLast = c.next;
+			boolean deleted = delete(c);
+			if (!deleted) { old.winLast = null; return Double.NEGATIVE_INFINITY; }
+		}
+		if (Utils.DEBUG) owner.checkPointers();
 		
 		return logProposalRatio;
 	}

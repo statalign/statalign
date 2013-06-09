@@ -142,6 +142,7 @@ public class AlignColumn {
 		this.next = next;
 		prev = next.prev;
 		if (prev!=null) prev.next = this;
+		else owner.first = this;
 		next.prev = this;
 		seq = new double[owner.owner.substitutionModel.e.length];
 		upp = new double[owner.owner.substitutionModel.e.length];		
@@ -150,9 +151,7 @@ public class AlignColumn {
 	
 	/** 
 	 *  Remove all non-parent references to a column, <code>p</code>.
-	 *  Any columns that called this column 'parent' will have a null
-	 *  parent after this function is called, and must be adopted
-	 *  (unless they belong to the root Vertex).
+	 *  Any adopted children must be updated separately.
 	 *  @param p The column to be deleted.
 	 */
 	static boolean delete(AlignColumn p) {
@@ -178,7 +177,7 @@ public class AlignColumn {
 		}
 
 		// Now skip column p in the parent sequence
-		if (p.prev != null) p.prev.next = p.next;
+		if (p.prev != null) p.prev.next = p.next; else p.owner.first = p.next;
 		if (p.next != null) p.next.prev = p.prev;     
 		
 		if (p.left != null)  { p.left.orphan = true; p.left.parent = null; }

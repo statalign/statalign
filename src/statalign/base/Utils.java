@@ -31,7 +31,7 @@ public class Utils{
 	/**
 	 * Debugging mode (various consistency checks done if on)
 	 */
-	public static boolean DEBUG = true;
+	public static boolean DEBUG = false;
 	// TODO Change this to an integer, so we can have different levels of 
 	// debug information printed.
 		
@@ -166,7 +166,8 @@ public class Utils{
 
 	public static final int MAX_SILENT_LENGTH = 10;
 
-	public static final double SILENT_INSERT_PROB = 0.1;	
+	//public static final double SILENT_INSERT_PROB = 0.05;	
+	public static final double SILENT_INSERT_PROB = 0.5;
 	
 	private static double[] tempDoubleArray;
 

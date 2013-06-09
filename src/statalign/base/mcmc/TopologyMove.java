@@ -35,8 +35,8 @@ public class TopologyMove extends McmcMove {
 		edgePrior = pr;
 		edgeProposalWidthControlVariable = propVar;
 		name = n;
-		autoTune = true;
 		//autoTune = true;
+		autoTune = false;
 		if(Utils.DEBUG){
 			try{
 				topMoves = new FileWriter("topMoves.txt");				
@@ -210,7 +210,7 @@ public class TopologyMove extends McmcMove {
 			
 			// double logProposalRatio = nephew.swapWithUncleAlignToParent();
 			System.out.println("logProposalRatio after swap = "+logProposalRatio);
-			System.out.println("After  Topology: "+tree.printedTree());
+			System.out.println("After  Topology: "+tree.printedTreeWithNumbers());
 		}
 		
 		
