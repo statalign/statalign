@@ -185,6 +185,13 @@ public abstract class ModelExtension extends McmcModule {
 		return manager.isParamChangeAccepted(logProposalRatio,m);
 	}
 	
+	/**
+	 * Computes the change in likelihood to this ModelExtension, after a change
+	 * to <code>ext</code>.
+	 * @param tree
+	 * @param ext The <code>ModelExtension</code> that just changed.
+	 * @return
+	 */
 	public double logLikeModExtParamChange(Tree tree, ModelExtension ext) {
 		return logLikeFactor(tree);
 	}

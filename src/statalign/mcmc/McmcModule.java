@@ -124,24 +124,7 @@ public abstract class McmcModule {
 	public boolean proposeParamChange(Tree tree) {
 		int selectedMoveIndex = Utils.weightedChoose(mcmcMoveWeights);
 		McmcMove selectedMove = mcmcMoves.get(selectedMoveIndex); 
-//		if (Utils.DEBUG) {
-//			try {
-//				System.out.print(selectedMove.name+" = "+selectedMove.getParam().get());
-//			}
-//			catch (NullPointerException e) {
-//				System.out.print(selectedMove.name);
-//			}
-//		}
 		selectedMove.move(tree);
-//		if (Utils.DEBUG) {
-//			try {
-//				System.out.print("\t"+selectedMove.name+" = "+selectedMove.getParam().get());
-//				System.out.println();
-//			}
-//			catch (NullPointerException e) {
-//				System.out.println();
-//			}
-//		}
 		return selectedMove.lastMoveAccepted;
 	}
 	
