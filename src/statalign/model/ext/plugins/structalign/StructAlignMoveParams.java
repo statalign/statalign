@@ -27,4 +27,11 @@ public class StructAlignMoveParams {
 	public void setPlotSide(int s) {
 		plotSide = s;
 	}
+	private boolean fixedToParent;
+	public boolean fixedToParent() {
+		return fixedToParent;
+	}
+	public void setFixedToParent(boolean b) {
+		fixedToParent = b;
+	}
 }

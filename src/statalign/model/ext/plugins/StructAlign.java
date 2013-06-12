@@ -57,10 +57,14 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	
 	JToggleButton myButton;
 	
-	public boolean globalSigma = true;
+	public boolean globalSigma = false;
 	public boolean useLibrary = false;
 	public boolean fixedEpsilon = false;
 	public boolean fixedSigma2 = false;
+	
+	/** If globalSigma = false then this switches on a spike prior at sigma2Hier. */
+	public boolean globalSigmaSpike = true; 
+	double[] globalSigmaSpikeParams = {3,1};
 	
 	double structTemp = 1;
 
@@ -139,7 +143,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	
 	// priors for rotation and translation are uniform
 	// so do not need to be included in M-H ratio
-	 
+	 	
 	
 	/** Default proposal weights in this order: 
 	 *  align, topology, edge, indel param, subst param, modelext param 
@@ -542,7 +546,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			HierarchicalContinuousPositiveStructAlignMove nuMove = null;
 			if (!globalSigma) {
 				ParameterInterface sigma2HInterface = paramInterfaceGenerator.new Sigma2HInterface();
-				sigma2HMove = new HierarchicalContinuousPositiveStructAlignMove(this,sigma2HInterface,sigma2HPrior,new GammaProposal(0.001,0.001),"σ_g");
+				sigma2HMove = new HierarchicalContinuousPositiveStructAlignMove(this,sigma2HInterface,sigma2HPrior,new GammaProposal(0.001,0.001),"σ_g");				
 				sigma2HMove.moveParams.setPlottable();
 				sigma2HMove.moveParams.setPlotSide(0);
 				addMcmcMove(sigma2HMove,sigma2HierWeight); 
@@ -580,8 +584,12 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				addMcmcMove(m,sigma2Weight);
 				if (!globalSigma) {
 					sigma2HMove.addChildMove(m);
+					if (globalSigmaSpike) {
+						sigma2HMove.setSpikeParams(globalSigmaSpikeParams);
+					}					
 					nuMove.addChildMove(m);
 				}
+				
 				if (sigma2.length == 1 && !fixedEpsilon) {
 					ArrayList<McmcMove> sigmaEpsilon = new ArrayList<McmcMove>();
 					sigmaEpsilon.add(m);

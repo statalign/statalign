@@ -143,10 +143,16 @@ public class StructAlignTraceGUI extends JPanel {
 			}
 		}
 		gr.setFont(STR_FONT);
+		Color burninColor = new Color(251, 87, 20);
+		Color nonBurninColor = new Color(46, 87, 221);
+		
 		gr.drawString("" + String.format("%.1f",maxParam), (int) minX, 5 + (int)minY);
 		gr.drawString("" + String.format("%.1f",minParam), (int) minX, 5 + (int)maxY);
 		gr.setFont(new Font("Dialog", Font.BOLD, 12));
 		String paramName = parameterHistory.get(0).plottableParameters.get(parameterIndex).name;
+		if (parameterHistory.get(parameterHistory.size()-1).plottableParameters.get(parameterIndex).fixedToParent) {
+			gr.setColor(burninColor);
+		}
 		gr.drawString(paramName, (int) minX + 3, (int)((minY+maxY)/2));
 		gr.setFont(STR_FONT);
 				
@@ -154,9 +160,7 @@ public class StructAlignTraceGUI extends JPanel {
 		if (parameterHistory.size() == 0) {
 			return;
 		}
-		
-		Color burninColor = new Color(251, 87, 20);
-		Color nonBurninColor = new Color(46, 87, 221);
+				
 		gr.setColor(burninColor);
 		//boolean finishedBurnin = (parameterHistory.get(parameterHistory.size()-1)).burnin;
 		int startFrom = 0;

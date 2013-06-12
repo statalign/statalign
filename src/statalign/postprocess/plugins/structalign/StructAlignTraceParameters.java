@@ -26,12 +26,14 @@ public class StructAlignTraceParameters {
 		public int proposalCount;
 		public int plotSide;
 		public boolean wasProposed = true;
-		PlottableParameter (String n,Number v, double a, int p, int s) {
+		public boolean fixedToParent;
+		PlottableParameter (String n,Number v, double a, int p, int s, boolean f) {
 			name = n;
-			value = v;
+			value = v;			
 			acceptanceRate = a;
 			proposalCount = p;
 			plotSide = s;
+			fixedToParent = f;
 		}
 	}
 	public List<PlottableParameter> plottableParameters = new ArrayList<PlottableParameter>(); 
@@ -48,7 +50,8 @@ public class StructAlignTraceParameters {
 									mcmcMove.getParam().get(),
 									mcmcMove.acceptanceRate(),
 									mcmcMove.proposalCount,
-									((ContinuousPositiveStructAlignMove) mcmcMove).moveParams.plotSide()));
+									((ContinuousPositiveStructAlignMove) mcmcMove).moveParams.plotSide(),
+									((ContinuousPositiveStructAlignMove) mcmcMove).moveParams.fixedToParent()));							
 									
 				}
 			}

@@ -14,7 +14,7 @@ public abstract class ContinuousPositiveParameterMove extends McmcMove {
 
 	protected Tree tree = null;
 
-	private ProposalDistribution<Double> proposalDistribution;
+	protected ProposalDistribution<Double> proposalDistribution;
 
 	protected double oldpar;
 	protected double oldll;

@@ -3,6 +3,8 @@ package statalign.model.ext.plugins.structalign;
 import java.util.List;
 import java.util.ArrayList;
 
+import statalign.base.Tree;
+import statalign.base.Utils;
 import statalign.mcmc.ContinuousPositiveParameterMove;
 import statalign.mcmc.ParameterInterface;
 import statalign.mcmc.PriorDistribution;
@@ -13,8 +15,17 @@ public class ContinuousPositiveStructAlignMove extends ContinuousPositiveParamet
 
 	StructAlign structAlign;
 	double[][] oldcovar;
+	boolean oldFixedToParent;
 	
 	List<HierarchicalContinuousPositiveStructAlignMove> parentPriors = null;
+	
+	/** 
+	 * <code>true</code> if this parameter is currently constrained to be
+	 * equal to its parent (where uniquely defined). This is used in cases
+	 * such as spike and slab priors.  
+	 */
+	boolean fixedToParent = false;
+	int nFixedToParent = 0;
 
 	public StructAlignMoveParams moveParams = new StructAlignMoveParams();
 	
@@ -34,8 +45,72 @@ public class ContinuousPositiveStructAlignMove extends ContinuousPositiveParamet
 	public void copyState(Object externalState) {
 		super.copyState(externalState);
 		oldcovar = structAlign.fullCovar;
+		oldFixedToParent = fixedToParent;
 	}
 	
+	@Override
+	public double proposal(Object externalState) {		
+		if (externalState instanceof Tree) {
+			if (tree == null) {
+				tree = (Tree) externalState;
+			}
+		}
+		else {
+			throw new IllegalArgumentException("ContinuousPositiveStructAlignMove.proposal must take an argument of type Tree.");
+		}
+		proposalDistribution.updateProposal(proposalWidthControlVariable,param.get());
+		
+		double logProposalDensity = 0;
+		
+		if (parentPriors != null) {
+			for (HierarchicalContinuousPositiveStructAlignMove parent : parentPriors) {
+				if (parent.allowSpike) { 			
+					double[] spikeParams = parent.spikeParams;
+					int m = parent.countFixedToParent();
+					int n = parent.countChildren();
+					double fixProb = spikeParams[0]/(spikeParams[0]+spikeParams[1]);
+					fixedToParent = (Utils.generator.nextDouble()<fixProb);
+					if (fixedToParent) {
+						param.set(parent.param.get());					 
+						if (!oldFixedToParent) { // z_k = 0 to begin with
+							logProposalDensity += Math.log((1-fixProb)/fixProb);
+							logProposalDensity += Math.log((m+1)/(n-m) 
+											 	* (spikeParams[0]+m) 
+											 	/ (spikeParams[1]+n-m-1));
+						}
+					}
+					else {
+						if (oldFixedToParent) { // z_k = 1 to begin with
+							logProposalDensity += Math.log(fixProb/(1-fixProb));
+							logProposalDensity += Math.log((n-m+1)/m 
+								 				* (spikeParams[1]+n-m) 
+								 				/ (spikeParams[0]+m-1));
+						}
+					}
+					// Assume only one parent allows spikes, and break once we've
+					// found it.
+					break;
+				}
+			}
+		}
+		moveParams.setFixedToParent(fixedToParent);
+		if (fixedToParent) nFixedToParent++;
+		else param.set(proposalDistribution.sample());
+		
+		if (param.get() < minValue || param.get() > maxValue) {
+			return(Double.NEGATIVE_INFINITY);
+		}
+
+		/** - log p(new | old) */
+		if (!fixedToParent) logProposalDensity = -proposalDistribution.logDensity(param.get());
+		
+		proposalDistribution.updateProposal(proposalWidthControlVariable,param.get());
+		
+		/** + log p(old | new) */
+		if (!oldFixedToParent) logProposalDensity += proposalDistribution.logDensity(oldpar);
+		
+		return logProposalDensity;
+	}
 	@Override
 	public double logPriorDensity(Object externalState) {
 		if (param.get() < minValue) {
@@ -68,5 +143,11 @@ public class ContinuousPositiveStructAlignMove extends ContinuousPositiveParamet
 	public void restoreState(Object externalState) {
 		super.restoreState(externalState);
 		structAlign.fullCovar = oldcovar;
+		fixedToParent = oldFixedToParent;
+		moveParams.setFixedToParent(fixedToParent);
 	}
+	public void setParam(double x) {
+		param.set(x);
+	}
+	
 }
