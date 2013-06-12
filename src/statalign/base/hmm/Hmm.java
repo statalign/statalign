@@ -50,4 +50,13 @@ public abstract class Hmm {
 	 */
 	public abstract int getEnd();
 	
+	/**
+	 * Returns the logarithm of the stationary probability of generating
+	 * a sequence of <code>length</code> characters under the HMM.
+	 * @param length The length of the sequence whose stationary
+	 * probability is to be computed.
+	 * @return The logarithm of the stationary probability under the HMM.
+	 */
+	public double getLogStationaryProb(int length) { return 0.0; }
+	
 }

@@ -95,4 +95,5 @@ public class EdgeMove extends ContinuousPositiveParameterMove {
 		tree.vertex[index].edgeChangeUpdate();
 		tree.vertex[index].calcAllUp();
 	}
+		
 }

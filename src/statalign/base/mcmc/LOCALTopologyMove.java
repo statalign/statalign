@@ -36,7 +36,8 @@ public class LOCALTopologyMove extends McmcMove {
 		autoTune = false; 
 		// autoTune = true by default
 		minEdgeLength = Utils.MIN_EDGE_LENGTH;
-		fastSwapProb = 0.9;
+		fastSwapProb = 0.05;
+		//fastSwapProb = 0.0;
 	}
 	
 	/**
@@ -144,11 +145,11 @@ public class LOCALTopologyMove extends McmcMove {
 		double w_ai_new = r * w_ai;
 		double w_aj_new = u2 * w_ac_new;
 		double logProposalRatio = 3 * Math.log(r);
-		//System.out.println("Before LOCAL: "+tree.printedTree());
+		if (Utils.DEBUG) System.out.println("Before LOCAL: "+tree.printedTreeWithNumbers());
 		invalidProposal = false;
 		if (w_aj_new < w_ai_new) { // Then we have a topology switch
+	        if (Utils.DEBUG) tree.root.printToScreenAlignment(0,0,true);
 			topologyChange = true;
-			nTopologyChanges++;
 			double w_ij_new = w_ai_new - w_aj_new;
 			double w_ic_new = w_ac_new - w_ai_new;
 			// Add in priorDensity to logProposalRatio
@@ -166,13 +167,16 @@ public class LOCALTopologyMove extends McmcMove {
 			if (Utils.generator.nextDouble() < fastSwapProb) {
 				logProposalRatio += nephew.fastSwapWithUncle();
 				didFastSwap = true;
+		        if (Utils.DEBUG) tree.root.printToScreenAlignment(0,0,true);
 			}
 			else {
-				logProposalRatio += nephew.swapWithUncleAlignToParent();
+				//logProposalRatio += nephew.swapWithUncleAlignToParent();
+				//logProposalRatio += nephew.nephewUncleSwapFixedColumns();
+				logProposalRatio += nephew.nephewUncleSwapFixedColumns3();
 				didFastSwap = false;
 			}
 		}
-		//System.out.println("After  LOCAL: "+tree.printedTree()+"\n"+"("+logProposalRatio+")");
+		if (Utils.DEBUG) System.out.println("After  LOCAL: "+tree.printedTreeWithNumbers());
 		return logProposalRatio;
 	}
 	@Override
@@ -190,14 +194,17 @@ public class LOCALTopologyMove extends McmcMove {
 				uncle.fastSwapBackUncle();
 			}
 			else {
-		        uncle.swapBackUncleAlignToParent();
+				uncle.restoreFiveWay();
+		        //uncle.swapBackUncleAlignToParent();
 			}
 		}
 		setEdges(w_ac-w_aj, w_ij, w_ai);
+		if (didFastSwap) tree.root.recomputeLogLike();
 	}
 	
 	@Override
 	public void afterMove(Object externalState) {
+		if (lastMoveAccepted && topologyChange) nTopologyChanges++;
 		((CoreMcmcModule) owner).getModelExtMan().afterTreeChange(tree,lastMoveAccepted ? uncle : nephew,lastMoveAccepted);
 		// Should also do an afterAlignChange here, but not obvious what to pass
 		// as the selectedRoot argument.

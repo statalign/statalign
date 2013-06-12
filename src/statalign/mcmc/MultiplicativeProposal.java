@@ -1,6 +1,14 @@
 package statalign.mcmc;
 
+import statalign.base.Utils;
 import statalign.utils.NormalDistribution;
+/**
+ * Proposal that multiplies the current parameter by a log-normally
+ * distributed variable, which is equivalent to a Gaussian random
+ * walk on the logarithm of the parameter. 
+ * 
+ * @author herman
+ */
 public class MultiplicativeProposal extends ProposalDistribution<Double> {
 
 	private NormalDistribution n;
@@ -14,7 +22,7 @@ public class MultiplicativeProposal extends ProposalDistribution<Double> {
 	 * x to log x.
 	 */
 	public double logDensity(Double x) {
-		return Math.log(n.density(x)) - Math.log(x);
+		return n.logDensity(Math.log(x)) - Math.log(x);
 	}
 	public Double sample() {
 		return Math.exp(n.sample());
@@ -22,6 +30,6 @@ public class MultiplicativeProposal extends ProposalDistribution<Double> {
 	public void updateProposal(double proposalWidthControlVariable, 
 			Double currentParam) {
 		n = new NormalDistribution(Math.log(currentParam),proposalWidthControlVariable);
-	}
+	}		
 	
 }

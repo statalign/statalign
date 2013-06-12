@@ -58,6 +58,10 @@ public class Tree extends Stoppable implements DataType {
 
     public CNetwork network;
 
+    //boolean changingTree = false;
+    boolean changingTree = true;
+    
+    public String[] previousFullAlign;
 
     public Tree() {
     }
@@ -103,6 +107,7 @@ public class Tree extends Stoppable implements DataType {
                 //	System.out.println(i+" "+temp);
                 AlignColumn column = new AlignColumn(actual);
                 column.seq = new double[substitutionModel.e.length];
+                column.upp = new double[substitutionModel.e.length];
                 actual.first = column;
                 actual.length = 0;
                 for (int j = 0; j < temp.length(); j++) {
@@ -193,8 +198,8 @@ public class Tree extends Stoppable implements DataType {
             //for(int i = 0; i < check.length; i++){
             //	System.out.println(check[i]);
             //}
-            root.calcFelsRecursively();
-            root.calcIndelLikeRecursively();
+            root.calcFelsenRecursively();
+            root.calcIndelLogLikeRecursively();
             //System.out.println("Log-likelihood: "+getLogLike());
 
             names = new String[(vertex.length + 1) / 2];
@@ -210,6 +215,11 @@ public class Tree extends Stoppable implements DataType {
         }
     }
 
+    void markAllVerticesUnselected() {
+    	for (Vertex v : vertex) {
+    		v.selected = false;
+    	}
+    }
     void compareLike(Tree tree) {
         System.out.println("this.logli=" + getLogLike());
         System.out.println("tree.logli=" + tree.getLogLike());
@@ -222,8 +232,9 @@ public class Tree extends Stoppable implements DataType {
     
     public void checkPointers() {
     	for (int i = 0; i < vertex.length; i++) {
-			if (vertex[i].left != null && vertex[i].right != null) {
-				vertex[i].checkPointers();
+			if (vertex[i].left != null && vertex[i].right != null) {				
+				//System.out.println("Checking vertex "+i);
+				vertex[i].checkPointers();				
 				AlignColumn p;
 				// checking pointer integrity
 				for (AlignColumn c = vertex[i].left.first; c != null; c = c.next) {
@@ -333,7 +344,10 @@ public class Tree extends Stoppable implements DataType {
     }
 
     public double getLogLike() {
-        return root.indelLogLike + root.orphanLogLike;
+    	if (Utils.DOWNWEIGHT_INDEL_LIKELIHOOD) {
+    		return (1.0/(((vertex.length+1)/2)-3))*root.indelLogLike + root.orphanLogLike;
+    	}
+    	else return root.indelLogLike + root.orphanLogLike;
     }
     /**
      * Recomputes the likelihood from scratch and checks whether everything was correct before.
@@ -341,10 +355,85 @@ public class Tree extends Stoppable implements DataType {
      */
     public void recomputeCheckLogLike() {
     	root.recomputeCheckLogLike();
-     }
+    }
     
     public int countLeaves() {
         return root.countLeaves();
+    }
+    public void countSilentIndels() {
+        for (Vertex v : vertex) v.countSilentIndels();
+    }
+    void checkUppFelsProducts() {
+    	double[] result = new double[vertex.length];
+    	System.out.println("upp · fels = ");
+VERTEX:	for (Vertex v : vertex) {
+    		boolean isRoot = (v == root);
+    		result[v.index] = 0.0;
+    		AlignColumn p = null, pp = null; 
+    		if (!isRoot) p = v.parent.first;
+    		AlignColumn c = v.first;
+    		double tmp = 0;
+COLUMN:    	while (c != v.last) {
+				
+				tmp = Math.log(Utils.calcEmProb(c.seq,c.upp));		
+				if (v.left!=null && v.right!=null) {
+					//System.out.println(c.seq[0]+" "+c.left.seq[0]+" "+v.left.charTransMatrix[0][0]);
+					boolean match = Utils.calcFelsenWithCheck(c.seq,
+							c.left!=null?c.left.seq:null,v.left.charTransMatrix,
+							c.right!=null?c.right.seq:null,v.right.charTransMatrix);
+					if (!match) {
+						throw new RuntimeException("Didn't match.");
+					}
+				}
+				result[v.index] += tmp;
+				char par = '-', car = ' ';
+				if (c != v.last) car = c.mostLikely();
+				if (p != null && p != v.parent.last) par = p.mostLikely(); else par = '-';
+				System.out.print("\t"+tmp+" ("+par+" -> "+car+") ");
+				for (int i=0; i<c.seq.length; i++) {
+					System.out.print(c.seq[i]+"/"+c.upp[i]+" ");
+				}
+				System.out.println();
+				
+				if (isRoot) { c = c.next; continue COLUMN; }
+				
+				p = c.parent;
+				if (p == null) throw new RuntimeException ("Start p is null.");
+				c = c.next; 	
+    			while (c.orphan) { 
+    				if (c != v.last) car = c.mostLikely(); else car = ' ';
+    				tmp = Math.log(Utils.calcEmProb(c.seq,c.upp));
+    				result[v.index] += tmp; 
+    				System.out.print("\t"+tmp+" ("+"- -> "+car+") ");
+	    			for (int i=0; i<c.seq.length; i++) {
+	    				System.out.print(c.seq[i]+"/"+c.upp[i]+" ");
+	    			}
+	    			System.out.println();
+    				c = c.next;
+    			}
+    			pp = c.parent;
+    			p = p.next;
+    			//if (p != null && p != v.parent.last) System.out.print(" ("+p.mostLikely()+","+pp.mostLikely()+") ");
+	    		// Include contributions from all parent columns that 
+	    		// experience a deletion on this branch.		    	
+	    		while (p != pp) {		 
+    				if (p != null && p != v.parent.last) par = p.mostLikely();
+    				
+    				tmp = Math.log(Utils.calcEmProb(p.seq, p.upp));
+	    			result[v.index] += tmp;
+	    			System.out.print("\t"+tmp+" ("+par+"-> -) ");		
+	    			for (int i=0; i<p.seq.length; i++) {
+	    				System.out.print(p.seq[i]+"/"+p.upp[i]+" ");
+	    			}
+	    			System.out.println();
+	    			p = p.next;
+	    			if (p == v.parent.last) break COLUMN;
+	    		}
+    			    		
+	    	}
+	    	System.out.println("\t"+result[v.index]+" \n");
+    	}
+    	System.out.println();
     }
 
 
@@ -365,7 +454,12 @@ public class Tree extends Stoppable implements DataType {
      * Returns a {@link State} object representing the current state. Assumes that
      * leaves come first in the {@link #vertex} array.
      */
-	public State getState() {
+    //public State getState() {
+    //	return getState(root);
+    //}
+	//public State getState(Vertex subtreeRoot) {
+    public State getState() {
+    	
 		int nn = vertex.length;
 		int nl = (nn+1)/2;
 		State state = new State(nn);
@@ -407,10 +501,14 @@ public class Tree extends Stoppable implements DataType {
         root.print(b);
         return b.toString();
     }
+    public String printedTreeWithNumbers() {
+    	StringBuffer b = new StringBuffer();
+        root.printWithNumbers(b);
+        return b.toString();
+    }
     
-	public double getLogPrior() {
-		return - root.calcSumOfEdges() - Math.log(substitutionModel.getPrior()) - 
-				hmm2.params[1] - hmm2.params[2];
+	public double getLogPrior() {		
+		return 0;
 	}
 
     /**

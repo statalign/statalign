@@ -17,7 +17,7 @@ public class TreeAlgo extends Stoppable {
 	public int GAPEXT = 2;
 	public double BIGNUM = 1e100;
 	
-	public static double MINEDGELEN = 0.01;
+	public static double MINEDGELEN = Utils.MIN_EDGE_LENGTH;
 	
 	public TreeAlgo() {
 	}
@@ -164,7 +164,7 @@ public class TreeAlgo extends Stoppable {
 			newVert.left.edgeLength = dist[i][j] / 2 - (remN > 2 ? (sumDist[i] - sumDist[j]) / (2 * remN - 4) : 0.001);
 			newVert.right.edgeLength = dist[i][j] - newVert.left.edgeLength;
 
-			val = (newVert.left.length + newVert.right.length) / 0.2;
+			val = (newVert.left.getLength() + newVert.right.getLength()) / 0.2;
 			newVert.left.edgeLength /= val;
 			newVert.right.edgeLength /= val;
 
@@ -216,7 +216,7 @@ public class TreeAlgo extends Stoppable {
 		}
 		tree.root = tree.vertex[vnum - 1];
 		tree.root.calcOrphan();
-		tree.root.calcFelsRecursively();
+		tree.root.calcFelsenRecursively();
 		
 		return tree;
 	}

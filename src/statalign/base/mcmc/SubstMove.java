@@ -69,7 +69,7 @@ public class SubstMove extends McmcMove {
 		for (int i = 0; i < tree.vertex.length; i++) {
 			tree.vertex[i].updateTransitionMatrix();
 		}
-		tree.root.calcFelsRecursively();
+		tree.root.calcFelsenRecursively();
 		owner.setLogLike(((CoreMcmcModule) owner).getModelExtMan().logLikeSubstParamChange(tree, tree.substitutionModel, -1));
 	}
 		
@@ -84,7 +84,7 @@ public class SubstMove extends McmcMove {
 		for (int i = 0; i < tree.vertex.length; i++) {
 			tree.vertex[i].updateTransitionMatrix();
 		}
-		tree.root.calcFelsRecursively();
+		tree.root.calcFelsenRecursively();
 	}
 
 

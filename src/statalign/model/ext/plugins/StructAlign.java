@@ -213,7 +213,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		usage.append("\t\tg{a_b}\t\tUses a Gamma(a,b) prior\n");
 		usage.append("\t\tinvg{a_b}\tUses an InverseGamma(a,b) prior\n");
 		usage.append("\t\tunif{a_b}\tUses a Uniform(a,b) prior\n");
-		usage.append("\tlink=LINK_FUNCTION\tSets link function between sequene and structure time\n");
+		usage.append("\tlink=LINK_FUNCTION\tSets link function between sequence and structure time\n");
 		usage.append("\tLINK_FUNCTION can be one of:\n");
 		usage.append("\t\tlinear (default)\n");
 		usage.append("\t\tquadratic\n");
@@ -572,8 +572,11 @@ public class StructAlign extends ModelExtension implements ActionListener {
 					// i.e. don't add the last one if we have
 					// more than one
 				}
-				m.moveParams.setPlottable();
-				m.moveParams.setPlotSide(0);
+				if (j<=sigma2.length/2) {
+					// plot only for tips
+					m.moveParams.setPlottable(); 
+					m.moveParams.setPlotSide(0);
+				}				
 				addMcmcMove(m,sigma2Weight);
 				if (!globalSigma) {
 					sigma2HMove.addChildMove(m);
@@ -594,6 +597,24 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	
 	@Override
 	public void beforeSampling(Tree tree) {
+		/* check for protein with no residues aligned to reference protein, resample alignment if any found */
+		boolean stop = false;
+		while(!stop){
+			String[] align = tree.getState().getLeafAlign();
+			String ref = align[0];
+			proteinLoop:
+			for(int i = 1; i < align.length; i++){
+				String other = align[i];
+				int countAligned = 0;
+				for(int j = 0; j < align[0].length(); j++)
+					countAligned += (ref.charAt(j) != '-' & other.charAt(j) != '-') ? 1 : 0;
+				if(countAligned == 0){
+					tree.root.selectAndResampleAlignment();
+					break proteinLoop;
+				} else if (i == align.length - 1) {stop = true;}
+			}
+		}
+
 		Funcs.initLSRotations(tree,coords,xlats,axes,angles);
 	}
 	

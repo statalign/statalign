@@ -22,7 +22,9 @@ public abstract class McmcModule {
 	public void setMcmc(Mcmc m) {
 		mcmc = m;
 	}
-	
+	public boolean isFirstHalfBurnin() {
+		return mcmc.firstHalfBurnin;
+	}
 	/** Current log-likelihood contribution */
 	public double curLogLike = 0;
 	
@@ -59,6 +61,7 @@ public abstract class McmcModule {
 		for (McmcMove mcmcMove : mcmcMoves) {
 			mcmcMove.proposalCount = 0;
 			mcmcMove.acceptanceCount = 0;
+			mcmcMove.lowCounts = 0;
 		}
 	}
 	public McmcMove getMcmcMove(String name) {
@@ -133,16 +136,19 @@ public abstract class McmcModule {
 					m.proposalWidthControlVariable *= m.spanMultiplier;
 					m.proposalCount = 0;
 					m.acceptanceCount = 0;
+					m.lowCounts++;
 				}
 				else if (m.acceptanceRate() > m.maxAcceptance) {
 					m.proposalWidthControlVariable /= m.spanMultiplier;
 					m.proposalCount = 0;
 					m.acceptanceCount = 0;
+					m.lowCounts = 0;
 				}
+				else m.lowCounts = 0;
 			}
 		}
 	}
-	public boolean isParamChangeAccepted(double logProposalRatio) {
-		return mcmc.isParamChangeAccepted(logProposalRatio);
+	public boolean isParamChangeAccepted(double logProposalRatio,McmcMove m) {
+		return mcmc.isParamChangeAccepted(logProposalRatio,m);
 	}
 }

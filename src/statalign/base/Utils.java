@@ -32,7 +32,27 @@ public class Utils{
 	 * Debugging mode (various consistency checks done if on)
 	 */
 	public static boolean DEBUG = false;
-	
+	// TODO Change this to an integer, so we can have different levels of 
+	// debug information printed.
+		
+	/** 
+	 * If this is set to <code>true</code> then the alignment moves operate
+	 * on the whole alignment rather than selecting subwindows. This
+	 * is usually much slower.
+	 */
+	public static boolean USE_FULL_WINDOWS = false;
+
+	/**
+	 * Whether to use information from the upper parts of the 
+	 * tree in order to fill out the <code>hmm2</code> and <code>hmm3</code>
+	 * matrices.
+	 */
+	public static boolean USE_UPPER = false;
+	/** Power determining how much we favour realigning
+	 *  the larger subtree first when doing a nearest-neighbour
+	 *  interchange move. 
+	 */
+	public static double LEAF_COUNT_POW = 1.0;
 	/**
 	 * The random number generator used throughout the program.
 	 * A new generator is constructed at each MCMC run using the seed in the
@@ -73,9 +93,9 @@ public class Utils{
 	 */
 	public static final double SPAN_MULTIPLIER = 0.7;
 	/**
-	 * During the burnin, the proposalWidthControlVariable for all continuous parameters
-	 * is adjusted in order to ensure that the average acceptance rate is between 
-	 * MIN_ACCEPTANCE and MAX_ACCEPTANCE where possible. 
+	 * During the burnin, the proposalWidthControlVariable for all McmcMove objects
+	 * is adjusted (if <code>McmcMove.autoTune=true</code>) in order to ensure that the average 
+	 * acceptance rate is between MIN_ACCEPTANCE and MAX_ACCEPTANCE where possible. 
 	 * This is done by repeatedly multiplying the proposalWidthControlVariable
 	 * by SPAN_MULTIPLIER until the acceptance falls within the desired range.
 	 */
@@ -112,6 +132,43 @@ public class Utils{
 	public static final double log0 = Double.NEGATIVE_INFINITY;
 	
 	public static final double MIN_EDGE_LENGTH = 0.001;
+	
+	/** Minimum length for internal node sequence. */
+	public static final int MIN_SEQ_LENGTH = 1; 
+	
+	/** If true then we downweight the indel contribution to the overall likelihood. */
+	public static final boolean DOWNWEIGHT_INDEL_LIKELIHOOD = false;
+
+	/** 
+	 * If true then we divide out the stationary probability of the
+	 * internal nodes from the indel likelihood, as per Redelings
+	 * and Suchard (2005), using the TKF92 stationary distribution
+	 * defined in Thorne et al. (1992). 
+	 */
+	public static final boolean USE_INDEL_CORRECTION_FACTOR = true;
+
+	public static final int LOW_COUNT_THRESHOLD = 10;
+
+	public static final double LOW_COUNT_MULTIPLIER = 0.999;
+
+	/** 
+	 * If <code>true</code> then during the first half of the burnin
+	 * if a particular McmcMove has been below its minimum acceptance
+	 * rate for at least (LOW_COUNT_THRESHOLD * MIN_SAMPLES_FOR_ACC_ESTIMATE) 
+	 * iterations, then for the purposes of computing the acceptance 
+	 * ratio, we multiply the new log likelihood by LOW_COUNT_MULTIPLIER
+	 * raised to a power that increases with the number of iterations
+	 * beyond the threshold. This gradually favours the state jumping,
+	 * which may be useful to avoid getting stuck in local modes during the
+	 * burnin. Ideally such a scheme should not be needed, however.
+	 */
+	public static final boolean SHAKE_IF_STUCK = true;
+
+	public static final int MAX_SILENT_LENGTH = 10;
+
+	//public static final double SILENT_INSERT_PROB = 0.05;	
+	public static final double SILENT_INSERT_PROB = 0.5;
+	
 	private static double[] tempDoubleArray;
 
 	/**
@@ -197,6 +254,7 @@ public class Utils{
 		return k;
 	}
 	
+	
 	/**
 	 * This function returns a random index, weighted by the weights in the array `weights'
 	 */
@@ -248,6 +306,35 @@ public class Utils{
 
 		return k;
 	}
+	public static int weightedChoose(double[] weights){
+		return weightedChoose(weights,null);
+	}
+	
+	public static int weightedChoose(List<Double> weights, MuDouble selectLogLike){
+		double sum = 0.0;
+
+		for(int i = 0; i < weights.size(); i++){
+			sum += weights.get(i);
+		}
+		if(selectLogLike != null)
+			selectLogLike.value += Math.log(sum);
+
+		double w = generator.nextDouble() * sum;
+		int k = 0;
+		sum = 0.0;
+		while(k < weights.size()-1 && (sum += weights.get(k)) <= w){
+			k++;
+		}
+		if(selectLogLike != null)
+			selectLogLike.value -= Math.log(weights.get(k));
+
+		assert (weights.get(k) > 1e-5) : "weightedChoose error";
+
+		return k;
+	}
+//	public static int weightedChoose(List<Double> weights){
+//		return weightedChoose(weights,null);
+//	}
 
 	/**
 	 * Behaves exactly like weightedChoose(new double[]{1-prob,prob}, selectLogLike), but faster
@@ -291,7 +378,131 @@ public class Utils{
 
 		return k;
 	}
+	public static int logWeightedChoose(double[] logWeights){
+		return logWeightedChoose(logWeights,null);
+	}
 
+	/**
+	 * For a tree of the form:
+	 * <pre>
+	 *       gg
+	 *       /
+	 *      g
+	 *     / \
+	 *    p   u
+	 *  /  \
+	 * t    b
+	 * </pre>
+	 * 
+	 * this function determines valid possible indel states for <code>p</code> and <code>g</code>
+	 * given fixed states for the neighbouring nodes.
+	 * @param p The presence/absence of node <code>p</code>.
+	 * @param g The presence/absence of node <code>b</code>.
+	 * @param neighb An array indicating the state of the neighbouring nodes, in the order
+	 * <code>{t,b,u,gg}</code>.
+	 * 
+	 * @return A boolean value indicating whether the specified values of <code>p</code>
+	 * and <code>b</code> are compatible with the neighbouring states.
+	 */
+	public static boolean isValidHistory(boolean p, boolean g, boolean[] neighb) {
+    	return isValidHistory(p,g,neighb,false);
+    }	
+	/**
+	 * For a tree of the form:
+	 * <pre>
+	 *       gg
+	 *       /
+	 *      g
+	 *     / \
+	 *    p   u
+	 *  /  \
+	 * t    b
+	 * </pre>
+	 * 
+	 * or, if <code>gIsRoot = true</code>, then for a tree of the form
+	 * <pre>
+	 *      g
+	 *     / \
+	 *    p   u
+	 *  /  \
+	 * t    b
+	 * </pre>
+	 * 
+	 * this function determines valid possible indel states for <code>p</code> and <code>g</code>
+	 * given fixed states for the neighbouring nodes.
+	 * @param gIsRoot This is <code>true</code> if <code>g</code> is the root of the tree.
+	 * @param p The presence/absence of node <code>p</code>.
+	 * @param g The presence/absence of node <code>b</code>.
+	 * @param neighb An array indicating the state of the neighbouring nodes, in the order
+	 * <code>{t,b,u,gg}</code> (if <code>gIsRoot=false</code>), or <code>{t,b,u}</code> 
+	 * (if <code>gIsRoot=true</code>).
+	 * 
+	 * @return A boolean value indicating whether the specified values of <code>p</code>
+	 * and <code>b</code> are compatible with the neighbouring states.
+	 */
+    public static boolean isValidHistory(boolean p, boolean g, boolean[] neighb, boolean gIsRoot) {
+    	
+    	boolean t = neighb[0], b = neighb[1], u = neighb[2], gg = false;
+    	if (!gIsRoot) gg = neighb[3]; 
+    	
+    	boolean result = true;
+    	if ((u|gg)&(t|b)) 	result &= (p&g);
+    	if (result && u&gg)	result &= g;
+    	if (result &&  t&b)	result &= p;
+    	if (result && (p&!g)) result &= !(u|gg);
+    	if (result && (g&!p)) result &= !(t|b);
+    	
+    	return result;
+    }    
+    static boolean isValidHistory(Vertex.Neighbours n) {
+   	    	    	
+    	boolean result = true;
+    	if ((n.ux|n.ggx)&(n.tx|n.bx)) 	result &= (n.px&n.gx);
+    	if (result && n.ux&n.ggx)	result &= n.gx;
+    	if (result &&  n.tx&n.bx)	result &= n.px;
+    	if (result && (n.px&!n.gx)) result &= !(n.ux|n.ggx);
+    	if (result && (n.gx&!n.px)) result &= !(n.tx|n.bx);
+    	    	    	
+    	return result;
+    }
+    /** 
+     * Determines whether a particular bit is set in the binary representation
+     * of an integer.
+     * @param x The integer to be queried.
+     * @param pos The bit to be queried.
+     * @return <code>true</code> if the bit as position <code>pos</code> is set.
+     */
+    static boolean bitIsSet(int x, int pos) {
+    	return (x & (1<<pos))!=0;
+    }
+    /**
+     * Determines whether a particular indel history is valid given the 
+     * rule that a character cannot be inserted more than once in a particular
+     * column (which is a definition of homology).
+     * @param neighb An integer representation of the presence/absence of the 
+     * six nodes involved in a nearest-neighbour interchange.
+     * @return <code>true</code> if the neighbourhood structure is valid
+     */
+    static boolean isValidHistory(int neighb) {
+	    	
+    	boolean tx = bitIsSet(neighb,0);
+		boolean bx = bitIsSet(neighb,1);
+		boolean ux = bitIsSet(neighb,2);
+		boolean ggx = bitIsSet(neighb,3);
+		
+		boolean px = bitIsSet(neighb,4);
+		boolean gx = bitIsSet(neighb,5);
+		
+    	boolean result = true;
+    	if ((ux|ggx)&(tx|bx)) 	result &= (px&gx);
+    	if (result && ux&ggx)	result &= gx;
+    	if (result &&  tx&bx)	result &= px;
+    	if (result && (px&!gx)) result &= !(ux|ggx);
+    	if (result && (gx&!px)) result &= !(tx|bx);
+    	    	    	
+    	return result;
+    }
+	    
 	/** 
 	 * Takes a time in milliseconds and converts to a string to be printed.
 	 * 
@@ -318,6 +529,15 @@ public class Utils{
 		return a+Math.log(Math.exp(b-a)+1);
 	}
 
+	/**
+	 * NB this function only overwrites <code>res</code> if fel1 != null, otherwise it multiplies
+	 * the existing elements. 
+	 * @param res
+	 * @param fel1
+	 * @param prob1
+	 * @param fel2
+	 * @param prob2
+	 */
     static void calcFelsen(double[] res, double[] fel1, double[][] prob1, double[] fel2, double[][] prob2) {
 		double s;
 		int i, j, len = res.length;

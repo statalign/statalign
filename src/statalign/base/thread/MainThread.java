@@ -69,7 +69,7 @@ public class MainThread extends StoppableThread {
 
 			TreeAlgo treeAlgo = new TreeAlgo();
 			Tree tree;
-			if(owner.inputData.useTree > 0) {
+			if(owner.inputData.useTree > 0) {				
 				tree = treeAlgo.rearrangeTree(owner.inputData.tree, names);
 				treeAlgo.addAlignSeqsToTree(tree, nongapped, names,
 						owner.inputData.model, new File(owner.fullPath).getName());
@@ -97,20 +97,33 @@ public class MainThread extends StoppableThread {
 			System.out.println("Stopped.");
 		} catch (IllegalArgumentException e) {
 			e.printStackTrace();
+			printStateInfo();
+
 			String msg = e.getMessage();
 			if(msg != null)
-				System.out.println("Plugin error: "+msg);
+				System.err.println("Plugin error: "+msg);
 		} catch(Exception e) {
 			owner.finished();
-			if(owner.frame != null) {
-				e.printStackTrace();
+			e.printStackTrace();
+			printStateInfo();
+
+			if(owner.frame != null) {				
 				System.out.println("Here is the error: " + e.getClass());
 				owner.frame.statusText.setText(MainFrame.IDLE_STATUS_MESSAGE);
 				//ErrorMessage.showPane(owner.frame,e.getLocalizedMessage(),true);
-			}
-			else
-				e.printStackTrace();
+			}			
 		}
 		owner.finished();
+	}
+	
+	private void printStateInfo() {
+		System.err.println(owner.modelExtMan.getMcmc().tree.printedTree());	
+		owner.modelExtMan.getMcmc().tree.checkPointers();
+		owner.modelExtMan.getMcmc().tree.root.recomputeCheckLogLike();
+		System.err.println(owner.fullPath);		
+		String align[] = owner.modelExtMan.getMcmc().getState().getFullAlign();
+		for (int i=0; i<align.length; i++) {
+			System.err.println(align[i]);				
+		}
 	}
 }

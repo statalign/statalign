@@ -1,5 +1,6 @@
 package statalign.base;
 
+import java.io.FileWriter;
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -21,6 +22,7 @@ import statalign.base.mcmc.MuMove;
 import statalign.base.mcmc.PhiMove;
 import statalign.base.mcmc.RMove;
 import statalign.base.mcmc.RhoMove;
+import statalign.base.mcmc.SilentIndelMove;
 import statalign.base.mcmc.SubstMove;
 import statalign.base.mcmc.ThetaMove;
 import statalign.base.mcmc.TopologyMove;
@@ -42,6 +44,9 @@ import statalign.postprocess.PostprocessManager;
 import statalign.postprocess.plugins.contree.CNetwork;
 import statalign.ui.ErrorMessage;
 import statalign.ui.MainFrame;
+import statalign.utils.BetaDistribution;
+import statalign.utils.GammaDistribution;
+import statalign.utils.NormalDistribution;
 
 import com.ppfold.algo.AlignmentData;
 import com.ppfold.algo.FuzzyAlignment;
@@ -88,7 +93,7 @@ public class Mcmc extends Stoppable {
 	double totalLogLike;
 	
 	/** 
-	 * If this variable is true, all proposed coreModel moves are accepted. 
+	 * If this variable is true, all proposed moves are accepted. 
 	 * The purpose of this is to allow:
 	 * a) an initial run of moves to randomise the starting configuration
 	 * b) a series of moves to be proposed before choosing whether to
@@ -156,6 +161,8 @@ public class Mcmc extends Stoppable {
 	private int allEdgeWeight = 6;
 	private int edgeWeightIncrement = 0; // Added after half of burnin
 	private int alignWeight = 25;
+	private int silentIndelWeight = 10;
+	private int silentIndelWeightIncrement = -8; // Added after half of burnin
 	private int topologyWeight = 8;
 	private int localTopologyWeight = 8;
 	private int topologyWeightIncrement = 0; // Added after half of burnin
@@ -165,6 +172,8 @@ public class Mcmc extends Stoppable {
 	
 	/** True while the MCMC is in the burn-in phase. */
 	public boolean burnin;
+	/** True while the MCMC is in the first half of burn-in phase. */
+	public boolean firstHalfBurnin;
 
 	public Mcmc(Tree tree, MCMCPars pars, PostprocessManager ppm, ModelExtManager modelExtMan) {
 		postprocMan = ppm;
@@ -259,21 +268,27 @@ public class Mcmc extends Stoppable {
 		if(!mcmcpars.fixAlign) {
 			AlignmentMove alignMove = new AlignmentMove(coreModel,"Alignment");
 			coreModel.addMcmcMove(alignMove, alignWeight);
+			
+			SilentIndelMove silentIndelMove = new SilentIndelMove(coreModel,"SilentIndel");
+			coreModel.addMcmcMove(silentIndelMove, silentIndelWeight);
 		}
 
 		GammaPrior edgePrior = new GammaPrior(1,1);
-		double uniformProposalWidthControlVariable = 0.1;
+		double uniformProposalWidthControlVariable = 0.25;
 		double multiplicativeProposalWidthControlVariable = 0.5;
 		
+		TopologyMove topologyMove = null;
+		
 		if(!mcmcpars.fixTopology && !mcmcpars.fixEdge) {
-			TopologyMove topologyMove = new TopologyMove(coreModel,edgePrior,
-					0.5*multiplicativeProposalWidthControlVariable,"Topology");
+			topologyMove = new TopologyMove(coreModel,edgePrior,
+					//0.5*multiplicativeProposalWidthControlVariable,"Topology"); // works ok with glob_25
+					1*uniformProposalWidthControlVariable,"Topology"); // experimental
 			coreModel.addMcmcMove(topologyMove, topologyWeight);
-			
+						
 //			LOCALTopologyMove localTopologyMove = new LOCALTopologyMove(coreModel,edgePrior,
 //					0.5*multiplicativeProposalWidthControlVariable,"LOCALTopology");
 			localTopologyMove = new LOCALTopologyMove(coreModel,edgePrior,
-					1*multiplicativeProposalWidthControlVariable,"LOCALTopology");
+					1*uniformProposalWidthControlVariable,"LOCALTopology");
 			coreModel.addMcmcMove(localTopologyMove, localTopologyWeight);
 		}
 		if(!mcmcpars.fixEdge) {
@@ -290,8 +305,9 @@ public class Mcmc extends Stoppable {
 			}		
 			AllEdgeMove allEdgeMove = new AllEdgeMove(coreModel,edgePrior,
 					new MultiplicativeProposal(),"AllEdge");
-			allEdgeMove.proposalWidthControlVariable = multiplicativeProposalWidthControlVariable;
+			allEdgeMove.proposalWidthControlVariable = multiplicativeProposalWidthControlVariable;			
 			coreModel.addMcmcMove(allEdgeMove, allEdgeWeight);
+						
 		}
 	}
 	
@@ -309,7 +325,8 @@ public class Mcmc extends Stoppable {
 	private void sample(int samplingMethod) throws StoppedException {
 		stoppable();
 		if(Utils.DEBUG) {
-			tree.recomputeCheckLogLike();
+			System.out.println("tree.getLogLike() (BEFORE) = "+tree.getLogLike());
+			tree.recomputeCheckLogLike(); 
 			if(Math.abs(modelExtMan.totalLogLike(tree)-totalLogLike) > 1e-5) {
 				System.out.println("\nBefore: "+modelExtMan.totalLogLike(tree)+" "+totalLogLike);
 				throw new Error("Log-likelihood inconsistency at start of sample()");
@@ -317,19 +334,18 @@ public class Mcmc extends Stoppable {
 		}
 		boolean accepted = coreModel.proposeParamChange(tree);
 		if (accepted) {
-//			if (Utils.DEBUG) {
-			//	System.out.println("Move accepted.");
-//			}
-			totalLogLike = coreModel.curLogLike; // Update likelihood cache
+			if (Utils.DEBUG) System.out.println("\t\tMove accepted.");
+			totalLogLike = coreModel.curLogLike;
 		}
 		else {
-			//if (Utils.DEBUG) {
-			//	System.out.println("Move rejected.");
-			//}
-			coreModel.setLogLike(totalLogLike); // Restore to previous likelihood
+
+			if (Utils.DEBUG) System.out.println("Move rejected.");
+			coreModel.setLogLike(totalLogLike);
+
 		}
 		if(Utils.DEBUG) {
-			tree.recomputeCheckLogLike();
+			//tree.recomputeCheckLogLike();
+        	tree.checkPointers();
 			if(Math.abs(modelExtMan.totalLogLike(tree)-totalLogLike) > 1e-5) {
 				System.out.println("After: "+modelExtMan.totalLogLike(tree)+" "+totalLogLike);
 				throw new Error("Log-likelihood inconsistency at end of sample()");
@@ -346,26 +362,35 @@ public class Mcmc extends Stoppable {
 	 * handled inside the McmcMove objects.
 	 * @return true if the move is accepted
 	 */
-	public boolean isParamChangeAccepted(double logProposalRatio) {
-		return acceptanceDecision(totalLogLike,coreModel.curLogLike,logProposalRatio,acceptAllMoves);
+
+	public boolean isParamChangeAccepted(double logProposalRatio,McmcMove m) {
+		double newLogLike = coreModel.curLogLike;
+		if (Utils.SHAKE_IF_STUCK && firstHalfBurnin && (m.lowCounts > Utils.LOW_COUNT_THRESHOLD)) {			
+			newLogLike *= Math.pow(Utils.LOW_COUNT_MULTIPLIER,m.lowCounts-Utils.LOW_COUNT_THRESHOLD);			
+		}
+		acceptAllMoves = firstHalfBurnin && m.acceptAllDuringFirstHalfBurnin; 
+		boolean accept = acceptanceDecision(totalLogLike,newLogLike,logProposalRatio,acceptAllMoves);
+		if (accept) m.lowCounts = 0;		
+		return accept;
 	}	
 	
 	public boolean acceptanceDecision(double oldLogLikelihood, double newLogLikelihood, double logProposalRatio,
-			boolean acceptMoveIfPossible) {
+			boolean acceptMoveIfPossible) {		
+		if (Utils.DEBUG) System.out.print("logLikelihoodRatio = "+(newLogLikelihood-oldLogLikelihood));
 		if (logProposalRatio > Double.NEGATIVE_INFINITY) {
 			cumulativeLogProposalRatio += logProposalRatio;
 		}
 		else {
 			return false;
 		}
-		//System.out.print("\t"+logProposalRatio+"\t"+cumulativeLogProposalRatio+"\t");
+		if (Utils.DEBUG) System.out.println("\tlogProposalRatio = "+logProposalRatio);
 		if (acceptMoveIfPossible) {						
 			return (newLogLikelihood > Double.NEGATIVE_INFINITY);
 		}
 		return (Math.log(Utils.generator.nextDouble()) < 
 				(cumulativeLogProposalRatio + tree.heat*(newLogLikelihood - oldLogLikelihood))
 				+ (cumulativeLogProposalRatio=0));
-	}		
+	}	
 	/**
 	 * Returns a string representation describing the acceptance ratios of the current MCMC run.
 	 * @return a string describing the acceptance ratios.
@@ -475,10 +500,14 @@ public class Mcmc extends Stoppable {
 			acceptAllMoves = false;
 			
 			burnin = true;
+			firstHalfBurnin = true;
 			boolean alreadyAddedWeightModifiers = false;
+			tree.root.recomputeLogLike(); // For testing
+			totalLogLike = modelExtMan.totalLogLike(tree);
 			for (int i = 0; i < burnIn; i++) {
 				
 				if (i > burnIn / 2) {
+					firstHalfBurnin = false;
 					if (!alreadyAddedWeightModifiers) {
 						alreadyAddedWeightModifiers = true;
 						if (edgeWeightIncrement > 0) {
@@ -486,6 +515,9 @@ public class Mcmc extends Stoppable {
 						}
 						if (topologyWeightIncrement > 0) {
 							coreModel.setWeight("Topology",topologyWeight+topologyWeightIncrement);
+						}
+						if (silentIndelWeightIncrement != 0) {
+							coreModel.setWeight("Silent",silentIndelWeight+silentIndelWeightIncrement);
 						}
 					}
 					
@@ -501,6 +533,7 @@ public class Mcmc extends Stoppable {
 				
 				// Perform an MCMC move
 				sample(0);
+				
 
 				// Triggers a /new step/ and a /new peek/ (if appropriate) of
 				// the plugins.
@@ -552,7 +585,9 @@ public class Mcmc extends Stoppable {
 			
 			//both real burn-in and the one to determine the sampling rate have now been completed.
 			burnin = false;
-
+			coreModel.zeroAllMoveCounts();
+			modelExtMan.zeroAllMoveCounts();
+			
 			int period;
 			if(AutomateParameters.shouldAutomateNumberOfSamples()){
 				period = 1000000;
@@ -679,7 +714,7 @@ public class Mcmc extends Stoppable {
 		modelExtMan.afterSampling();
 		
 		System.out.println(getInfoString());
-		System.out.println("Proportion of LOCAL proposals resulting in topology change = "+
+		System.out.println("Acceptance rate for LOCAL moves resulting in topology change = "+
 				String.format("%8.4f",(double)localTopologyMove.nTopologyChanges/(double)localTopologyMove.proposalCount));
 		
 		if (frame != null) {
@@ -1456,4 +1491,123 @@ public class Mcmc extends Stoppable {
 //			modelExtMan.afterModExtParamChange(tree, modExtParamChangeAccepted);
 //		}
 
+	
+	
+	/**
+	 * Code to test that the moves are being sampled according to the
+	 * correct weights (i.e. that there is not some bias arising from
+	 * the choose function and/or random number generator).
+	 */
+	public static void main3(String[] args) {
+		final int rWeight = 8;
+		final int lambdaWeight = 4;
+		final int muWeight = 6;
+		final int lambdaMuWeight = 6;
+		final int phiWeight = 4;
+		final int rhoWeight = 6;
+		final int thetaWeight = 6;
+		
+		final int substWeight = 10;
+		final int edgeWeight = 1; // per edge
+		final int allEdgeWeight = 6;
+		final int edgeWeightIncrement = 0; // Added after half of burnin
+		final int alignWeight = 25;
+		final int topologyWeight = 8;
+		final int localTopologyWeight = 8;
+		
+		int[] weights = {
+				rWeight,
+				lambdaWeight, 
+				rhoWeight,
+				thetaWeight,				
+				edgeWeight,
+				edgeWeight,
+				edgeWeight,
+				edgeWeight,
+				edgeWeight,
+				edgeWeight,
+				edgeWeight,
+				allEdgeWeight,				
+				alignWeight,
+				topologyWeight,
+				localTopologyWeight
+		};
+		
+		final int nSamples = 10000;
+		int[] samples = new int[nSamples];
+		for (int i=0; i<nSamples; i++) {
+			samples[i] = Utils.weightedChoose(weights);
+		}
+		try {
+			FileWriter output = new FileWriter("sampleTest.txt");
+			for (int i=0; i<nSamples; i++) {
+				output.write(samples[i]+"\n");
+			}
+			output.flush();
+		} catch (IOException e) { throw new RuntimeException(e.toString());}
+		System.out.println("Done.");
+	}
+		
+	/**
+	 * Code to test that various samplers are working correctly.
+	 */
+	public static void main2(String[] args) {
+		
+		MultiplicativeProposal proposalDistribution = new MultiplicativeProposal();
+		//LogisticProposal proposalDistribution = new LogisticProposal();
+		//GaussianProposal proposalDistribution = new GaussianProposal();
+		//GammaDistribution n = new GammaDistribution(2,0.5);
+		BetaDistribution n = new BetaDistribution(2,5);
+		
+		int ITERS = 100000;
+		//double var = 3.5; // LogisticProposal
+		//double var = 0.6; // GaussianProposal
+		double var = 2.5; // MultiplicativeProposal
+		double oldParam = 0.5; 
+		double[] params = new double[ITERS]; 
+		double MIN_PARAM = 0;
+		double MAX_PARAM = 1; // Beta
+		//double MAX_PARAM = Double.POSITIVE_INFINITY; // Gamma
+		int acc = 0;
+		
+		for (int i=0; i<ITERS; i++) {						
+			
+			if (i>0) oldParam = params[i-1];
+			
+			proposalDistribution.updateProposal(var,oldParam);
+			
+		    double newParam = proposalDistribution.sample();						
+		    
+		    if (newParam <= MIN_PARAM || newParam > MAX_PARAM) {
+		    	params[i] = oldParam;
+		    	continue;
+		    }
+		    
+		    double logProposalRatio = -proposalDistribution.logDensity(newParam);
+		    
+		    proposalDistribution.updateProposal(var,newParam);
+		
+		    logProposalRatio += proposalDistribution.logDensity(oldParam);
+				    
+		    double logLikeRatio = Math.log(n.density(newParam)) - Math.log(n.density(oldParam));
+		    
+		    //System.out.println(oldParam+"\t"+newParam+"\t"+logProposalRatio+"\t"+logLikeRatio);
+
+		    if (Math.log(Utils.generator.nextDouble())< (logLikeRatio + logProposalRatio)) {
+		    	params[i] = newParam;
+		    	acc++;
+		    }
+		    else {
+		    	params[i] = oldParam; 
+		    }
+		}
+		System.out.println("Acceptance rate = "+((double)acc/(double)ITERS));
+		try {
+			FileWriter output = new FileWriter("multiplicativeTest.txt");
+			for (int i=0; i<ITERS; i++) {
+				output.write(params[i]+"\n");
+			}
+		} catch (IOException e) {}	
+
+	}
 }

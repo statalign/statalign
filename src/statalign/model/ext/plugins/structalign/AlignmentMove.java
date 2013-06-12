@@ -60,8 +60,22 @@ public class AlignmentMove extends McmcMove {
 		owner.setLogLike( ((StructAlign) owner).calcAllColumnContrib() );
 	}
 	public void restoreState(Object externalState) {
-		subtreeRoot.alignRestore();
+		subtreeRoot.alignRestore(); 
+		
 		((StructAlign) owner).curAlign = ((StructAlign) owner).oldAlign;
 		owner.setLogLike(oldll);
 	}
+	public void afterMove(Object externalState) {
+		if (Utils.DEBUG) {
+			tree.root.calcFelsenRecursively(); 
+			tree.root.calcOrphanRecursively(); 
+			tree.root.calcIndelLogLikeRecursively(); 
+	        if (Utils.USE_UPPER) {
+	        	//owner.root.calcFelsenRecursively();
+	        	tree.root.calcUpperRecursively();
+	        }   
+	        //tree.root.recomputeCheckLogLike();
+		}
+	}
+
 }

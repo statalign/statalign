@@ -18,7 +18,17 @@ public abstract class McmcMove {
 	public int proposalCount = 0;
 	public int acceptanceCount = 0;
 	public boolean lastMoveAccepted = false;	
+	public boolean acceptAllDuringFirstHalfBurnin = false;
 	public boolean moveProposed = false;
+	/** Number of times that the acceptance rate has been 
+	 * recorded as being below the minimum. If this count
+	 * reaches a particular threshold (set in Utils), then 
+	 * during the burnin we will multiply the new 
+	 * likelihood by a constant less than unity in order to favour
+	 * acceptance of the proposal, mainly for the purposes of forcing
+	 * the chain to explore alternative topologies. 
+	 */ 
+	public int lowCounts = 0;
 	
 	public double proposalWidthControlVariable = 1.0;
 	public double spanMultiplier = Utils.SPAN_MULTIPLIER;
@@ -30,6 +40,8 @@ public abstract class McmcMove {
 	
 	public String name;
 	private long time = 0;
+
+	
 	public long getTime() {
 		return time;
 	}
@@ -47,11 +59,11 @@ public abstract class McmcMove {
 	public void afterMove(Object externalState) { }
 
 	public boolean isParamChangeAccepted(double logProposalRatio) {
-		return getOwner().isParamChangeAccepted(logProposalRatio);
+		return getOwner().isParamChangeAccepted(logProposalRatio,this);
 	}
 	
 	public void move(Object externalState) {
-		//System.out.println("Executing move:\""+name+"\"");
+		if (Utils.DEBUG) System.out.println("Executing move:\""+name+"\"");
 		time -= System.currentTimeMillis();
 		proposalCount++;
 		moveProposed = true;

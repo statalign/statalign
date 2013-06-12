@@ -192,9 +192,10 @@ public class ModelExtManager {
 		return selectedPlugin.proposeParamChange(tree);
 	}
 	
-	public boolean isParamChangeAccepted(double logProposalRatio) {
+
+	public boolean isParamChangeAccepted(double logProposalRatio,McmcMove m) {
 		mcmc.coreModel.setLogLike(logLikeModExtParamChange(mcmc.tree));
-		return mcmc.isParamChangeAccepted(logProposalRatio);
+		return mcmc.isParamChangeAccepted(logProposalRatio,m);
 	}
 	
 	public void modifyProposalWidths() {
@@ -267,8 +268,9 @@ public class ModelExtManager {
 	public double logLikeTreeChange(Tree tree, Vertex nephew) {
 		double ll = tree.getLogLike();
 		//double ll = 0.0;
-		for(ModelExtension plugin : activeList)
-			ll += plugin.logLikeTreeChange(tree, nephew);
+		for(ModelExtension plugin : activeList) {
+			ll += plugin.logLikeTreeChange(tree, nephew);	
+		}
 		return ll;
 	}
 	

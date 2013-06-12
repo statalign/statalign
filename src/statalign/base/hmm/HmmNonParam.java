@@ -12,8 +12,11 @@ import statalign.base.Utils;
  */
 public class HmmNonParam extends HmmSilent {
 
-	final double P = 0.99999;
-	final double Q = 0.6;
+	//final double P = 0.9999999999;
+	final double P = 0.99999; // original
+	//final double P = 0.99;
+	final double Q = 0.6; // original
+	//final double Q = 0.2;
 	final int SILENT = 7;
 
 	/* transition matrix for 3-sequence alignment HMM, st. 7 is silent, st. 0 is start, st. 6 is end*/
@@ -32,8 +35,8 @@ public class HmmNonParam extends HmmSilent {
 
 	/* states' emission descriptor: first dim. is parent/left child/right child, 2nd dim. is state, value is 0/1 */
 	private int stateEmit[][] = {{0,1,1,1,0,0,0,1},
-			{0,1,1,0,1,0,0,0},
-			{0,1,0,1,0,1,0,0}};
+								 {0,1,1,0,1,0,0,0},
+								 {0,1,0,1,0,1,0,0}};
 
 	/* converts states' emission pattern as a binary number (p=4,l=2,r=1) to state # : e.g. 7->1, 6->2
        8->7 is virtual, so that end state has a pattern, too */

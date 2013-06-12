@@ -222,6 +222,7 @@ public class State {
 		}
 		
 		String[] createAlign() {
+				
 			int l = left[root], r = right[root], len = align[root].length, i;
 			
 			for(i = 0; i < len; i++) {

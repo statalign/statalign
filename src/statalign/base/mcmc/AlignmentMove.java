@@ -11,7 +11,8 @@ public class AlignmentMove extends McmcMove {
 	Tree tree = null;
 	Vertex selectedRoot;
 	double[] weights;
-	final static double LEAFCOUNT_POWER = 1.0;
+	final static double LEAFCOUNT_POWER = 1.0; // Original
+	//final static double LEAFCOUNT_POWER = -2.0;
 	final static double SELTRLEVPROB[] = { 0.9, 0.6, 0.4, 0.2, 0 };
 	
 	public static final double MIN_WINDOW_MULTIPLIER = 0.1;
@@ -64,6 +65,16 @@ public class AlignmentMove extends McmcMove {
 	}
 	public void restoreState(Object externalState) {
 		selectedRoot.alignRestore();
+		 tree.root.calcFelsenRecursively();
+         tree.root.calcOrphanRecursively();
+         tree.root.calcIndelLogLikeRecursively();
+//		selectedRoot.calcFelsenRecursively();
+//		selectedRoot.calcOrphanRecursively();
+//		selectedRoot.calcIndelLogLikeRecursively();
+         if (Utils.USE_UPPER) {
+         	//owner.root.calcFelsenRecursively();
+         	tree.root.calcUpperRecursively();
+         }   
 	}
 	
 	public void afterMove(Object externalState) {

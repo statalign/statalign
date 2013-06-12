@@ -62,6 +62,10 @@ public class AlignColumn {
 	 * This double array contains the Felsenstein Likelihoods
 	 */
 	public double seq[];						// Felsenstein likelihoods of the column
+	/**
+	 * This double array contains the upper Likelihoods
+	 */
+	public double upp[];						// upper likelihoods of the column
 
 	/**
 	 * It constructs a new AlignColumn. Sets only the owner, other fields are filled in outside of the
@@ -74,6 +78,39 @@ public class AlignColumn {
 		orphan = true;
 	}
 	
+	/**
+	 * Creates a new column as a clone of the <code>this</code>,
+	 * copying (or cloning) all fields except <code>prev</code> and <code>next</code>.
+	 */
+	public AlignColumn clone() {
+		AlignColumn c = new AlignColumn(owner);
+		c.parent = parent;
+		c.orphan = orphan;
+		c.left = left;
+		c.right = right;
+		c.selected = selected;
+		c.emptyWindow = emptyWindow;
+		if (seq==null) c.seq = null;
+		else 		   c.seq = seq.clone();
+		return c;
+	}
+	/**
+	 * Copies all fields from column <code>c</code> into <code>this</code>,
+	 * except for <code>prev</code> and <code>next</code>.
+	 * @param c The column from which the data will be copied.
+	 */
+	void copy(AlignColumn c) {
+		owner = c.owner;
+		parent = c.parent;
+		orphan = c.orphan;
+		seq = c.seq;
+		upp = c.upp;
+		left = c.left;
+		right = c.right;
+		parent = c.parent;
+		selected = c.selected;
+		emptyWindow = c.emptyWindow;	
+	}
 	/**
 	 * It creates a new AlignColumn, chains it to the next column (namely, it is used to
 	 * generate a new ancestral sequence built in a traceback phase of a dynamic programming).
@@ -91,10 +128,95 @@ public class AlignColumn {
 		orphan = true;
 		this.next = next;
 		next.prev = this;
-		if(newSeq)
+		if(newSeq) {
 			seq = new double[owner.owner.substitutionModel.e.length];
+			upp = new double[owner.owner.substitutionModel.e.length];
+		}
+	}	
+	public AlignColumn(AlignColumn next) {
+		owner = next.owner;
+		parent = next.parent;
+		left = null;
+		right = null;
+		orphan = true;
+		this.next = next;
+		prev = next.prev;
+		if (prev!=null) prev.next = this;
+		else owner.first = this;
+		next.prev = this;
+		seq = new double[owner.owner.substitutionModel.e.length];
+		upp = new double[owner.owner.substitutionModel.e.length];		
+		owner.length++;
 	}
+	
+	/** 
+	 *  Remove all non-parent references to a column, <code>p</code>.
+	 *  Any adopted children must be updated separately.
+	 *  @param p The column to be deleted.
+	 */
+	static boolean delete(AlignColumn p) {
+		
+//		if (Utils.DEBUG) {
+//			if (p.left!=null && p.right!=null) {
+//				throw new IllegalArgumentException("A column cannot be deleted if it has two descendants.");
+//			}
+//		}
+		
+		//if (Utils.DEBUG) {
+			if (p.owner.length<=Utils.MIN_SEQ_LENGTH) {
+				return false; // Don't allow it to delete if we have so few columns already
+				//throw new RuntimeException("All columns in sequence "+p.owner.index+" have been deleted.");
+			}
+//			System.out.println("Deleting column "+p.toString()+" at Vertex "+p.owner.index);
+//			System.out.println("p.prev = "+p.prev);
+		//}
+		
+		if (!p.orphan) {
+			if (p==p.parent.left)  p.parent.left = null;
+			else  				   p.parent.right = null;			
+		}
 
+		// Now skip column p in the parent sequence
+		if (p.prev != null) p.prev.next = p.next; else p.owner.first = p.next;
+		if (p.next != null) p.next.prev = p.prev;     
+		
+		if (p.left != null)  { p.left.orphan = true; p.left.parent = null; }
+		if (p.right != null) { p.right.orphan = true; p.right.parent = null; }
+		// NB the reason for making the new orphan's parent field null
+		// is to allow the memory associated with p to be freed
+		// as soon as possible, rather than waiting for p.left and p.right
+		// to be adopted by another parent.
+		
+		p.owner.length--;
+		
+		return true;
+	}
+		
+	/**
+	 * Updates the parent/child pointers with a specified parent.
+	 * @param p The parent column. 
+	 * @param isLeft Whether <code>this</code> is to be the left descendant of <code>p</code>.
+	 */
+	void updateParent(AlignColumn p, boolean isLeft) {		
+		
+		// Remove this node from the list of children of its old parent
+		if (p != parent) {
+			if (parent!=null) {
+				if (this==parent.left) parent.left = null;
+				else if (this==parent.right) parent.right = null;
+				else ; // the original parent had already taken a new child
+			}
+			parent = p;
+		}
+		
+		//if (orphan) parent = p.next; 
+		//else {		
+		if (!orphan) {			
+			if (isLeft) p.left = this;
+			else 	  p.right = this;
+		}
+	}
+	
 	void setWinFirst(AlignColumn prev) {
 		owner.winFirst = this;
 		this.prev = prev;
@@ -124,6 +246,7 @@ public class AlignColumn {
 		saveLeft(copy);
 		saveRight(copy);
 		seq = copy.seq;
+		upp = copy.upp;
 	}
 
 	void saveParent(AlignColumn copy) {
