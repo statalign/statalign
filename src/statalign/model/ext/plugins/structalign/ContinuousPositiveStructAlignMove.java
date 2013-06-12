@@ -74,7 +74,7 @@ public class ContinuousPositiveStructAlignMove extends ContinuousPositiveParamet
 						param.set(parent.param.get());					 
 						if (!oldFixedToParent) { // z_k = 0 to begin with
 							logProposalDensity += Math.log((1-fixProb)/fixProb);
-							logProposalDensity += Math.log((m+1)/(n-m) 
+							logProposalDensity += Math.log((n-m)/(m+1) 
 											 	* (spikeParams[0]+m) 
 											 	/ (spikeParams[1]+n-m-1));
 						}
@@ -82,7 +82,7 @@ public class ContinuousPositiveStructAlignMove extends ContinuousPositiveParamet
 					else {
 						if (oldFixedToParent) { // z_k = 1 to begin with
 							logProposalDensity += Math.log(fixProb/(1-fixProb));
-							logProposalDensity += Math.log((n-m+1)/m 
+							logProposalDensity += Math.log(m/(n-m+1) 
 								 				* (spikeParams[1]+n-m) 
 								 				/ (spikeParams[0]+m-1));
 						}
