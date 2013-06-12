@@ -160,12 +160,18 @@ public class Mcmc extends Stoppable {
 	private int edgeWeight = 1; // per edge
 	private int allEdgeWeight = 6;
 	private int edgeWeightIncrement = 0; // Added after half of burnin
-	private int alignWeight = 25;
+	
+	//private int alignWeight = 25;
+	private double[] Pvals = {0.9,0.99,0.999,0.9999,0.99999};
+	private int[] alignWeights = {1,1,1,1,20};
+	//private int[] alignWeights = {0,0,0,0,20};
+	private int[] alignWeightIncrements = {1,1,1,1,0};
+	
 	private int silentIndelWeight = 10;
 	private int silentIndelWeightIncrement = -8; // Added after half of burnin
 	private int topologyWeight = 8;
 	private int localTopologyWeight = 8;
-	private int topologyWeightIncrement = 32; // Added after half of burnin
+	private int topologyWeightIncrement = 12; // Added after half of burnin
 	private int topologyWeightDuringRandomisationPeriod = 100; // To use while we're randomising initial config
 	
 	LOCALTopologyMove localTopologyMove;
@@ -266,8 +272,10 @@ public class Mcmc extends Stoppable {
 		coreModel.addMcmcMove(substMove, substWeight);
 
 		if(!mcmcpars.fixAlign) {
-			AlignmentMove alignMove = new AlignmentMove(coreModel,"Alignment");
-			coreModel.addMcmcMove(alignMove, alignWeight);
+			for (int i =0; i<Pvals.length; i++) {
+				AlignmentMove alignMove = new AlignmentMove(coreModel,Pvals[i],"Alignment"+Pvals[i]);
+				coreModel.addMcmcMove(alignMove, alignWeights[i]);
+			}
 			
 			SilentIndelMove silentIndelMove = new SilentIndelMove(coreModel,"SilentIndel");
 			coreModel.addMcmcMove(silentIndelMove, silentIndelWeight);
@@ -518,6 +526,11 @@ public class Mcmc extends Stoppable {
 						}
 						if (silentIndelWeightIncrement != 0) {
 							coreModel.setWeight("Silent",silentIndelWeight+silentIndelWeightIncrement);
+						}
+						for (int p=0; p<Pvals.length; p++) {
+							if (alignWeightIncrements[p] > 0) {
+								coreModel.setWeight("Alignment"+Pvals[p],alignWeights[p]+alignWeightIncrements[p]);
+							}
 						}
 					}
 					

@@ -13,15 +13,22 @@ import statalign.base.Utils;
 public class HmmNonParam extends HmmSilent {
 
 	//final double P = 0.9999999999;
-	final double P = 0.99999; // original
+	double P = 0.99999; // original
 	//final double P = 0.99;
 	final double Q = 0.6; // original
 	//final double Q = 0.2;
 	final int SILENT = 7;
 
 	/* transition matrix for 3-sequence alignment HMM, st. 7 is silent, st. 0 is start, st. 6 is end*/
-	private double transMatrix[][] = 
-	{{0,P*P*P*P*P,P*P*P*P*(1-P),P*P*P*P*(1-P),1-P,P*(1-P),P-P*P*P-P*(1-P),P*P*P*(1-P)*(1-P)},
+	private double transMatrix[][] = null;
+	
+	@Override
+	public void updateParam(double[] _P) {
+		P = _P[0];
+		updateTransMatrix();
+	}
+	private void updateTransMatrix() {
+		transMatrix = new double[][] {{0,P*P*P*P*P,P*P*P*P*(1-P),P*P*P*P*(1-P),1-P,P*(1-P),P-P*P*P-P*(1-P),P*P*P*(1-P)*(1-P)},
 			{0,1-P+P*P*P*P*P*P,P*P*P*P*P*(1-P),P*P*P*P*P*(1-P),P*(1-P),P*P*(1-P),P*P*P*(1-P),P*P*P*P*(1-P)*(1-P)},
 			{0,P*P*P*P*P*Q,1-Q+P*P*P*P*(1-P)*Q,P*P*P*P*(1-P)*Q,(1-P)*Q,P*(1-P)*Q,P*P*(1-P)*Q,P*P*P*(1-P)*(1-P)*Q},
 			{0,P*P*P*P*P*Q,P*P*P*P*(1-P)*Q,1-Q+P*P*P*P*(1-P)*Q,(1-P)*Q,P*(1-P)*Q,P*P*(1-P)*Q,P*P*P*(1-P)*(1-P)*Q},
@@ -29,6 +36,21 @@ public class HmmNonParam extends HmmSilent {
 			{0,P*P*P*Q,P*P*(1-P)*Q,P*P*(1-P)*Q,0,1-Q,(1-P)*Q,P*(1-P)*(1-P)*Q},
 			{0,0,0,0,0,0,0,0},
 			{0,P*P*P*P*P*Q,P*P*P*P*(1-P)*Q,P*P*P*P*(1-P)*Q,(1-P)*Q,P*(1-P)*Q,P*P*(1-P)*Q,1-Q+P*P*P*(1-P)*(1-P)*Q}};
+		
+		double sil2sil = 1-transMatrix[SILENT][SILENT];
+		int i, j;
+
+		for(i = 0; i <= 5; i++)
+			for(j = 1; j < 7; j++)
+				redTransMatrix[i][j] = Math.log(transMatrix[i][j]+transMatrix[i][SILENT]*transMatrix[SILENT][j]/sil2sil);
+		for(i = 0; i < 7; i++) {
+			redTransMatrix[i][0] = Utils.log0;
+			redTransMatrix[6][i] = Utils.log0;
+		}
+		for(i = 0; i < 8; i++)
+			for(j = 0; j < 8; j++)
+				transMatrix[i][j] = Math.log(transMatrix[i][j]);
+	}
 
 	/* reduced transition matrix, silent st. eliminated, st. 0 is start, st. 6 is end */
 	private double redTransMatrix[][] = new double[7][7];
@@ -46,19 +68,7 @@ public class HmmNonParam extends HmmSilent {
 	 * Constructs a HMMSilent for Tree. Sets up the transition matrices.
 	 */
 	public HmmNonParam() {
-		double sil2sil = 1-transMatrix[SILENT][SILENT];
-		int i, j;
-
-		for(i = 0; i <= 5; i++)
-			for(j = 1; j < 7; j++)
-				redTransMatrix[i][j] = Math.log(transMatrix[i][j]+transMatrix[i][SILENT]*transMatrix[SILENT][j]/sil2sil);
-		for(i = 0; i < 7; i++) {
-			redTransMatrix[i][0] = Utils.log0;
-			redTransMatrix[6][i] = Utils.log0;
-		}
-		for(i = 0; i < 8; i++)
-			for(j = 0; j < 8; j++)
-				transMatrix[i][j] = Math.log(transMatrix[i][j]);
+		updateTransMatrix();		
 	}
 	
 	/**

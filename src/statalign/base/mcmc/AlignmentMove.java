@@ -11,6 +11,7 @@ public class AlignmentMove extends McmcMove {
 	Tree tree = null;
 	Vertex selectedRoot;
 	double[] weights;
+	double P; // for hmm3
 	final static double LEAFCOUNT_POWER = 1.0; // Original
 	//final static double LEAFCOUNT_POWER = -2.0;
 	final static double SELTRLEVPROB[] = { 0.9, 0.6, 0.4, 0.2, 0 };
@@ -18,9 +19,10 @@ public class AlignmentMove extends McmcMove {
 	public static final double MIN_WINDOW_MULTIPLIER = 0.1;
 	public static final double MAX_WINDOW_MULTIPLIER = 1.0;
 	
-	public AlignmentMove (McmcModule m, String n) {
+	public AlignmentMove (McmcModule m, double _P, String n) {
 		owner = m;
 		name = n;		
+		P = _P;
 		spanMultiplier = 0.9;
 	}
 
@@ -40,6 +42,8 @@ public class AlignmentMove extends McmcMove {
 		else {
 			autoTune = false;
 		}
+		tree.hmm3.updateParam(new double[]{P});
+		tree.root.recursivelyUpdateHmmMatrices();
 	}
 	public double proposal(Object externalState) {
 		weights = new double[tree.vertex.length];

@@ -44,4 +44,6 @@ abstract public class HmmSilent extends Hmm {
 	 */
 	public abstract int getSilent();
 	
+	public void updateParam(double[] _P) { }		
+	
 }
