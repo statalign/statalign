@@ -273,7 +273,7 @@ public class Mcmc extends Stoppable {
 
 		if(!mcmcpars.fixAlign) {
 			for (int i =0; i<Pvals.length; i++) {
-				AlignmentMove alignMove = new AlignmentMove(coreModel,Pvals[i],"Alignment"+Pvals[i]);
+				AlignmentMove alignMove = new AlignmentMove(coreModel,Pvals[i],"Alignment_"+i+"_"+Pvals[i]);
 				coreModel.addMcmcMove(alignMove, alignWeights[i]);
 			}
 			
@@ -529,7 +529,7 @@ public class Mcmc extends Stoppable {
 						}
 						for (int p=0; p<Pvals.length; p++) {
 							if (alignWeightIncrements[p] > 0) {
-								coreModel.setWeight("Alignment"+Pvals[p],alignWeights[p]+alignWeightIncrements[p]);
+								coreModel.setWeight("Alignment_"+p,alignWeights[p]+alignWeightIncrements[p]);
 							}
 						}
 					}
