@@ -313,7 +313,7 @@ public class Vertex {
 
     }
 
-    void updateHmm3Matrix() {
+    void updateHmm3Matrix() {    	
         if (left != null && right != null) {
             hmm3TransMatrix = owner.hmm3.preCalcTransMatrix(hmm3TransMatrix, left.edgeLength, right.edgeLength);
             hmm3RedTransMatrix = owner.hmm3.preCalcRedTransMatrix(hmm3RedTransMatrix, hmm3TransMatrix);
@@ -346,6 +346,18 @@ public class Vertex {
         if (parent != null)
             updateHmm2Matrix();
         updateHmm3Matrix();
+    }
+    public void recursivelyUpdateHmmMatrices() {
+        if (left != null && right != null) {
+            // System.out.println("calling the left child");
+            left.recursivelyUpdateHmmMatrices();
+            //System.out.println("calling the right child");
+            right.recursivelyUpdateHmmMatrices();
+            //calcUpperWithCheck(); 
+            // we shouldn't require all upp vectors to be
+            // recomputed after every move, because that's unnecessary
+        }
+        updateHmmMatrices();        
     }
 
     public void setEdgeLength(double x) {
@@ -1604,7 +1616,7 @@ public class Vertex {
     }
 
     /** This function cuts out a window and realigns in the selected subtree. */
-    public double selectAndResampleAlignment() {
+    public double selectAndResampleAlignment() {    	   	
     	
     	if (Utils.DEBUG) {
 	    	System.out.println(index+" "+name+" "+edgeLength);
