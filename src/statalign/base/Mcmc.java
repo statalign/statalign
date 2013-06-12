@@ -165,7 +165,7 @@ public class Mcmc extends Stoppable {
 	private int silentIndelWeightIncrement = -8; // Added after half of burnin
 	private int topologyWeight = 8;
 	private int localTopologyWeight = 8;
-	private int topologyWeightIncrement = 0; // Added after half of burnin
+	private int topologyWeightIncrement = 32; // Added after half of burnin
 	private int topologyWeightDuringRandomisationPeriod = 100; // To use while we're randomising initial config
 	
 	LOCALTopologyMove localTopologyMove;
