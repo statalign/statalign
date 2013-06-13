@@ -164,7 +164,7 @@ public class Mcmc extends Stoppable {
 	//private int alignWeight = 25;
 	private double[] Pvals = {0.9,0.99,0.999,0.9999,0.99999};
 	private int[] alignWeights = {1,1,1,1,20};
-	//private int[] alignWeights = {0,0,0,0,20};
+	//private int[] alignWeights = {0,0,0,0,25};
 	private int[] alignWeightIncrements = {5,1,1,1,-4};
 	
 	private int silentIndelWeight = 10;
@@ -175,6 +175,7 @@ public class Mcmc extends Stoppable {
 	private int topologyWeightDuringRandomisationPeriod = 100; // To use while we're randomising initial config
 	
 	LOCALTopologyMove localTopologyMove;
+	TopologyMove topologyMove;
 	
 	/** True while the MCMC is in the burn-in phase. */
 	public boolean burnin;
@@ -285,7 +286,7 @@ public class Mcmc extends Stoppable {
 		double uniformProposalWidthControlVariable = 0.25;
 		double multiplicativeProposalWidthControlVariable = 0.5;
 		
-		TopologyMove topologyMove = null;
+		topologyMove = null;
 		
 		if(!mcmcpars.fixTopology && !mcmcpars.fixEdge) {
 			topologyMove = new TopologyMove(coreModel,edgePrior,
@@ -727,6 +728,8 @@ public class Mcmc extends Stoppable {
 		System.out.println(getInfoString());
 		System.out.println("Acceptance rate for LOCAL moves resulting in topology change = "+
 				String.format("%8.4f",(double)localTopologyMove.nTopologyChanges/(double)localTopologyMove.proposalCount));
+		System.out.println("Acceptance rate for Topology moves resulting in topology change = "+
+				String.format("%8.4f",(double)topologyMove.topologyChangeAcceptanceCount/(double)topologyMove.proposalCount));
 		
 		if (frame != null) {
 			frame.statusText.setText(MainFrame.IDLE_STATUS_MESSAGE);

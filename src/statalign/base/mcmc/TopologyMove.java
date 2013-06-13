@@ -30,13 +30,15 @@ public class TopologyMove extends McmcMove {
 	double fastSwapProb = 0.05;	
 	boolean didFastSwap = false;
 	
+	public int topologyChangeAcceptanceCount = 0;
+	
 	public TopologyMove (McmcModule m, PriorDistribution<Double> pr, double propVar, String n) {
 		owner = m;
 		edgePrior = pr;
 		edgeProposalWidthControlVariable = propVar;
 		name = n;
-		autoTune = true;
-		//autoTune = false;
+		//autoTune = true;
+		autoTune = false;
 		if(Utils.DEBUG){
 			try{
 				topMoves = new FileWriter("topMoves.txt");				
@@ -301,9 +303,9 @@ public class TopologyMove extends McmcMove {
 		
 		if (Utils.DEBUG) {
 			tree.checkPointers();
-		}
+		}		
 		// Only count moves that change the topology, i.e. not swaps across the root
-		if (lastMoveAccepted && nephew.parent == tree.root) acceptanceCount--;			
+		if (lastMoveAccepted && nephew.parent == tree.root) topologyChangeAcceptanceCount++;			
 			
 //		if (lastMoveAccepted) {
 //			throw new RuntimeException("Stop for a cup of tea.");
