@@ -8,6 +8,7 @@ import java.util.Random;
 
 import mpi.MPI;
 
+import org.apache.commons.math3.random.RandomGenerator;
 import org.apache.commons.math3.random.Well19937c;
 
 import statalign.MPIUtils;
@@ -1510,6 +1511,24 @@ public class Mcmc extends Stoppable {
 
 	
 	
+	public static void main(String[] args) {
+		
+		int nSamples = 10000;
+		RandomGenerator master = new Well19937c(1);
+		ArrayList<RandomGenerator> rands = new ArrayList<RandomGenerator>();
+		//for (int i=0; i<10; i++) rands.add(new Well19937c(master.nextInt()));
+		for (int i=0; i<10; i++) rands.add(new Well19937c(i));
+		try {
+			FileWriter output = new FileWriter("rngTest.txt");
+			for (int i=0; i<nSamples; i++) {
+				for (int j=0; j<10; j++) {
+					output.write(rands.get(j).nextDouble()+"\t");
+				}
+				output.write("\n");
+			}
+			output.flush();
+		} catch (IOException e) { throw new RuntimeException(e.toString());}
+	}
 	/**
 	 * Code to test that the moves are being sampled according to the
 	 * correct weights (i.e. that there is not some bias arising from

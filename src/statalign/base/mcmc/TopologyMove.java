@@ -305,7 +305,10 @@ public class TopologyMove extends McmcMove {
 			tree.checkPointers();
 		}		
 		// Only count moves that change the topology, i.e. not swaps across the root
-		if (lastMoveAccepted && nephew.parent == tree.root) topologyChangeAcceptanceCount++;			
+		if (lastMoveAccepted && nephew.parent == tree.root) {
+			System.out.println("Topology change (stNNI).");
+			topologyChangeAcceptanceCount++;			
+		}
 			
 //		if (lastMoveAccepted) {
 //			throw new RuntimeException("Stop for a cup of tea.");
