@@ -204,7 +204,7 @@ public class LOCALTopologyMove extends McmcMove {
 	
 	@Override
 	public void afterMove(Object externalState) {
-		if (lastMoveAccepted && topologyChange) nTopologyChanges++;
+		if (lastMoveAccepted && topologyChange && nephew.parent != tree.root) nTopologyChanges++;
 		((CoreMcmcModule) owner).getModelExtMan().afterTreeChange(tree,lastMoveAccepted ? uncle : nephew,lastMoveAccepted);
 		// Should also do an afterAlignChange here, but not obvious what to pass
 		// as the selectedRoot argument.

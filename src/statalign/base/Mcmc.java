@@ -166,6 +166,7 @@ public class Mcmc extends Stoppable {
 	private int[] alignWeights = {1,1,1,1,20};
 	//private int[] alignWeights = {0,0,0,0,25};
 	private int[] alignWeightIncrements = {5,1,1,1,-4};
+	//private int[] alignWeightIncrements = {0,0,0,0,0};
 	
 	private int silentIndelWeight = 10;
 	private int silentIndelWeightIncrement = -8; // Added after half of burnin
