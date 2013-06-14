@@ -76,6 +76,7 @@ public class AlignmentMove extends McmcMove {
 	        }   
 	        //tree.root.recomputeCheckLogLike();
 		}
+		//if (lastMoveAccepted && (owner.getLogLike() == oldll)) acceptanceCount--;
 	}
 
 }

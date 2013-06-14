@@ -12,6 +12,9 @@ public class AlignmentMove extends McmcMove {
 	Vertex selectedRoot;
 	double[] weights;
 	double P; // for hmm3
+	
+	double oldll; 
+	
 	final static double LEAFCOUNT_POWER = 1.0; // Original
 	//final static double LEAFCOUNT_POWER = -2.0;
 	final static double SELTRLEVPROB[] = { 0.9, 0.6, 0.4, 0.2, 0 };
@@ -42,6 +45,7 @@ public class AlignmentMove extends McmcMove {
 		else {
 			autoTune = false;
 		}
+		oldll = owner.curLogLike;
 		tree.hmm3.updateParam(new double[]{P});
 		tree.root.recursivelyUpdateHmmMatrices();
 	}
@@ -83,6 +87,7 @@ public class AlignmentMove extends McmcMove {
 	
 	public void afterMove(Object externalState) {
 		((CoreMcmcModule) owner).getModelExtMan().afterAlignChange(tree, selectedRoot,lastMoveAccepted);
+		if (lastMoveAccepted && (owner.curLogLike == oldll)) acceptanceCount--;
 	}
 	
 	 
