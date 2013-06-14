@@ -4,10 +4,12 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Random;
 
 import mpi.MPI;
 
+import org.apache.commons.math3.random.RandomGenerator;
 import org.apache.commons.math3.random.Well19937c;
 
 import statalign.MPIUtils;
@@ -163,9 +165,12 @@ public class Mcmc extends Stoppable {
 	
 	//private int alignWeight = 25;
 	private double[] Pvals = {0.9,0.99,0.999,0.9999,0.99999};
+
 	private int[] alignWeights = {1,1,1,1,20};
 	//private int[] alignWeights = {0,0,0,0,25};
 	private int[] alignWeightIncrements = {5,1,1,1,-4};
+	//private int[] alignWeightIncrements = {11,1,1,1,-10};
+	//private int[] alignWeightIncrements = {0,0,0,0,0};
 	
 	private int silentIndelWeight = 10;
 	private int silentIndelWeightIncrement = -8; // Added after half of burnin
@@ -493,6 +498,8 @@ public class Mcmc extends Stoppable {
 
 			// Randomise the initial starting configuration 
 			// by accepting all moves for a period.
+			tree.root.recomputeLogLike(); // For testing
+			totalLogLike = modelExtMan.totalLogLike(tree);
 			if (randomisationPeriod > 0) {
 				System.out.println("Randomising initial configuration for "+randomisationPeriod+" steps.");
 				acceptAllMoves = true;
@@ -599,6 +606,8 @@ public class Mcmc extends Stoppable {
 			burnin = false;
 			coreModel.zeroAllMoveCounts();
 			modelExtMan.zeroAllMoveCounts();
+			
+			//Utils.DEBUG = true;
 			
 			int period;
 			if(AutomateParameters.shouldAutomateNumberOfSamples()){
@@ -1506,7 +1515,41 @@ public class Mcmc extends Stoppable {
 //		}
 
 	
+	public static void main(String[] args) {
+		
+		HashMap<Integer,String> test = new HashMap<Integer,String>();
+		test.put(1, "1");
+		test.put(2, "2");
+		test.put(4, "4");
+		
+		for (int i=1; i<=4; i++) {
+			String s = test.get(i);
+			if (s==null) {
+				test.put(i, ""+i);
+			}
+			System.out.println(s+" "+test.get(i));
+		}
+		
+	}
 	
+	public static void main4(String[] args) {
+		
+		int nSamples = 10000;
+		RandomGenerator master = new Well19937c(1);
+		ArrayList<RandomGenerator> rands = new ArrayList<RandomGenerator>();
+		//for (int i=0; i<10; i++) rands.add(new Well19937c(master.nextInt()));
+		for (int i=0; i<10; i++) rands.add(new Well19937c(i));
+		try {
+			FileWriter output = new FileWriter("rngTest.txt");
+			for (int i=0; i<nSamples; i++) {
+				for (int j=0; j<10; j++) {
+					output.write(rands.get(j).nextDouble()+"\t");
+				}
+				output.write("\n");
+			}
+			output.flush();
+		} catch (IOException e) { throw new RuntimeException(e.toString());}
+	}
 	/**
 	 * Code to test that the moves are being sampled according to the
 	 * correct weights (i.e. that there is not some bias arising from

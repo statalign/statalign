@@ -1,5 +1,6 @@
 package statalign.model.ext.plugins.structalign;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.ArrayList;
 
@@ -15,6 +16,7 @@ public class ContinuousPositiveStructAlignMove extends ContinuousPositiveParamet
 
 	StructAlign structAlign;
 	double[][] oldcovar;
+	private HashMap<Integer, MultiNormCholesky> oldMultiNorms; // TODO handle this inside StructAlign	
 	boolean oldFixedToParent;
 	
 	List<HierarchicalContinuousPositiveStructAlignMove> parentPriors = null;
@@ -44,7 +46,10 @@ public class ContinuousPositiveStructAlignMove extends ContinuousPositiveParamet
 	}
 	public void copyState(Object externalState) {
 		super.copyState(externalState);
-		oldcovar = structAlign.fullCovar;
+		oldcovar = structAlign.fullCovar; // TODO handle in more abstract fashion
+		oldll = structAlign.curLogLike; // TODO handle in more abstract fashion
+		oldMultiNorms = structAlign.multiNorms; // TODO handle in more abstract fashion
+		structAlign.beforeContinuousParamChange(tree);
 		oldFixedToParent = fixedToParent;
 	}
 	
@@ -136,13 +141,15 @@ public class ContinuousPositiveStructAlignMove extends ContinuousPositiveParamet
 	}
 	public void updateLikelihood(Object externalState) {
 		if (param.get() > minValue) {
-			structAlign.fullCovar = structAlign.calcFullCovar(tree);
-			owner.setLogLike( structAlign.calcAllColumnContrib() );
+			owner.setLogLike( structAlign.logLikeContinuousParamChange(tree) );			
 		}
 	}
 	public void restoreState(Object externalState) {
 		super.restoreState(externalState);
-		structAlign.fullCovar = oldcovar;
+		structAlign.fullCovar = oldcovar; // TODO handle in more abstract fashion
+		structAlign.curLogLike = oldll; // TODO handle in more abstract fashion
+		structAlign.multiNorms = oldMultiNorms; // TODO handle in more abstract fashion
+		structAlign.afterContinuousParamChange(tree, lastMoveAccepted);
 		fixedToParent = oldFixedToParent;
 		moveParams.setFixedToParent(fixedToParent);
 	}
@@ -151,3 +158,4 @@ public class ContinuousPositiveStructAlignMove extends ContinuousPositiveParamet
 	}
 	
 }
+

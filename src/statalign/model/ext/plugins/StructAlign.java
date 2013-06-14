@@ -627,8 +627,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	}
 	
 	
-	@Override
-	public double logLikeFactor(Tree tree) {
+	public double computeLogLikeFactor(Tree tree) {
 		String[] align = tree.getState().getLeafAlign();
 		checkConsAlign(align); 		
 		curAlign = align;
@@ -644,6 +643,25 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		checkConsLogLike(logli); 
 		curLogLike = logli;
 				
+		return curLogLike;
+	}
+	
+	@Override
+	public double logLikeFactor(Tree tree) {		
+
+		// Compute log likelihood if not yet computed
+		if (curLogLike==0) return computeLogLikeFactor(tree);
+
+		if (Utils.DEBUG) {
+			double oldLogLike = curLogLike;
+			if (Math.abs(oldLogLike - computeLogLikeFactor(tree)) > 1e-8) {
+				throw new RuntimeException("Inconsistency in logLikeFactor: "+
+						oldLogLike +" != "+curLogLike);
+			}
+		}
+			
+		// If it's non-zero, then we return its current value
+		//return computeLogLikeFactor(tree);	
 		return curLogLike;
 	}
 	
@@ -715,11 +733,13 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		return true;
 	}
 
+	public HashMap<Integer, MultiNormCholesky> multiNorms = new HashMap<Integer, MultiNormCholesky>();	
+	private HashMap<Integer, MultiNormCholesky> oldMultiNorms = new HashMap<Integer, MultiNormCholesky>();
 	/**
 	 * Calculates the structural likelihood contribution of a single alignment column
 	 * @param col the column, id of the residue for each sequence (or -1 if gapped in column)
 	 * @return the likelihood contribution
-	 */
+	 */		
 	public double columnContrib(int[] col) {
 		// count the number of ungapped positions in the column
 		int numMatch = 0;
@@ -731,16 +751,30 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			return 1;
 		// collect indices of ungapped positions
 		int[] notgap = new int[numMatch];
-		int j = 0;
-		for(int i = 0; i < col.length; i++)
-			if(col[i] != -1)
+		int columnCode = 0;
+		int j = 0;		
+		for(int i = 0; i < col.length; i++)  {
+			if(col[i] != -1) {
 				notgap[j++] = i;
+				columnCode |= (1 << i);
+			}						
+		}
 		
-		// extract covariance corresponding to ungapped positions
-		double[][] subCovar = Funcs.getSubMatrix(fullCovar, notgap, notgap);
-		// create normal distribution with mean 0 and covariance subCovar
-		MultiNormCholesky multiNorm = new MultiNormCholesky(new double[numMatch], subCovar);
+		MultiNormCholesky multiNorm2=null, multiNorm = multiNorms.get(columnCode);
+		if (Utils.DEBUG){
+			double[][] subCovar = Funcs.getSubMatrix(fullCovar, notgap, notgap);
+			// create normal distribution with mean 0 and covariance subCovar
+			multiNorm2 = new MultiNormCholesky(new double[numMatch], subCovar);
+		}
 		
+		if (multiNorm == null) {
+			// extract covariance corresponding to ungapped positions
+			double[][] subCovar = Funcs.getSubMatrix(fullCovar, notgap, notgap);
+			// create normal distribution with mean 0 and covariance subCovar
+			multiNorm = new MultiNormCholesky(new double[numMatch], subCovar);
+			multiNorms.put(columnCode, multiNorm);
+		}		
+			
 		double logli = 0;
 		double[] vals = new double[numMatch];
 		
@@ -748,6 +782,21 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		for(j = 0; j < 3; j++){
 			for(int i = 0; i < numMatch; i++)
 				vals[i] = rotCoords[notgap[i]][col[notgap[i]]][j];
+			
+			if (Utils.DEBUG && multiNorm.logDensity(vals) != multiNorm2.logDensity(vals)) {
+				System.out.print("col = [");
+				for (int k=0; k<col.length; k++) System.out.print(col[k]+",");
+				System.out.println("] ("+columnCode+")");
+				for (int key : multiNorms.keySet()) {
+					if (multiNorms.get(key).getMeans().length==vals.length) {
+						System.out.println(key+" "+multiNorms.get(key).logDensity(vals));
+					}
+				}
+				throw new RuntimeException(
+						"Inconsistency: "+multiNorm.logDensity(vals)+" != "
+						+multiNorm2.logDensity(vals));
+			}
+			
 			logli += multiNorm.logDensity(vals);
 		}
 		return logli;
@@ -798,6 +847,9 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		}
 		for(int i = 0; i < tree.names.length; i++)
 			covar[i][i] += epsilon;
+		
+		multiNorms = new HashMap<Integer, MultiNormCholesky>(); 
+		
 		return covar;
 	}
 	
@@ -912,9 +964,10 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		oldCovar = fullCovar;
 		oldAlign = curAlign;
 		oldLogLi = curLogLike;
+		oldMultiNorms = multiNorms;
 	}
 	@Override
-	public double logLikeTreeChange(Tree tree, Vertex nephew) {
+	public double logLikeTreeChange(Tree tree, Vertex nephew) {		
 		fullCovar = calcFullCovar(tree);
 		curAlign = tree.getState().getLeafAlign();
 		curLogLike = calcAllColumnContrib();
@@ -930,6 +983,26 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		fullCovar = oldCovar;
 		curAlign = oldAlign;
 		curLogLike = oldLogLi;
+		multiNorms = oldMultiNorms;
+	}
+	
+	public void beforeContinuousParamChange(Tree tree) {
+		//oldCovar = fullCovar;
+		//oldLogLi = curLogLike;
+		//oldMultiNorms = multiNorms;
+	}
+	public double logLikeContinuousParamChange(Tree tree) {		
+		fullCovar = calcFullCovar(tree);		
+		curLogLike = calcAllColumnContrib();
+		return curLogLike;
+	}
+	public void afterContinuousParamChange(Tree tree, boolean accepted) {
+		if(accepted)	// accepted, do nothing
+			return;
+		// rejected, restore
+		//fullCovar = oldCovar;
+		//curLogLike = oldLogLi;
+		//multiNorms = oldMultiNorms;
 	}
 	
 	@Override
