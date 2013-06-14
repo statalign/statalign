@@ -500,6 +500,8 @@ public class Mcmc extends Stoppable {
 
 			// Randomise the initial starting configuration 
 			// by accepting all moves for a period.
+			tree.root.recomputeLogLike(); // For testing
+			totalLogLike = modelExtMan.totalLogLike(tree);
 			if (randomisationPeriod > 0) {
 				System.out.println("Randomising initial configuration for "+randomisationPeriod+" steps.");
 				acceptAllMoves = true;

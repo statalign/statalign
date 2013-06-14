@@ -725,7 +725,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		return true;
 	}
 
-	private HashMap<Integer, MultiNormCholesky> multiNorms = new HashMap<Integer, MultiNormCholesky>();	
+	public HashMap<Integer, MultiNormCholesky> multiNorms = new HashMap<Integer, MultiNormCholesky>();	
 	private HashMap<Integer, MultiNormCholesky> oldMultiNorms = new HashMap<Integer, MultiNormCholesky>();
 	/**
 	 * Calculates the structural likelihood contribution of a single alignment column
@@ -981,7 +981,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	public void beforeContinuousParamChange(Tree tree) {
 		//oldCovar = fullCovar;
 		//oldLogLi = curLogLike;
-		oldMultiNorms = multiNorms;
+		//oldMultiNorms = multiNorms;
 	}
 	public double logLikeContinuousParamChange(Tree tree) {		
 		fullCovar = calcFullCovar(tree);		
@@ -994,7 +994,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		// rejected, restore
 		//fullCovar = oldCovar;
 		//curLogLike = oldLogLi;
-		multiNorms = oldMultiNorms;
+		//multiNorms = oldMultiNorms;
 	}
 	
 	@Override

@@ -1,5 +1,6 @@
 package statalign.model.ext.plugins.structalign;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.ArrayList;
 
@@ -13,6 +14,8 @@ public class ContinuousPositiveStructAlignMove extends ContinuousPositiveParamet
 
 	StructAlign structAlign;
 	double[][] oldcovar; // TODO handle this inside StructAlign
+	private HashMap<Integer, MultiNormCholesky> oldMultiNorms; // TODO handle this inside StructAlign	
+
 	
 	List<HierarchicalContinuousPositiveStructAlignMove> parentPriors = null;
 
@@ -35,6 +38,7 @@ public class ContinuousPositiveStructAlignMove extends ContinuousPositiveParamet
 		super.copyState(externalState);
 		oldcovar = structAlign.fullCovar; // TODO handle in more abstract fashion
 		oldll = structAlign.curLogLike; // TODO handle in more abstract fashion
+		oldMultiNorms = structAlign.multiNorms; // TODO handle in more abstract fashion
 		structAlign.beforeContinuousParamChange(tree);
 	}
 	
@@ -72,6 +76,7 @@ public class ContinuousPositiveStructAlignMove extends ContinuousPositiveParamet
 		super.restoreState(externalState);
 		structAlign.fullCovar = oldcovar; // TODO handle in more abstract fashion
 		structAlign.curLogLike = oldll; // TODO handle in more abstract fashion
+		structAlign.multiNorms = oldMultiNorms; // TODO handle in more abstract fashion
 		structAlign.afterContinuousParamChange(tree, lastMoveAccepted);
 	}
 }
