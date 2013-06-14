@@ -165,6 +165,7 @@ public class Mcmc extends Stoppable {
 	
 	//private int alignWeight = 25;
 	private double[] Pvals = {0.9,0.99,0.999,0.9999,0.99999};
+
 	private int[] alignWeights = {1,1,1,1,20};
 	//private int[] alignWeights = {0,0,0,0,25};
 	private int[] alignWeightIncrements = {5,1,1,1,-4};
