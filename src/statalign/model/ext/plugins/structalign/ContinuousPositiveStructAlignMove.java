@@ -12,7 +12,7 @@ import statalign.model.ext.plugins.StructAlign;
 public class ContinuousPositiveStructAlignMove extends ContinuousPositiveParameterMove {
 
 	StructAlign structAlign;
-	double[][] oldcovar;
+	double[][] oldcovar; // TODO handle this inside StructAlign
 	
 	List<HierarchicalContinuousPositiveStructAlignMove> parentPriors = null;
 
@@ -33,7 +33,9 @@ public class ContinuousPositiveStructAlignMove extends ContinuousPositiveParamet
 	}
 	public void copyState(Object externalState) {
 		super.copyState(externalState);
-		oldcovar = structAlign.fullCovar;
+		oldcovar = structAlign.fullCovar; // TODO handle in more abstract fashion
+		oldll = structAlign.curLogLike; // TODO handle in more abstract fashion
+		structAlign.beforeContinuousParamChange(tree);
 	}
 	
 	@Override
@@ -61,12 +63,15 @@ public class ContinuousPositiveStructAlignMove extends ContinuousPositiveParamet
 	}
 	public void updateLikelihood(Object externalState) {
 		if (param.get() > minValue) {
-			structAlign.fullCovar = structAlign.calcFullCovar(tree);
-			owner.setLogLike( structAlign.calcAllColumnContrib() );
+//			structAlign.fullCovar = structAlign.calcFullCovar(tree);
+//			owner.setLogLike( structAlign.calcAllColumnContrib() );
+			owner.setLogLike( structAlign.logLikeContinuousParamChange(tree) );			
 		}
 	}
 	public void restoreState(Object externalState) {
 		super.restoreState(externalState);
-		structAlign.fullCovar = oldcovar;
+		structAlign.fullCovar = oldcovar; // TODO handle in more abstract fashion
+		structAlign.curLogLike = oldll; // TODO handle in more abstract fashion
+		structAlign.afterContinuousParamChange(tree, lastMoveAccepted);
 	}
 }
