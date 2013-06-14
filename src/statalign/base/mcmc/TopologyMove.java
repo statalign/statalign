@@ -15,7 +15,7 @@ public class TopologyMove extends McmcMove {
 	
 	final boolean INCLUDE_EDGE_MULTIPLIERS = true;
 	
-	FileWriter topMoves;
+	FileWriter topMoves = null;
 	Tree tree = null;
 	Vertex nephew;
 	Vertex uncle;
@@ -144,10 +144,11 @@ public class TopologyMove extends McmcMove {
     	if (Utils.DEBUG) {
     		tree.root.printToScreenAlignment(0,0,true);
     		System.out.println("BEFORE: root.orphanLogLike = "+tree.root.orphanLogLike+", root.indelLogLike = "+tree.root.indelLogLike);    	
-	    	
-	    	try{
-	    	topMoves.write(tree.root.orphanLogLike + "\t" + tree.root.indelLogLike + "\t");
-	    	} catch(IOException e){throw new RuntimeException("Problem writing to file topMoves.txt.");}
+			if (topMoves != null) {
+		    	try{
+		    	topMoves.write(tree.root.orphanLogLike + "\t" + tree.root.indelLogLike + "\t");
+		    	} catch(IOException e){throw new RuntimeException("Problem writing to file topMoves.txt.");}
+			}
     	}
     	
     	double logProposalRatio = 0;
@@ -204,10 +205,12 @@ public class TopologyMove extends McmcMove {
 		if (Utils.DEBUG) {
 			tree.root.printToScreenAlignment(0,0,true);
 			System.out.println("AFTER: root.orphanLogLike = "+tree.root.orphanLogLike+", root.indelLogLike = "+tree.root.indelLogLike);
-			try{
-		    	topMoves.write(tree.root.orphanLogLike+"\t"+tree.root.indelLogLike +"\t"+logProposalRatio+"\n");
-			    topMoves.flush();
-		    } catch(IOException e){throw new RuntimeException("Problem writing to file topMoves.txt.");}
+			if (topMoves != null) {
+				try{
+			    	topMoves.write(tree.root.orphanLogLike+"\t"+tree.root.indelLogLike +"\t"+logProposalRatio+"\n");
+			    	topMoves.flush();
+				} catch(IOException e){throw new RuntimeException("Problem writing to file topMoves.txt.");}
+			}
 		    System.out.println("lambda = "+tree.hmm2.params[1]+", mu = "+tree.hmm2.params[2]);
 			
 			// double logProposalRatio = nephew.swapWithUncleAlignToParent();

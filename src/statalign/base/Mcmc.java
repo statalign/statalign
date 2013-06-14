@@ -4,6 +4,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Random;
 
 import mpi.MPI;
@@ -603,6 +604,8 @@ public class Mcmc extends Stoppable {
 			burnin = false;
 			coreModel.zeroAllMoveCounts();
 			modelExtMan.zeroAllMoveCounts();
+			
+			//Utils.DEBUG = true;
 			
 			int period;
 			if(AutomateParameters.shouldAutomateNumberOfSamples()){
@@ -1510,8 +1513,24 @@ public class Mcmc extends Stoppable {
 //		}
 
 	
-	
 	public static void main(String[] args) {
+		
+		HashMap<Integer,String> test = new HashMap<Integer,String>();
+		test.put(1, "1");
+		test.put(2, "2");
+		test.put(4, "4");
+		
+		for (int i=1; i<=4; i++) {
+			String s = test.get(i);
+			if (s==null) {
+				test.put(i, ""+i);
+			}
+			System.out.println(s+" "+test.get(i));
+		}
+		
+	}
+	
+	public static void main4(String[] args) {
 		
 		int nSamples = 10000;
 		RandomGenerator master = new Well19937c(1);
