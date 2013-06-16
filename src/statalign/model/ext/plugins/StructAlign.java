@@ -64,7 +64,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	
 	/** If globalSigma = false then this switches on a spike prior at sigma2Hier. */
 	public boolean globalSigmaSpike = true; 
-	double[] globalSigmaSpikeParams = {3,1};
+	double[] globalSigmaSpikeParams = {3.1,1.1};
 	
 	double structTemp = 1;
 
@@ -134,6 +134,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	private double sigma2HPriorShape = 2;
 	private double sigma2HPriorRate = 2;
 //	public InverseGammaPrior sigma2HPrior = new InverseGammaPrior(sigma2HPriorShape,sigma2HPriorRate);
+	HierarchicalContinuousPositiveStructAlignMove sigma2HMove = null;
 	public GammaPrior sigma2HPrior = new GammaPrior(sigma2HPriorShape,sigma2HPriorRate);
 //	public HyperbolicPrior sigma2HPrior = new HyperbolicPrior();
 
@@ -541,8 +542,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			addMcmcMove(epsilonMove,epsilonWeight);
 		}
 		
-		if (!fixedSigma2) {
-			HierarchicalContinuousPositiveStructAlignMove sigma2HMove = null;
+		if (!fixedSigma2) {			
 			HierarchicalContinuousPositiveStructAlignMove nuMove = null;
 			if (!globalSigma) {
 				ParameterInterface sigma2HInterface = paramInterfaceGenerator.new Sigma2HInterface();
@@ -586,6 +586,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 					sigma2HMove.addChildMove(m);
 					if (globalSigmaSpike) {
 						sigma2HMove.setSpikeParams(globalSigmaSpikeParams);
+						sigma2HMove.disallowSpikeSelection();
 					}					
 					nuMove.addChildMove(m);
 				}
@@ -626,6 +627,12 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		Funcs.initLSRotations(tree,coords,xlats,axes,angles);
 	}
 	
+	@Override
+	public void afterFirstHalfBurnin() {		
+		if (!globalSigma) {
+			sigma2HMove.allowSpikeSelection();
+		}
+	}
 	
 	public double computeLogLikeFactor(Tree tree) {
 		String[] align = tree.getState().getLeafAlign();

@@ -522,6 +522,8 @@ public class Mcmc extends Stoppable {
 				
 				if (i > burnIn / 2) {
 					firstHalfBurnin = false;
+					coreModel.afterFirstHalfBurnin();
+					modelExtMan.afterFirstHalfBurnin();
 					if (!alreadyAddedWeightModifiers) {
 						alreadyAddedWeightModifiers = true;
 						if (edgeWeightIncrement > 0) {

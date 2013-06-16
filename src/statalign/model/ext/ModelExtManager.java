@@ -357,5 +357,9 @@ public class ModelExtManager {
 	public List<ModelExtension> getPluginList() {
 		return Collections.unmodifiableList(pluginList);
 	}
+	public void afterFirstHalfBurnin() {
+		for(ModelExtension plugin : activeList)
+			plugin.afterFirstHalfBurnin();		
+	}
 	
 }

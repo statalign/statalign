@@ -16,7 +16,9 @@ public class HierarchicalContinuousPositiveStructAlignMove extends ContinuousPos
 	private List<ContinuousPositiveStructAlignMove> children = new ArrayList<ContinuousPositiveStructAlignMove>();
 	public PriorDistribution<Double> hierarchicalPrior;
 	
-	boolean allowSpike = false;
+	boolean allowSpikeSelection = false;
+	public void disallowSpikeSelection() { allowSpikeSelection = false; }
+	public void allowSpikeSelection() { allowSpikeSelection = true; }
 	double[] spikeParams;
 	
 	public HierarchicalContinuousPositiveStructAlignMove (StructAlign s, 
@@ -36,7 +38,7 @@ public class HierarchicalContinuousPositiveStructAlignMove extends ContinuousPos
 	}
 	public void setSpikeParams(double[] params) {
 		spikeParams = params;
-		allowSpike = true;
+		allowSpikeSelection = true;
 		for (ContinuousPositiveStructAlignMove child : children) {
 			//System.out.print(child.fixedToParent+" ");
 			//double fixProb = spikeParams[0]/(spikeParams[0]+spikeParams[1]);
@@ -59,14 +61,18 @@ public class HierarchicalContinuousPositiveStructAlignMove extends ContinuousPos
 	}
 	@Override
 	public double proposal(Object externalState) {
-		double logProposalDensity = super.proposal(externalState);
-		// The super method also acquires the Tree
+		double logProposalDensity = 0;
 		for (int i=0; i<children.size(); i++) {
-			if(i == tree.root.index || children.get(i).fixedToParent) {
+			if(i == tree.root.index) {			
 				continue;
 			}
-			logProposalDensity -= hierarchicalPrior.logDensity(children.get(i).getParam().get());
+			if (children.get(i).fixedToParent) {
+				children.get(i).copyState(externalState);
+				logProposalDensity -= children.get(i).logPriorDensity(externalState);
+			}
+			else logProposalDensity -= hierarchicalPrior.logDensity(children.get(i).getParam().get());
 		}
+		logProposalDensity += super.proposal(externalState);
 		hierarchicalPrior = new GammaPrior(((StructAlign) owner).nu,((StructAlign) owner).nu / ((StructAlign) owner).sigma2Hier); 
 		// TODO Abstract this somewhat
 		for (int i=0; i<children.size(); i++) {
@@ -74,11 +80,11 @@ public class HierarchicalContinuousPositiveStructAlignMove extends ContinuousPos
 				continue;
 			}
 			if (children.get(i).fixedToParent) {
-				children.get(i).copyState(externalState);
 				children.get(i).setParam(param.get());
+				logProposalDensity += children.get(i).logPriorDensity(externalState);
 			}
+			else logProposalDensity += hierarchicalPrior.logDensity(children.get(i).getParam().get());
 			//children.get(i).setPlottable();
-			logProposalDensity += hierarchicalPrior.logDensity(children.get(i).getParam().get());
 		}
 		return logProposalDensity;
 	}

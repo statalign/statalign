@@ -69,7 +69,7 @@ public class ContinuousPositiveStructAlignMove extends ContinuousPositiveParamet
 		
 		if (parentPriors != null) {
 			for (HierarchicalContinuousPositiveStructAlignMove parent : parentPriors) {
-				if (parent.allowSpike) { 			
+				if (parent.allowSpikeSelection) { 			
 					double[] spikeParams = parent.spikeParams;
 					int m = parent.countFixedToParent();
 					int n = parent.countChildren();
@@ -99,8 +99,9 @@ public class ContinuousPositiveStructAlignMove extends ContinuousPositiveParamet
 			}
 		}
 		moveParams.setFixedToParent(fixedToParent);
-		if (fixedToParent) nFixedToParent++;
+		if (fixedToParent) nFixedToParent++;		
 		else param.set(proposalDistribution.sample());
+		autoTune = !fixedToParent;
 		
 		if (param.get() < minValue || param.get() > maxValue) {
 			return(Double.NEGATIVE_INFINITY);
@@ -113,7 +114,7 @@ public class ContinuousPositiveStructAlignMove extends ContinuousPositiveParamet
 		
 		/** + log p(old | new) */
 		if (!oldFixedToParent) logProposalDensity += proposalDistribution.logDensity(oldpar);
-		
+				
 		return logProposalDensity;
 	}
 	@Override
@@ -129,7 +130,7 @@ public class ContinuousPositiveStructAlignMove extends ContinuousPositiveParamet
 			// because some priors may be improper.
 			// NB be careful with this though -- an improper prior should
 			// only be used if the posterior can be shown to be proper.
-			if (parentPriors != null) {
+			if (!fixedToParent && parentPriors != null) {
 				for (HierarchicalContinuousPositiveStructAlignMove parent : parentPriors) {
 					logDensity += parent.getLogChildDensity(this);
 					// The normalising constant of this density will depend
@@ -140,22 +141,28 @@ public class ContinuousPositiveStructAlignMove extends ContinuousPositiveParamet
 		}
 	}
 	public void updateLikelihood(Object externalState) {
-		if (param.get() > minValue) {
+		if (!(fixedToParent && oldFixedToParent) && param.get() > minValue) {
 			owner.setLogLike( structAlign.logLikeContinuousParamChange(tree) );			
 		}
 	}
 	public void restoreState(Object externalState) {
 		super.restoreState(externalState);
-		structAlign.fullCovar = oldcovar; // TODO handle in more abstract fashion
-		structAlign.curLogLike = oldll; // TODO handle in more abstract fashion
-		structAlign.multiNorms = oldMultiNorms; // TODO handle in more abstract fashion
-		structAlign.afterContinuousParamChange(tree, lastMoveAccepted);
-		fixedToParent = oldFixedToParent;
-		moveParams.setFixedToParent(fixedToParent);
+		if (!(fixedToParent && oldFixedToParent)) {
+			structAlign.fullCovar = oldcovar; // TODO handle in more abstract fashion
+			structAlign.curLogLike = oldll; // TODO handle in more abstract fashion
+			structAlign.multiNorms = oldMultiNorms; // TODO handle in more abstract fashion
+			
+			structAlign.afterContinuousParamChange(tree, lastMoveAccepted);
+			
+			fixedToParent = oldFixedToParent;
+			moveParams.setFixedToParent(fixedToParent);
+		}
 	}
 	public void setParam(double x) {
 		param.set(x);
 	}
-	
+	public void afterMove(Object externalState) {
+		super.afterMove(externalState);		
+	}
 }
 

@@ -151,4 +151,5 @@ public abstract class McmcModule {
 	public boolean isParamChangeAccepted(double logProposalRatio,McmcMove m) {
 		return mcmc.isParamChangeAccepted(logProposalRatio,m);
 	}
+	public void afterFirstHalfBurnin() {}
 }
