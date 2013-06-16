@@ -361,5 +361,9 @@ public class ModelExtManager {
 		for(ModelExtension plugin : activeList)
 			plugin.afterFirstHalfBurnin();		
 	}
+	public void incrementWeights() {
+		for(ModelExtension plugin : activeList)
+			plugin.incrementWeights();		
+	}
 	
 }

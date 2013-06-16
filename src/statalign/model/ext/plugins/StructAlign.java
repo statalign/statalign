@@ -34,8 +34,10 @@ import statalign.mcmc.HyperbolicPrior;
 import statalign.mcmc.InverseGammaPrior;
 import statalign.mcmc.McmcCombinationMove;
 import statalign.mcmc.McmcMove;
+import statalign.mcmc.MultiplicativeProposal;
 import statalign.mcmc.ParameterInterface;
 import statalign.mcmc.PriorDistribution;
+import statalign.mcmc.ProposalDistribution;
 import statalign.mcmc.UniformPrior;
 import statalign.model.ext.ModelExtension;
 import statalign.model.ext.plugins.structalign.*;
@@ -567,6 +569,9 @@ public class StructAlign extends ModelExtension implements ActionListener {
 					sigmaName = "σ2_"+j;
 				}
 				ParameterInterface sigma2Interface = paramInterfaceGenerator.new Sigma2Interface(j);
+//				ProposalDistribution prop = null;
+//				if (globalSigma) prop = new GaussianProposal();
+//				else prop = new MultiplicativeProposal(); 
 				ContinuousPositiveStructAlignMove m = new ContinuousPositiveStructAlignMove(
 															this,sigma2Interface,
 															sigma2Prior,new GaussianProposal(),sigmaName);
@@ -628,9 +633,10 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	}
 	
 	@Override
-	public void afterFirstHalfBurnin() {		
+	public void afterFirstHalfBurnin() {	
 		if (!globalSigma) {
 			sigma2HMove.allowSpikeSelection();
+			zeroAllMoveCounts();
 		}
 	}
 	
