@@ -30,6 +30,8 @@ public abstract class McmcModule {
 	
 	protected List<McmcMove> mcmcMoves = new ArrayList<McmcMove>();
 	protected List<Integer> mcmcMoveWeights = new ArrayList<Integer>();
+	protected List<Integer> mcmcMoveWeightIncrements = new ArrayList<Integer>();
+	
 	public int getParamChangeWeight() {
 		int w = 0;
 		for (int i=0; i<mcmcMoveWeights.size(); i++) {
@@ -48,6 +50,12 @@ public abstract class McmcModule {
 	public void addMcmcMove(McmcMove m, int weight) {
 		mcmcMoves.add(m);
 		mcmcMoveWeights.add(weight);
+		mcmcMoveWeightIncrements.add(0);
+	}
+	public void addMcmcMove(McmcMove m, int weight, int increment) {
+		mcmcMoves.add(m);
+		mcmcMoveWeights.add(weight);
+		mcmcMoveWeightIncrements.add(increment);
 	}
 	public List<McmcMove> getMcmcMoves() {
 		return mcmcMoves;
@@ -150,5 +158,17 @@ public abstract class McmcModule {
 	}
 	public boolean isParamChangeAccepted(double logProposalRatio,McmcMove m) {
 		return mcmc.isParamChangeAccepted(logProposalRatio,m);
+	}
+	public void incrementWeights() {
+		for (int i=0; i<mcmcMoves.size(); i++) {
+			if (mcmcMoveWeightIncrements.get(i) != 0) {
+				mcmcMoveWeights.set(i,mcmcMoveWeights.get(i)+
+						mcmcMoveWeightIncrements.get(i));				
+				System.out.println("Move \""+mcmcMoves.get(i).name+"\" now has weight "+mcmcMoveWeights.get(i));
+			}
+		}
+	}
+	public void afterFirstHalfBurnin() { 
+		for (McmcMove m : mcmcMoves) m.afterFirstHalfBurnin();
 	}
 }

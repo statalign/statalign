@@ -280,6 +280,9 @@ public class Vertex {
     }
 
     void updateHmm2Matrix() {
+    	updateHmm2Matrix(1.0);
+    }
+    void updateHmm2Matrix(double heat) {
         hmm2TransMatrix = owner.hmm2.preCalcTransMatrix(hmm2TransMatrix, edgeLength);
         hmm2PropTransMatrix = hmm2TransMatrix;
         // This is commented out for now. Uncomment to use the rescaling of the transition matrices.
@@ -288,27 +291,27 @@ public class Vertex {
 //        double heat = owner.heat;
         //double heat = PROPOSAL_HEAT;
 //        double heat = 1.0;
-//        hmm2PropTransMatrix = new double[hmm2TransMatrix.length][];
-//        for (int i = 0; i < hmm2TransMatrix.length; i++) {
-//            hmm2PropTransMatrix[i] = hmm2TransMatrix[i].clone();
-//            /**/
-//			double tempSum = Utils.log0;
-//			for (int j = 0; j < hmm2PropTransMatrix[i].length; j++) {
-//
-//				hmm2PropTransMatrix[i][j] = hmm2PropTransMatrix[i][j]* heat;
-//				//hmm2PropTransMatrix[i][j] = -Math.pow(Math.abs(hmm2PropTransMatrix[i][j]),heat);
-//
-//				tempSum = Utils.logAdd(tempSum, hmm2TransMatrix[i][j]);
-//				
-//			}
-//			if(tempSum != Double.NEGATIVE_INFINITY){
-//				for (int j = 0; j < hmm2PropTransMatrix[i].length; j++) {
-//
-//					hmm2PropTransMatrix[i][j] = hmm2PropTransMatrix[i][j]-tempSum;
-//				}
-//			}
-//            /**/
-//        }
+        hmm2PropTransMatrix = new double[hmm2TransMatrix.length][];
+        for (int i = 0; i < hmm2TransMatrix.length; i++) {
+            hmm2PropTransMatrix[i] = hmm2TransMatrix[i].clone();
+            /**/
+			double tempSum = Utils.log0;
+			for (int j = 0; j < hmm2PropTransMatrix[i].length; j++) {
+
+				hmm2PropTransMatrix[i][j] = hmm2PropTransMatrix[i][j]* heat;
+				//hmm2PropTransMatrix[i][j] = -Math.pow(Math.abs(hmm2PropTransMatrix[i][j]),heat);
+
+				tempSum = Utils.logAdd(tempSum, hmm2TransMatrix[i][j]);
+				
+			}
+			if(tempSum != Double.NEGATIVE_INFINITY){
+				for (int j = 0; j < hmm2PropTransMatrix[i].length; j++) {
+
+					hmm2PropTransMatrix[i][j] = hmm2PropTransMatrix[i][j]-tempSum;
+				}
+			}
+            /**/
+        }
 
 
     }
@@ -1790,10 +1793,15 @@ public class Vertex {
         return bpp;
     }
     
-    public double realignToParent() {
-    	return realignToParent(false);
+    public double realignToParent(double heat) {
+    	return realignToParent(false,heat);
     }
-    
+    public double realignToParent() {
+    	return realignToParent(false,1.0);
+    }
+    public double realignToParent(boolean useCurrentWin) {
+    	return realignToParent(useCurrentWin,1.0);
+    }
     /**
      * Samples a new alignment between the subtree rooted at this vertex and the rest of the sequences.
      * Only the alignment between this vertex and its parent is changed.
@@ -1801,7 +1809,7 @@ public class Vertex {
      * 		(backproposal and proposal for window selection must be computed by the caller)
      * @return the ratio between backproposal and proposal probabilities
      */
-    public double realignToParent(boolean useCurrentWin) {
+    public double realignToParent(boolean useCurrentWin, double heat) {
     	if(parent == null)
     		throw new Error("realignToParent was called on the root vertex");
     	
@@ -1835,16 +1843,16 @@ public class Vertex {
         selectWindowUp();
 
         // compute alignment backproposal
-        bpp += hmm2BackProp();
+        bpp += hmm2BackProp(heat);
 
         // align the sequences
-        double bppProp = hmm2AlignWithSave();
+        double bppProp = hmm2AlignWithSave(heat);
         bpp += bppProp;
         parent.calcAllUp();
 
         if(Utils.DEBUG) {
         	// check proposal - backproposal consistency
-        	double bppBack = hmm2BackProp();
+        	double bppBack = hmm2BackProp(heat);
         	if(Math.abs(bppProp+bppBack) > 1e-5) {
         	  System.out.println("Proposal - backproposal inconsistent in realignToParent! Prop: "+bppProp+" Back: "+bppBack);
         	}

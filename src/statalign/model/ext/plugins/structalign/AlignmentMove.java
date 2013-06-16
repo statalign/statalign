@@ -19,6 +19,9 @@ public class AlignmentMove extends McmcMove {
 	double[][][] oldrots = null;
 	double oldll;
 	
+	double heat = 1.0;
+	double secondHeat = 1.0;
+	
 	Vertex subtreeRoot;
 	int nLeaves;
 	ArrayList<Integer> subtreeLeaves;
@@ -47,7 +50,7 @@ public class AlignmentMove extends McmcMove {
 	}
 
 	public double proposal(Object externalState) {
-		double logProposalRatio = subtreeRoot.realignToParent();
+		double logProposalRatio = subtreeRoot.realignToParent(heat);
 		((StructAlign) owner).curAlign = tree.getState().getLeafAlign();
 		return logProposalRatio;
 	}
@@ -78,5 +81,8 @@ public class AlignmentMove extends McmcMove {
 		}
 		//if (lastMoveAccepted && (owner.getLogLike() == oldll)) acceptanceCount--;
 	}
-
+	@Override
+	public void afterFirstHalfBurnin() {
+		heat = secondHeat;
+	}
 }

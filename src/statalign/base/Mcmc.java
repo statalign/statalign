@@ -177,6 +177,7 @@ public class Mcmc extends Stoppable {
 	private int topologyWeight = 8;
 	private int localTopologyWeight = 8;
 	private int topologyWeightIncrement = 12; // Added after half of burnin
+	private int localTopologyWeightIncrement = 12; // Added after half of burnin
 	private int topologyWeightDuringRandomisationPeriod = 100; // To use while we're randomising initial config
 	
 	LOCALTopologyMove localTopologyMove;
@@ -223,7 +224,7 @@ public class Mcmc extends Stoppable {
 		
 		IndelMove rMove = new RMove(coreModel,new BetaPrior(1,1),new LogisticProposal(),"R");
 		rMove.proposalWidthControlVariable = 1.0;
-		coreModel.addMcmcMove(rMove,rWeight);
+		coreModel.addMcmcMove(rMove,rWeight);				
 		
 		if (lambdaMuMove) {
 			IndelMove lambdaMove = new LambdaMove(coreModel,new GammaPrior(lambdaMuPriorParams[0],lambdaMuPriorParams[1]),new GaussianProposal(),"Lambda");
@@ -280,11 +281,11 @@ public class Mcmc extends Stoppable {
 		if(!mcmcpars.fixAlign) {
 			for (int i =0; i<Pvals.length; i++) {
 				AlignmentMove alignMove = new AlignmentMove(coreModel,Pvals[i],"Alignment_"+i+"_"+Pvals[i]);
-				coreModel.addMcmcMove(alignMove, alignWeights[i]);
+				coreModel.addMcmcMove(alignMove, alignWeights[i],alignWeightIncrements[i]);
 			}
 			
 			SilentIndelMove silentIndelMove = new SilentIndelMove(coreModel,"SilentIndel");
-			coreModel.addMcmcMove(silentIndelMove, silentIndelWeight);
+			coreModel.addMcmcMove(silentIndelMove, silentIndelWeight,silentIndelWeightIncrement);
 		}
 
 		GammaPrior edgePrior = new GammaPrior(1,1);
@@ -297,13 +298,13 @@ public class Mcmc extends Stoppable {
 			topologyMove = new TopologyMove(coreModel,edgePrior,
 					//0.5*multiplicativeProposalWidthControlVariable,"Topology"); // works ok with glob_25
 					1*uniformProposalWidthControlVariable,"Topology"); // experimental
-			coreModel.addMcmcMove(topologyMove, topologyWeight);
+			coreModel.addMcmcMove(topologyMove, topologyWeight,topologyWeightIncrement);
 						
 //			LOCALTopologyMove localTopologyMove = new LOCALTopologyMove(coreModel,edgePrior,
 //					0.5*multiplicativeProposalWidthControlVariable,"LOCALTopology");
 			localTopologyMove = new LOCALTopologyMove(coreModel,edgePrior,
 					1*uniformProposalWidthControlVariable,"LOCALTopology");
-			coreModel.addMcmcMove(localTopologyMove, localTopologyWeight);
+			coreModel.addMcmcMove(localTopologyMove, localTopologyWeight,localTopologyWeightIncrement);
 		}
 		if(!mcmcpars.fixEdge) {
 			//HyperbolicPrior edgePrior = new HyperbolicPrior();
@@ -315,7 +316,7 @@ public class Mcmc extends Stoppable {
 						"Edge"+i);
 				edgeMove.proposalWidthControlVariable = uniformProposalWidthControlVariable;
 				// Default minimum edge length is 0.01
-				coreModel.addMcmcMove(edgeMove, edgeWeight);
+				coreModel.addMcmcMove(edgeMove, edgeWeight,edgeWeightIncrement);
 			}		
 			AllEdgeMove allEdgeMove = new AllEdgeMove(coreModel,edgePrior,
 					new MultiplicativeProposal(),"AllEdge");
@@ -355,7 +356,6 @@ public class Mcmc extends Stoppable {
 
 			if (Utils.DEBUG) System.out.println("Move rejected.");
 			coreModel.setLogLike(totalLogLike);
-
 		}
 		if(Utils.DEBUG) {
 			//tree.recomputeCheckLogLike();
@@ -376,7 +376,6 @@ public class Mcmc extends Stoppable {
 	 * handled inside the McmcMove objects.
 	 * @return true if the move is accepted
 	 */
-
 	public boolean isParamChangeAccepted(double logProposalRatio,McmcMove m) {
 		double newLogLike = coreModel.curLogLike;
 		if (Utils.SHAKE_IF_STUCK && firstHalfBurnin && (m.lowCounts > Utils.LOW_COUNT_THRESHOLD)) {			
@@ -516,31 +515,19 @@ public class Mcmc extends Stoppable {
 			acceptAllMoves = false;
 			
 			burnin = true;
-			firstHalfBurnin = true;
-			boolean alreadyAddedWeightModifiers = false;
-			tree.root.recomputeLogLike(); // For testing
+			firstHalfBurnin = true;			
+			
+			tree.root.recomputeLogLike(); 
 			totalLogLike = modelExtMan.totalLogLike(tree);
+			
 			for (int i = 0; i < burnIn; i++) {
-				
-				if (i > burnIn / 2) {
+								
+				if (firstHalfBurnin && i > burnIn / 2) {
 					firstHalfBurnin = false;
-					if (!alreadyAddedWeightModifiers) {
-						alreadyAddedWeightModifiers = true;
-						if (edgeWeightIncrement > 0) {
-							coreModel.setWeight("Edge",edgeWeight+edgeWeightIncrement);
-						}
-						if (topologyWeightIncrement > 0) {
-							coreModel.setWeight("Topology",topologyWeight+topologyWeightIncrement);
-						}
-						if (silentIndelWeightIncrement != 0) {
-							coreModel.setWeight("Silent",silentIndelWeight+silentIndelWeightIncrement);
-						}
-						for (int p=0; p<Pvals.length; p++) {
-							if (alignWeightIncrements[p] > 0) {
-								coreModel.setWeight("Alignment_"+p,alignWeights[p]+alignWeightIncrements[p]);
-							}
-						}
-					}
+					coreModel.afterFirstHalfBurnin();
+					modelExtMan.afterFirstHalfBurnin();
+					coreModel.incrementWeights();
+					modelExtMan.incrementWeights();
 					
 					if (simulatedAnnealing) {
 						tree.heat = 1;
@@ -551,7 +538,6 @@ public class Mcmc extends Stoppable {
 						tree.heat = Math.log(i) / Math.log(burnIn / 2); 
 					}
 				}
-				
 				// Perform an MCMC move
 				sample(0);
 				

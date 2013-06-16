@@ -56,5 +56,4 @@ public class CoreMcmcModule extends McmcModule {
 		}
 		return accepted;
 	}
-
 }
