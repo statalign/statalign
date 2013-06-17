@@ -291,28 +291,29 @@ public class Vertex {
 //        double heat = owner.heat;
         //double heat = PROPOSAL_HEAT;
 //        double heat = 1.0;
-        hmm2PropTransMatrix = new double[hmm2TransMatrix.length][];
-        for (int i = 0; i < hmm2TransMatrix.length; i++) {
-            hmm2PropTransMatrix[i] = hmm2TransMatrix[i].clone();
-            /**/
-			double tempSum = Utils.log0;
-			for (int j = 0; j < hmm2PropTransMatrix[i].length; j++) {
-
-				hmm2PropTransMatrix[i][j] = hmm2PropTransMatrix[i][j]* heat;
-				//hmm2PropTransMatrix[i][j] = -Math.pow(Math.abs(hmm2PropTransMatrix[i][j]),heat);
-
-				tempSum = Utils.logAdd(tempSum, hmm2TransMatrix[i][j]);
-				
-			}
-			if(tempSum != Double.NEGATIVE_INFINITY){
+        if (heat != 1.0) {
+	        hmm2PropTransMatrix = new double[hmm2TransMatrix.length][];
+	        for (int i = 0; i < hmm2TransMatrix.length; i++) {
+	            hmm2PropTransMatrix[i] = hmm2TransMatrix[i].clone();
+	            /**/
+				double tempSum = Utils.log0;
 				for (int j = 0; j < hmm2PropTransMatrix[i].length; j++) {
-
-					hmm2PropTransMatrix[i][j] = hmm2PropTransMatrix[i][j]-tempSum;
+	
+					hmm2PropTransMatrix[i][j] = hmm2PropTransMatrix[i][j]* heat;
+					//hmm2PropTransMatrix[i][j] = -Math.pow(Math.abs(hmm2PropTransMatrix[i][j]),heat);
+	
+					tempSum = Utils.logAdd(tempSum, hmm2TransMatrix[i][j]);
+					
 				}
-			}
-            /**/
+				if(tempSum != Double.NEGATIVE_INFINITY){
+					for (int j = 0; j < hmm2PropTransMatrix[i].length; j++) {
+	
+						hmm2PropTransMatrix[i][j] = hmm2PropTransMatrix[i][j]-tempSum;
+					}
+				}
+	            /**/
+	        }
         }
-
 
     }
 
@@ -1493,7 +1494,7 @@ public class Vertex {
         boolean isLeft = parent.left == this;
 
         int k, previ, prevj, prevk;
-        double probMatrix[][][] = hmm2ProbMatrix();
+        double probMatrix[][][] = hmm2ProbMatrix(heat);
         MuDouble retVal = new MuDouble(0.0);
         double prJump[] = new double[END];                        // no need to have an element for end state
 
@@ -1517,7 +1518,7 @@ public class Vertex {
 
         for (k = END; k != START; k = prevk) {
             for (prevk = START; prevk < END; prevk++)
-                prJump[prevk] = heat*(probMatrix[previ][prevj][prevk] + hmm2PropTransMatrix[prevk][k]);
+                prJump[prevk] = (probMatrix[previ][prevj][prevk] + hmm2PropTransMatrix[prevk][k]);
             prevk = Utils.logWeightedChoose(prJump, retVal);
 
             if (hmm2Parent[prevk] != 0) {
@@ -1813,8 +1814,9 @@ public class Vertex {
     	if(parent == null)
     		throw new Error("realignToParent was called on the root vertex");
     	
+    	updateHmm2Matrix(heat);
     	double bpp = 0;
-    	owner.root.calcUpperRecursively();
+    	if (Utils.USE_UPPER) owner.root.calcUpperRecursively();
         if(!useCurrentWin) {
         	MuDouble p = new MuDouble(1.0);
 	        winLength = Utils.linearizerWeight(length, p, Utils.WINDOW_MULTIPLIER*Math.sqrt(length));
@@ -1843,16 +1845,16 @@ public class Vertex {
         selectWindowUp();
 
         // compute alignment backproposal
-        bpp += hmm2BackProp(heat);
+        bpp += hmm2BackProp();
 
         // align the sequences
-        double bppProp = hmm2AlignWithSave(heat);
+        double bppProp = hmm2AlignWithSave();
         bpp += bppProp;
         parent.calcAllUp();
 
         if(Utils.DEBUG) {
         	// check proposal - backproposal consistency
-        	double bppBack = hmm2BackProp(heat);
+        	double bppBack = hmm2BackProp();
         	if(Math.abs(bppProp+bppBack) > 1e-5) {
         	  System.out.println("Proposal - backproposal inconsistent in realignToParent! Prop: "+bppProp+" Back: "+bppBack);
         	}
@@ -1866,6 +1868,7 @@ public class Vertex {
 
         // 	System.out.print(" Prop: "+bppProp+" it's doublecheck: "+bppBack+" bpp: "+bpp+" ");
 
+        updateHmm2Matrix(1.0);
         return bpp;
     }
 

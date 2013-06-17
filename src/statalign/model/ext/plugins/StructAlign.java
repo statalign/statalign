@@ -158,6 +158,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	int translationWeight = 2;
 	int libraryWeight = 2;
 	int alignmentWeight = 2;
+	int alignmentWeightIncrement = 0;
 	
 	/* Weights for combination moves */
 	int alignmentRotationWeight = 8;
@@ -488,31 +489,33 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			addMcmcMove(libraryMove,libraryWeight);
 		}
 		
-		AlignmentMove alignmentMove = new AlignmentMove(this,"alignment");
-		addMcmcMove(alignmentMove,alignmentWeight); 
-		
-		/* Combination moves */
-		ArrayList<McmcMove> alignmentRotation = new ArrayList<McmcMove>();
-		alignmentRotation.add(alignmentMove);
-		alignmentRotation.add(rotationMove);
-		McmcCombinationMove alignmentRotationMove = 
-			new McmcCombinationMove(alignmentRotation);
-		addMcmcMove(alignmentRotationMove,alignmentRotationWeight); 
-		
-		ArrayList<McmcMove> alignmentTranslation = new ArrayList<McmcMove>(); 
-		alignmentTranslation.add(alignmentMove);
-		alignmentTranslation.add(translationMove);
-		McmcCombinationMove alignmentTranslationMove = 
-			new McmcCombinationMove(alignmentTranslation);
-		addMcmcMove(alignmentTranslationMove,alignmentTranslationWeight); 
-		
-		if (useLibrary) { 
-			ArrayList<McmcMove> alignmentLibrary = new ArrayList<McmcMove>();
-			alignmentLibrary.add(alignmentMove);
-			alignmentLibrary.add(libraryMove);
-			McmcCombinationMove alignmentLibraryMove = 
-				new McmcCombinationMove(alignmentLibrary);
-			addMcmcMove(alignmentLibraryMove,alignmentLibraryWeight);
+		if (!inputData.pars.fixAlign) {
+			AlignmentMove alignmentMove = new AlignmentMove(this,"alignment");
+			addMcmcMove(alignmentMove,alignmentWeight,alignmentWeightIncrement); 
+			
+			/* Combination moves */
+			ArrayList<McmcMove> alignmentRotation = new ArrayList<McmcMove>();
+			alignmentRotation.add(alignmentMove);
+			alignmentRotation.add(rotationMove);
+			McmcCombinationMove alignmentRotationMove = 
+				new McmcCombinationMove(alignmentRotation);
+			addMcmcMove(alignmentRotationMove,alignmentRotationWeight); 
+			
+			ArrayList<McmcMove> alignmentTranslation = new ArrayList<McmcMove>(); 
+			alignmentTranslation.add(alignmentMove);
+			alignmentTranslation.add(translationMove);
+			McmcCombinationMove alignmentTranslationMove = 
+				new McmcCombinationMove(alignmentTranslation);
+			addMcmcMove(alignmentTranslationMove,alignmentTranslationWeight);
+				
+			if (useLibrary) { 
+				ArrayList<McmcMove> alignmentLibrary = new ArrayList<McmcMove>();
+				alignmentLibrary.add(alignmentMove);
+				alignmentLibrary.add(libraryMove);
+				McmcCombinationMove alignmentLibraryMove = 
+					new McmcCombinationMove(alignmentLibrary);
+				addMcmcMove(alignmentLibraryMove,alignmentLibraryWeight);
+			}
 		}
 		
 		/** Add moves for scalar parameters */
