@@ -287,8 +287,8 @@ public class CommandLine {
 				if(useAlign.length() != 1 || (manager.inputData.useAlign =
 						"NIF".indexOf(Character.toUpperCase(useAlign.charAt(0)))) == -1)
 					return error("bad format for parameter -usealign: "+useAlign);
-				if(manager.inputData.useAlign == 2)
-					return error("fixing the alignment is currently not supported");
+//				if(manager.inputData.useAlign == 2)
+//					return error("fixing the alignment is currently not supported");
 				if(manager.inputData.useAlign > 0 && !manager.inputData.seqs.isAligned())
 					return error("input sequences must be aligned when -usealign="+useAlign+" is used");
 				if(manager.inputData.useAlign == 1)
