@@ -488,17 +488,17 @@ public class Mcmc extends Stoppable {
 
 		try {
 			//only to use if AutomateParameters.shouldAutomate() == true
-			final int SAMPLE_RATE_WHEN_DETERMINING_THE_SPACE = 100;
-			final int BURNIN_TO_CALCULATE_THE_SPACE = 25000;
-			ArrayList<String[]> alignmentsFromSamples = new ArrayList<String[]>(); 
+//			final int SAMPLE_RATE_WHEN_DETERMINING_THE_SPACE = 100;
+//			final int BURNIN_TO_CALCULATE_THE_SPACE = 25000;
+//			ArrayList<String[]> alignmentsFromSamples = new ArrayList<String[]>(); 
 			int burnIn = mcmcpars.burnIn;
-			boolean stopBurnIn = false;
-			if(AutomateParameters.shouldAutomateBurnIn()){
-				burnIn = 10000000;
-			} 
-			if(AutomateParameters.shouldAutomateStepRate()){
-				burnIn += BURNIN_TO_CALCULATE_THE_SPACE;
-			}
+//			boolean stopBurnIn = false;
+//			if(AutomateParameters.shouldAutomateBurnIn()){
+//				burnIn = 10000000;
+//			} 
+//			if(AutomateParameters.shouldAutomateStepRate()){
+//				burnIn += BURNIN_TO_CALCULATE_THE_SPACE;
+//			}
 
 			// Randomise the initial starting configuration 
 			// by accepting all moves for a period.
@@ -557,36 +557,36 @@ public class Mcmc extends Stoppable {
 					}
 				}
 				
-				if(AutomateParameters.shouldAutomateBurnIn() && i % 50 == 0){
-					// every 50 steps, add the current loglikelihood to a list
-					// and check if we find a major decline in that list 
-					logLikeList.add(getState().logLike);
-					if(!stopBurnIn){
-						stopBurnIn = AutomateParameters.shouldStopBurnIn(logLikeList);
-						if(AutomateParameters.shouldAutomateStepRate() && stopBurnIn){
-							burnIn = i + BURNIN_TO_CALCULATE_THE_SPACE;
-						}else if (stopBurnIn){
-							burnIn = i;
-						}
-					}
-				}
+//				if(AutomateParameters.shouldAutomateBurnIn() && i % 50 == 0){
+//					// every 50 steps, add the current loglikelihood to a list
+//					// and check if we find a major decline in that list 
+//					logLikeList.add(getState().logLike);
+//					if(!stopBurnIn){
+//						stopBurnIn = AutomateParameters.shouldStopBurnIn(logLikeList);
+//						if(AutomateParameters.shouldAutomateStepRate() && stopBurnIn){
+//							burnIn = i + BURNIN_TO_CALCULATE_THE_SPACE;
+//						}else if (stopBurnIn){
+//							burnIn = i;
+//						}
+//					}
+//				}
 				currentTime = System.currentTimeMillis();
-				int realBurnIn = burnIn - BURNIN_TO_CALCULATE_THE_SPACE;
+//				int realBurnIn = burnIn - BURNIN_TO_CALCULATE_THE_SPACE;
 				if (frame != null) {
 					String text = "";
-					if((i > realBurnIn ) && AutomateParameters.shouldAutomateStepRate()){
-						text = "Burn-in to aid automation of MCMC parameters: " + (i-realBurnIn + 1) ;
-					}else{
+//					if((i > realBurnIn ) && AutomateParameters.shouldAutomateStepRate()){
+//						text = "Burn-in to aid automation of MCMC parameters: " + (i-realBurnIn + 1) ;
+//					}else{
 						text = "Burn-in: " + (i + 1);
-					}
+//					}
 					frame.statusText.setText(text);
 				} else if (i % 1000 == 999) {
 					System.out.println("Burn in: " + (i + 1));
 				}
-				if( AutomateParameters.shouldAutomateStepRate() && (i >= realBurnIn) && i % SAMPLE_RATE_WHEN_DETERMINING_THE_SPACE == 0)   {
-					String[] align = getState().getLeafAlign();
-					alignmentsFromSamples.add(align);
-				}	
+//				if( AutomateParameters.shouldAutomateStepRate() && (i >= realBurnIn) && i % SAMPLE_RATE_WHEN_DETERMINING_THE_SPACE == 0)   {
+//					String[] align = getState().getLeafAlign();
+//					alignmentsFromSamples.add(align);
+//				}	
 				if (AutomateParameters.shouldAutomateProposalVariances() && i % mcmcpars.sampRate == 0) {
 					coreModel.modifyProposalWidths();
 					modelExtMan.modifyProposalWidths();
@@ -601,40 +601,40 @@ public class Mcmc extends Stoppable {
 			//Utils.DEBUG = true;
 			
 			int period;
-			if(AutomateParameters.shouldAutomateNumberOfSamples()){
-				period = 1000000;
-			}else{
+//			if(AutomateParameters.shouldAutomateNumberOfSamples()){
+//				period = 1000000;
+//			}else{
 				period = mcmcpars.cycles / mcmcpars.sampRate;
-			}
+//			}
 
 			int sampRate;
-			if(AutomateParameters.shouldAutomateStepRate()){
-				if(frame != null)
-				{
-					frame.statusText.setText("Calculating the sample rate");
-				}
-				else
-				{
-					System.out.println("Calculating the sample rate");
-				}
-				ArrayList<Double> theSpace = Distance.spaceAMA(alignmentsFromSamples);
-				sampRate = AutomateParameters.getSampleRateOfTheSpace(theSpace,SAMPLE_RATE_WHEN_DETERMINING_THE_SPACE);
-
-			}else{
+//			if(AutomateParameters.shouldAutomateStepRate()){
+//				if(frame != null)
+//				{
+//					frame.statusText.setText("Calculating the sample rate");
+//				}
+//				else
+//				{
+//					System.out.println("Calculating the sample rate");
+//				}
+//				ArrayList<Double> theSpace = Distance.spaceAMA(alignmentsFromSamples);
+//				sampRate = AutomateParameters.getSampleRateOfTheSpace(theSpace,SAMPLE_RATE_WHEN_DETERMINING_THE_SPACE);
+//
+//			}else{
 				sampRate = mcmcpars.sampRate;
-			}
+//			}
 
 
 			int swapNo = 0; // TODO: delete?
 			swapCounter = mcmcpars.swapRate;
 			
 			
-			AlignmentData alignment = new AlignmentData(getState().getLeafAlign());
-			ArrayList<AlignmentData> allAlignments = new ArrayList<AlignmentData>();
-			ArrayList<Double> distances = new ArrayList<Double>();
+//			AlignmentData alignment = new AlignmentData(getState().getLeafAlign());
+//			ArrayList<AlignmentData> allAlignments = new ArrayList<AlignmentData>();
+//			ArrayList<Double> distances = new ArrayList<Double>();
 
 			boolean shouldStop = false;
-			double currScore = 0;
+//			double currScore = 0;
 			for (int i = 0; i < period && !shouldStop; i++) {
 				for (int j = 0; j < sampRate; j++) {
 					
@@ -666,36 +666,36 @@ public class Mcmc extends Stoppable {
 					currentTime = System.currentTimeMillis();
 					if (frame != null) {
 						String text = "Samples taken: " + Integer.toString(i);
-						//remainingTime((currentTime - start)
-						//		* ((period - i - 1) * sampRate
-						//				+ sampRate - j - 1)
-						//				/ (burnIn + i * sampRate + j + 1))
-
+//						//remainingTime((currentTime - start)
+//						//		* ((period - i - 1) * sampRate
+//						//				+ sampRate - j - 1)
+//						//				/ (burnIn + i * sampRate + j + 1))
+//
 						text += "   The sampling rate: " + sampRate;
-						if(AutomateParameters.shouldAutomateNumberOfSamples()){
-							text +=  ",  Similarity(alignment n-1, alignment n): " + df.format(currScore) + " < " + df.format(AutomateParameters.PERCENT_CONST);
-						}
+//						if(AutomateParameters.shouldAutomateNumberOfSamples()){
+//							text +=  ",  Similarity(alignment n-1, alignment n): " + df.format(currScore) + " < " + df.format(AutomateParameters.PERCENT_CONST);
+//						}
 						frame.statusText.setText(text );
 					}
 				}
 				if (frame == null && !isParallel) {
 					System.out.println("Sample: " + (i + 1));
 				}
-				if(AutomateParameters.shouldAutomateNumberOfSamples()){
-					alignment = new AlignmentData(getState().getLeafAlign());
-					allAlignments.add(alignment);
-					if (allAlignments.size() >1){
-						FuzzyAlignment Fa = FuzzyAlignment.getFuzzyAlignmentAndProject(allAlignments.subList(0, allAlignments.size()-1), 0);
-						FuzzyAlignment Fb = FuzzyAlignment.getFuzzyAlignmentAndProject(allAlignments, 0);
-						currScore = FuzzyAlignment.AMA(Fa, Fb);
-						System.out.println(currScore);
-						distances.add(currScore);
-						if (allAlignments.size() >5){
-							shouldStop = AutomateParameters.shouldStopSampling(distances);
-						}
-
-					}
-				}
+//				if(AutomateParameters.shouldAutomateNumberOfSamples()){
+//					alignment = new AlignmentData(getState().getLeafAlign());
+//					allAlignments.add(alignment);
+//					if (allAlignments.size() >1){
+//						FuzzyAlignment Fa = FuzzyAlignment.getFuzzyAlignmentAndProject(allAlignments.subList(0, allAlignments.size()-1), 0);
+//						FuzzyAlignment Fb = FuzzyAlignment.getFuzzyAlignmentAndProject(allAlignments, 0);
+//						currScore = FuzzyAlignment.AMA(Fa, Fb);
+//						System.out.println(currScore);
+//						distances.add(currScore);
+//						if (allAlignments.size() >5){
+//							shouldStop = AutomateParameters.shouldStopSampling(distances);
+//						}
+//
+//					}
+//				}
 				// Report the results of the sample.
 				report(i, period);
 			}
