@@ -294,17 +294,19 @@ public class Mcmc extends Stoppable {
 		double multiplicativeProposalWidthControlVariable = 0.5;
 		
 		topologyMove = null;
+		double fastSwapProb = 0.05;
+		if (mcmcpars.fixAlign) fastSwapProb = 0.0;
 		
 		if(!mcmcpars.fixTopology && !mcmcpars.fixEdge) {
 			topologyMove = new TopologyMove(coreModel,edgePrior,
 					//0.5*multiplicativeProposalWidthControlVariable,"Topology"); // works ok with glob_25
-					1*uniformProposalWidthControlVariable,"Topology"); // experimental
+					1*uniformProposalWidthControlVariable,fastSwapProb,"Topology"); // experimental
 			coreModel.addMcmcMove(topologyMove, topologyWeight,topologyWeightIncrement);
 						
 //			LOCALTopologyMove localTopologyMove = new LOCALTopologyMove(coreModel,edgePrior,
 //					0.5*multiplicativeProposalWidthControlVariable,"LOCALTopology");
 			localTopologyMove = new LOCALTopologyMove(coreModel,edgePrior,
-					1*uniformProposalWidthControlVariable,"LOCALTopology");
+					1*uniformProposalWidthControlVariable,fastSwapProb,"LOCALTopology");
 			coreModel.addMcmcMove(localTopologyMove, localTopologyWeight,localTopologyWeightIncrement);
 		}
 		if(!mcmcpars.fixEdge) {

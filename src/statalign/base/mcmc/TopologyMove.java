@@ -32,11 +32,12 @@ public class TopologyMove extends McmcMove {
 	
 	public int topologyChangeAcceptanceCount = 0;
 	
-	public TopologyMove (McmcModule m, PriorDistribution<Double> pr, double propVar, String n) {
+	public TopologyMove (McmcModule m, PriorDistribution<Double> pr, double propVar, double _fastSwapProb, String n) {
 		owner = m;
 		edgePrior = pr;
 		edgeProposalWidthControlVariable = propVar;
 		name = n;
+		fastSwapProb = _fastSwapProb;
 		//autoTune = true;
 		autoTune = false;
 		if(Utils.DEBUG){
