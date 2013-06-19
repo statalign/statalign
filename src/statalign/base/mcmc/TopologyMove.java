@@ -27,7 +27,7 @@ public class TopologyMove extends McmcMove {
 	
 	PriorDistribution<Double> edgePrior;
 	
-	double fastSwapProb = 0.05;	
+	double fastSwapProb = 0.0;	
 	boolean didFastSwap = false;
 	
 	public int topologyChangeAcceptanceCount = 0;

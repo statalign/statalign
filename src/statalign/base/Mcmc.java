@@ -165,10 +165,16 @@ public class Mcmc extends Stoppable {
 	
 	//private int alignWeight = 25;
 	private double[] Pvals = {0.9,0.99,0.999,0.9999,0.99999};
+	//private double[] rateMult = {3.0,2.5,2.0,1.5,1};
+	private double[] rateMult = {1,1,1,1,1};
 
 	private int[] alignWeights = {1,1,1,1,20};
+	private int[] alignWeights2 = {1,1,1,1,20};
+	//private int[] alignWeights2 = {0,0,0,0,0};
 	//private int[] alignWeights = {0,0,0,0,25};
 	private int[] alignWeightIncrements = {5,1,1,1,-4};
+	private int[] alignWeightIncrements2 = {2,2,2,2,-8};
+	//private int[] alignWeightIncrements2 = {5,5,5,5,5};
 	//private int[] alignWeightIncrements = {5,1,1,1,-10};
 	//private int[] alignWeightIncrements = {11,1,1,1,-10};
 	//private int[] alignWeightIncrements = {0,0,0,0,0};
@@ -280,10 +286,15 @@ public class Mcmc extends Stoppable {
 		coreModel.addMcmcMove(substMove, substWeight);
 
 		if(!mcmcpars.fixAlign) {
-			for (int i =0; i<Pvals.length; i++) {
+			for (int i=0; i<Pvals.length; i++) {
 				AlignmentMove alignMove = new AlignmentMove(coreModel,Pvals[i],"Alignment_"+i+"_"+Pvals[i]);
 				coreModel.addMcmcMove(alignMove, alignWeights[i],alignWeightIncrements[i]);
 			}
+//			for (int i=0; i<rateMult.length; i++) {
+//				AlignmentMove alignMove = new AlignmentMove(coreModel,Pvals[4],"Alignment_"+(i+Pvals.length)+"_"+Pvals[4]+"_"+rateMult[i]);
+//				alignMove.setProposalParamMultiplier(rateMult[i]);
+//				coreModel.addMcmcMove(alignMove, alignWeights2[i],alignWeightIncrements2[i]);
+//			}
 			
 			SilentIndelMove silentIndelMove = new SilentIndelMove(coreModel,"SilentIndel");
 			coreModel.addMcmcMove(silentIndelMove, silentIndelWeight,silentIndelWeightIncrement);
@@ -294,7 +305,8 @@ public class Mcmc extends Stoppable {
 		double multiplicativeProposalWidthControlVariable = 0.5;
 		
 		topologyMove = null;
-		double fastSwapProb = 0.05;
+		//double fastSwapProb = 0.05;
+		double fastSwapProb = 0.0;
 		if (mcmcpars.fixAlign) fastSwapProb = 0.0;
 		
 		if(!mcmcpars.fixTopology && !mcmcpars.fixEdge) {
@@ -1506,7 +1518,7 @@ public class Mcmc extends Stoppable {
 //		}
 
 	
-	public static void main(String[] args) {
+	public static void main5(String[] args) {
 		
 		HashMap<Integer,String> test = new HashMap<Integer,String>();
 		test.put(1, "1");
