@@ -282,6 +282,14 @@ public class Vertex {
     void updateHmm2Matrix() {
     	updateHmm2Matrix(1.0);
     }
+    void updateHmm2Matrix(double R, double lambda, double mu) {
+        hmm2TransMatrix = owner.hmm2.preCalcTransMatrix(hmm2TransMatrix, edgeLength,new double[] {R,lambda,mu});
+        hmm2PropTransMatrix = hmm2TransMatrix;
+    }
+    public void updateHmm2Matrix(double[] params) {
+        hmm2TransMatrix = owner.hmm2.preCalcTransMatrix(hmm2TransMatrix, edgeLength,params);
+        hmm2PropTransMatrix = hmm2TransMatrix;
+    }
     void updateHmm2Matrix(double heat) {
         hmm2TransMatrix = owner.hmm2.preCalcTransMatrix(hmm2TransMatrix, edgeLength);
         hmm2PropTransMatrix = hmm2TransMatrix;
@@ -362,6 +370,32 @@ public class Vertex {
             // recomputed after every move, because that's unnecessary
         }
         updateHmmMatrices();        
+    }
+    public void updateHmm2Matrices() {
+        if (parent != null)
+            updateHmm2Matrix();
+    }
+    public void recursivelyUpdateHmm2Matrices() {
+    	if (!selected) return;
+        if (left != null && right != null) {
+            // System.out.println("calling the left child");
+            left.recursivelyUpdateHmm2Matrices();
+            //System.out.println("calling the right child");
+            right.recursivelyUpdateHmm2Matrices();
+            //calcUpperWithCheck(); 
+        }
+        updateHmm2Matrices();        
+    }    
+    public void recursivelyUpdateHmm3Matrices() {
+        if (!selected) return;
+    	if (left != null && right != null) {
+            // System.out.println("calling the left child");
+            left.recursivelyUpdateHmm3Matrices();
+            //System.out.println("calling the right child");
+            right.recursivelyUpdateHmm3Matrices();
+            //calcUpperWithCheck(); 
+        }
+        updateHmm3Matrix();        
     }
 
     public void setEdgeLength(double x) {
@@ -464,6 +498,21 @@ public class Vertex {
     }
     
     public void recomputeLogLike() {
+        if (left != null && right != null) {
+            // System.out.println("calling the left child");
+            left.recomputeLogLike();
+            //System.out.println("calling the right child");
+            right.recomputeLogLike();
+            //calcUpperWithCheck(); 
+            // we shouldn't require all upp vectors to be
+            // recomputed after every move, because that's unnecessary
+        }
+        calcFelsen();
+        calcOrphan();
+        calcIndelLogLike();
+    }
+    public void recomputeLogLikeSelected() {
+    	if (!selected) return;
         if (left != null && right != null) {
             // System.out.println("calling the left child");
             left.recomputeLogLike();
@@ -2446,8 +2495,12 @@ public class Vertex {
          
          
         //DEBUG=2; // Activate verbose print statements 
-        owner.root.recomputeLogLike();
-     	uncle.calcAllUp(); // uncle is now lower 
+		
+ 		uncle.selectAllUp();
+ 		selected = true;
+ 		
+        owner.root.recomputeLogLikeSelected();
+     	//uncle.calcAllUp(); // uncle is now lower 
      	//DEBUG=0; // Deactivate verbose print statements
     	
     }
@@ -3358,7 +3411,9 @@ public class Vertex {
  		if (Utils.DEBUG) {
  			owner.checkPointers();
  		}
-		owner.root.recomputeLogLike();
+ 		uncle.selectAllUp();
+ 		selected = true;
+		owner.root.recomputeLogLikeSelected();
  		
     	//uncle.calcAllUp();
     	
@@ -5112,6 +5167,16 @@ public class Vertex {
 //        if (Utils.USE_UPPER) {
 //        	owner.root.calcUpperRecursively();
 //        }
+    }
+    void selectAllUp() {   	
+        selected = true;
+        for (Vertex v = parent; v != null; v = v.parent) {
+    		v.selected = true;
+    	}
+        if (left != null && right != null) {
+            left.selected = false;
+            right.selected = false;
+        }
     }
 
     void parentNewChild(Vertex child) {

@@ -76,7 +76,7 @@ public class CommandLine {
 		Options opt = new Options(args, Multiplicity.ZERO_OR_ONE, 0,
 				Integer.MAX_VALUE);
 		opt.addSet("run")
-				.addOption("debug", Separator.NONE)
+				.addOption("debug", Separator.EQUALS)
 				.addOption("subst", Separator.EQUALS)
 				.addOption("mcmc", Separator.EQUALS)
 				.addOption("seed", Separator.EQUALS)
