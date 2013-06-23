@@ -201,6 +201,7 @@ public class Mcmc extends Stoppable {
 		ppm.mcmc = this;
 		this.modelExtMan.setMcmc(this);
 		this.tree = tree;
+		tree.owner = this;
 		mcmcpars = pars;
 		this.tree.heat = 1.0d;
 		randomisationPeriod = mcmcpars.randomisationPeriod;
@@ -308,7 +309,7 @@ public class Mcmc extends Stoppable {
 		double multiplicativeProposalWidthControlVariable = 0.5;
 		
 		topologyMove = null;
-		double fastSwapProb = 0.0;
+		double fastSwapProb = 0.05;
 		if (mcmcpars.fixAlign) fastSwapProb = 0.0;
 		
 		if(!mcmcpars.fixTopology && !mcmcpars.fixEdge) {
@@ -384,6 +385,15 @@ public class Mcmc extends Stoppable {
 		}
 	}
 	
+	/**
+	 * 
+	 * @param aligned Vector indicating which characters are aligned to the current
+	 * column in the subtrees below.
+	 * @return Logarithm of emission probability for subtrees
+	 */
+	double calcEm(int[] aligned) {
+		return modelExtMan.calcLogEm(aligned);
+	}
 	/**
 	 * This function is called by the McmcMove objects in order to determine whether 
 	 * the proposed moves are to be accepted.

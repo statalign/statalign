@@ -312,6 +312,16 @@ public abstract class ModelExtension extends McmcModule {
 	public void afterSubstParamChange(Tree tree, SubstitutionModel model, int ind, boolean accepted) {}
 	
 	/**
+	 * 
+	 * @param aligned Vector indicating which characters are aligned to the current
+	 * column in the subtrees below.
+	 * @return Logarithm of emission probability for subtrees
+	 */
+	public double calcLogEm(int[] aligned) {
+		return 0;
+	}
+	
+	/**
 	 * Allows access to the Mcmc class. Generally not recommended.
 	 */
 //	protected Mcmc getMcmc() {

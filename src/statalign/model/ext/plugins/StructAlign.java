@@ -1028,6 +1028,11 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		// does not affect log-likelihood
 		return curLogLike;
 	}
+	
+	@Override
+	public double calcLogEm(int[] aligned) {
+		return columnContrib(aligned);
+	}
 
 	// </StructAlign>
 }

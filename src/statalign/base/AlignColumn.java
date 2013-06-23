@@ -66,7 +66,11 @@ public class AlignColumn {
 	 * This double array contains the upper Likelihoods
 	 */
 	public double upp[];						// upper likelihoods of the column
-
+	/**
+	 * Vector indicating which characters are aligned to this column at the leaves below. 
+	 */
+	public int aligned[];
+	
 	/**
 	 * It constructs a new AlignColumn. Sets only the owner, other fields are filled in outside of the
 	 * constructor
@@ -92,6 +96,10 @@ public class AlignColumn {
 		c.emptyWindow = emptyWindow;
 		if (seq==null) c.seq = null;
 		else 		   c.seq = seq.clone();
+		if (upp==null) c.upp = null;
+		else 		   c.upp = upp.clone();
+		if (aligned==null) c.aligned = null;
+		else 		   c.aligned = aligned.clone();
 		return c;
 	}
 	/**
@@ -105,6 +113,7 @@ public class AlignColumn {
 		orphan = c.orphan;
 		seq = c.seq;
 		upp = c.upp;
+		if (Utils.USE_MODEXT_EM) aligned = c.aligned;
 		left = c.left;
 		right = c.right;
 		parent = c.parent;
@@ -131,6 +140,7 @@ public class AlignColumn {
 		if(newSeq) {
 			seq = new double[owner.owner.substitutionModel.e.length];
 			upp = new double[owner.owner.substitutionModel.e.length];
+			if (Utils.USE_MODEXT_EM) aligned = new int[owner.owner.vertex.length/2 + 1];
 		}
 	}	
 	public AlignColumn(AlignColumn next) {
@@ -145,7 +155,8 @@ public class AlignColumn {
 		else owner.first = this;
 		next.prev = this;
 		seq = new double[owner.owner.substitutionModel.e.length];
-		upp = new double[owner.owner.substitutionModel.e.length];		
+		upp = new double[owner.owner.substitutionModel.e.length];	
+		if (Utils.USE_MODEXT_EM) aligned = new int[owner.owner.vertex.length/2 + 1];		
 		owner.length++;
 	}
 	
@@ -246,7 +257,8 @@ public class AlignColumn {
 		saveLeft(copy);
 		saveRight(copy);
 		seq = copy.seq;
-		upp = copy.upp;
+		upp = copy.upp;		
+		if (Utils.USE_MODEXT_EM) aligned = copy.aligned;
 	}
 
 	void saveParent(AlignColumn copy) {

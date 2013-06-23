@@ -123,8 +123,10 @@ public class Vertex {
         int size = owner.substitutionModel.e.length;
         first = new AlignColumn(this);
         first.seq = new double[size];
+        if (Utils.USE_MODEXT_EM) first.aligned = new int[owner.vertex.length/2 + 1];
         for (int i = 0; i < first.seq.length; i++) {
             first.seq[i] = seq[0][i];
+            if (Utils.USE_MODEXT_EM) first.aligned[index] = 0;
         }
         first.prev = null;
         AlignColumn prev = first;
@@ -133,10 +135,12 @@ public class Vertex {
             prev.next = actual;
             actual.prev = prev;
             actual.seq = new double[size];
+            if (Utils.USE_MODEXT_EM) actual.aligned = new int[owner.vertex.length/2 + 1];
             for (int j = 0; j < first.seq.length; j++) {
                 actual.seq[j] = seq[i][j];
             }
             prev = actual;
+			if (Utils.USE_MODEXT_EM) actual.aligned[index] = i;
         }
         last = new AlignColumn(this);
         last.prev = prev;
@@ -924,7 +928,8 @@ public class Vertex {
         double probMatrix[][][];                                                                // DP matrix used for 3-seq HMM alignment
         probMatrix = new double[leftLen + 1][rightLen + 1][END];        // don't reserve space for end state
 
-        double emissionProb, felsen[] = new double[equDist.length], tr;
+        double logEmissionProb, felsen[] = new double[equDist.length], tr;
+        int[] aligned;
         AlignColumn l = null, r = null;
         int i, j, k, previ, prevj, prevk;
 
@@ -940,10 +945,36 @@ public class Vertex {
                         if (hmm3Parent[k] != 0) {
                             // there's a parent character in alignment column, but still can be an (even double-) deletion
                             Utils.calcFelsen(felsen, hmm3Left[k] != 0 ? l.seq : null, left.charTransMatrix, hmm3Right[k] != 0 ? r.seq : null, right.charTransMatrix);
-                            emissionProb = Utils.calcEmProb(felsen, equDist);
+                            logEmissionProb = Math.log(Utils.calcEmProb(felsen, equDist));
+                            if (Utils.USE_MODEXT_EM && owner.owner != null) {
+                        		aligned = new int[owner.vertex.length / 2 + 1];
+                        		for (int ii=0; ii<aligned.length; ii++) aligned[ii] = -1;
+                        		if (hmm3Left[k] != 0) {
+                        			for (int ii=0; ii<aligned.length; ii++) {
+                        				if (l.aligned[ii] > 0) aligned[ii] = l.aligned[ii];
+                        			}
+                        		}
+                        		if (hmm3Right[k] != 0) {
+                        			for (int ii=0; ii<aligned.length; ii++) {
+                        				if (r.aligned[ii] > 0) aligned[ii] = r.aligned[ii];
+                        			}
+                        		}                        		
+                        		//System.out.print(logEmissionProb);
+                        		logEmissionProb += owner.owner.calcEm(aligned);
+                        		//System.out.println(" "+logEmissionProb);
+                        	}
                         } else {
                             // no parent, it's an insertion on either of (but never both) branches
-                            emissionProb = Utils.calcEmProb(hmm3Left[k] != 0 ? l.seq : r.seq, equDist);
+                            logEmissionProb = Math.log(Utils.calcEmProb(hmm3Left[k] != 0 ? l.seq : r.seq, equDist));
+                            if (Utils.USE_MODEXT_EM  && owner.owner != null) {
+                            	if (hmm3Left[k] != 0) {
+                            		logEmissionProb += owner.owner.calcEm(l.aligned);
+                            	}
+                            	else if (hmm3Right[k] != 0) {
+                            		logEmissionProb += owner.owner.calcEm(r.aligned);
+                            	}
+                            	// Shouldn't be any other cases
+                            }
                         }
                         if (previ == 0 && prevj == 0)
                             tr = hmm3RedTransMatrix[START][k];
@@ -951,7 +982,7 @@ public class Vertex {
                             for (tr = Utils.log0, prevk = START + 1; prevk < END; prevk++)
                                 tr = Utils.logAdd(tr, probMatrix[previ][prevj][prevk] + hmm3RedTransMatrix[prevk][k]);
                         }
-                        probMatrix[i][j][k] = heat*(Math.log(emissionProb) + tr);
+                        probMatrix[i][j][k] = heat*(logEmissionProb + tr);
                     } else
                         probMatrix[i][j][k] = Utils.log0;
                 }
@@ -1178,6 +1209,8 @@ public class Vertex {
         //s = right.printedAlignment();
         //System.out.println(s[0]+"\n"+s[1]+"\n");
 
+        if (Utils.USE_MODEXT_EM) updateAligned();
+
         return retVal.value;
     }
 
@@ -1320,6 +1353,8 @@ public class Vertex {
         //s = right.printedAlignment();
         //System.out.println(s[0]+"\n"+s[1]+"\n");
 
+        if (Utils.USE_MODEXT_EM) updateAligned();
+        
         return retVal.value;
     }
 
@@ -1338,7 +1373,7 @@ public class Vertex {
         double probMatrix[][][];                                          // DP matrix used for 2-seq HMM alignment
         probMatrix = new double[parentLen + 1][childLen + 1][END];        // don't reserve space for end state
 
-        double emissionProb, felsen[] = new double[equDist.length], tr;
+        double logEmissionProb, felsen[] = new double[equDist.length], tr;
         AlignColumn c = null;                // child
         AlignColumn p = null;                // parent
         AlignColumn b;                            // brother
@@ -1352,19 +1387,36 @@ public class Vertex {
                     previ = i - hmm2Parent[k];
                     prevj = j - hmm2Child[k];
                     if (previ >= 0 && prevj >= 0) {
+                    	int[] aligned;                    	
                         if (hmm2Parent[k] != 0) {                // parent present: substitution (* *) or deletion (* -)
                             b = (this == parent.left) ? p.right : p.left;
                             Utils.calcFelsen(felsen, hmm2Child[k] != 0 ? c.seq : null, charTransMatrix, b != null ? b.seq : null, brother.charTransMatrix);
                             if (parent == owner.root || p.orphan || !Utils.USE_UPPER) {
-                                emissionProb = Utils.calcEmProb(felsen, equDist);
+                                logEmissionProb = Math.log(Utils.calcEmProb(felsen, equDist));
                             }
                             else {
-                            	emissionProb = Utils.calcEmProb(felsen, p.upp);
+                            	logEmissionProb = Math.log(Utils.calcEmProb(felsen, p.upp));
                             	// If a double deletion (childless parent) then the above
                             	// should just yield the sum of p.upp
                             }
+                            if (Utils.USE_MODEXT_EM && owner.owner != null) {
+                        		aligned = new int[owner.vertex.length / 2 + 1];
+                        		for (int ii=0; ii<aligned.length; ii++) aligned[ii] = -1;
+                        		if (hmm2Child[k] != 0) {
+                        			for (int ii=0; ii<aligned.length; ii++) {
+                        				if (c.aligned[ii] > 0) aligned[ii] = c.aligned[ii];
+                        			}
+                        		}
+                        		if (b != null) {
+                        			for (int ii=0; ii<aligned.length; ii++) {
+                        				if (b.aligned[ii] > 0) aligned[ii] = b.aligned[ii];
+                        			}
+                        		}
+                        		logEmissionProb += owner.owner.calcEm(aligned);
+                        	}
                         } else {                    // insertion (- *)
-                            emissionProb = Utils.calcEmProb(c.seq, equDist);
+                            logEmissionProb = Math.log(Utils.calcEmProb(c.seq, equDist));
+                            if (Utils.USE_MODEXT_EM && owner.owner != null) logEmissionProb += owner.owner.calcEm(c.aligned);
                         }
                         if (previ == 0 && prevj == 0) tr = hmm2PropTransMatrix[START][k];
                         else {
@@ -1372,7 +1424,7 @@ public class Vertex {
                                 tr = Utils.logAdd(tr, probMatrix[previ][prevj][prevk] + hmm2PropTransMatrix[prevk][k]);
                             }
                         }
-                        probMatrix[i][j][k] = 1.0*(Math.log(emissionProb) + tr);
+                        probMatrix[i][j][k] = 1.0*(logEmissionProb + tr);
                     } else probMatrix[i][j][k] = Utils.log0;
                 }
                 c = (j > 0) ? c.next : winFirst;
@@ -1523,6 +1575,9 @@ public class Vertex {
 //        if (Utils.DEBUG) {
 //        	printToScreenAlignment(0,0);
 //        }
+        
+        if (Utils.USE_MODEXT_EM) parent.updateAligned();
+        
         return retVal.value;
     }
 
@@ -1628,6 +1683,8 @@ public class Vertex {
         parent.calcFelsen();
         parent.calcOrphan();
         parent.calcIndelLogLike();
+        
+	    if (Utils.USE_MODEXT_EM) parent.updateAligned();
 
 //        if (Utils.DEBUG) {
 //        	printToScreenAlignment(0,0);
@@ -1676,7 +1733,8 @@ public class Vertex {
 	    	System.out.println(owner.hmm2.params[0]+" "+owner.hmm2.params[1]+" "+owner.hmm2.params[2]);
 	    	System.out.println(owner.printedTree());
     	}
-        //printToScreenAlignment(0,0,true);
+        //if (Utils.DEBUG) printToScreenAlignment(0,0,true);
+    	//printToScreenAlignment(0,0,true);
     	StringBuffer sb = new StringBuffer();
     	
 //    	 owner.root.calcFelsenRecursively();
@@ -1935,6 +1993,23 @@ public class Vertex {
             for (AlignColumn actualAC = parent.winFirst; actualAC != parent.winLast; actualAC = actualAC.next)
                 parent.winLength++;
         }
+    }
+    
+    void updateAligned() {
+    	for (AlignColumn p = last.prev; p != null; p = p.prev) {
+    		p.aligned = new int[owner.vertex.length / 2 + 1];
+    		for (int i=0; i<p.aligned.length; i++) p.aligned[i] = -1;
+     		if (p.left != null) {
+     			for (int i=0; i<p.aligned.length; i++) {
+     				if (p.left.aligned[i] > 0) p.aligned[i] = p.left.aligned[i];
+     			}
+     		}
+     		if (p.right != null) {
+     			for (int i=0; i<p.aligned.length; i++) {
+     				if (p.right.aligned[i] > 0) p.aligned[i] = p.right.aligned[i];
+     			}
+     		}             		
+    	}
     }
     
     double doRecAlign() {
