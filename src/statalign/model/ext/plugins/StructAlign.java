@@ -273,8 +273,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	}
 	@Override
 	public void setParam(String paramName, boolean paramValue) {
-		if (paramName.equals("globalSigma")) {
-			globalSigma = true;
+		if (paramName.equals("localSigma")) {
+			globalSigma = false;
 		}
 		else if (paramName.equals("useLibrary")) {
 			useLibrary = true;
