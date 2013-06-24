@@ -165,7 +165,7 @@ public class Mcmc extends Stoppable {
 	
 	//private int alignWeight = 25;
 	private double[] Pvals = {0.9,0.99,0.999,0.9999,0.99999};
-	private double[] rateMult = {3.0,2.5,2.0,1.5,1};
+	private double[] rateMult = {3.0,2.5,2.0,1.5,1.0};
 	//private double[] rateMult = {1,1,1,1,1};
 
 	private int[] alignWeights = {0,0,0,0,12};
@@ -291,12 +291,17 @@ public class Mcmc extends Stoppable {
 				AlignmentMove alignMove = new AlignmentMove(coreModel,Pvals[i],"Alignment_"+i+"_"+Pvals[i]);
 				if (i==(Pvals.length-1)) { // Keep one of them with longer windows
 					alignMove.autoTunable = false;
-				}
+					alignMove.useModelExtInProposal();
+				}				
 				coreModel.addMcmcMove(alignMove, alignWeights[i],alignWeightIncrements[i]);
 			}
 			for (int i=0; i<rateMult.length; i++) {
 				AlignmentMove alignMove = new AlignmentMove(coreModel,Pvals[4],"Alignment_"+(i+Pvals.length)+"_"+Pvals[4]+"_"+rateMult[i]);
 				alignMove.setProposalParamMultiplier(rateMult[i]);
+				if (i==(rateMult.length-1)) { // Keep one of them with longer windows
+					alignMove.autoTunable = false;
+					alignMove.useModelExtInProposal();
+				}
 				coreModel.addMcmcMove(alignMove, alignWeights2[i],alignWeightIncrements2[i]);
 			}
 			
@@ -315,7 +320,7 @@ public class Mcmc extends Stoppable {
 		if(!mcmcpars.fixTopology && !mcmcpars.fixEdge) {
 			topologyMove = new TopologyMove(coreModel,edgePrior,
 					//0.5*multiplicativeProposalWidthControlVariable,"Topology"); // works ok with glob_25
-					1*uniformProposalWidthControlVariable,fastSwapProb,"Topology"); // experimental
+					0.75*uniformProposalWidthControlVariable,fastSwapProb,"Topology"); // experimental
 			coreModel.addMcmcMove(topologyMove, topologyWeight,topologyWeightIncrement);
 						
 //			LOCALTopologyMove localTopologyMove = new LOCALTopologyMove(coreModel,edgePrior,
@@ -359,7 +364,7 @@ public class Mcmc extends Stoppable {
 		stoppable();
 		if(Utils.DEBUG) {
 			System.out.println("tree.getLogLike() (BEFORE) = "+tree.getLogLike());
-			tree.recomputeCheckLogLike(); 
+			//tree.recomputeCheckLogLike(); 
 			if(Math.abs(modelExtMan.totalLogLike(tree)-totalLogLike) > 1e-5) {
 				System.out.println("\nBefore: "+modelExtMan.totalLogLike(tree)+" "+totalLogLike);
 				throw new Error("Log-likelihood inconsistency at start of sample()");

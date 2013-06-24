@@ -115,8 +115,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	// sigma2Prior will either be InverseGamma or Hyperbolic, depending
 	// on whether globalSigma is switched on. It is defined inside the initRun()
 	// method.
-	private double epsilonPriorShape = 2;
-	private double epsilonPriorRate = 2;
+	private double epsilonPriorShape = 2;//10; //1; //2;
+	private double epsilonPriorRate = 2;//50; //5; //2;
 	public PriorDistribution<Double> epsilonPrior;
 	boolean epsilonPriorInitialised = false;
 	

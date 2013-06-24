@@ -541,11 +541,18 @@ public class Vertex {
             // we shouldn't require all upp vectors to be
             // recomputed after every move, because that's unnecessary
         }
+        //if (Utils.USE_MODEXT_EM) updateAlignedWithCheck();
         calcFelsenWithCheck();
         calcOrphanWithCheck();
         calcIndelLogLikeWithCheck();
     }
 
+    public void calcUpperFromRoot() {
+    	for (Vertex v = parent; v != null; v = v.parent) {
+    		v.calcUpperFromRoot();
+    		v.calcUpper();
+    	}    	
+    }
     /**
      * This function calculates the upper probability vectors, which contain
      * the partial likelihoods for everything except this subtree.
@@ -1209,7 +1216,9 @@ public class Vertex {
         //s = right.printedAlignment();
         //System.out.println(s[0]+"\n"+s[1]+"\n");
 
-        if (Utils.USE_MODEXT_EM) updateAligned();
+        if (Utils.USE_MODEXT_EM) {
+        	updateAligned();
+        }
 
         return retVal.value;
     }
@@ -1353,7 +1362,9 @@ public class Vertex {
         //s = right.printedAlignment();
         //System.out.println(s[0]+"\n"+s[1]+"\n");
 
-        if (Utils.USE_MODEXT_EM) updateAligned();
+        if (Utils.USE_MODEXT_EM) {
+        	updateAligned();
+        }
         
         return retVal.value;
     }
@@ -1410,6 +1421,11 @@ public class Vertex {
                         		if (b != null) {
                         			for (int ii=0; ii<aligned.length; ii++) {
                         				if (b.aligned[ii] > 0) aligned[ii] = b.aligned[ii];
+                        			}
+                        		}
+                        		if (Utils.USE_MODEXT_UPP) {
+                        			for (int ii=0; ii<aligned.length; ii++) {
+                        				if (p.alignedUpp[ii] > 0) aligned[ii] = p.alignedUpp[ii];                        			
                         			}
                         		}
                         		logEmissionProb += owner.owner.calcEm(aligned);
@@ -1511,6 +1527,11 @@ public class Vertex {
         boolean isLeft = parent.left == this;
         //System.out.println("Aligning "+(isLeft ? "left" : "right")+" in hmm2Align");
 
+//        if (Utils.USE_MODEXT_UPP) {
+//        	if (Utils.DEBUG) updateAlignedUppFromRootWithCheck();
+//        	updateAlignedUppFromRoot();
+//        }
+        
         int k, previ, prevj, prevk;
         double probMatrix[][][] = hmm2ProbMatrix();
         MuDouble retVal = new MuDouble(0.0);
@@ -1576,7 +1597,10 @@ public class Vertex {
 //        	printToScreenAlignment(0,0);
 //        }
         
-        if (Utils.USE_MODEXT_EM) parent.updateAligned();
+        if (Utils.USE_MODEXT_EM) {
+        	parent.updateAligned();
+        	parent.updateAlignedParent();
+        }
         
         return retVal.value;
     }
@@ -1597,6 +1621,12 @@ public class Vertex {
         int parentLen = parent.winLength, childLen = winLength;
         boolean isLeft = parent.left == this;
 
+//        if (Utils.USE_MODEXT_UPP) {
+//        	if (Utils.DEBUG) updateAlignedUppFromRootWithCheck();
+//        	updateAlignedUppFromRoot();
+//        }
+//        if (Utils.USE_UPPER) calcUpperFromRoot();
+        
         int k, previ, prevj, prevk;
         double probMatrix[][][] = hmm2ProbMatrix(heat);
         MuDouble retVal = new MuDouble(0.0);
@@ -1677,14 +1707,17 @@ public class Vertex {
         if (Utils.USE_UPPER) { 
         	// Then we may have modified the Felsenstein vectors
         	// for `this', so need to restore them.
-        	calcFelsen();
+        	//calcFelsen();
         }
         calcOrphan();
         parent.calcFelsen();
         parent.calcOrphan();
         parent.calcIndelLogLike();
         
-	    if (Utils.USE_MODEXT_EM) parent.updateAligned();
+        if (Utils.USE_MODEXT_EM) {
+        	parent.updateAligned();
+        	parent.updateAlignedParent();
+        }
 
 //        if (Utils.DEBUG) {
 //        	printToScreenAlignment(0,0);
@@ -1820,10 +1853,15 @@ public class Vertex {
 //        calcOrphanRecursively();
 //        calcIndelLogLikeRecursively();
         //calcAllUp();
-        if (Utils.USE_UPPER) {
-        	//owner.root.calcFelsenRecursively();
-        	owner.root.calcUpperRecursively();
-        }   
+//        if (Utils.USE_UPPER) {
+//        	//owner.root.calcFelsenRecursively();
+//        	owner.root.calcUpperRecursively();
+//        }   
+        
+        if (this != owner.root) {
+        	if (Utils.USE_MODEXT_UPP) updateAlignedUppFromRoot();
+        	if (Utils.USE_UPPER) calcUpperFromRoot();        
+        }
         
         //printToScreenAlignment(b,b+winLength);
         // compute alignment backproposal
@@ -1859,10 +1897,9 @@ public class Vertex {
 //        owner.root.calcOrphanRecursively();
 //        owner.root.calcIndelLogLikeRecursively();
         calcAllUp();
-        if (Utils.USE_UPPER) {
-        	//owner.root.calcFelsenRecursively();
-        	owner.root.calcUpperRecursively();
-        }   
+//        if (Utils.USE_UPPER) {        	
+//        	owner.root.calcUpperRecursively();
+//        }   
         //owner.root.recomputeCheckLogLike();
         //if (Utils.USE_UPPER) owner.checkUppFelsProducts();
 
@@ -1923,7 +1960,6 @@ public class Vertex {
     	
     	updateHmm2Matrix(heat);
     	double bpp = 0;
-    	if (Utils.USE_UPPER) owner.root.calcUpperRecursively();
         if(!useCurrentWin) {
         	MuDouble p = new MuDouble(1.0);
 	        winLength = Utils.linearizerWeight(length, p, Utils.WINDOW_MULTIPLIER*Math.sqrt(length));
@@ -1951,6 +1987,13 @@ public class Vertex {
         // window is projected to parent
         selectWindowUp();
 
+    	//if (Utils.USE_UPPER) owner.root.calcUpperRecursively();
+        if (this != owner.root) {
+        	if (Utils.USE_MODEXT_UPP) updateAlignedUppFromRoot();
+        	if (Utils.USE_UPPER) calcUpperFromRoot();        
+        }
+        
+        
         // compute alignment backproposal
         bpp += hmm2BackProp();
 
@@ -1996,7 +2039,16 @@ public class Vertex {
     }
     
     void updateAligned() {
+    	updateAligned(false);
+    }
+    void updateAlignedWithCheck() {
+    	updateAligned(true);
+    }
+    void updateAligned(boolean withCheck) {
+    	if (Utils.DEBUG) System.out.println(index+".updateAligned()");
+    	int[] oldAligned = null;    	
     	for (AlignColumn p = last.prev; p != null; p = p.prev) {
+    		if (withCheck) oldAligned = p.aligned.clone();
     		p.aligned = new int[owner.vertex.length / 2 + 1];
     		for (int i=0; i<p.aligned.length; i++) p.aligned[i] = -1;
      		if (p.left != null) {
@@ -2009,9 +2061,83 @@ public class Vertex {
      				if (p.right.aligned[i] > 0) p.aligned[i] = p.right.aligned[i];
      			}
      		}             		
+     		if (withCheck) {
+     			for (int i=0; i<p.aligned.length; i++) {
+     				if (p.aligned[i] != oldAligned[i]) {
+     					for (int j=0; j<p.aligned.length; j++) {
+     						System.out.println(p.aligned[j]+" "+oldAligned[j]);
+     					}
+     					throw new RuntimeException("Inconsistency in aligned vectors:");
+     				}
+     			}
+     		}
+    	}    	
+    }
+    public void updateAlignedParent() {
+	    for (Vertex v = parent; v != null; v = v.parent) {
+			v.updateAligned();
+		}
+    }
+    void updateAlignedUpp() {
+    	updateAlignedUpp(false);
+    }
+    void updateAlignedUppWithCheck() {
+    	updateAlignedUpp(true);
+    }
+    void updateAlignedUpp(boolean withCheck) {
+    	int[] oldAlignedUpp = null;    	   	    	
+    	for (AlignColumn c = last.prev; c != null; c = c.prev) {
+    		if (withCheck) oldAlignedUpp = c.alignedUpp.clone();
+    		c.alignedUpp = new int[owner.vertex.length / 2 + 1];
+    		for (int i=0; i<c.alignedUpp.length; i++) {
+    			c.alignedUpp[i] = c.orphan ? -1 : c.parent.alignedUpp[i];
+    		}
+    		if (c.orphan) continue;
+    		if (this == parent.left) {
+	     		if (c.left != null) {
+	     			for (int i=0; i<c.alignedUpp.length; i++) {
+	     				if (c.left.aligned[i] > 0) c.alignedUpp[i] = c.left.aligned[i];
+	     			}
+	     		}
+    		}
+    		else {
+	     		if (c.right != null) {
+	     			for (int i=0; i<c.alignedUpp.length; i++) {
+	     				if (c.right.aligned[i] > 0) c.alignedUpp[i] = c.right.aligned[i];
+	     			}
+	     		}
+    		}
+    		if (withCheck) {
+     			for (int i=0; i<c.alignedUpp.length; i++) {
+     				if (c.alignedUpp[i] != oldAlignedUpp[i]) {
+     					for (int j=0; j<c.alignedUpp.length; j++) {
+     						System.out.println(c.alignedUpp[j]+" "+oldAlignedUpp[j]);
+     					}
+     					throw new RuntimeException("Inconsistency in alignedUpp vectors:");
+     				}
+     			}
+     		}
     	}
     }
-    
+    void updateAlignedUppFromRoot() {
+    	for (Vertex v = parent; v != null; v = v.parent) {
+    		v.updateAlignedUppFromRoot();
+    		v.updateAlignedUpp();
+    	}    	
+    }
+    void updateAlignedUppFromRootWithCheck() {
+    	for (Vertex v = parent; v != null; v = v.parent) {
+    		v.updateAlignedUppFromRootWithCheck();
+    		v.updateAlignedUppWithCheck();
+    	}    	
+    }
+    public void updateAlignedRecursively() {
+    	if (left != null && right != null && left.selected && right.selected) {
+    		left.updateAlignedRecursively();
+    		right.updateAlignedRecursively();
+    	}
+    	updateAligned();
+    }
     double doRecAlign() {
         if (left != null && right != null && left.selected && right.selected) {
             double ret = left.doRecAlign() + right.doRecAlign();
@@ -4547,6 +4673,9 @@ public class Vertex {
     public double fastSwapWithUncle() {
     	boolean old_USE_UPPER = Utils.USE_UPPER; 
     	Utils.USE_UPPER = false;
+    	boolean old_USE_MODEXT_UPP = Utils.USE_MODEXT_UPP; 
+    	Utils.USE_MODEXT_UPP = false;
+    	
         Vertex uncle = parent.brother(), grandpa = parent.parent;
         double ret = 0.0;
         Vertex starter;
@@ -4834,6 +4963,7 @@ public class Vertex {
         //	System.out.println("RET after backproposing anchors (final value) "+ret);
 
         Utils.USE_UPPER = old_USE_UPPER;
+        Utils.USE_MODEXT_UPP =  old_USE_MODEXT_UPP;     	
         return ret;
     }
 

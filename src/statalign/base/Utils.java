@@ -31,7 +31,7 @@ public class Utils{
 	/**
 	 * Debugging mode (various consistency checks done if on)
 	 */
-	public static boolean DEBUG = true;
+	public static boolean DEBUG = false;
 	// TODO Change this to an integer, so we can have different levels of 
 	// debug information printed.
 		
@@ -47,7 +47,9 @@ public class Utils{
 	 * to the emission probability used to compute the dynamic programming
 	 * matrices for alignment proposals. 
 	 */
-	public static final boolean USE_MODEXT_EM = true;
+	public static boolean USE_MODEXT_EM = true;
+	
+	public static boolean USE_MODEXT_UPP = true;
 	
 	/**
 	 * Whether to use information from the upper parts of the 
@@ -175,6 +177,7 @@ public class Utils{
 
 	//public static final double SILENT_INSERT_PROB = 0.05;	
 	public static final double SILENT_INSERT_PROB = 0.5;
+
 	
 	private static double[] tempDoubleArray;
 

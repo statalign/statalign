@@ -16,6 +16,8 @@ public class AlignmentMove extends McmcMove {
 	double[] realParams;
 	
 	public boolean autoTunable = true;
+	private boolean useModelExtInProposal = false;
+	private boolean useModextEm = false, useModextUpp = false;
 	
 	double oldll; 
 	
@@ -24,7 +26,7 @@ public class AlignmentMove extends McmcMove {
 	final static double SELTRLEVPROB[] = { 0.9, 0.6, 0.4, 0.2, 0 };
 	
 	public double minAcceptance = 0.05; // keep tuning till we get to this
-	public static final double MIN_WINDOW_MULTIPLIER = 0.1;
+	public static final double MIN_WINDOW_MULTIPLIER = 0.5;
 	public static final double MAX_WINDOW_MULTIPLIER = 1.5;
 	
 	public AlignmentMove (McmcModule m, double _P, String n) {
@@ -37,7 +39,9 @@ public class AlignmentMove extends McmcMove {
 	public void setProposalParamMultiplier(double p) {
 		proposalParamMultiplier = p;
 	}
-
+	public void useModelExtInProposal() {
+		useModelExtInProposal = true;
+	}
 
 	public void copyState(Object externalState) {
 		if (externalState instanceof Tree) {
@@ -48,8 +52,21 @@ public class AlignmentMove extends McmcMove {
 		else {
 			throw new IllegalArgumentException("AlignmentMove.copyState must take an argument of type Tree.");
 		}
+		if (!useModelExtInProposal) {
+			useModextEm = Utils.USE_MODEXT_EM; 
+			useModextUpp = Utils.USE_MODEXT_UPP; 
+			Utils.USE_MODEXT_EM = false;			
+			Utils.USE_MODEXT_UPP = false;
+		}		
+		if (proposalWidthControlVariable < MIN_WINDOW_MULTIPLIER) {		
+			proposalWidthControlVariable = MIN_WINDOW_MULTIPLIER; 
+		}		
+		if (proposalWidthControlVariable > MAX_WINDOW_MULTIPLIER) {		
+			proposalWidthControlVariable = MAX_WINDOW_MULTIPLIER;
+		}
+		
 		Utils.WINDOW_MULTIPLIER = proposalWidthControlVariable;
-
+		
 		oldll = owner.curLogLike;
 		
 		weights = new double[tree.vertex.length];
@@ -115,13 +132,23 @@ public class AlignmentMove extends McmcMove {
 //		selectedRoot.calcIndelLogLikeRecursively();
          if (Utils.USE_UPPER) {
          	//owner.root.calcFelsenRecursively();
-         	tree.root.calcUpperRecursively();
+         	//tree.root.calcUpperRecursively();
+        	selectedRoot.calcUpperFromRoot();
          }   
 	}
 	
 	public void afterMove(Object externalState) {
 		((CoreMcmcModule) owner).getModelExtMan().afterAlignChange(tree, selectedRoot,lastMoveAccepted);
 		if (lastMoveAccepted && (owner.curLogLike == oldll)) acceptanceCount--;
+				
+		if (!useModelExtInProposal) {			
+			Utils.USE_MODEXT_EM = useModextEm;			
+			Utils.USE_MODEXT_UPP = useModextUpp;
+			if (lastMoveAccepted) {
+				selectedRoot.updateAlignedRecursively();
+				selectedRoot.updateAlignedParent();
+			}
+		}	
 	}
 	
 	@Override

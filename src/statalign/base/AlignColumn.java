@@ -70,6 +70,10 @@ public class AlignColumn {
 	 * Vector indicating which characters are aligned to this column at the leaves below. 
 	 */
 	public int aligned[];
+	/**
+	 * Vector indicating which characters are aligned to the parent of this column. 
+	 */
+	public int alignedUpp[];
 	
 	/**
 	 * It constructs a new AlignColumn. Sets only the owner, other fields are filled in outside of the
@@ -100,6 +104,8 @@ public class AlignColumn {
 		else 		   c.upp = upp.clone();
 		if (aligned==null) c.aligned = null;
 		else 		   c.aligned = aligned.clone();
+		if (alignedUpp==null) c.alignedUpp = null;
+		else 		   c.alignedUpp = alignedUpp.clone();
 		return c;
 	}
 	/**
@@ -114,6 +120,7 @@ public class AlignColumn {
 		seq = c.seq;
 		upp = c.upp;
 		if (Utils.USE_MODEXT_EM) aligned = c.aligned;
+		if (Utils.USE_MODEXT_UPP) aligned = c.aligned;
 		left = c.left;
 		right = c.right;
 		parent = c.parent;
@@ -141,6 +148,7 @@ public class AlignColumn {
 			seq = new double[owner.owner.substitutionModel.e.length];
 			upp = new double[owner.owner.substitutionModel.e.length];
 			if (Utils.USE_MODEXT_EM) aligned = new int[owner.owner.vertex.length/2 + 1];
+			if (Utils.USE_MODEXT_UPP) alignedUpp = new int[owner.owner.vertex.length/2 + 1];
 		}
 	}	
 	public AlignColumn(AlignColumn next) {
@@ -156,7 +164,8 @@ public class AlignColumn {
 		next.prev = this;
 		seq = new double[owner.owner.substitutionModel.e.length];
 		upp = new double[owner.owner.substitutionModel.e.length];	
-		if (Utils.USE_MODEXT_EM) aligned = new int[owner.owner.vertex.length/2 + 1];		
+		if (Utils.USE_MODEXT_EM) aligned = new int[owner.owner.vertex.length/2 + 1];
+		if (Utils.USE_MODEXT_UPP) alignedUpp = new int[owner.owner.vertex.length/2 + 1];		
 		owner.length++;
 	}
 	
@@ -259,6 +268,7 @@ public class AlignColumn {
 		seq = copy.seq;
 		upp = copy.upp;		
 		if (Utils.USE_MODEXT_EM) aligned = copy.aligned;
+		if (Utils.USE_MODEXT_UPP) alignedUpp = copy.alignedUpp;
 	}
 
 	void saveParent(AlignColumn copy) {
