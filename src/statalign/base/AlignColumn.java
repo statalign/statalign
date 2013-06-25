@@ -1,4 +1,5 @@
 package statalign.base;
+import static java.util.Arrays.*;
 
 /**
  * 
@@ -147,8 +148,14 @@ public class AlignColumn {
 		if(newSeq) {
 			seq = new double[owner.owner.substitutionModel.e.length];
 			upp = new double[owner.owner.substitutionModel.e.length];
-			if (Utils.USE_MODEXT_EM) aligned = new int[owner.owner.vertex.length/2 + 1];
-			if (Utils.USE_MODEXT_UPP) alignedUpp = new int[owner.owner.vertex.length/2 + 1];
+			if (Utils.USE_MODEXT_EM) {
+				aligned = new int[owner.owner.vertex.length/2 + 1];
+				fill(aligned,-1);
+			}
+			if (Utils.USE_MODEXT_UPP) {
+				alignedUpp = new int[owner.owner.vertex.length/2 + 1];
+				fill(alignedUpp,-1);
+			}
 		}
 	}	
 	public AlignColumn(AlignColumn next) {
@@ -164,8 +171,14 @@ public class AlignColumn {
 		next.prev = this;
 		seq = new double[owner.owner.substitutionModel.e.length];
 		upp = new double[owner.owner.substitutionModel.e.length];	
-		if (Utils.USE_MODEXT_EM) aligned = new int[owner.owner.vertex.length/2 + 1];
-		if (Utils.USE_MODEXT_UPP) alignedUpp = new int[owner.owner.vertex.length/2 + 1];		
+		if (Utils.USE_MODEXT_EM) {
+			aligned = new int[owner.owner.vertex.length/2 + 1];
+			fill(aligned,-1);
+		}
+		if (Utils.USE_MODEXT_UPP) {
+			alignedUpp = new int[owner.owner.vertex.length/2 + 1];
+			fill(alignedUpp,-1);
+		}
 		owner.length++;
 	}
 	

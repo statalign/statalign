@@ -738,10 +738,13 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	public double columnContrib(int[] col) {
 		// count the number of ungapped positions in the column
 		int numMatch = 0;
+		//System.out.print("\t");
 		for(int i = 0; i < col.length; i++){
+			//System.out.print(col[i]+" ");
 			if(col[i] != -1)
 				numMatch++;
 		}
+		//System.out.println();
 		if(numMatch == 0) 
 			return 1;
 		// collect indices of ungapped positions

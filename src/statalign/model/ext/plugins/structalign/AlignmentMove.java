@@ -22,10 +22,16 @@ public class AlignmentMove extends McmcMove {
 	double heat = 1.0;
 	double secondHeat = 1.0;
 	
+	boolean autoTunable = true;
+	
 	Vertex subtreeRoot;
 	int nLeaves;
 	ArrayList<Integer> subtreeLeaves;
 	int index;
+	
+	public double minAcceptance = 0.05; // keep tuning till we get to this
+	public static final double MIN_WINDOW_MULTIPLIER = 0.5;
+	public static final double MAX_WINDOW_MULTIPLIER = 1.5;
 	
 	public AlignmentMove (StructAlign s, String n) {
 		owner = s;
@@ -41,7 +47,16 @@ public class AlignmentMove extends McmcMove {
 		else {
 			throw new IllegalArgumentException("AlignmentMove.copyState must take an argument of type Tree.");
 		}
+		if (proposalWidthControlVariable < MIN_WINDOW_MULTIPLIER) {		
+			proposalWidthControlVariable = MIN_WINDOW_MULTIPLIER; 
+		}		
+		if (proposalWidthControlVariable > MAX_WINDOW_MULTIPLIER) {		
+			proposalWidthControlVariable = MAX_WINDOW_MULTIPLIER;
+		}
+		
+		Utils.WINDOW_MULTIPLIER = proposalWidthControlVariable;
 		subtreeRoot = Funcs.sampleVertex(tree);
+		if (Utils.DEBUG) System.out.println("subtreeRoot = "+subtreeRoot.index);
 		nLeaves = ((StructAlign) owner).coords.length;
 		subtreeLeaves = Subtree.getSubtreeLeaves(tree, subtreeRoot, nLeaves);
 		index = subtreeLeaves.get(Utils.generator.nextInt(subtreeLeaves.size()));
@@ -63,26 +78,40 @@ public class AlignmentMove extends McmcMove {
 		owner.setLogLike( ((StructAlign) owner).calcAllColumnContrib() );
 	}
 	public void restoreState(Object externalState) {
-		subtreeRoot.alignRestore(); 
+		if (Utils.DEBUG && Utils.USE_MODEXT_EM) tree.root.updateAlignedRecursivelyWithCheck();
+		if (Utils.DEBUG) tree.root.recomputeCheckLogLike();
+		subtreeRoot.alignRestore();
+//		subtreeRoot.calcOrphan();
+//		subtreeRoot.calcAllUp();
+		//System.out.println("oldll = "+oldll+", newll = "+owner.getLogLike());
+		if (Utils.DEBUG) tree.root.recomputeCheckLogLike();
+		if (Utils.USE_MODEXT_EM) subtreeRoot.updateAlignedParentInWindow();
+		if (Utils.DEBUG && Utils.USE_MODEXT_EM) tree.root.updateAlignedRecursivelyInWindowWithCheck();
+		if (Utils.DEBUG && Utils.USE_MODEXT_EM) tree.root.updateAlignedRecursivelyWithCheck();
 		
 		((StructAlign) owner).curAlign = ((StructAlign) owner).oldAlign;
 		owner.setLogLike(oldll);
 	}
 	public void afterMove(Object externalState) {
 		if (Utils.DEBUG) {
-			tree.root.calcFelsenRecursively(); 
-			tree.root.calcOrphanRecursively(); 
-			tree.root.calcIndelLogLikeRecursively(); 
-	        if (Utils.USE_UPPER) {
-	        	//owner.root.calcFelsenRecursively();
-	        	tree.root.calcUpperRecursively();
-	        }   
+//			tree.root.calcFelsenRecursively(); 
+//			tree.root.calcOrphanRecursively(); 
+//			tree.root.calcIndelLogLikeRecursively(); 
+//	        if (Utils.USE_UPPER) {
+//	        	//owner.root.calcFelsenRecursively();
+//	        	subtreeRoot.calcUpperFromRoot();
+//	        	//tree.root.calcUpperRecursively();
+//	        }   
 	        //tree.root.recomputeCheckLogLike();
 		}
+//		if (lastMoveAccepted && subtreeRoot != tree.root) {						
+//			subtreeRoot.updateAlignedParent();
+//		}
 		//if (lastMoveAccepted && (owner.getLogLike() == oldll)) acceptanceCount--;
 	}
 	@Override
 	public void afterFirstHalfBurnin() {
 		heat = secondHeat;
+		autoTune = autoTunable;
 	}
 }

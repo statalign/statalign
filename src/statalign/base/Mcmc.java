@@ -364,7 +364,7 @@ public class Mcmc extends Stoppable {
 		stoppable();
 		if(Utils.DEBUG) {
 			System.out.println("tree.getLogLike() (BEFORE) = "+tree.getLogLike());
-			//tree.recomputeCheckLogLike(); 
+			tree.recomputeCheckLogLike(); 
 			if(Math.abs(modelExtMan.totalLogLike(tree)-totalLogLike) > 1e-5) {
 				System.out.println("\nBefore: "+modelExtMan.totalLogLike(tree)+" "+totalLogLike);
 				throw new Error("Log-likelihood inconsistency at start of sample()");
@@ -381,7 +381,7 @@ public class Mcmc extends Stoppable {
 			coreModel.setLogLike(totalLogLike);
 		}
 		if(Utils.DEBUG) {
-			//tree.recomputeCheckLogLike();
+			tree.recomputeCheckLogLike();
         	tree.checkPointers();
 			if(Math.abs(modelExtMan.totalLogLike(tree)-totalLogLike) > 1e-5) {
 				System.out.println("After: "+modelExtMan.totalLogLike(tree)+" "+totalLogLike);

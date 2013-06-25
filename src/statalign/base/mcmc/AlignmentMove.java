@@ -23,7 +23,8 @@ public class AlignmentMove extends McmcMove {
 	
 	final static double LEAFCOUNT_POWER = 1.0; // Original
 	//final static double LEAFCOUNT_POWER = -2.0;
-	final static double SELTRLEVPROB[] = { 0.9, 0.6, 0.4, 0.2, 0 };
+	final static double SELTRLEVPROB[] = { 0.9, 0.6, 0.4, 0.2, 0 }; // Original
+	//final static double SELTRLEVPROB[] = { 0.6, 0.6, 0.4, 0.2, 0 }; 
 	
 	public double minAcceptance = 0.05; // keep tuning till we get to this
 	public static final double MIN_WINDOW_MULTIPLIER = 0.5;
@@ -81,21 +82,20 @@ public class AlignmentMove extends McmcMove {
 		selectedRoot = tree.vertex[k];
 		selectedRoot.selectSubtree(SELTRLEVPROB, 0);
 				
-		tree.hmm3.updateParam(new double[]{P});				
-		selectedRoot.recursivelyUpdateHmm3Matrices();
-		
-		if (proposalParamMultiplier != 1.0) {
-			realParams = tree.hmm2.params.clone();
-			if (selectedRoot != tree.root) {
-				selectedRoot.updateHmm2Matrix(new double[] {realParams[0], 
-						 proposalParamMultiplier*realParams[1], 
-						 proposalParamMultiplier*realParams[2]});
-			}
-		}
+//		tree.hmm3.updateParam(new double[]{P});				
+//		selectedRoot.recursivelyUpdateHmm3Matrices();
+				
 	}
 	public double proposal(Object externalState) {
 		
 		((CoreMcmcModule) owner).getModelExtMan().beforeAlignChange(tree, selectedRoot);
+		if (proposalParamMultiplier != 1.0 && selectedRoot != tree.root) {
+			realParams = tree.hmm2.params.clone();
+
+			selectedRoot.updateHmm2Matrix(new double[] {realParams[0], 
+					 proposalParamMultiplier*realParams[1], 
+					 proposalParamMultiplier*realParams[2]});
+		}
 		double logProposalRatio = selectedRoot.selectAndResampleAlignment();
 		if (proposalParamMultiplier != 1.0 && selectedRoot != tree.root) {
 			selectedRoot.updateHmm2Matrix(realParams);
@@ -116,13 +116,16 @@ public class AlignmentMove extends McmcMove {
 	}
 	public void restoreState(Object externalState) {
 		selectedRoot.alignRestore();
-		selectedRoot.calcOrphan();
+		///selectedRoot.calcOrphan();
+		
 		if (selectedRoot != tree.root) {
-			selectedRoot.parent.calcFelsen();
-			selectedRoot.parent.calcOrphan();
-			selectedRoot.parent.calcIndelLogLike();
-			selectedRoot.calcAllUp();
+//			selectedRoot.parent.calcFelsen();
+//			selectedRoot.parent.calcOrphan();
+//			selectedRoot.parent.calcIndelLogLike();
+			///selectedRoot.calcAllUp();
 		}
+		
+		
 //		 tree.root.calcFelsenRecursively();
 //         tree.root.calcOrphanRecursively();
 //         tree.root.calcIndelLogLikeRecursively();
@@ -133,8 +136,12 @@ public class AlignmentMove extends McmcMove {
          if (Utils.USE_UPPER) {
          	//owner.root.calcFelsenRecursively();
          	//tree.root.calcUpperRecursively();
-        	selectedRoot.calcUpperFromRoot();
+        	 
+        	 ///selectedRoot.calcUpperFromRoot();
          }   
+         if (Utils.USE_MODEXT_EM) {        	 
+        	 selectedRoot.updateAlignedParentInWindow();
+         }
 	}
 	
 	public void afterMove(Object externalState) {
@@ -145,10 +152,13 @@ public class AlignmentMove extends McmcMove {
 			Utils.USE_MODEXT_EM = useModextEm;			
 			Utils.USE_MODEXT_UPP = useModextUpp;
 			if (lastMoveAccepted) {
-				selectedRoot.updateAlignedRecursively();
-				selectedRoot.updateAlignedParent();
+				selectedRoot.updateAlignedRecursivelyInWindow();
+				selectedRoot.updateAlignedParentInWindow();
 			}
 		}	
+		if (Utils.DEBUG && Utils.USE_MODEXT_EM) {
+			tree.root.updateAlignedRecursivelyWithCheck();			
+		}
 	}
 	
 	@Override

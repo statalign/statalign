@@ -185,6 +185,7 @@ public class TopologyMove extends McmcMove {
 //		s = uncle.printedAlignment();
 //		System.out.println(uncle.index+" "+s[1]+"\n"+uncle.parent.index+" "+s[0]);
 		
+    	if (Utils.USE_MODEXT_EM) fastSwapProb = 0;
 		if (Utils.generator.nextDouble() < fastSwapProb) {
 			logProposalRatio += nephew.fastSwapWithUncle();
 			didFastSwap = true;
@@ -312,6 +313,11 @@ public class TopologyMove extends McmcMove {
 		if (lastMoveAccepted && nephew.parent == tree.root) {
 			System.out.println("Topology change (stNNI).");
 			topologyChangeAcceptanceCount++;			
+		}
+		if (Utils.USE_MODEXT_EM && lastMoveAccepted) {
+			nephew.updateAligned();
+			uncle.updateAlignedParent();
+			if (Utils.DEBUG) tree.root.updateAlignedRecursivelyWithCheck();
 		}
 			
 //		if (lastMoveAccepted) {

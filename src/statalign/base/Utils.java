@@ -49,7 +49,7 @@ public class Utils{
 	 */
 	public static boolean USE_MODEXT_EM = true;
 	
-	public static boolean USE_MODEXT_UPP = true;
+	public static boolean USE_MODEXT_UPP = false;
 	
 	/**
 	 * Whether to use information from the upper parts of the 
