@@ -152,6 +152,8 @@ public class AlignmentMove extends McmcMove {
 			Utils.USE_MODEXT_EM = useModextEm;			
 			Utils.USE_MODEXT_UPP = useModextUpp;
 			if (lastMoveAccepted) {
+				//if (Utils.DEBUG) tree.root.updateAlignedRecursivelyWithCheck();
+				//tree.root.updateAlignedRecursively();
 				selectedRoot.updateAlignedRecursivelyInWindow();
 				selectedRoot.updateAlignedParentInWindow();
 			}
