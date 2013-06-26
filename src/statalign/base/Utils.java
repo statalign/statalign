@@ -45,11 +45,23 @@ public class Utils{
 	/** 
 	 * If true, then ModelExtensions are allowed to offer a contribution
 	 * to the emission probability used to compute the dynamic programming
-	 * matrices for alignment proposals. 
+	 * matrices for alignment proposals.
+	 * NB this will be switched on automatically when a suitable 
+	 * ModelExtension is activated. Setting to true here will render this
+	 * variable constitutively active, which is unlikely to be useful.
 	 */
-	public static boolean USE_MODEXT_EM = true;
+	public static boolean USE_MODEXT_EM = false;
 	
-	public static boolean USE_MODEXT_UPP = true;
+	/** 
+	 * If true, then ModelExtensions are allowed to offer an upper contribution
+	 * to the emission probability used to compute the dynamic programming
+	 * matrices for alignment proposals. The <i>upper</i> contribution involves
+	 * information about all vertices outside of the current subtree.
+	 * NB this will be switched on automatically when when a suitable 
+	 * ModelExtension is activated. Setting to true here will render this
+	 * variable constitutively active, which is unlikely to be useful.
+	 */
+	public static boolean USE_MODEXT_UPP = false;
 	
 	/**
 	 * Whether to use information from the upper parts of the 

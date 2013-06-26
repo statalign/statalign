@@ -48,7 +48,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	
 	/** The command line identifier of this plugin */
 	//private static final String CMD_LINE_PLUGIN_ID = "structal";
-	private final String pluginID = "structal";
+	private final String pluginID = "structal";	
 	
 	@Override
 	public String getPluginID() {
@@ -62,8 +62,14 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	public boolean fixedEpsilon = false;
 	public boolean fixedSigma2 = false;
 	
-	double structTemp = 1;
-
+	double structTemp = 1;	
+	
+	private boolean USE_IN_ALIGNMENT_PROPOSALS = true;
+	
+	@Override
+	public boolean useInAlignmentProposals() {
+		return USE_IN_ALIGNMENT_PROPOSALS;
+	}
 	
 	/** Alpha-C atomic coordinate for each sequence and each residue */
 	public double[][][] coords;
@@ -225,7 +231,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	@Override
 	public void setActive(boolean active) {
 		super.setActive(active);
-		System.out.println("StructAlign plugin is now "+(active?"enabled":"disabled"));
+		System.out.println("StructAlign plugin is now "+(active?"enabled":"disabled"));		
 	}
 	
 	@Override
