@@ -37,6 +37,7 @@ public class AlignmentMove extends McmcMove {
 		owner = s;
 		name = n;
 		autoTune = false; 
+		proposalWidthControlVariable = 1.0;
 		// This move gets autoTune'd via the core AlignmentMove
 	}
 	
@@ -55,7 +56,8 @@ public class AlignmentMove extends McmcMove {
 		}
 		
 		Utils.WINDOW_MULTIPLIER = proposalWidthControlVariable;
-		subtreeRoot = Funcs.sampleVertex(tree);
+		
+		subtreeRoot = Funcs.sampleVertex(tree);		
 		if (Utils.DEBUG) System.out.println("subtreeRoot = "+subtreeRoot.index);
 		nLeaves = ((StructAlign) owner).coords.length;
 		subtreeLeaves = Subtree.getSubtreeLeaves(tree, subtreeRoot, nLeaves);
@@ -112,6 +114,6 @@ public class AlignmentMove extends McmcMove {
 	@Override
 	public void afterFirstHalfBurnin() {
 		heat = secondHeat;
-		autoTune = autoTunable;
+		//autoTune = autoTunable;
 	}
 }

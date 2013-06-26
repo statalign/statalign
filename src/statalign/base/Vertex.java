@@ -1823,7 +1823,7 @@ public class Vertex {
 	        	System.err.println("Window length: "+winLength+"\t");
 	        }
         }
-        int b = (length - winLength == 0 ? 0 : Utils.generator.nextInt(length - winLength));
+        int b = (length - winLength == 0 ? 0 : Utils.generator.nextInt(length - winLength + 1));
         if (Utils.DEBUG) System.out.println("Initial window length\t "+winLength);
         //System.out.print("b: "+b+"\t");
         AlignColumn actualAC = first;
@@ -1868,7 +1868,7 @@ public class Vertex {
 //        }   
         
         if (this != owner.root) {
-        	if (Utils.USE_MODEXT_UPP) updateAlignedUppFromRoot();
+        	if (Utils.USE_MODEXT_UPP) updateAlignedUppFromRootInWindow();
         	if (Utils.USE_UPPER) calcUpperFromRoot();        	        	
         }
 //        if (Utils.USE_MODEXT_EM) {
@@ -1929,9 +1929,9 @@ public class Vertex {
         	 if (Utils.USE_MODEXT_EM) owner.root.updateAlignedRecursivelyWithCheck();
         	// check proposal - backproposal consistency
         	 if (this != owner.root) {
-             	if (Utils.USE_MODEXT_UPP) updateAlignedUppFromRoot();
+             	if (Utils.USE_MODEXT_UPP) updateAlignedUppFromRootInWindow();
              	if (Utils.USE_UPPER) calcUpperFromRoot();        
-             }
+             }          	
         	// check proposal - backproposal consistency
         	double bppBack = doRecBackprop();
         	if(parent != null)
@@ -1987,16 +1987,19 @@ public class Vertex {
 	        winLength = Utils.linearizerWeight(length, p, Utils.WINDOW_MULTIPLIER*Math.sqrt(length));
 	        //System.out.print("Length: "+length+"\t");
 	        //System.out.print("Window length: "+winLength+"\t");
-	        int b = (length - winLength == 0 ? 0 : Utils.generator.nextInt(length - winLength));
+	        int b = (length - winLength == 0 ? 0 : Utils.generator.nextInt(length - winLength + 1));
 	        //System.out.print("b: "+b+"\t");
 	        AlignColumn actualAC = first;
 	        for (int i = 0; i < b; i++) {
 	            actualAC = actualAC.next;
 	        }
 	        winFirst = actualAC;
+	        if (Utils.DEBUG) System.out.print("b = "+b+", ");
 	        for (int i = 0; i < winLength; i++) {
-	            actualAC = actualAC.next;
+	        	if (Utils.DEBUG) System.out.print(actualAC.mostLikely());
+	        	actualAC = actualAC.next;	            
 	        }
+	        if (Utils.DEBUG) System.out.println();
 	        winLast = actualAC;
 	        
 	        //double bpp = -Math.log(p.value * (length - winLength == 0 ? 1 : length - winLength));
@@ -2014,7 +2017,7 @@ public class Vertex {
 
     	//if (Utils.USE_UPPER) owner.root.calcUpperRecursively();
         if (this != owner.root) {
-        	if (Utils.USE_MODEXT_UPP) updateAlignedUppFromRoot();
+        	if (Utils.USE_MODEXT_UPP) updateAlignedUppFromRootInWindow();
         	if (Utils.USE_UPPER) calcUpperFromRoot();        
         }
         
@@ -2037,7 +2040,7 @@ public class Vertex {
              owner.root.recomputeCheckLogLike();
         	// check proposal - backproposal consistency
         	 if (this != owner.root) {
-             	if (Utils.USE_MODEXT_UPP) updateAlignedUppFromRoot();
+             	if (Utils.USE_MODEXT_UPP) updateAlignedUppFromRootInWindow();
              	if (Utils.USE_UPPER) calcUpperFromRoot();        
              }
         	double bppBack = hmm2BackProp();
@@ -2152,7 +2155,8 @@ public class Vertex {
     }
     void updateAlignedUpp(boolean withCheck, boolean inWindow) {    
     	if (Utils.DEBUG) System.out.println(index+".updateAlignedUpp()");
-    	int[] oldAlignedUpp = null;    	   	    	
+    	int[] oldAlignedUpp = null;
+    	AlignColumn b = null;
     	for (AlignColumn c = (inWindow?winLast.prev:last.prev); c != null; c = c.prev) {
     		if (withCheck) oldAlignedUpp = c.alignedUpp.clone();
     		c.alignedUpp = new int[owner.vertex.length / 2 + 1];
@@ -2160,24 +2164,26 @@ public class Vertex {
     			c.alignedUpp[i] = c.orphan ? -1 : c.parent.alignedUpp[i];
     		}
     		if (c.orphan) continue;
-    		if (this == parent.left) {
-	     		if (c.left != null) {
+    		if (this != parent.left) {
+    			b = c.parent.left;
+	     		if (b != null) {
 	     			for (int i=0; i<c.alignedUpp.length; i++) {
-	     				if (c.left.aligned[i] >= 0) c.alignedUpp[i] = c.left.aligned[i];
+	     				if (b.aligned[i] >= 0) c.alignedUpp[i] = b.aligned[i];
 	     			}
 	     		}
     		}
     		else {
-	     		if (c.right != null) {
+    			b = c.parent.right;
+	     		if (b != null) {
 	     			for (int i=0; i<c.alignedUpp.length; i++) {
-	     				if (c.right.aligned[i] >= 0) c.alignedUpp[i] = c.right.aligned[i];
+	     				if (b.aligned[i] >= 0) c.alignedUpp[i] = b.aligned[i];
 	     			}
 	     		}
     		}
-    		if (!withCheck) {
-	     		for (int j=0; j<c.aligned.length; j++) System.out.print(c.alignedUpp[j]+" ");
-				System.out.println();
-     		}
+//    		if (!withCheck) {
+//	     		for (int j=0; j<c.aligned.length; j++) System.out.print(c.alignedUpp[j]+" ");
+//				System.out.println();
+//     		}
     		if (withCheck) {
      			for (int i=0; i<c.alignedUpp.length; i++) {
      				if (c.alignedUpp[i] != oldAlignedUpp[i]) {
@@ -2195,8 +2201,17 @@ public class Vertex {
     	selectWindowUp();
     	for (Vertex v = parent; v != null; v = v.parent) {
     		if (v != owner.root) {    			 	
-    			v.selectWindowUp();
     			v.updateAlignedUppFromRoot();
+    		}    		
+    		v.updateAlignedUpp();
+    	}    	
+    }
+    void updateAlignedUppFromRootInWindow() {
+    	selectWindowUp();
+    	for (Vertex v = parent; v != null; v = v.parent) {
+    		if (v != owner.root) {    			 	
+    			v.selectWindowUp();
+    			v.updateAlignedUppFromRootInWindow();
     		}    		
     		v.updateAlignedUpp();
     	}    	
