@@ -66,13 +66,7 @@ public class ModelExtManager {
 				String [] pluginPair = args.get(i).split("\\[",2);
 				for(ModelExtension plugin : pluginList) {
 					if (plugin.getPluginID().equals(pluginPair[0])) {
-						plugin.setActive(true);
-						if (plugin.useInAlignmentProposals()) {
-							Utils.USE_MODEXT_EM = true;
-							Utils.USE_MODEXT_UPP = true;
-							System.out.println("Using information from '"+plugin.getPluginID()+
-												"' in alignment proposals.");
-						}
+						plugin.setActive(true);						
 						if (pluginPair.length == 2) { // Then we have some parameters
 							if (pluginPair[1].endsWith("]")) {
 								String paramString = pluginPair[1].substring(0,pluginPair[1].length()-1);

@@ -101,6 +101,12 @@ public abstract class ModelExtension extends McmcModule {
 	 */
 	public void setActive(boolean active) {
 		this.active = active;
+		if (useInAlignmentProposals()) {
+			Utils.USE_MODEXT_EM = true;
+			Utils.USE_MODEXT_UPP = true;
+			System.out.println("Using information from '"+getPluginID()+
+								"' in alignment proposals.");
+		}
 	}
 	
 	/**
