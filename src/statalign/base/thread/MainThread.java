@@ -37,6 +37,10 @@ public class MainThread extends StoppableThread {
 	public synchronized void run() {
 		try {
 			
+			owner.inputData.pars.fixAlign = owner.inputData.useAlign >= 2;
+			owner.inputData.pars.fixTopology = owner.inputData.useTree >= 2;
+			owner.inputData.pars.fixEdge = owner.inputData.useTree >= 3;
+			
 			// initialise model extension plugins for run
 			owner.modelExtMan.initRun(owner.inputData);
 			
@@ -82,9 +86,7 @@ public class MainThread extends StoppableThread {
 //					owner.inputData.model,
 //					owner.inputData.model.attachedScoringScheme,
 //					new File(owner.fullPath).getName());
-			owner.inputData.pars.fixAlign = owner.inputData.useAlign >= 2;
-			owner.inputData.pars.fixTopology = owner.inputData.useTree >= 2;
-			owner.inputData.pars.fixEdge = owner.inputData.useTree >= 3;
+			
 			Mcmc mcmc = new Mcmc(tree, owner.inputData.pars, owner.postProcMan, owner.modelExtMan);
 			mcmc.doMCMC();
 			

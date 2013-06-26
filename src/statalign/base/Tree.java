@@ -63,6 +63,8 @@ public class Tree extends Stoppable implements DataType {
     
     public String[] previousFullAlign;
 
+    Mcmc owner;
+    
     public Tree() {
     }
     

@@ -168,5 +168,7 @@ public abstract class McmcModule {
 			}
 		}
 	}
-	public void afterFirstHalfBurnin() { }
+	public void afterFirstHalfBurnin() { 
+		for (McmcMove m : mcmcMoves) m.afterFirstHalfBurnin();
+	}
 }

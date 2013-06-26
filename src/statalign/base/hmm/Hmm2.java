@@ -20,5 +20,16 @@ public abstract class Hmm2 extends Hmm {
 	 * @return The calculated transition matrix.
 	 */
 	public abstract double[][] preCalcTransMatrix(double[][] transMatrix, double t);
+	/**
+	 * 
+	 * @param transMatrix If null, the function allocates memory for the return matrix
+	 *        If not, this is used for storing the matrix. For speeding-up purposes,
+	 *        note that allocating memory is time-consuming. In this way we need to allocate
+	 *        memory when asked.
+	 * @param t The edge length parameter.
+	 * @param newParams A set of temporary parameters to be used for this particular instance
+	 * @return The calculated transition matrix.
+	 */
+	public abstract double[][] preCalcTransMatrix(double[][] transMatrix, double t, double[] newParams);
 	
 }

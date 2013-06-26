@@ -42,6 +42,27 @@ public class Utils{
 	 */
 	public static boolean USE_FULL_WINDOWS = false;
 
+	/** 
+	 * If true, then ModelExtensions are allowed to offer a contribution
+	 * to the emission probability used to compute the dynamic programming
+	 * matrices for alignment proposals.
+	 * NB this will be switched on automatically when a suitable 
+	 * ModelExtension is activated. Setting to true here will render this
+	 * variable constitutively active, which is unlikely to be useful.
+	 */
+	public static boolean USE_MODEXT_EM = false;
+	
+	/** 
+	 * If true, then ModelExtensions are allowed to offer an upper contribution
+	 * to the emission probability used to compute the dynamic programming
+	 * matrices for alignment proposals. The <i>upper</i> contribution involves
+	 * information about all vertices outside of the current subtree.
+	 * NB this will be switched on automatically when when a suitable 
+	 * ModelExtension is activated. Setting to true here will render this
+	 * variable constitutively active, which is unlikely to be useful.
+	 */
+	public static boolean USE_MODEXT_UPP = false;
+	
 	/**
 	 * Whether to use information from the upper parts of the 
 	 * tree in order to fill out the <code>hmm2</code> and <code>hmm3</code>
@@ -168,6 +189,7 @@ public class Utils{
 
 	//public static final double SILENT_INSERT_PROB = 0.05;	
 	public static final double SILENT_INSERT_PROB = 0.5;
+
 	
 	private static double[] tempDoubleArray;
 
@@ -607,6 +629,9 @@ public class Utils{
 		return p;
 	}
 	
+   public static String repeatedString(String s, int n) {
+	   return new String(new char[n]).replace("\0", s);
+   }
 	/**
 	 * Makes Enumeration iterable.
 	 * 

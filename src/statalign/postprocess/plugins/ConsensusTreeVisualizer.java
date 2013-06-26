@@ -88,7 +88,6 @@ public class ConsensusTreeVisualizer extends TreeVisualizer {
         String outputRootString = outputRoot.toString();
         
         // Logging.
-        consensusTrees.add(outputRootString);
         if (sampling) {
             try {
                 file.write("Sample " + no + "\tConsensus tree:\t" + outputRootString + "\n");
@@ -96,7 +95,13 @@ public class ConsensusTreeVisualizer extends TreeVisualizer {
                 e.printStackTrace();
             }
         }
-
+        if (postprocessWrite) {
+            try {
+				outputFile.write(outputRootString + "\n");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
         if (show) {
 	        for (TreeView view : treeViews) {
 	            view.newSample(outputRoot);
@@ -119,13 +124,8 @@ public class ConsensusTreeVisualizer extends TreeVisualizer {
         super.afterLastSample();
         
 		if (postprocessWrite) {
-			try {
-				for (String tree : consensusTrees) {
-					outputFile.write(tree + "\n");
-				}
-				
-				// TODO: should be handled in the PostprocessManager 
-				//       in my opinion.
+			try {			
+				outputFile.flush();
 				outputFile.close();
 			} catch (IOException ioex) {
 				ioex.printStackTrace();

@@ -38,6 +38,16 @@ public abstract class ModelExtension extends McmcModule {
 	}
 	
 	/**
+	 * If <code>true</code>, then this plugin is able to compute a column-wise
+	 * contribution to the likelihood, and can be used to influence the alignment
+	 * proposals that are carried out by functions inside statalign.base.Vertex
+	 * By default this is false.
+	 */	
+	public boolean useInAlignmentProposals() {
+		return false;
+	}
+	
+	/**
 	 * This function is called when command line arguments are specified for
 	 * a plugin. If the specific {@link ModelExtension} does not override these methods
 	 * then it cannot handle any command line arguments, and so the default 
@@ -310,6 +320,16 @@ public abstract class ModelExtension extends McmcModule {
 	 * @param accepted true if the change was accepted
 	 */
 	public void afterSubstParamChange(Tree tree, SubstitutionModel model, int ind, boolean accepted) {}
+	
+	/**
+	 * 
+	 * @param aligned Vector indicating which characters are aligned to the current
+	 * column in the subtrees below.
+	 * @return Logarithm of emission probability for subtrees
+	 */
+	public double calcLogEm(int[] aligned) {
+		return 0;
+	}
 	
 	/**
 	 * Allows access to the Mcmc class. Generally not recommended.

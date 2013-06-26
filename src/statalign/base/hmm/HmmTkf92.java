@@ -86,10 +86,19 @@ public class HmmTkf92 extends Hmm2 {
 	 * See the abstract class Hmm2 for details.
 	 */
 	public double[][] preCalcTransMatrix(double[][] transMatrix, double t) {
+		_R = params[0]; _L = params[1]; _M = params[2];
+		return calcTransMatrix(transMatrix,t);				
+	}
+	public double[][] preCalcTransMatrix(double[][] transMatrix, double t, double[] newParams) {
+		_R = newParams[0]; _L = newParams[1]; _M = newParams[2];
+		double[][] result = calcTransMatrix(transMatrix,t);
+		_R = params[0]; _L = params[1]; _M = params[2];
+		return result;
+	}	
+	public double[][] calcTransMatrix(double[][] transMatrix, double t) {
 		if(transMatrix == null)
 			transMatrix = new double[5][5];		// TKF92 has 5 states including start (st. 0) & end (st. 4)
 
-		_R = params[0]; _L = params[1]; _M = params[2];
 		_T = t; _B = Math.exp((_L-_M)*_T); _B = (1-_B)/(_M-_L*_B);
 		transMatrix[1][1] = Math.log(HMM2_11());
 		transMatrix[1][2] = Math.log(HMM2_12());

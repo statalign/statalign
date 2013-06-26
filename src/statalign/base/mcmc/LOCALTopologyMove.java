@@ -28,7 +28,7 @@ public class LOCALTopologyMove extends McmcMove {
 	
 	PriorDistribution<Double> edgePrior;
 	
-	public LOCALTopologyMove (McmcModule m, PriorDistribution<Double> pr, double propVar, String n) {
+	public LOCALTopologyMove (McmcModule m, PriorDistribution<Double> pr, double propVar, double _fastSwapProb, String n) {
 		owner = m;
 		edgePrior = pr;
 		proposalWidthControlVariable = propVar;
@@ -36,7 +36,7 @@ public class LOCALTopologyMove extends McmcMove {
 		autoTune = false; 
 		// autoTune = true by default
 		minEdgeLength = Utils.MIN_EDGE_LENGTH;
-		fastSwapProb = 0.05;
+		fastSwapProb = _fastSwapProb;
 		//fastSwapProb = 0.0;
 	}
 	
@@ -164,6 +164,7 @@ public class LOCALTopologyMove extends McmcMove {
 		}
 		if (topologyChange && !invalidProposal) {
 			// Do the topology switch:
+	    	if (Utils.USE_MODEXT_EM) fastSwapProb = 0;
 			if (Utils.generator.nextDouble() < fastSwapProb) {
 				logProposalRatio += nephew.fastSwapWithUncle();
 				didFastSwap = true;
@@ -214,6 +215,11 @@ public class LOCALTopologyMove extends McmcMove {
 		
 		if (Utils.DEBUG) {
 			tree.checkPointers();
+		}
+		if (Utils.USE_MODEXT_EM && lastMoveAccepted) {
+			nephew.updateAligned();
+			uncle.updateAlignedParent();
+			if (Utils.DEBUG) tree.root.updateAlignedRecursivelyWithCheck();
 		}
 	}
 	

@@ -95,7 +95,11 @@ public class Funcs{
 			return v;
 		} else
 			return tree.root; */
-		return tree.vertex[Utils.generator.nextInt(tree.vertex.length - 1)]; // -1 excludes root
+		Vertex v = tree.vertex[Utils.generator.nextInt(tree.vertex.length)];
+		while (v == tree.root) {
+			v = tree.vertex[Utils.generator.nextInt(tree.vertex.length)];
+		}
+		return  v;
 	}
 	
 	public static ArrayList<Integer> findRefSubtrees(Tree tree, int refInd){

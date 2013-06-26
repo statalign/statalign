@@ -50,7 +50,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	
 	/** The command line identifier of this plugin */
 	//private static final String CMD_LINE_PLUGIN_ID = "structal";
-	private final String pluginID = "structal";
+	private final String pluginID = "structal";	
 	
 	@Override
 	public String getPluginID() {
@@ -69,7 +69,13 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	double[] globalSigmaSpikeParams = {3.1,1.1};
 	
 	double structTemp = 1;
-
+	
+	private boolean USE_IN_ALIGNMENT_PROPOSALS = true;
+	
+	@Override
+	public boolean useInAlignmentProposals() {
+		return USE_IN_ALIGNMENT_PROPOSALS;
+	}
 	
 	/** Alpha-C atomic coordinate for each sequence and each residue */
 	public double[][][] coords;
@@ -121,8 +127,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	// sigma2Prior will either be InverseGamma or Hyperbolic, depending
 	// on whether globalSigma is switched on. It is defined inside the initRun()
 	// method.
-	private double epsilonPriorShape = 2;
-	private double epsilonPriorRate = 2;
+	private double epsilonPriorShape = 2;//10; //1; //2;
+	private double epsilonPriorRate = 2;//50; //5; //2;
 	public PriorDistribution<Double> epsilonPrior;
 	boolean epsilonPriorInitialised = false;
 	
@@ -165,6 +171,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	int translationWeight = 2;
 	int libraryWeight = 2;
 	int alignmentWeight = 2;
+	int alignmentWeightIncrement = 0;
 	
 	/* Weights for combination moves */
 	int alignmentRotationWeight = 8;
@@ -231,7 +238,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	@Override
 	public void setActive(boolean active) {
 		super.setActive(active);
-		System.out.println("StructAlign plugin is now "+(active?"enabled":"disabled"));
+		System.out.println("StructAlign plugin is now "+(active?"enabled":"disabled"));		
 	}
 	
 	@Override
@@ -279,8 +286,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	}
 	@Override
 	public void setParam(String paramName, boolean paramValue) {
-		if (paramName.equals("globalSigma")) {
-			globalSigma = true;
+		if (paramName.equals("localSigma")) {
+			globalSigma = false;
 		}
 		else if (paramName.equals("useLibrary")) {
 			useLibrary = true;
@@ -495,31 +502,33 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			addMcmcMove(libraryMove,libraryWeight);
 		}
 		
-		AlignmentMove alignmentMove = new AlignmentMove(this,"alignment");
-		addMcmcMove(alignmentMove,alignmentWeight); 
-		
-		/* Combination moves */
-		ArrayList<McmcMove> alignmentRotation = new ArrayList<McmcMove>();
-		alignmentRotation.add(alignmentMove);
-		alignmentRotation.add(rotationMove);
-		McmcCombinationMove alignmentRotationMove = 
-			new McmcCombinationMove(alignmentRotation);
-		addMcmcMove(alignmentRotationMove,alignmentRotationWeight); 
-		
-		ArrayList<McmcMove> alignmentTranslation = new ArrayList<McmcMove>(); 
-		alignmentTranslation.add(alignmentMove);
-		alignmentTranslation.add(translationMove);
-		McmcCombinationMove alignmentTranslationMove = 
-			new McmcCombinationMove(alignmentTranslation);
-		addMcmcMove(alignmentTranslationMove,alignmentTranslationWeight); 
-		
-		if (useLibrary) { 
-			ArrayList<McmcMove> alignmentLibrary = new ArrayList<McmcMove>();
-			alignmentLibrary.add(alignmentMove);
-			alignmentLibrary.add(libraryMove);
-			McmcCombinationMove alignmentLibraryMove = 
-				new McmcCombinationMove(alignmentLibrary);
-			addMcmcMove(alignmentLibraryMove,alignmentLibraryWeight);
+		if (!inputData.pars.fixAlign) {
+			AlignmentMove alignmentMove = new AlignmentMove(this,"alignment");
+			addMcmcMove(alignmentMove,alignmentWeight,alignmentWeightIncrement); 
+			
+			/* Combination moves */
+			ArrayList<McmcMove> alignmentRotation = new ArrayList<McmcMove>();
+			alignmentRotation.add(alignmentMove);
+			alignmentRotation.add(rotationMove);
+			McmcCombinationMove alignmentRotationMove = 
+				new McmcCombinationMove(alignmentRotation);
+			addMcmcMove(alignmentRotationMove,alignmentRotationWeight); 
+			
+			ArrayList<McmcMove> alignmentTranslation = new ArrayList<McmcMove>(); 
+			alignmentTranslation.add(alignmentMove);
+			alignmentTranslation.add(translationMove);
+			McmcCombinationMove alignmentTranslationMove = 
+				new McmcCombinationMove(alignmentTranslation);
+			addMcmcMove(alignmentTranslationMove,alignmentTranslationWeight);
+				
+			if (useLibrary) { 
+				ArrayList<McmcMove> alignmentLibrary = new ArrayList<McmcMove>();
+				alignmentLibrary.add(alignmentMove);
+				alignmentLibrary.add(libraryMove);
+				McmcCombinationMove alignmentLibraryMove = 
+					new McmcCombinationMove(alignmentLibrary);
+				addMcmcMove(alignmentLibraryMove,alignmentLibraryWeight);
+			}
 		}
 		
 		/** Add moves for scalar parameters */
@@ -756,10 +765,13 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	public double columnContrib(int[] col) {
 		// count the number of ungapped positions in the column
 		int numMatch = 0;
+		//System.out.print("\t");
 		for(int i = 0; i < col.length; i++){
+			//System.out.print(col[i]+" ");
 			if(col[i] != -1)
 				numMatch++;
 		}
+		//System.out.println();
 		if(numMatch == 0) 
 			return 1;
 		// collect indices of ungapped positions
@@ -1045,6 +1057,11 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			int ind) {
 		// does not affect log-likelihood
 		return curLogLike;
+	}
+	
+	@Override
+	public double calcLogEm(int[] aligned) {
+		return columnContrib(aligned);
 	}
 
 	// </StructAlign>
