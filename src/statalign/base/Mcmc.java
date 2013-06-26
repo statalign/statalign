@@ -665,6 +665,7 @@ public class Mcmc extends Stoppable {
 			boolean shouldStop = false;
 //			double currScore = 0;
 			for (int i = 0; i < period && !shouldStop; i++) {
+				if (i % 100000 == 0) printMcmcInfo();
 				for (int j = 0; j < sampRate; j++) {
 					
 					// Perform an MCMC move
@@ -729,21 +730,14 @@ public class Mcmc extends Stoppable {
 				report(i, period);
 			}
 		} catch (StoppedException ex) {
+			postprocMan.afterLastSample();
+			modelExtMan.afterSampling();
 			// stopped: report and save state
 			// should we still call afterLastSample?
 		}
 
 		//if(Utils.DEBUG) {
-			String info = "\n";
-			info += String.format("%-24s","Move name")+
-			String.format("%8s","t")+
-			String.format("%8s","nMoves")+
-			String.format("%8s","t/move")+
-			String.format("%8s", "acc")+
-			String.format("%8s\n", "propVar");
-			info += coreModel.getMcmcInfo();
-			info += modelExtMan.getMcmcInfo();
-			System.out.println(info);
+			printMcmcInfo();
 		//}
 
 		// Triggers a /after first sample/ of the plugins.
@@ -766,6 +760,18 @@ public class Mcmc extends Stoppable {
 
 	}
 
+	private void printMcmcInfo() {
+		String info = "\n";
+		info += String.format("%-24s","Move name")+
+		String.format("%8s","t")+
+		String.format("%8s","nMoves")+
+		String.format("%8s","t/move")+
+		String.format("%8s", "acc")+
+		String.format("%8s\n", "propVar");
+		info += coreModel.getMcmcInfo();
+		info += modelExtMan.getMcmcInfo();
+		System.out.println(info);
+	}
 	/** 
 	 * Triggers <tt>postProcMan</tt> to print out a report of the current
 	 * state of the chain.
