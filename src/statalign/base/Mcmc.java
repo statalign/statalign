@@ -139,6 +139,13 @@ public class Mcmc extends Stoppable {
 	 */
 	public McmcModule coreModel;
 	
+	/** 
+	 * Interval (in terms of number of samples) 
+	 * at which current postprocessing information is flushed to file
+	 * and MCMC info is printed to stdout. 
+	 */
+	int LOG_INTERVAL = 100; 
+	
 	// TODO Move the parameters below into MCMCPars. Would be nice to have
 	// a set of sliding bars in a menu in the GUI that go from 0 to 100, 
 	// to select the relative frequency of the different moves etc.
@@ -516,6 +523,7 @@ public class Mcmc extends Stoppable {
 		ArrayList<Double> logLikeList = new ArrayList<Double>();
 
 		try {
+			stoppable();
 			//only to use if AutomateParameters.shouldAutomate() == true
 //			final int SAMPLE_RATE_WHEN_DETERMINING_THE_SPACE = 100;
 //			final int BURNIN_TO_CALCULATE_THE_SPACE = 25000;
@@ -665,7 +673,10 @@ public class Mcmc extends Stoppable {
 			boolean shouldStop = false;
 //			double currScore = 0;
 			for (int i = 0; i < period && !shouldStop; i++) {
-				if (i % 100000 == 0) printMcmcInfo();
+				if (i > 0 && (i % LOG_INTERVAL == 0)) {
+					postprocMan.flushAll();
+					printMcmcInfo();
+				}
 				for (int j = 0; j < sampRate; j++) {
 					
 					// Perform an MCMC move
@@ -732,6 +743,7 @@ public class Mcmc extends Stoppable {
 		} catch (StoppedException ex) {
 			postprocMan.afterLastSample();
 			modelExtMan.afterSampling();
+			printMcmcInfo();
 			// stopped: report and save state
 			// should we still call afterLastSample?
 		}
@@ -761,7 +773,7 @@ public class Mcmc extends Stoppable {
 	}
 
 	private void printMcmcInfo() {
-		String info = "\n";
+		String info = "\n"+Utils.repeatedString("#",64)+"\n";
 		info += String.format("%-24s","Move name")+
 		String.format("%8s","t")+
 		String.format("%8s","nMoves")+
@@ -770,6 +782,7 @@ public class Mcmc extends Stoppable {
 		String.format("%8s\n", "propVar");
 		info += coreModel.getMcmcInfo();
 		info += modelExtMan.getMcmcInfo();
+		info += Utils.repeatedString("#",64)+"\n";
 		System.out.println(info);
 	}
 	/** 

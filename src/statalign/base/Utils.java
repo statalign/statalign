@@ -617,6 +617,9 @@ public class Utils{
 		return p;
 	}
 	
+   public static String repeatedString(String s, int n) {
+	   return new String(new char[n]).replace("\0", s);
+   }
 	/**
 	 * Makes Enumeration iterable.
 	 * 
