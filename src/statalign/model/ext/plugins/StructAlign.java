@@ -182,7 +182,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	/** Value to fix sigma at if we're not estimating it. */
 	public double fixedSigma2Value = 0.0;
 	/** Minimum value for epsilon, to prevent numerical errors. */
-	public final double MIN_EPSILON = 0.01;
+	public double MIN_EPSILON = 0.01;
 	/** Value to fix epsilon at if we're not estimating it. */
 	public double fixedEpsilonValue = 0.0;
 	
@@ -212,6 +212,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		usage.append("OPTIONS: \n");
 		usage.append("\tsigma2=X\t\t(Fixes sigma2 at X)\n");
 		usage.append("\tepsilon=X\t\t(Fixes epsilon at X)\n");
+		usage.append("\tminEpsilon=X\t\t(Sets minimum value for epsilon to X) [default 0.01]\n");
+		usage.append("\tlocalSigma\t\t(Allows each branch to have its own sigma parameter)\n");
 		usage.append("\tuseLibrary\t\t(Allows rotation library moves to be used)\n");
 		usage.append("\tsigma2Prior=PRIOR\t(Sets the prior and hyperparameters for sigma2)\n");
 		usage.append("\tepsilonPrior=PRIOR\t(Sets the prior and hyperparameters for epsilon)\n");
@@ -224,6 +226,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		usage.append("\tLINK_FUNCTION can be one of:\n");
 		usage.append("\t\tlinear (default)\n");
 		usage.append("\t\tquadratic\n");
+		usage.append("\nNote that the above syntax is designed to work in bash shells. " +
+				"Other shells such as csh may require square brackets to be preceded by a backslash.");
 												
 		return usage.toString();
 	}
@@ -241,6 +245,11 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			fixedEpsilonValue = Double.parseDouble(paramValue);
 			addToFilenameExtension("eps_"+fixedEpsilonValue);
 			System.out.println("Fixing epsilon to "+fixedEpsilonValue+".");
+		}
+		else if (paramName.equals("minEpsilon")) {
+			MIN_EPSILON = Double.parseDouble(paramValue);
+			addToFilenameExtension("minEps_"+MIN_EPSILON);
+			System.out.println("Minimum value for epsilon is now "+MIN_EPSILON+".");
 		}
 		else if (paramName.equals("sigma2")) {
 			fixedSigma2 = true;
