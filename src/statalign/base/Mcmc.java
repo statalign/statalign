@@ -568,7 +568,7 @@ public class Mcmc extends Stoppable {
 					modelExtMan.afterFirstHalfBurnin();
 					coreModel.incrementWeights();
 					modelExtMan.incrementWeights();
-										
+					//Utils.DEBUG = true;					
 					if (simulatedAnnealing) {
 						tree.heat = 1;
 					}

@@ -120,8 +120,8 @@ public class AlignColumn {
 		orphan = c.orphan;
 		seq = c.seq;
 		upp = c.upp;
-		if(Utils.USE_MODEXT_EM) aligned = c.aligned;
-		if(Utils.USE_MODEXT_UPP) aligned = c.aligned;
+		aligned = c.aligned;
+		aligned = c.aligned;
 		left = c.left;
 		right = c.right;
 		parent = c.parent;
@@ -280,8 +280,8 @@ public class AlignColumn {
 		saveRight(copy);
 		seq = copy.seq;
 		upp = copy.upp;		
-		if(Utils.USE_MODEXT_EM) aligned = copy.aligned;
-		if(Utils.USE_MODEXT_UPP) alignedUpp = copy.alignedUpp;
+		aligned = copy.aligned;
+		alignedUpp = copy.alignedUpp;
 	}
 
 	void saveParent(AlignColumn copy) {

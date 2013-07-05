@@ -217,8 +217,8 @@ public class LOCALTopologyMove extends McmcMove {
 			tree.checkPointers();
 		}
 		if (Utils.USE_MODEXT_EM && lastMoveAccepted) {
-			nephew.updateAligned();
-			uncle.updateAlignedParent();
+			uncle.parent.updateAligned();
+			nephew.updateAlignedParent();
 			if (Utils.DEBUG) tree.root.updateAlignedRecursivelyWithCheck();
 		}
 	}

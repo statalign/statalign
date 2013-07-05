@@ -310,13 +310,13 @@ public class TopologyMove extends McmcMove {
 			tree.checkPointers();
 		}		
 		// Only count moves that change the topology, i.e. not swaps across the root
-		if (lastMoveAccepted && nephew.parent == tree.root) {
+		if (lastMoveAccepted && nephew.parent != tree.root) {
 			System.out.println("Topology change (stNNI).");
 			topologyChangeAcceptanceCount++;			
 		}
 		if (Utils.USE_MODEXT_EM && lastMoveAccepted) {
-			nephew.updateAligned();
-			uncle.updateAlignedParent();
+			uncle.parent.updateAligned();
+			nephew.updateAlignedParent();
 			if (Utils.DEBUG) tree.root.updateAlignedRecursivelyWithCheck();
 		}
 			

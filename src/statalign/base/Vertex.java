@@ -2100,14 +2100,16 @@ public class Vertex {
 //	     		for (int j=0; j<p.aligned.length; j++) System.out.print(oldAligned[j]+" ");
 //				System.out.print("\t");
 //     		}
-    		p.aligned = new int[owner.vertex.length / 2 + 1];
+    		if (p.aligned == null) p.aligned = new int[owner.vertex.length / 2 + 1];
     		for (int i=0; i<p.aligned.length; i++) p.aligned[i] = -1;
      		if (p.left != null) {
+     			//if (Utils.DEBUG) System.out.println("left = "+left.index);
      			for (int i=0; i<p.aligned.length; i++) {
      				if (p.left.aligned[i] >= 0) p.aligned[i] = p.left.aligned[i];
      			}
      		}
      		if (p.right != null) {
+     			//if (Utils.DEBUG) System.out.println("right = "+right.index);
      			for (int i=0; i<p.aligned.length; i++) {
      				if (p.right.aligned[i] >= 0) p.aligned[i] = p.right.aligned[i];
      			}
@@ -2232,7 +2234,7 @@ public class Vertex {
     	updateAligned();    	
     }
     public void updateAlignedRecursivelyInWindow() {
-    	if (!selected) return;
+    	if (!selected) return;    	
     	if (left != null && right != null) {
     	//if (left != null && right != null) {
     		left.updateAlignedRecursivelyInWindow();
