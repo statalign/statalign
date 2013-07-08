@@ -51,6 +51,9 @@ public class InputData {
 	 * Are we using the parallel version?
 	 */
 	public boolean isParallel;
+	
+	/** If <code>true</true> then logging information is also printed during the burnin. */
+	public boolean doReportDuringBurnin = false;
 
 	/**
 	 * The current substitution model that is used to analyse the sequences.

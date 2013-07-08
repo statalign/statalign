@@ -593,7 +593,9 @@ public class Mcmc extends Stoppable {
 						postprocMan.newPeek();
 					}
 				}
-				
+				if (mcmcpars.doReportDuringBurnin && (i % mcmcpars.sampRate == 0)) {
+					report(i, mcmcpars.cycles / mcmcpars.sampRate);
+				}
 //				if(AutomateParameters.shouldAutomateBurnIn() && i % 50 == 0){
 //					// every 50 steps, add the current loglikelihood to a list
 //					// and check if we find a major decline in that list 
@@ -793,6 +795,12 @@ public class Mcmc extends Stoppable {
 	 * @param total
 	 */
 	private void report(int no, int total) {
+		report(no,total,true);
+	}
+	private void reportDuringBurnin(int no, int total) {
+		report(no,total,false);
+	}
+	private void report(int no, int total, boolean useSample) {
 
 		int coldChainLocation = -1;
 
@@ -810,7 +818,7 @@ public class Mcmc extends Stoppable {
 
 			if (isColdChain() && MPIUtils.isMaster(rank)) {
 				// Sample normally.
-				postprocMan.newSample(coreModel,getState(), no, total);
+				if (useSample) postprocMan.newSample(coreModel,getState(), no, total);
 			} else if (isColdChain() && !MPIUtils.isMaster(rank)) {
 				// Send state.
 				State state = getState();
@@ -818,11 +826,11 @@ public class Mcmc extends Stoppable {
 			} else if (!isColdChain() && MPIUtils.isMaster(rank)) {
 				// Receive state.
 				State state = MPIStateReceieve(coldChainLocation);
-				postprocMan.newSample(coreModel,state, no, total);
+				if (useSample) postprocMan.newSample(coreModel,state, no, total);
 			}
 
 		} else {
-			postprocMan.newSample(coreModel,getState(), no, total);
+			if (useSample) postprocMan.newSample(coreModel,getState(), no, total);
 		}
 
 		// Log the accept ratios/params to the (.log) file. TODO: move to a plugin.

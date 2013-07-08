@@ -40,7 +40,8 @@ public class MainThread extends StoppableThread {
 			owner.inputData.pars.fixAlign = owner.inputData.useAlign >= 2;
 			owner.inputData.pars.fixTopology = owner.inputData.useTree >= 2;
 			owner.inputData.pars.fixEdge = owner.inputData.useTree >= 3;
-			
+			owner.inputData.pars.doReportDuringBurnin = owner.inputData.doReportDuringBurnin;
+
 			// initialise model extension plugins for run
 			owner.modelExtMan.initRun(owner.inputData);
 			

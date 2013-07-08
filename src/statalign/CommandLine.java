@@ -77,6 +77,7 @@ public class CommandLine {
 				Integer.MAX_VALUE);
 		opt.addSet("run")
 				.addOption("debug", Separator.EQUALS)
+				.addOption("reportBurnin", Separator.EQUALS)
 				.addOption("subst", Separator.EQUALS)
 				.addOption("mcmc", Separator.EQUALS)
 				.addOption("seed", Separator.EQUALS)
@@ -96,6 +97,10 @@ public class CommandLine {
 		if (set.isSet("debug")) {
 			Utils.DEBUG = true;
 			System.out.println("Debug mode enabled.");
+		}
+		if (set.isSet("reportBurnin")) {
+			manager.inputData.doReportDuringBurnin = true;
+			System.out.println("Enabled printing of logging information during burnin.");
 		}
 		if (set.isSet("help")) {
 			OptionData help = set.getOption("help");
@@ -485,6 +490,11 @@ public class CommandLine {
 			  .append("          identical input and settings)\n")
 			  .append("        Default: 1\n\n")
 	
+			  .append("    -reportBurnin=true\n")
+			  .append("        Enables the printing of logging information during the burnin.\n")
+			  .append("        Default: false\n\n")
+	
+			  
 			  .append("    -ot=OUTTYPE\n")
 			  .append("        Sets output alignment type.\n")
 			  .append("          (One of: "
