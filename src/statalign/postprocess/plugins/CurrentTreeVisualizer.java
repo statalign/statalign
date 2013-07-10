@@ -109,12 +109,11 @@ public class CurrentTreeVisualizer extends TreeVisualizer {
     @Override
     public void newSample(State state, int no, int total) {
 //    	System.out.println("CurrentTreeVisualizer: New sample.");
-        String sampledTree = state.getNewickString();
-
-       
+    	//state.updateNewickStringWithLabels();
+        String sampledTree = state.getNewickStringWithLabels();
 
         if(show) {
-        	 // TODO: START OF FIX
+        	 // TODO: START OF FIXif (withNumbers) sb.append("["+node+"]");
             NewickParser parser = new NewickParser(sampledTree);
             TreeNode node = parser.parse();
         	for (TreeView view : treeViews) {

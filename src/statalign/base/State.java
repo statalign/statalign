@@ -178,18 +178,38 @@ public class State {
 		}
 		return newickString;
 	}	
+	public String getNewickStringWithLabels() {
+		if(newickString == null) {
+			StringBuilder sb = new StringBuilder();
+	        newickWithNumbers(root,sb);
+			newickString = sb.toString();
+		}
+		return newickString;
+	}
+	public void updateNewickStringWithLabels() {
+		StringBuilder sb = new StringBuilder();
+        newickWithNumbers(root,sb);
+		newickString = sb.toString();
+	}	
 	
 	/** Recursively prints newick representation of subtree into sb */
 	private void newick(int node, StringBuilder sb) {
+		newick(node,sb,false);
+	}
+	private void newickWithNumbers(int node, StringBuilder sb) {
+		newick(node,sb,true);
+	}
+	private void newick(int node, StringBuilder sb, boolean withNumbers) {
 		if(node < nl) {		// leaf
             String nameEncoded = NewickParser.getEncodedTaxaName(name[node]);
-			sb.append(nameEncoded);
+			sb.append(nameEncoded);        	
 		} else {
 			sb.append('(');
-			newick(left[node], sb);
+			newick(left[node],sb,withNumbers);
 			sb.append(',');
-			newick(right[node], sb);
-			sb.append(')');
+			newick(right[node],sb,withNumbers);
+			sb.append(')');			
+        	if (withNumbers) sb.append("["+node+"]");
 		}
 		if(node == root) {
 			sb.append(';');
