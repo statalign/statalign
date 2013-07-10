@@ -210,6 +210,7 @@ public class State {
 			newick(right[node],sb,withNumbers);
 			sb.append(')');			
         	if (withNumbers) sb.append("["+node+"]");
+        	//sb.append("["+node+"]");
 		}
 		if(node == root) {
 			sb.append(';');

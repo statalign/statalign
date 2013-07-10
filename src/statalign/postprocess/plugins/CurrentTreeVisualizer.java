@@ -65,8 +65,8 @@ public class CurrentTreeVisualizer extends TreeVisualizer {
     @Override
     public void newPeek(State state) {
 //    	System.out.println("CurrentTreeVisualizer: New peek.");
-        String treeString = state.getNewickString();
-        NewickParser parser = new NewickParser(treeString);
+        String sampledTree = state.getNewickStringWithLabels();
+        NewickParser parser = new NewickParser(sampledTree);
         TreeNode node = parser.parse();
 
         if(show) {

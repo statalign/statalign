@@ -72,7 +72,7 @@ public class ConsensusTreeVisualizer extends TreeVisualizer {
     @Override
     public void newSample(State state, int no, int total) {
     	if (state.isBurnin) return;
-    	String treeString = state.getNewickString();
+    	String treeString = state.getNewickStringWithLabels();
         NewickParser parser = new NewickParser(treeString);
         TreeNode root = parser.parse();
         
