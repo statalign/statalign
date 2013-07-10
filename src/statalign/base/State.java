@@ -76,6 +76,8 @@ public class State {
 	private String[] fullAlign;
 	/** Cache to store previously calculated newick tree string by {@link #getNewickString()} */
 	private String newickString;
+	/** <code>true</code> if this state comes from the burnin.*/
+	public boolean isBurnin;
 	
 	/**
 	 * Constructs a new {@link State} object, filling the given parameter and

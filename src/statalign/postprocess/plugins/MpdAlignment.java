@@ -138,6 +138,7 @@ public class MpdAlignment extends statalign.postprocess.Postprocess {
 	public void newSample(State state, int no, int total) {
 		//System.out.println(curAlig);
 		//System.out.println(curAlig.leafAlignment);
+		if (state.isBurnin) return; 
 		for(int i = 0; i < curAlig.leafAlignment.length; i++){
             if (curAlig == null || curAlig.leafAlignment[i] == null) {
                 System.out.println();

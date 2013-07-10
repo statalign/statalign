@@ -115,7 +115,8 @@ public class LogLikelihoodTrace extends statalign.postprocess.Postprocess{
 		}
 		if(sampling){
 			try {
-				file.write("Sample "+no+"\tLoglikelihood:\t"+logLike[1]+"\n");										
+				if (state.isBurnin) file.write("Burnin "+no+"\tLoglikelihood:\t"+logLike[1]+"\n");
+				else file.write("Sample "+no+"\tLoglikelihood:\t"+logLike[1]+"\n");										
 			} catch (IOException e) {
 				new ErrorMessage(null," "+e.getLocalizedMessage(),true);
 			}

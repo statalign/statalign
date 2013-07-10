@@ -111,11 +111,12 @@ public class CurrentTreeVisualizer extends TreeVisualizer {
 //    	System.out.println("CurrentTreeVisualizer: New sample.");
         String sampledTree = state.getNewickString();
 
-        // TODO: START OF FIX
-        NewickParser parser = new NewickParser(sampledTree);
-        TreeNode node = parser.parse();
+       
 
         if(show) {
+        	 // TODO: START OF FIX
+            NewickParser parser = new NewickParser(sampledTree);
+            TreeNode node = parser.parse();
         	for (TreeView view : treeViews) {
         		view.newSample(node);
         	}
@@ -126,7 +127,8 @@ public class CurrentTreeVisualizer extends TreeVisualizer {
         
         if (sampling) {
             try {
-                file.write("Sample " + no + "\tTree:\t" + sampledTree + "\n");
+                if (state.isBurnin) file.write("Burnin " + no + "\tTree:\t" + sampledTree + "\n");
+                else file.write("Sample " + no + "\tTree:\t" + sampledTree + "\n");
             } catch (IOException e) {
                 e.printStackTrace();
             }

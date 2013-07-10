@@ -327,7 +327,7 @@ public class Mcmc extends Stoppable {
 		if(!mcmcpars.fixTopology && !mcmcpars.fixEdge) {
 			topologyMove = new TopologyMove(coreModel,edgePrior,
 					//0.5*multiplicativeProposalWidthControlVariable,"Topology"); // works ok with glob_25
-					0.75*uniformProposalWidthControlVariable,fastSwapProb,"Topology"); // experimental
+					0.5*uniformProposalWidthControlVariable,fastSwapProb,"Topology"); // experimental
 			coreModel.addMcmcMove(topologyMove, topologyWeight,topologyWeightIncrement);
 						
 //			LOCALTopologyMove localTopologyMove = new LOCALTopologyMove(coreModel,edgePrior,
@@ -454,7 +454,7 @@ public class Mcmc extends Stoppable {
 		}
 		return info;
 	}
-
+	
 	/**
 	 * Returns a {@link State} object that describes the current state of the
 	 * MCMC. This can then be passed on to other classes such as postprocessing

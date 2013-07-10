@@ -266,7 +266,6 @@ public abstract class Postprocess {
     public List<ModelExtension> getModExtPlugins() {
     	return mcmc.modelExtMan.getPluginList();
     }
-
 	
 
 
