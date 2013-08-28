@@ -25,7 +25,7 @@ public class HierarchicalContinuousPositiveStructAlignMove extends ContinuousPos
 
 	public void addChildMove(ContinuousPositiveStructAlignMove child) {
 		children.add(child);
-		child.addParent(this);
+		//child.addParent(this);
 	}
 	public double getLogChildDensity(ContinuousPositiveStructAlignMove child) {
 		return hierarchicalPrior.logDensity(child.getParam().get());

@@ -32,6 +32,7 @@ import statalign.mcmc.GammaProposal;
 import statalign.mcmc.GaussianProposal;
 import statalign.mcmc.HyperbolicPrior;
 import statalign.mcmc.InverseGammaPrior;
+import statalign.mcmc.LinearPrior;
 import statalign.mcmc.McmcCombinationMove;
 import statalign.mcmc.McmcMove;
 import statalign.mcmc.ParameterInterface;
@@ -57,7 +58,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	
 	JToggleButton myButton;
 	
-	public boolean globalSigma = true;
+	public boolean globalSigma = false;
 	public boolean useLibrary = false;
 	public boolean fixedEpsilon = false;
 	public boolean fixedSigma2 = false;
@@ -133,7 +134,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	private double tauPriorRate = 0.001;
 	public InverseGammaPrior tauPrior = new InverseGammaPrior(tauPriorShape,tauPriorRate);
 
-	private double sigma2HPriorShape = 2;
+	private double sigma2HPriorShape = 1;
 	private double sigma2HPriorRate = 2;
 //	public InverseGammaPrior sigma2HPrior = new InverseGammaPrior(sigma2HPriorShape,sigma2HPriorRate);
 	public GammaPrior sigma2HPrior = new GammaPrior(sigma2HPriorShape,sigma2HPriorRate);
@@ -156,8 +157,10 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	//int sigma2Weight = 5; //15;
 	int sigma2Weight = 18; // 
 	int tauWeight = 10;
-	int sigma2HierWeight = 10;
-	int nuWeight = 10;
+	int sigma2HierWeight = 10; // ORIGINAL
+	//int sigma2HierWeight = 0;
+	int nuWeight = 10; // ORIGINAL
+	//int nuWeight = 0;
 	//int epsilonWeight = 2;//10;
 	int epsilonWeight = 13; //
 	int rotationWeight = 2;
@@ -461,12 +464,14 @@ public class StructAlign extends ModelExtension implements ActionListener {
 					sigma2Prior = new GammaPrior(2,2);
 				}
 				else {
-					sigma2Prior = new GammaPrior(2,2);
+					sigma2Prior = new GammaPrior(1,1);
 					//sigma2Prior = new HyperbolicPrior();
 				}
 			}
 			else {
-				sigma2Prior = new InverseGammaPrior(sigma2PriorShape,sigma2PriorRate);
+				//sigma2Prior = new InverseGammaPrior(sigma2PriorShape,sigma2PriorRate);
+				sigma2Prior = new LinearPrior();
+				//sigma2Prior = new UniformPrior();
 			}
 			sigma2PriorInitialised = true;
 		}
@@ -598,7 +603,10 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				addMcmcMove(m,sigma2Weight);
 				if (!globalSigma) {
 					sigma2HMove.addChildMove(m);
+					m.addParent(sigma2HMove);
 					nuMove.addChildMove(m);
+					// Don't add nuMove as a parent, because otherwise
+					// we'll double count the prior.
 				}
 				if (sigma2.length == 1 && !fixedEpsilon) {
 					ArrayList<McmcMove> sigmaEpsilon = new ArrayList<McmcMove>();

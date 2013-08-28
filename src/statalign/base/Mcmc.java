@@ -316,7 +316,7 @@ public class Mcmc extends Stoppable {
 			coreModel.addMcmcMove(silentIndelMove, silentIndelWeight,silentIndelWeightIncrement);
 		}
 
-		GammaPrior edgePrior = new GammaPrior(1,1);
+		GammaPrior edgePrior = new GammaPrior(1,0.01);
 		double uniformProposalWidthControlVariable = 0.25;
 		double multiplicativeProposalWidthControlVariable = 0.5;
 		

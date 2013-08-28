@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.ArrayList;
 
 import statalign.mcmc.ContinuousPositiveParameterMove;
+import statalign.mcmc.GammaPrior;
 import statalign.mcmc.ParameterInterface;
 import statalign.mcmc.PriorDistribution;
 import statalign.mcmc.ProposalDistribution;
@@ -50,17 +51,33 @@ public class ContinuousPositiveStructAlignMove extends ContinuousPositiveParamet
 		else {
 			// return 0;
 			double logDensity = prior.logDensityUnnormalised(param.get());
+			//double logDensity = Math.log(param.get());
 			// Since we're only using this in ratios, there's no
 			// need to compute the normalising constant, which is good, 
 			// because some priors may be improper.
 			// NB be careful with this though -- an improper prior should
 			// only be used if the posterior can be shown to be proper.
 			if (parentPriors != null) {
+//				System.out.print(param.get()+"\t"+Math.log(param.get())+"\t"+logDensity);
+				//double logDensity1 = 0;
 				for (HierarchicalContinuousPositiveStructAlignMove parent : parentPriors) {
+					//parent.hierarchicalPrior = new GammaPrior(((StructAlign) owner).nu,((StructAlign) owner).nu / ((StructAlign) owner).sigma2Hier);
 					logDensity += parent.getLogChildDensity(this);
 					// The normalising constant of this density will depend
 					// on the parent, so we may need the normalised density here.
 				}
+//				System.out.print("\t"+logDensity1);
+				//logDensity += logDensity1;
+				// FOR TESTING
+//				double logDensity2 = 0;				
+//				for (HierarchicalContinuousPositiveStructAlignMove parent : parentPriors) {
+//					parent.hierarchicalPrior = new GammaPrior(1+((StructAlign) owner).nu,((StructAlign) owner).nu / ((StructAlign) owner).sigma2Hier);
+//					logDensity2 += parent.getLogChildDensity(this);
+//					parent.hierarchicalPrior = new GammaPrior(((StructAlign) owner).nu,((StructAlign) owner).nu / ((StructAlign) owner).sigma2Hier);
+//					// The normalising constant of this density will depend
+//					// on the parent, so we may need the normalised density here.
+//				}
+//				System.out.println("\t"+logDensity2);
 			}
 			return logDensity;
 		}
