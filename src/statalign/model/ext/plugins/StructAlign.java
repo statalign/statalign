@@ -58,7 +58,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	
 	JToggleButton myButton;
 	
-	public boolean globalSigma = false;
+	public boolean globalSigma = true;
 	public boolean useLibrary = false;
 	public boolean fixedEpsilon = false;
 	public boolean fixedSigma2 = false;
@@ -470,8 +470,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			}
 			else {
 				//sigma2Prior = new InverseGammaPrior(sigma2PriorShape,sigma2PriorRate);
-				//sigma2Prior = new LinearPrior();
-				sigma2Prior = new UniformPrior();
+				sigma2Prior = new LinearPrior();
+				//sigma2Prior = new UniformPrior();
 			}
 			sigma2PriorInitialised = true;
 		}
