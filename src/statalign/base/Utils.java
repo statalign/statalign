@@ -547,8 +547,8 @@ public class Utils{
 		if(a == b)
 			return Math.log(2)+a;
 		if(a < b)
-			return b+Math.log(Math.exp(a-b)+1);
-		return a+Math.log(Math.exp(b-a)+1);
+			return b+Math.log(FastMath.exp(a-b)+1);
+		return a+Math.log(FastMath.exp(b-a)+1);
 	}
 
 	/**
