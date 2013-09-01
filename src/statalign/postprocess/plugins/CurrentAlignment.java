@@ -170,8 +170,8 @@ public class CurrentAlignment extends statalign.postprocess.Postprocess{
 			try {
 				String[] alignment = Utils.alignmentTransformation(allAlignment, seqNames, alignmentType, input);
 				for(int i = 0; i < alignment.length; i++){
-					if (state.isBurnin) file.write("Burnin "+no+"\tAlignment:\t"+"\t"+alignment[i]+"\n");
-					else file.write("Sample "+no+"\tAlignment:\t"+"\t"+alignment[i]+"\n");
+					if (state.isBurnin) file.write("Burnin "+no+"\tAlignment:"+"\t"+alignment[i]+"\n");
+					else file.write("Sample "+no+"\tAlignment:"+"\t"+alignment[i]+"\n");
 				}
 			} catch (IOException e) {
 				e.printStackTrace();
