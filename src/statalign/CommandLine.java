@@ -341,8 +341,8 @@ public class CommandLine {
 			// TODO allow rnaMode to be switched off even for RNA sequences (plugin param)
 			// TODO move rnaMode to a "RNA container" plugin
 			if(manager.inputData.seqs.isRNA()) {
-				PostprocessManager.rnaMode = true;
-				System.out.println("RNA mode activated.");
+//				PostprocessManager.rnaMode = true;
+//				System.out.println("RNA mode activated.");
 			}
 
 			AutomateParameters.setAutomateBurnIn(false);

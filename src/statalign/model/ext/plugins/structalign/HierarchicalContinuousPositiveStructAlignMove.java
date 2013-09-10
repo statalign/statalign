@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.ArrayList;
 
 import statalign.mcmc.GammaPrior;
+import statalign.mcmc.LogNormalPrior;
 import statalign.mcmc.McmcMove;
 import statalign.mcmc.ParameterInterface;
 import statalign.mcmc.PriorDistribution;
@@ -19,7 +20,8 @@ public class HierarchicalContinuousPositiveStructAlignMove extends ContinuousPos
 			ParameterInterface p,  PriorDistribution<Double> pr,
 			ProposalDistribution<Double> prop, String n) {
 		super(s,p,pr,prop,n);
-		hierarchicalPrior = new GammaPrior(((StructAlign) owner).nu,((StructAlign) owner).nu / ((StructAlign) owner).sigma2Hier);
+		//hierarchicalPrior = new GammaPrior(((StructAlign) owner).nu,((StructAlign) owner).nu / ((StructAlign) owner).sigma2Hier);
+		hierarchicalPrior = new LogNormalPrior(Math.log(((StructAlign) owner).sigma2Hier),((StructAlign) owner).nu);
 		//hierarchicalPrior = new GammaPrior(1,((StructAlign) owner).nu / ((StructAlign) owner).sigma2Hier);
 		// TODO Abstract this somewhat
 	}
@@ -42,7 +44,8 @@ public class HierarchicalContinuousPositiveStructAlignMove extends ContinuousPos
 			}
 			logProposalDensity -= hierarchicalPrior.logDensity(children.get(i).getParam().get());
 		}
-		hierarchicalPrior = new GammaPrior(((StructAlign) owner).nu,((StructAlign) owner).nu / ((StructAlign) owner).sigma2Hier);
+		//hierarchicalPrior = new GammaPrior(((StructAlign) owner).nu,((StructAlign) owner).nu / ((StructAlign) owner).sigma2Hier);
+		hierarchicalPrior = new LogNormalPrior(Math.log(((StructAlign) owner).sigma2Hier),((StructAlign) owner).nu);
 		//hierarchicalPrior = new GammaPrior(1,((StructAlign) owner).nu / ((StructAlign) owner).sigma2Hier);
 		// TODO Abstract this somewhat
 		for (int i=0; i<children.size(); i++) {
@@ -58,7 +61,8 @@ public class HierarchicalContinuousPositiveStructAlignMove extends ContinuousPos
 	@Override
 	public void restoreState(Object externalState) {
 		super.restoreState(externalState);
-		hierarchicalPrior = new GammaPrior(((StructAlign) owner).nu,((StructAlign) owner).nu / ((StructAlign) owner).sigma2Hier);
+		//hierarchicalPrior = new GammaPrior(((StructAlign) owner).nu,((StructAlign) owner).nu / ((StructAlign) owner).sigma2Hier);
+		hierarchicalPrior = new LogNormalPrior(Math.log(((StructAlign) owner).sigma2Hier),((StructAlign) owner).nu);
 		//hierarchicalPrior = new GammaPrior(1,((StructAlign) owner).nu / ((StructAlign) owner).sigma2Hier);
 		// TODO Abstract this somewhat
 	}

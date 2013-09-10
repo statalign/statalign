@@ -31,7 +31,7 @@ public class SubstMove extends McmcMove {
 		owner = m;
 		prior = null;
 		name = n;
-		autoTune = true;
+		autoTune = false;
 	}
 
 	public void copyState(Object externalState) {

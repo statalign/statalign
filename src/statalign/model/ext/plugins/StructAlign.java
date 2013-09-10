@@ -141,7 +141,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 //	public HyperbolicPrior sigma2HPrior = new HyperbolicPrior();
 
 	private double nuPriorShape = 1;
-	private double nuPriorRate = 0.5;
+	private double nuPriorRate = 1; // 0.5
 	public GammaPrior nuPrior = new GammaPrior(nuPriorShape,nuPriorRate);
 	
 	// priors for rotation and translation are uniform
@@ -470,8 +470,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			}
 			else {
 				//sigma2Prior = new InverseGammaPrior(sigma2PriorShape,sigma2PriorRate);
-				sigma2Prior = new LinearPrior();
-				//sigma2Prior = new UniformPrior();
+				//sigma2Prior = new LinearPrior();
+				sigma2Prior = new UniformPrior();
 			}
 			sigma2PriorInitialised = true;
 		}

@@ -175,16 +175,17 @@ public class Mcmc extends Stoppable {
 	private double[] rateMult = {3.0,2.5,2.0,1.5,1.0};
 	//private double[] rateMult = {1,1,1,1,1};
 
-	private int[] alignWeights = {0,0,0,0,12};
-	private int[] alignWeights2 = {0,0,0,0,12};
+	private int[] alignWeights = {0,0,0,0,12}; // ORIGINAL
+	private int[] alignWeights2 = {0,0,0,0,12}; // ORIGINAL
 	//private int[] alignWeights2 = {0,0,0,0,0};
 	//private int[] alignWeights = {0,0,0,0,25};
-	private int[] alignWeightIncrements = {5,2,2,2,-4};
-	private int[] alignWeightIncrements2 = {2,2,2,2,-8};
+	private int[] alignWeightIncrements = {5,2,2,2,-4}; // ORIGINAL
+	private int[] alignWeightIncrements2 = {2,2,2,2,-8}; // ORIGINAL
 	//private int[] alignWeightIncrements2 = {5,5,5,5,5};
 	//private int[] alignWeightIncrements = {5,1,1,1,-10};
 	//private int[] alignWeightIncrements = {11,1,1,1,-10};
 	//private int[] alignWeightIncrements = {0,0,0,0,0};
+	//private int[] alignWeightIncrements2 = {0,0,0,0,0};
 	
 	private int silentIndelWeight = 10;
 	private int silentIndelWeightIncrement = -8; // Added after half of burnin
@@ -298,8 +299,9 @@ public class Mcmc extends Stoppable {
 				AlignmentMove alignMove = new AlignmentMove(coreModel,Pvals[i],"Alignment_"+i+"_"+Pvals[i]);
 				if (i==(Pvals.length-1)) { // Keep one of them with longer windows
 					alignMove.autoTunable = false;
-					alignMove.useModelExtInProposal();
+					//alignMove.useModelExtInProposal(); // ORIGINAL
 				}				
+				alignMove.useModelExtInProposal(); // NOT ORIGINAL
 				coreModel.addMcmcMove(alignMove, alignWeights[i],alignWeightIncrements[i]);
 			}
 			for (int i=0; i<rateMult.length; i++) {
@@ -307,8 +309,9 @@ public class Mcmc extends Stoppable {
 				alignMove.setProposalParamMultiplier(rateMult[i]);
 				if (i==(rateMult.length-1)) { // Keep one of them with longer windows
 					alignMove.autoTunable = false;
-					alignMove.useModelExtInProposal();
+					//alignMove.useModelExtInProposal(); // ORIGINAL
 				}
+				alignMove.useModelExtInProposal(); // NOT ORIGINAL
 				coreModel.addMcmcMove(alignMove, alignWeights2[i],alignWeightIncrements2[i]);
 			}
 			
