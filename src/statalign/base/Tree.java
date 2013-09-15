@@ -630,6 +630,20 @@ COLUMN:    	while (c != v.last) {
                 //Delete the root 
         } 
          
-    } 
-
+    }
+    
+    //public void setAllDistToRoot(){
+    //	root.setDistToRoot(0);
+    //}
+    
+    public double getDiameter(){
+    	// set distance to root for all vertices
+    	root.setDistToRoot(0);
+    	// set max distance between two leaves below each vertex
+    	root.setMaxDistBelow();
+    	double max = 0;
+    	for(int i = 0; i < vertex.length; i++)
+    		max = Math.max(max, vertex[i].maxDistBelow);
+    	return max;
+    }
 }

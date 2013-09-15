@@ -90,6 +90,10 @@ public class Vertex {
 
     public int leafCount;
 
+    public double distToRoot;			// distance of vertex to root
+    
+    public double maxDistBelow;			// longest distance between leaves below this vertex
+    
     Vertex() {
     }
     
@@ -6186,4 +6190,28 @@ public class Vertex {
 //
 //    }
 
+    public void setDistToRoot(double soFar){
+    	distToRoot = soFar + edgeLength;
+    	if(left != null){
+    		left.setDistToRoot(distToRoot);
+    		right.setDistToRoot(distToRoot);
+    	}
+    }
+    
+    public void setMaxDistBelow(){
+    	maxDistBelow = left.getMaxDist() + right.getMaxDist() - 2.0 * distToRoot;
+    	if(left != null){
+    		left.setMaxDistBelow();
+    		right.setMaxDistBelow();
+    	}
+    }
+    
+    public double getMaxDist(){
+    	ArrayList<Integer> indices = new ArrayList<Integer>(0);
+    	collectIndicesBelow(this, indices);
+    	double max = 0;
+    	for(int i = 0; i < indices.size(); i++)
+    		max = Math.max(max, indices.get(i));
+    	return max;
+    }
 }
