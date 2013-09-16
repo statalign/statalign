@@ -152,7 +152,7 @@ public class Utils{
 	 */
 	public static final double log0 = Double.NEGATIVE_INFINITY;
 	
-	public static final double MIN_EDGE_LENGTH = 0.001;
+	public static final double MIN_EDGE_LENGTH = 0.01;
 	
 	/** Minimum length for internal node sequence. */
 	public static final int MIN_SEQ_LENGTH = 1; 

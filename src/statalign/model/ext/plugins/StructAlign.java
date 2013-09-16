@@ -139,13 +139,13 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	public InverseGammaPrior tauPrior = new InverseGammaPrior(tauPriorShape,tauPriorRate);
 
 	private double sigma2HPriorShape = 1;
-	private double sigma2HPriorRate = 2;
+	private double sigma2HPriorRate = 1;
 //	public InverseGammaPrior sigma2HPrior = new InverseGammaPrior(sigma2HPriorShape,sigma2HPriorRate);
 	public GammaPrior sigma2HPrior = new GammaPrior(sigma2HPriorShape,sigma2HPriorRate);
 //	public HyperbolicPrior sigma2HPrior = new HyperbolicPrior();
 
 	private double nuPriorShape = 1;
-	private double nuPriorRate = 2; 
+	private double nuPriorRate = 6; 
 	public GammaPrior nuPrior = new GammaPrior(nuPriorShape,nuPriorRate);
 	
 	// priors for rotation and translation are uniform
