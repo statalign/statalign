@@ -231,6 +231,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		usage.append("\tlocalEpsilon\t\t(Uses B-factor information [if available] to scale epsilon per site.)\n");
 		usage.append("\tlocalSigma\t\t(Allows each branch to have its own sigma parameter)\n");
 		usage.append("\tuseLibrary\t\t(Allows rotation library moves to be used)\n");
+		usage.append("\tsigmaSpike\t(Activates spike mixture prior for local sigmas)\n");		
+		usage.append("\tsigmaSpike={a_b}\t(Specifies parameters for the Beta prior on spike probability) [default (3.1,1.1) ]\n");		
 		usage.append("\tsigma2Prior=PRIOR\t(Sets the prior and hyperparameters for sigma2)\n");
 		usage.append("\tepsilonPrior=PRIOR\t(Sets the prior and hyperparameters for epsilon)\n");
 		usage.append("\tPRIOR can be one of:\n");
@@ -273,6 +275,27 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			addToFilenameExtension("sigma2_"+fixedSigma2Value);
 			System.out.println("Fixing sigma2 to "+fixedSigma2Value+".");
 		}
+		else if (paramName.equals("sigmaSpike")) {
+			globalSigmaSpike = true;
+			globalSigma = false;
+			addToFilenameExtension("spike_");
+			String[] argString = paramValue.split("\\{",2);
+			if (argString[1].endsWith("}")) {				
+				String [] args = argString[1].substring(0,argString[1].length()-1).split("_",2);
+				if (args.length == 2) {
+					addToFilenameExtension(paramName+"_spike_"+args[0]+"_"+args[1]);
+					System.out.println("Using Gamma("+Double.parseDouble(args[0])+","+Double.parseDouble(args[1])+
+							") prior for "+paramName+".");
+					globalSigmaSpikeParams = new double[] {Double.parseDouble(args[0]),Double.parseDouble(args[1])};
+				}
+				else {
+					throw new IllegalArgumentException(
+							"Spike parameters must be specifed in the form\n-plugin:structal[sigmaSpike={a_b}]\n");
+				}
+			}
+			addToFilenameExtension(globalSigmaSpikeParams[0]+"_"+globalSigmaSpikeParams[1]);
+			System.out.println("Activating spike prior for local sigmas.");
+		}
 		else if (paramName.equals("sigma2Prior")) {
 			sigma2Prior = setPrior(paramName,paramValue);
 			sigma2PriorInitialised = (sigma2Prior != null);
@@ -313,6 +336,13 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		}
 		else if (paramName.equals("useLibrary")) {
 			useLibrary = true;
+		}
+		else if (paramName.equals("sigmaSpike")) {
+			globalSigmaSpike = true;
+			globalSigma = false;
+			addToFilenameExtension("spike_");
+			addToFilenameExtension(globalSigmaSpikeParams[0]+"_"+globalSigmaSpikeParams[1]);
+			System.out.println("Activating spike prior for local sigmas.");
 		}
 		else {
 			super.setParam(paramName,paramValue);
