@@ -428,7 +428,12 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				}
 				if (localEpsilon) {
 					for(int j = 0; j < len; j++) {
-						bFactors[ind][j] /= bFactorMean;
+						if (bFactorMean == 0) {
+							bFactors[ind][j] = 1;	
+						}
+						else {
+							bFactors[ind][j] /= bFactorMean;	
+						}						
 					}
 				}
 				
@@ -815,6 +820,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		if (Utils.DEBUG){
 			double[][] subCovar = Funcs.getSubMatrix(fullCovar, notgap, notgap);
 			// create normal distribution with mean 0 and covariance subCovar
+			if (localEpsilon) addLocalEpsilonToDiagonal(subCovar,notgap,col);
 			multiNorm2 = new MultiNormCholesky(new double[numMatch], subCovar);
 		}
 		
