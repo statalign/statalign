@@ -62,6 +62,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	public boolean useLibrary = false;
 	public boolean fixedEpsilon = false;
 	public boolean fixedSigma2 = false;
+	public boolean localEpsilon = false;
 	
 	double structTemp = 1;	
 	
@@ -74,6 +75,9 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	
 	/** Alpha-C atomic coordinate for each sequence and each residue */
 	public double[][][] coords;
+	
+	/** Crystallographic temperature factors, for weighting epsilon. */
+	private double[][] bFactors;
 	
 	/** Alpha-C atomic coordinates under the current set of rotations/translations */
 	public double[][][] rotCoords;
@@ -141,7 +145,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 //	public HyperbolicPrior sigma2HPrior = new HyperbolicPrior();
 
 	private double nuPriorShape = 1;
-	private double nuPriorRate = 1; // 0.5
+	private double nuPriorRate = 2; 
 	public GammaPrior nuPrior = new GammaPrior(nuPriorShape,nuPriorRate);
 	
 	// priors for rotation and translation are uniform
@@ -216,6 +220,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		usage.append("\tsigma2=X\t\t(Fixes sigma2 at X)\n");
 		usage.append("\tepsilon=X\t\t(Fixes epsilon at X)\n");
 		usage.append("\tminEpsilon=X\t\t(Sets minimum value for epsilon to X) [default 0.01]\n");
+		usage.append("\tlocalEpsilon\t\t(Uses B-factor information [if available] to scale epsilon per site.)\n");
 		usage.append("\tlocalSigma\t\t(Allows each branch to have its own sigma parameter)\n");
 		usage.append("\tuseLibrary\t\t(Allows rotation library moves to be used)\n");
 		usage.append("\tsigma2Prior=PRIOR\t(Sets the prior and hyperparameters for sigma2)\n");
@@ -293,6 +298,10 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	public void setParam(String paramName, boolean paramValue) {
 		if (paramName.equals("localSigma")) {
 			globalSigma = false;
+		}
+		else if (paramName.equals("localEpsilon")) {
+			localEpsilon = true;
+			System.out.println("Using B-factor information to scale epsilon.");
 		}
 		else if (paramName.equals("useLibrary")) {
 			useLibrary = true;
@@ -385,10 +394,14 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		for(String name : inputData.seqs.seqNames)
 			seqMap.put(name.toUpperCase(), i++);
 		coords = new double[inputData.seqs.seqNames.size()][][];
+		if (localEpsilon) bFactors = new double[inputData.seqs.seqNames.size()][];
 		for(DataType data : inputData.auxData) {
 			if(!(data instanceof ProteinSkeletons))
 				continue;
 			ProteinSkeletons ps = (ProteinSkeletons) data;
+			if (localEpsilon && ps.bFactors.size() == 0) {
+				throw new RuntimeException("No B-factor data available: cannot use localEpsilon mode.");
+			}
 			for(i = 0; i < ps.names.size(); i++) {
 				String name = ps.names.get(i).toUpperCase();
 				if(!seqMap.containsKey(name))
@@ -396,12 +409,29 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				int ind = seqMap.get(name);
 				int len = inputData.seqs.sequences.get(ind).replaceAll("-", "").length();
 				List<double[]> cl = ps.coords.get(i);
+				List<Double> bF = ps.bFactors.get(i);
+				if (localEpsilon && bF.size() == 0) {
+					throw new RuntimeException("No B-factor data available for "+name+": cannot use localEpsilon mode.");					
+				}
 				if(len != cl.size())
 					throw new IllegalArgumentException("structalign: sequence length mismatch with structure file for seq "+name);
 				coords[ind] = new double[len][];
+				if (localEpsilon) bFactors[ind] = new double[len];
 				// center all coordinates to mean zero so that rotations are around center of gravity
-				for(int j = 0; j < len; j++)
+				double bFactorMean = 0;
+				for(int j = 0; j < len; j++) {
 					 coords[ind][j] = Utils.copyOf(cl.get(j));
+					 if (localEpsilon) {
+						 bFactors[ind][j] = bF.get(j);
+						 bFactorMean += bFactors[ind][j]/len;
+					 }
+				}
+				if (localEpsilon) {
+					for(int j = 0; j < len; j++) {
+						bFactors[ind][j] /= bFactorMean;
+					}
+				}
+				
 				RealMatrix temp = new Array2DRowRealMatrix(coords[ind]);
 				RealVector mean = Funcs.meanVector(temp);
 				for(int j = 0; j < len; j++)
@@ -788,12 +818,13 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			multiNorm2 = new MultiNormCholesky(new double[numMatch], subCovar);
 		}
 		
-		if (multiNorm == null) {
+		if (localEpsilon || multiNorm == null) {
 			// extract covariance corresponding to ungapped positions
 			double[][] subCovar = Funcs.getSubMatrix(fullCovar, notgap, notgap);
+			if (localEpsilon) addLocalEpsilonToDiagonal(subCovar,notgap,col);
 			// create normal distribution with mean 0 and covariance subCovar
 			multiNorm = new MultiNormCholesky(new double[numMatch], subCovar);
-			multiNorms.put(columnCode, multiNorm);
+			if (!localEpsilon) multiNorms.put(columnCode, multiNorm);
 		}		
 			
 		double logli = 0;
@@ -821,6 +852,12 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			logli += multiNorm.logDensity(vals);
 		}
 		return logli;
+	}
+	
+	private void addLocalEpsilonToDiagonal(double[][] subCovar, int[] notgap, int[] col) {		
+		for (int i=0; i<notgap.length; i++) {
+			subCovar[i][i] += Math.pow((bFactors[notgap[i]][col[notgap[i]]]),2) * epsilon / notgap.length;
+		}
 	}
 
 	/**
@@ -866,13 +903,15 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				for(int j = i; j < tree.names.length; j++)
 					covar[j][i] = covar[i][j] = tau * Math.exp(-distanceMatrix[i][j]);
 		}
-		for(int i = 0; i < tree.names.length; i++)
-			covar[i][i] += epsilon;
+		for(int i = 0; i < tree.names.length; i++) {
+			if (!localEpsilon) covar[i][i] += epsilon;			
+		}
+			
 		
 		multiNorms = new HashMap<Integer, MultiNormCholesky>(); 
 		
 		return covar;
-	}
+	}	
 	
 
 	public void printTree(Vertex v, String vname){
