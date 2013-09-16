@@ -139,6 +139,13 @@ public class Mcmc extends Stoppable {
 	 */
 	public McmcModule coreModel;
 	
+	/** 
+	 * Interval (in terms of number of samples) 
+	 * at which current postprocessing information is flushed to file
+	 * and MCMC info is printed to stdout. 
+	 */
+	int LOG_INTERVAL = 100; 
+	
 	// TODO Move the parameters below into MCMCPars. Would be nice to have
 	// a set of sliding bars in a menu in the GUI that go from 0 to 100, 
 	// to select the relative frequency of the different moves etc.
@@ -165,12 +172,20 @@ public class Mcmc extends Stoppable {
 	
 	//private int alignWeight = 25;
 	private double[] Pvals = {0.9,0.99,0.999,0.9999,0.99999};
+	private double[] rateMult = {3.0,2.5,2.0,1.5,1.0};
+	//private double[] rateMult = {1,1,1,1,1};
 
-	private int[] alignWeights = {1,1,1,1,20};
+	private int[] alignWeights = {0,0,0,0,12}; // ORIGINAL
+	private int[] alignWeights2 = {0,0,0,0,12}; // ORIGINAL
+	//private int[] alignWeights2 = {0,0,0,0,0};
 	//private int[] alignWeights = {0,0,0,0,25};
-	private int[] alignWeightIncrements = {5,1,1,1,-4};
+	private int[] alignWeightIncrements = {5,2,2,2,-4}; // ORIGINAL
+	private int[] alignWeightIncrements2 = {2,2,2,2,-8}; // ORIGINAL
+	//private int[] alignWeightIncrements2 = {5,5,5,5,5};
+	//private int[] alignWeightIncrements = {5,1,1,1,-10};
 	//private int[] alignWeightIncrements = {11,1,1,1,-10};
 	//private int[] alignWeightIncrements = {0,0,0,0,0};
+	//private int[] alignWeightIncrements2 = {0,0,0,0,0};
 	
 	private int silentIndelWeight = 10;
 	private int silentIndelWeightIncrement = -8; // Added after half of burnin
@@ -194,6 +209,7 @@ public class Mcmc extends Stoppable {
 		ppm.mcmc = this;
 		this.modelExtMan.setMcmc(this);
 		this.tree = tree;
+		tree.owner = this;
 		mcmcpars = pars;
 		this.tree.heat = 1.0d;
 		randomisationPeriod = mcmcpars.randomisationPeriod;
@@ -279,31 +295,48 @@ public class Mcmc extends Stoppable {
 		coreModel.addMcmcMove(substMove, substWeight);
 
 		if(!mcmcpars.fixAlign) {
-			for (int i =0; i<Pvals.length; i++) {
+			for (int i=0; i<Pvals.length; i++) {
 				AlignmentMove alignMove = new AlignmentMove(coreModel,Pvals[i],"Alignment_"+i+"_"+Pvals[i]);
+				if (i==(Pvals.length-1)) { // Keep one of them with longer windows
+					alignMove.autoTunable = false;
+					//alignMove.useModelExtInProposal(); // ORIGINAL
+				}				
+				alignMove.useModelExtInProposal(); // NOT ORIGINAL
 				coreModel.addMcmcMove(alignMove, alignWeights[i],alignWeightIncrements[i]);
+			}
+			for (int i=0; i<rateMult.length; i++) {
+				AlignmentMove alignMove = new AlignmentMove(coreModel,Pvals[4],"Alignment_"+(i+Pvals.length)+"_"+Pvals[4]+"_"+rateMult[i]);
+				alignMove.setProposalParamMultiplier(rateMult[i]);
+				if (i==(rateMult.length-1)) { // Keep one of them with longer windows
+					alignMove.autoTunable = false;
+					//alignMove.useModelExtInProposal(); // ORIGINAL
+				}
+				alignMove.useModelExtInProposal(); // NOT ORIGINAL
+				coreModel.addMcmcMove(alignMove, alignWeights2[i],alignWeightIncrements2[i]);
 			}
 			
 			SilentIndelMove silentIndelMove = new SilentIndelMove(coreModel,"SilentIndel");
 			coreModel.addMcmcMove(silentIndelMove, silentIndelWeight,silentIndelWeightIncrement);
 		}
 
-		GammaPrior edgePrior = new GammaPrior(1,1);
+		GammaPrior edgePrior = new GammaPrior(1,0.01);
 		double uniformProposalWidthControlVariable = 0.25;
 		double multiplicativeProposalWidthControlVariable = 0.5;
 		
 		topologyMove = null;
+		double fastSwapProb = 0.05;
+		if (mcmcpars.fixAlign) fastSwapProb = 0.0;
 		
 		if(!mcmcpars.fixTopology && !mcmcpars.fixEdge) {
 			topologyMove = new TopologyMove(coreModel,edgePrior,
 					//0.5*multiplicativeProposalWidthControlVariable,"Topology"); // works ok with glob_25
-					1*uniformProposalWidthControlVariable,"Topology"); // experimental
+					0.75*uniformProposalWidthControlVariable,fastSwapProb,"Topology"); // experimental
 			coreModel.addMcmcMove(topologyMove, topologyWeight,topologyWeightIncrement);
 						
 //			LOCALTopologyMove localTopologyMove = new LOCALTopologyMove(coreModel,edgePrior,
 //					0.5*multiplicativeProposalWidthControlVariable,"LOCALTopology");
 			localTopologyMove = new LOCALTopologyMove(coreModel,edgePrior,
-					1*uniformProposalWidthControlVariable,"LOCALTopology");
+					1*uniformProposalWidthControlVariable,fastSwapProb,"LOCALTopology");
 			coreModel.addMcmcMove(localTopologyMove, localTopologyWeight,localTopologyWeightIncrement);
 		}
 		if(!mcmcpars.fixEdge) {
@@ -358,7 +391,7 @@ public class Mcmc extends Stoppable {
 			coreModel.setLogLike(totalLogLike);
 		}
 		if(Utils.DEBUG) {
-			//tree.recomputeCheckLogLike();
+			tree.recomputeCheckLogLike();
         	tree.checkPointers();
 			if(Math.abs(modelExtMan.totalLogLike(tree)-totalLogLike) > 1e-5) {
 				System.out.println("After: "+modelExtMan.totalLogLike(tree)+" "+totalLogLike);
@@ -367,6 +400,15 @@ public class Mcmc extends Stoppable {
 		}
 	}
 	
+	/**
+	 * 
+	 * @param aligned Vector indicating which characters are aligned to the current
+	 * column in the subtrees below.
+	 * @return Logarithm of emission probability for subtrees
+	 */
+	double calcEm(int[] aligned) {
+		return modelExtMan.calcLogEm(aligned);
+	}
 	/**
 	 * This function is called by the McmcMove objects in order to determine whether 
 	 * the proposed moves are to be accepted.
@@ -415,7 +457,7 @@ public class Mcmc extends Stoppable {
 		}
 		return info;
 	}
-
+	
 	/**
 	 * Returns a {@link State} object that describes the current state of the
 	 * MCMC. This can then be passed on to other classes such as postprocessing
@@ -484,18 +526,19 @@ public class Mcmc extends Stoppable {
 		ArrayList<Double> logLikeList = new ArrayList<Double>();
 
 		try {
+			stoppable();
 			//only to use if AutomateParameters.shouldAutomate() == true
-			final int SAMPLE_RATE_WHEN_DETERMINING_THE_SPACE = 100;
-			final int BURNIN_TO_CALCULATE_THE_SPACE = 25000;
-			ArrayList<String[]> alignmentsFromSamples = new ArrayList<String[]>(); 
+//			final int SAMPLE_RATE_WHEN_DETERMINING_THE_SPACE = 100;
+//			final int BURNIN_TO_CALCULATE_THE_SPACE = 25000;
+//			ArrayList<String[]> alignmentsFromSamples = new ArrayList<String[]>(); 
 			int burnIn = mcmcpars.burnIn;
-			boolean stopBurnIn = false;
-			if(AutomateParameters.shouldAutomateBurnIn()){
-				burnIn = 10000000;
-			} 
-			if(AutomateParameters.shouldAutomateStepRate()){
-				burnIn += BURNIN_TO_CALCULATE_THE_SPACE;
-			}
+//			boolean stopBurnIn = false;
+//			if(AutomateParameters.shouldAutomateBurnIn()){
+//				burnIn = 10000000;
+//			} 
+//			if(AutomateParameters.shouldAutomateStepRate()){
+//				burnIn += BURNIN_TO_CALCULATE_THE_SPACE;
+//			}
 
 			// Randomise the initial starting configuration 
 			// by accepting all moves for a period.
@@ -528,7 +571,6 @@ public class Mcmc extends Stoppable {
 					modelExtMan.afterFirstHalfBurnin();
 					coreModel.incrementWeights();
 					modelExtMan.incrementWeights();
-					
 					if (simulatedAnnealing) {
 						tree.heat = 1;
 					}
@@ -553,37 +595,39 @@ public class Mcmc extends Stoppable {
 						postprocMan.newPeek();
 					}
 				}
-				
-				if(AutomateParameters.shouldAutomateBurnIn() && i % 50 == 0){
-					// every 50 steps, add the current loglikelihood to a list
-					// and check if we find a major decline in that list 
-					logLikeList.add(getState().logLike);
-					if(!stopBurnIn){
-						stopBurnIn = AutomateParameters.shouldStopBurnIn(logLikeList);
-						if(AutomateParameters.shouldAutomateStepRate() && stopBurnIn){
-							burnIn = i + BURNIN_TO_CALCULATE_THE_SPACE;
-						}else if (stopBurnIn){
-							burnIn = i;
-						}
-					}
+				if (mcmcpars.doReportDuringBurnin && (i % mcmcpars.sampRate == 0)) {
+					report(i, mcmcpars.cycles / mcmcpars.sampRate);
 				}
+//				if(AutomateParameters.shouldAutomateBurnIn() && i % 50 == 0){
+//					// every 50 steps, add the current loglikelihood to a list
+//					// and check if we find a major decline in that list 
+//					logLikeList.add(getState().logLike);
+//					if(!stopBurnIn){
+//						stopBurnIn = AutomateParameters.shouldStopBurnIn(logLikeList);
+//						if(AutomateParameters.shouldAutomateStepRate() && stopBurnIn){
+//							burnIn = i + BURNIN_TO_CALCULATE_THE_SPACE;
+//						}else if (stopBurnIn){
+//							burnIn = i;
+//						}
+//					}
+//				}
 				currentTime = System.currentTimeMillis();
-				int realBurnIn = burnIn - BURNIN_TO_CALCULATE_THE_SPACE;
+//				int realBurnIn = burnIn - BURNIN_TO_CALCULATE_THE_SPACE;
 				if (frame != null) {
 					String text = "";
-					if((i > realBurnIn ) && AutomateParameters.shouldAutomateStepRate()){
-						text = "Burn-in to aid automation of MCMC parameters: " + (i-realBurnIn + 1) ;
-					}else{
+//					if((i > realBurnIn ) && AutomateParameters.shouldAutomateStepRate()){
+//						text = "Burn-in to aid automation of MCMC parameters: " + (i-realBurnIn + 1) ;
+//					}else{
 						text = "Burn-in: " + (i + 1);
-					}
+//					}
 					frame.statusText.setText(text);
 				} else if (i % 1000 == 999) {
 					System.out.println("Burn in: " + (i + 1));
 				}
-				if( AutomateParameters.shouldAutomateStepRate() && (i >= realBurnIn) && i % SAMPLE_RATE_WHEN_DETERMINING_THE_SPACE == 0)   {
-					String[] align = getState().getLeafAlign();
-					alignmentsFromSamples.add(align);
-				}	
+//				if( AutomateParameters.shouldAutomateStepRate() && (i >= realBurnIn) && i % SAMPLE_RATE_WHEN_DETERMINING_THE_SPACE == 0)   {
+//					String[] align = getState().getLeafAlign();
+//					alignmentsFromSamples.add(align);
+//				}	
 				if (AutomateParameters.shouldAutomateProposalVariances() && i % mcmcpars.sampRate == 0) {
 					coreModel.modifyProposalWidths();
 					modelExtMan.modifyProposalWidths();
@@ -598,41 +642,45 @@ public class Mcmc extends Stoppable {
 			//Utils.DEBUG = true;
 			
 			int period;
-			if(AutomateParameters.shouldAutomateNumberOfSamples()){
-				period = 1000000;
-			}else{
+//			if(AutomateParameters.shouldAutomateNumberOfSamples()){
+//				period = 1000000;
+//			}else{
 				period = mcmcpars.cycles / mcmcpars.sampRate;
-			}
+//			}
 
 			int sampRate;
-			if(AutomateParameters.shouldAutomateStepRate()){
-				if(frame != null)
-				{
-					frame.statusText.setText("Calculating the sample rate");
-				}
-				else
-				{
-					System.out.println("Calculating the sample rate");
-				}
-				ArrayList<Double> theSpace = Distance.spaceAMA(alignmentsFromSamples);
-				sampRate = AutomateParameters.getSampleRateOfTheSpace(theSpace,SAMPLE_RATE_WHEN_DETERMINING_THE_SPACE);
-
-			}else{
+//			if(AutomateParameters.shouldAutomateStepRate()){
+//				if(frame != null)
+//				{
+//					frame.statusText.setText("Calculating the sample rate");
+//				}
+//				else
+//				{
+//					System.out.println("Calculating the sample rate");
+//				}
+//				ArrayList<Double> theSpace = Distance.spaceAMA(alignmentsFromSamples);
+//				sampRate = AutomateParameters.getSampleRateOfTheSpace(theSpace,SAMPLE_RATE_WHEN_DETERMINING_THE_SPACE);
+//
+//			}else{
 				sampRate = mcmcpars.sampRate;
-			}
+//			}
 
 
 			int swapNo = 0; // TODO: delete?
 			swapCounter = mcmcpars.swapRate;
 			
 			
-			AlignmentData alignment = new AlignmentData(getState().getLeafAlign());
-			ArrayList<AlignmentData> allAlignments = new ArrayList<AlignmentData>();
-			ArrayList<Double> distances = new ArrayList<Double>();
+//			AlignmentData alignment = new AlignmentData(getState().getLeafAlign());
+//			ArrayList<AlignmentData> allAlignments = new ArrayList<AlignmentData>();
+//			ArrayList<Double> distances = new ArrayList<Double>();
 
 			boolean shouldStop = false;
-			double currScore = 0;
+//			double currScore = 0;
 			for (int i = 0; i < period && !shouldStop; i++) {
+				if (i > 0 && (i % LOG_INTERVAL == 0)) {
+					postprocMan.flushAll();
+					printMcmcInfo();
+				}
 				for (int j = 0; j < sampRate; j++) {
 					
 					// Perform an MCMC move
@@ -663,55 +711,49 @@ public class Mcmc extends Stoppable {
 					currentTime = System.currentTimeMillis();
 					if (frame != null) {
 						String text = "Samples taken: " + Integer.toString(i);
-						//remainingTime((currentTime - start)
-						//		* ((period - i - 1) * sampRate
-						//				+ sampRate - j - 1)
-						//				/ (burnIn + i * sampRate + j + 1))
-
+//						//remainingTime((currentTime - start)
+//						//		* ((period - i - 1) * sampRate
+//						//				+ sampRate - j - 1)
+//						//				/ (burnIn + i * sampRate + j + 1))
+//
 						text += "   The sampling rate: " + sampRate;
-						if(AutomateParameters.shouldAutomateNumberOfSamples()){
-							text +=  ",  Similarity(alignment n-1, alignment n): " + df.format(currScore) + " < " + df.format(AutomateParameters.PERCENT_CONST);
-						}
+//						if(AutomateParameters.shouldAutomateNumberOfSamples()){
+//							text +=  ",  Similarity(alignment n-1, alignment n): " + df.format(currScore) + " < " + df.format(AutomateParameters.PERCENT_CONST);
+//						}
 						frame.statusText.setText(text );
 					}
 				}
 				if (frame == null && !isParallel) {
 					System.out.println("Sample: " + (i + 1));
 				}
-				if(AutomateParameters.shouldAutomateNumberOfSamples()){
-					alignment = new AlignmentData(getState().getLeafAlign());
-					allAlignments.add(alignment);
-					if (allAlignments.size() >1){
-						FuzzyAlignment Fa = FuzzyAlignment.getFuzzyAlignmentAndProject(allAlignments.subList(0, allAlignments.size()-1), 0);
-						FuzzyAlignment Fb = FuzzyAlignment.getFuzzyAlignmentAndProject(allAlignments, 0);
-						currScore = FuzzyAlignment.AMA(Fa, Fb);
-						System.out.println(currScore);
-						distances.add(currScore);
-						if (allAlignments.size() >5){
-							shouldStop = AutomateParameters.shouldStopSampling(distances);
-						}
-
-					}
-				}
+//				if(AutomateParameters.shouldAutomateNumberOfSamples()){
+//					alignment = new AlignmentData(getState().getLeafAlign());
+//					allAlignments.add(alignment);
+//					if (allAlignments.size() >1){
+//						FuzzyAlignment Fa = FuzzyAlignment.getFuzzyAlignmentAndProject(allAlignments.subList(0, allAlignments.size()-1), 0);
+//						FuzzyAlignment Fb = FuzzyAlignment.getFuzzyAlignmentAndProject(allAlignments, 0);
+//						currScore = FuzzyAlignment.AMA(Fa, Fb);
+//						System.out.println(currScore);
+//						distances.add(currScore);
+//						if (allAlignments.size() >5){
+//							shouldStop = AutomateParameters.shouldStopSampling(distances);
+//						}
+//
+//					}
+//				}
 				// Report the results of the sample.
 				report(i, period);
 			}
 		} catch (StoppedException ex) {
+			postprocMan.afterLastSample();
+			modelExtMan.afterSampling();
+			printMcmcInfo();
 			// stopped: report and save state
 			// should we still call afterLastSample?
 		}
 
 		//if(Utils.DEBUG) {
-			String info = "\n";
-			info += String.format("%-24s","Move name")+
-			String.format("%8s","t")+
-			String.format("%8s","nMoves")+
-			String.format("%8s","t/move")+
-			String.format("%8s", "acc")+
-			String.format("%8s\n", "propVar");
-			info += coreModel.getMcmcInfo();
-			info += modelExtMan.getMcmcInfo();
-			System.out.println(info);
+			printMcmcInfo();
 		//}
 
 		// Triggers a /after first sample/ of the plugins.
@@ -734,6 +776,19 @@ public class Mcmc extends Stoppable {
 
 	}
 
+	private void printMcmcInfo() {
+		String info = "\n"+Utils.repeatedString("#",64)+"\n";
+		info += String.format("%-24s","Move name")+
+		String.format("%8s","t")+
+		String.format("%8s","nMoves")+
+		String.format("%8s","t/move")+
+		String.format("%8s", "acc")+
+		String.format("%8s\n", "propVar");
+		info += coreModel.getMcmcInfo();
+		info += modelExtMan.getMcmcInfo();
+		info += Utils.repeatedString("#",64)+"\n";
+		System.out.println(info);
+	}
 	/** 
 	 * Triggers <tt>postProcMan</tt> to print out a report of the current
 	 * state of the chain.
@@ -742,6 +797,12 @@ public class Mcmc extends Stoppable {
 	 * @param total
 	 */
 	private void report(int no, int total) {
+		report(no,total,true);
+	}
+	private void reportDuringBurnin(int no, int total) {
+		report(no,total,false);
+	}
+	private void report(int no, int total, boolean useSample) {
 
 		int coldChainLocation = -1;
 
@@ -759,7 +820,7 @@ public class Mcmc extends Stoppable {
 
 			if (isColdChain() && MPIUtils.isMaster(rank)) {
 				// Sample normally.
-				postprocMan.newSample(coreModel,getState(), no, total);
+				if (useSample) postprocMan.newSample(coreModel,getState(), no, total);
 			} else if (isColdChain() && !MPIUtils.isMaster(rank)) {
 				// Send state.
 				State state = getState();
@@ -767,11 +828,11 @@ public class Mcmc extends Stoppable {
 			} else if (!isColdChain() && MPIUtils.isMaster(rank)) {
 				// Receive state.
 				State state = MPIStateReceieve(coldChainLocation);
-				postprocMan.newSample(coreModel,state, no, total);
+				if (useSample) postprocMan.newSample(coreModel,state, no, total);
 			}
 
 		} else {
-			postprocMan.newSample(coreModel,getState(), no, total);
+			if (useSample) postprocMan.newSample(coreModel,getState(), no, total);
 		}
 
 		// Log the accept ratios/params to the (.log) file. TODO: move to a plugin.
@@ -1503,7 +1564,7 @@ public class Mcmc extends Stoppable {
 //		}
 
 	
-	public static void main(String[] args) {
+	public static void main5(String[] args) {
 		
 		HashMap<Integer,String> test = new HashMap<Integer,String>();
 		test.put(1, "1");

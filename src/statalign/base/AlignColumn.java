@@ -1,4 +1,5 @@
 package statalign.base;
+import static java.util.Arrays.*;
 
 /**
  * 
@@ -11,7 +12,7 @@ package statalign.base;
  * otherwise it is, and then its  <tt>parent</tt> represents the first ancestral character
  * to the right in the alignment column.
  * 
- * @author miklos, novak
+ * @author miklos, novak, herman
  *
  */
 public class AlignColumn {
@@ -66,7 +67,15 @@ public class AlignColumn {
 	 * This double array contains the upper Likelihoods
 	 */
 	public double upp[];						// upper likelihoods of the column
-
+	/**
+	 * Vector indicating which characters are aligned to this column at the leaves below. 
+	 */
+	public int aligned[];
+	/**
+	 * Vector indicating which characters are aligned to the parent of this column. 
+	 */
+	public int alignedUpp[];
+	
 	/**
 	 * It constructs a new AlignColumn. Sets only the owner, other fields are filled in outside of the
 	 * constructor
@@ -92,6 +101,12 @@ public class AlignColumn {
 		c.emptyWindow = emptyWindow;
 		if (seq==null) c.seq = null;
 		else 		   c.seq = seq.clone();
+		if (upp==null) c.upp = null;
+		else 		   c.upp = upp.clone();
+		if (aligned==null) c.aligned = null;
+		else 		   c.aligned = aligned.clone();
+		if (alignedUpp==null) c.alignedUpp = null;
+		else 		   c.alignedUpp = alignedUpp.clone();
 		return c;
 	}
 	/**
@@ -105,6 +120,8 @@ public class AlignColumn {
 		orphan = c.orphan;
 		seq = c.seq;
 		upp = c.upp;
+		aligned = c.aligned;
+		aligned = c.aligned;
 		left = c.left;
 		right = c.right;
 		parent = c.parent;
@@ -131,6 +148,14 @@ public class AlignColumn {
 		if(newSeq) {
 			seq = new double[owner.owner.substitutionModel.e.length];
 			upp = new double[owner.owner.substitutionModel.e.length];
+			if(Utils.USE_MODEXT_EM) {
+				aligned = new int[owner.owner.vertex.length/2 + 1];
+				fill(aligned,-1);
+			}
+			if(Utils.USE_MODEXT_UPP) {
+				alignedUpp = new int[owner.owner.vertex.length/2 + 1];
+				fill(alignedUpp,-1);
+			}
 		}
 	}	
 	public AlignColumn(AlignColumn next) {
@@ -145,7 +170,15 @@ public class AlignColumn {
 		else owner.first = this;
 		next.prev = this;
 		seq = new double[owner.owner.substitutionModel.e.length];
-		upp = new double[owner.owner.substitutionModel.e.length];		
+		upp = new double[owner.owner.substitutionModel.e.length];	
+		if(Utils.USE_MODEXT_EM) {
+			aligned = new int[owner.owner.vertex.length/2 + 1];
+			fill(aligned,-1);
+		}
+		if(Utils.USE_MODEXT_UPP) {
+			alignedUpp = new int[owner.owner.vertex.length/2 + 1];
+			fill(alignedUpp,-1);
+		}
 		owner.length++;
 	}
 	
@@ -246,7 +279,9 @@ public class AlignColumn {
 		saveLeft(copy);
 		saveRight(copy);
 		seq = copy.seq;
-		upp = copy.upp;
+		upp = copy.upp;		
+		aligned = copy.aligned;
+		alignedUpp = copy.alignedUpp;
 	}
 
 	void saveParent(AlignColumn copy) {

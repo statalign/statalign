@@ -234,7 +234,7 @@ public class StructTrace extends Postprocess {
 				e.printStackTrace();
 			}
 		}
-		if(Utils.DEBUG) {
+		//if(Utils.DEBUG) {
 			System.out.println("final rotation matrices:");
 			for(int i = 1; i < structAlign.xlats.length; i++) {
 				Rotation rot = new Rotation(new Vector3D(structAlign.axes[i]), structAlign.angles[i]);
@@ -249,7 +249,7 @@ public class StructTrace extends Postprocess {
 			for (McmcMove mcmcMove : structAlign.getMcmcMoves()) {
 				System.out.println(mcmcMove.name+"\t"+mcmcMove.acceptanceRate());
 			}
-		}
+		//}
 	}
 	
 	public static void printMatrix(double[][] m) {

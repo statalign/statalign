@@ -27,16 +27,17 @@ public class TopologyMove extends McmcMove {
 	
 	PriorDistribution<Double> edgePrior;
 	
-	double fastSwapProb = 0.05;	
+	double fastSwapProb = 0.0;	
 	boolean didFastSwap = false;
 	
 	public int topologyChangeAcceptanceCount = 0;
 	
-	public TopologyMove (McmcModule m, PriorDistribution<Double> pr, double propVar, String n) {
+	public TopologyMove (McmcModule m, PriorDistribution<Double> pr, double propVar, double _fastSwapProb, String n) {
 		owner = m;
 		edgePrior = pr;
 		edgeProposalWidthControlVariable = propVar;
 		name = n;
+		fastSwapProb = _fastSwapProb;
 		//autoTune = true;
 		autoTune = false;
 		if(Utils.DEBUG){
@@ -184,6 +185,7 @@ public class TopologyMove extends McmcMove {
 //		s = uncle.printedAlignment();
 //		System.out.println(uncle.index+" "+s[1]+"\n"+uncle.parent.index+" "+s[0]);
 		
+    	if (Utils.USE_MODEXT_EM) fastSwapProb = 0;
 		if (Utils.generator.nextDouble() < fastSwapProb) {
 			logProposalRatio += nephew.fastSwapWithUncle();
 			didFastSwap = true;
@@ -308,9 +310,14 @@ public class TopologyMove extends McmcMove {
 			tree.checkPointers();
 		}		
 		// Only count moves that change the topology, i.e. not swaps across the root
-		if (lastMoveAccepted && nephew.parent == tree.root) {
+		if (lastMoveAccepted && nephew.parent != tree.root) {
 			System.out.println("Topology change (stNNI).");
 			topologyChangeAcceptanceCount++;			
+		}
+		if (Utils.USE_MODEXT_EM && lastMoveAccepted) {
+			uncle.parent.updateAligned();
+			nephew.updateAlignedParent();
+			if (Utils.DEBUG) tree.root.updateAlignedRecursivelyWithCheck();
 		}
 			
 //		if (lastMoveAccepted) {

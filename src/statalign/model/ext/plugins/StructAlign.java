@@ -32,6 +32,7 @@ import statalign.mcmc.GammaProposal;
 import statalign.mcmc.GaussianProposal;
 import statalign.mcmc.HyperbolicPrior;
 import statalign.mcmc.InverseGammaPrior;
+import statalign.mcmc.LinearPrior;
 import statalign.mcmc.McmcCombinationMove;
 import statalign.mcmc.McmcMove;
 import statalign.mcmc.MultiplicativeProposal;
@@ -50,7 +51,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	
 	/** The command line identifier of this plugin */
 	//private static final String CMD_LINE_PLUGIN_ID = "structal";
-	private final String pluginID = "structal";
+	private final String pluginID = "structal";	
 	
 	@Override
 	public String getPluginID() {
@@ -65,14 +66,25 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	public boolean fixedSigma2 = false;
 	
 	/** If globalSigma = false then this switches on a spike prior at sigma2Hier. */
-	public boolean globalSigmaSpike = true; 
+	public boolean globalSigmaSpike = false; 
 	double[] globalSigmaSpikeParams = {3.1,1.1};
 	
-	double structTemp = 1;
-
+	public boolean localEpsilon = false;
+	
+	double structTemp = 1;	
+	
+	private boolean USE_IN_ALIGNMENT_PROPOSALS = true;
+	
+	@Override
+	public boolean useInAlignmentProposals() {
+		return USE_IN_ALIGNMENT_PROPOSALS;
+	}
 	
 	/** Alpha-C atomic coordinate for each sequence and each residue */
 	public double[][][] coords;
+	
+	/** Crystallographic temperature factors, for weighting epsilon. */
+	private double[][] bFactors;
 	
 	/** Alpha-C atomic coordinates under the current set of rotations/translations */
 	public double[][][] rotCoords;
@@ -121,8 +133,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	// sigma2Prior will either be InverseGamma or Hyperbolic, depending
 	// on whether globalSigma is switched on. It is defined inside the initRun()
 	// method.
-	private double epsilonPriorShape = 2;
-	private double epsilonPriorRate = 2;
+	private double epsilonPriorShape = 2;//10; //1; //2;
+	private double epsilonPriorRate = 2;//50; //5; //2;
 	public PriorDistribution<Double> epsilonPrior;
 	boolean epsilonPriorInitialised = false;
 	
@@ -133,15 +145,15 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	private double tauPriorRate = 0.001;
 	public InverseGammaPrior tauPrior = new InverseGammaPrior(tauPriorShape,tauPriorRate);
 
-	private double sigma2HPriorShape = 2;
-	private double sigma2HPriorRate = 2;
+	private double sigma2HPriorShape = 1;
+	private double sigma2HPriorRate = 1;
 //	public InverseGammaPrior sigma2HPrior = new InverseGammaPrior(sigma2HPriorShape,sigma2HPriorRate);
 	HierarchicalContinuousPositiveStructAlignMove sigma2HMove = null;
 	public GammaPrior sigma2HPrior = new GammaPrior(sigma2HPriorShape,sigma2HPriorRate);
 //	public HyperbolicPrior sigma2HPrior = new HyperbolicPrior();
 
 	private double nuPriorShape = 1;
-	private double nuPriorRate = 1;
+	private double nuPriorRate = 6; 
 	public GammaPrior nuPrior = new GammaPrior(nuPriorShape,nuPriorRate);
 	
 	// priors for rotation and translation are uniform
@@ -157,14 +169,17 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	//int sigma2Weight = 5; //15;
 	int sigma2Weight = 18; // 
 	int tauWeight = 10;
-	int sigma2HierWeight = 10;
-	int nuWeight = 10;
+	int sigma2HierWeight = 10; // ORIGINAL
+	//int sigma2HierWeight = 0;
+	int nuWeight = 10; // ORIGINAL
+	//int nuWeight = 0;
 	//int epsilonWeight = 2;//10;
 	int epsilonWeight = 13; //
 	int rotationWeight = 2;
 	int translationWeight = 2;
 	int libraryWeight = 2;
 	int alignmentWeight = 2;
+	int alignmentWeightIncrement = 0;
 	
 	/* Weights for combination moves */
 	int alignmentRotationWeight = 8;
@@ -182,7 +197,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	/** Value to fix sigma at if we're not estimating it. */
 	public double fixedSigma2Value = 0.0;
 	/** Minimum value for epsilon, to prevent numerical errors. */
-	public final double MIN_EPSILON = 0.01;
+	public double MIN_EPSILON = 0.01;
 	/** Value to fix epsilon at if we're not estimating it. */
 	public double fixedEpsilonValue = 0.0;
 	
@@ -212,6 +227,9 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		usage.append("OPTIONS: \n");
 		usage.append("\tsigma2=X\t\t(Fixes sigma2 at X)\n");
 		usage.append("\tepsilon=X\t\t(Fixes epsilon at X)\n");
+		usage.append("\tminEpsilon=X\t\t(Sets minimum value for epsilon to X) [default 0.01]\n");
+		usage.append("\tlocalEpsilon\t\t(Uses B-factor information [if available] to scale epsilon per site.)\n");
+		usage.append("\tlocalSigma\t\t(Allows each branch to have its own sigma parameter)\n");
 		usage.append("\tuseLibrary\t\t(Allows rotation library moves to be used)\n");
 		usage.append("\tsigma2Prior=PRIOR\t(Sets the prior and hyperparameters for sigma2)\n");
 		usage.append("\tepsilonPrior=PRIOR\t(Sets the prior and hyperparameters for epsilon)\n");
@@ -224,6 +242,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		usage.append("\tLINK_FUNCTION can be one of:\n");
 		usage.append("\t\tlinear (default)\n");
 		usage.append("\t\tquadratic\n");
+		usage.append("\nNote that the above syntax is designed to work in bash shells. " +
+				"Other shells such as csh may require square brackets to be preceded by a backslash.");
 												
 		return usage.toString();
 	}
@@ -231,7 +251,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	@Override
 	public void setActive(boolean active) {
 		super.setActive(active);
-		System.out.println("StructAlign plugin is now "+(active?"enabled":"disabled"));
+		System.out.println("StructAlign plugin is now "+(active?"enabled":"disabled"));		
 	}
 	
 	@Override
@@ -241,6 +261,11 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			fixedEpsilonValue = Double.parseDouble(paramValue);
 			addToFilenameExtension("eps_"+fixedEpsilonValue);
 			System.out.println("Fixing epsilon to "+fixedEpsilonValue+".");
+		}
+		else if (paramName.equals("minEpsilon")) {
+			MIN_EPSILON = Double.parseDouble(paramValue);
+			addToFilenameExtension("minEps_"+MIN_EPSILON);
+			System.out.println("Minimum value for epsilon is now "+MIN_EPSILON+".");
 		}
 		else if (paramName.equals("sigma2")) {
 			fixedSigma2 = true;
@@ -279,8 +304,12 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	}
 	@Override
 	public void setParam(String paramName, boolean paramValue) {
-		if (paramName.equals("globalSigma")) {
-			globalSigma = true;
+		if (paramName.equals("localSigma")) {
+			globalSigma = false;
+		}
+		else if (paramName.equals("localEpsilon")) {
+			localEpsilon = true;
+			System.out.println("Using B-factor information to scale epsilon.");
 		}
 		else if (paramName.equals("useLibrary")) {
 			useLibrary = true;
@@ -373,10 +402,14 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		for(String name : inputData.seqs.seqNames)
 			seqMap.put(name.toUpperCase(), i++);
 		coords = new double[inputData.seqs.seqNames.size()][][];
+		if (localEpsilon) bFactors = new double[inputData.seqs.seqNames.size()][];
 		for(DataType data : inputData.auxData) {
 			if(!(data instanceof ProteinSkeletons))
 				continue;
 			ProteinSkeletons ps = (ProteinSkeletons) data;
+			if (localEpsilon && ps.bFactors.size() == 0) {
+				throw new RuntimeException("No B-factor data available: cannot use localEpsilon mode.");
+			}
 			for(i = 0; i < ps.names.size(); i++) {
 				String name = ps.names.get(i).toUpperCase();
 				if(!seqMap.containsKey(name))
@@ -384,12 +417,34 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				int ind = seqMap.get(name);
 				int len = inputData.seqs.sequences.get(ind).replaceAll("-", "").length();
 				List<double[]> cl = ps.coords.get(i);
+				List<Double> bF = ps.bFactors.get(i);
+				if (localEpsilon && bF.size() == 0) {
+					throw new RuntimeException("No B-factor data available for "+name+": cannot use localEpsilon mode.");					
+				}
 				if(len != cl.size())
 					throw new IllegalArgumentException("structalign: sequence length mismatch with structure file for seq "+name);
 				coords[ind] = new double[len][];
+				if (localEpsilon) bFactors[ind] = new double[len];
 				// center all coordinates to mean zero so that rotations are around center of gravity
-				for(int j = 0; j < len; j++)
+				double bFactorMean = 0;
+				for(int j = 0; j < len; j++) {
 					 coords[ind][j] = Utils.copyOf(cl.get(j));
+					 if (localEpsilon) {
+						 bFactors[ind][j] = bF.get(j);
+						 bFactorMean += bFactors[ind][j]/len;
+					 }
+				}
+				if (localEpsilon) {
+					for(int j = 0; j < len; j++) {
+						if (bFactorMean == 0) {
+							bFactors[ind][j] = 1;	
+						}
+						else {
+							bFactors[ind][j] /= bFactorMean;	
+						}						
+					}
+				}
+				
 				RealMatrix temp = new Array2DRowRealMatrix(coords[ind]);
 				RealVector mean = Funcs.meanVector(temp);
 				for(int j = 0; j < len; j++)
@@ -452,12 +507,14 @@ public class StructAlign extends ModelExtension implements ActionListener {
 					sigma2Prior = new GammaPrior(2,2);
 				}
 				else {
-					sigma2Prior = new GammaPrior(2,2);
+					sigma2Prior = new GammaPrior(1,1);
 					//sigma2Prior = new HyperbolicPrior();
 				}
 			}
 			else {
-				sigma2Prior = new InverseGammaPrior(sigma2PriorShape,sigma2PriorRate);
+				//sigma2Prior = new InverseGammaPrior(sigma2PriorShape,sigma2PriorRate);
+				//sigma2Prior = new LinearPrior();
+				sigma2Prior = new UniformPrior();
 			}
 			sigma2PriorInitialised = true;
 		}
@@ -495,31 +552,33 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			addMcmcMove(libraryMove,libraryWeight);
 		}
 		
-		AlignmentMove alignmentMove = new AlignmentMove(this,"alignment");
-		addMcmcMove(alignmentMove,alignmentWeight); 
-		
-		/* Combination moves */
-		ArrayList<McmcMove> alignmentRotation = new ArrayList<McmcMove>();
-		alignmentRotation.add(alignmentMove);
-		alignmentRotation.add(rotationMove);
-		McmcCombinationMove alignmentRotationMove = 
-			new McmcCombinationMove(alignmentRotation);
-		addMcmcMove(alignmentRotationMove,alignmentRotationWeight); 
-		
-		ArrayList<McmcMove> alignmentTranslation = new ArrayList<McmcMove>(); 
-		alignmentTranslation.add(alignmentMove);
-		alignmentTranslation.add(translationMove);
-		McmcCombinationMove alignmentTranslationMove = 
-			new McmcCombinationMove(alignmentTranslation);
-		addMcmcMove(alignmentTranslationMove,alignmentTranslationWeight); 
-		
-		if (useLibrary) { 
-			ArrayList<McmcMove> alignmentLibrary = new ArrayList<McmcMove>();
-			alignmentLibrary.add(alignmentMove);
-			alignmentLibrary.add(libraryMove);
-			McmcCombinationMove alignmentLibraryMove = 
-				new McmcCombinationMove(alignmentLibrary);
-			addMcmcMove(alignmentLibraryMove,alignmentLibraryWeight);
+		if (!inputData.pars.fixAlign) {
+			AlignmentMove alignmentMove = new AlignmentMove(this,"alignment");
+			addMcmcMove(alignmentMove,alignmentWeight,alignmentWeightIncrement); 
+			
+			/* Combination moves */
+			ArrayList<McmcMove> alignmentRotation = new ArrayList<McmcMove>();
+			alignmentRotation.add(alignmentMove);
+			alignmentRotation.add(rotationMove);
+			McmcCombinationMove alignmentRotationMove = 
+				new McmcCombinationMove(alignmentRotation);
+			addMcmcMove(alignmentRotationMove,alignmentRotationWeight); 
+			
+			ArrayList<McmcMove> alignmentTranslation = new ArrayList<McmcMove>(); 
+			alignmentTranslation.add(alignmentMove);
+			alignmentTranslation.add(translationMove);
+			McmcCombinationMove alignmentTranslationMove = 
+				new McmcCombinationMove(alignmentTranslation);
+			addMcmcMove(alignmentTranslationMove,alignmentTranslationWeight);
+				
+			if (useLibrary) { 
+				ArrayList<McmcMove> alignmentLibrary = new ArrayList<McmcMove>();
+				alignmentLibrary.add(alignmentMove);
+				alignmentLibrary.add(libraryMove);
+				McmcCombinationMove alignmentLibraryMove = 
+					new McmcCombinationMove(alignmentLibrary);
+				addMcmcMove(alignmentLibraryMove,alignmentLibraryWeight);
+			}
 		}
 		
 		/** Add moves for scalar parameters */
@@ -593,7 +652,10 @@ public class StructAlign extends ModelExtension implements ActionListener {
 						sigma2HMove.setSpikeParams(globalSigmaSpikeParams);
 						sigma2HMove.disallowSpikeSelection();
 					}					
+					m.addParent(sigma2HMove);
 					nuMove.addChildMove(m);
+					// Don't add nuMove as a parent, because otherwise
+					// we'll double count the prior.
 				}
 				
 				if (sigma2.length == 1 && !fixedEpsilon) {
@@ -634,7 +696,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	
 	@Override
 	public void afterFirstHalfBurnin() {	
-		if (!globalSigma) {
+		if (!globalSigma && globalSigmaSpike) {
 			sigma2HMove.allowSpikeSelection();
 			zeroAllMoveCounts();
 		}
@@ -747,7 +809,9 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	}
 
 	public HashMap<Integer, MultiNormCholesky> multiNorms = new HashMap<Integer, MultiNormCholesky>();	
+	//public HashMap<Column, MultiNormCholesky> multiNormsLocal = new HashMap<Column, MultiNormCholesky>();
 	private HashMap<Integer, MultiNormCholesky> oldMultiNorms = new HashMap<Integer, MultiNormCholesky>();
+	//public HashMap<Column, MultiNormCholesky> oldMultiNormsLocal = new HashMap<Column, MultiNormCholesky>();
 	/**
 	 * Calculates the structural likelihood contribution of a single alignment column
 	 * @param col the column, id of the residue for each sequence (or -1 if gapped in column)
@@ -756,10 +820,13 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	public double columnContrib(int[] col) {
 		// count the number of ungapped positions in the column
 		int numMatch = 0;
+		//System.out.print("\t");
 		for(int i = 0; i < col.length; i++){
+			//System.out.print(col[i]+" ");
 			if(col[i] != -1)
 				numMatch++;
 		}
+		//System.out.println();
 		if(numMatch == 0) 
 			return 1;
 		// collect indices of ungapped positions
@@ -773,19 +840,35 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			}						
 		}
 		
-		MultiNormCholesky multiNorm2=null, multiNorm = multiNorms.get(columnCode);
+		/*
+		 * Under localEpsilon mode, the covariance depends on the column,
+		 * not just the indel pattern of the column, but we can still
+		 * cache the Cholesky decompositions to be re-used for columns
+		 * that do not change (since most of the alignment columns do 
+		 * not change during an alignment move, this could still yield
+		 * a significant speedup).
+		 */
+			
+		
+		MultiNormCholesky multiNorm = null;
+		if (localEpsilon) ;//multiNorm = multiNormsLocal.get(new Column(col));
+		else multiNorm = multiNorms.get(columnCode);				
+		MultiNormCholesky multiNorm2 = null;
 		if (Utils.DEBUG){
 			double[][] subCovar = Funcs.getSubMatrix(fullCovar, notgap, notgap);
 			// create normal distribution with mean 0 and covariance subCovar
+			if (localEpsilon) addLocalEpsilonToDiagonal(subCovar,notgap,col);
 			multiNorm2 = new MultiNormCholesky(new double[numMatch], subCovar);
 		}
 		
 		if (multiNorm == null) {
 			// extract covariance corresponding to ungapped positions
 			double[][] subCovar = Funcs.getSubMatrix(fullCovar, notgap, notgap);
+			if (localEpsilon) addLocalEpsilonToDiagonal(subCovar,notgap,col);
 			// create normal distribution with mean 0 and covariance subCovar
 			multiNorm = new MultiNormCholesky(new double[numMatch], subCovar);
-			multiNorms.put(columnCode, multiNorm);
+			if (localEpsilon) ;//multiNormsLocal.put(new Column(col), multiNorm);
+			else multiNorms.put(columnCode, multiNorm);
 		}		
 			
 		double logli = 0;
@@ -796,7 +879,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			for(int i = 0; i < numMatch; i++)
 				vals[i] = rotCoords[notgap[i]][col[notgap[i]]][j];
 			
-			if (Utils.DEBUG && multiNorm.logDensity(vals) != multiNorm2.logDensity(vals)) {
+			if (Utils.DEBUG  && multiNorm.logDensity(vals) != multiNorm2.logDensity(vals)) {
 				System.out.print("col = [");
 				for (int k=0; k<col.length; k++) System.out.print(col[k]+",");
 				System.out.println("] ("+columnCode+")");
@@ -814,7 +897,34 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		}
 		return logli;
 	}
+	
+	private void addLocalEpsilonToDiagonal(double[][] subCovar, int[] notgap, int[] col) {		
+		for (int i=0; i<notgap.length; i++) {
+			subCovar[i][i] += Math.pow((bFactors[notgap[i]][col[notgap[i]]]),2) * epsilon / notgap.length;
+		}
+	}
 
+	private class Column {
+		public int[] col;
+		Column(int[] x) {
+			col = x.clone();
+		}
+		@Override
+		public boolean equals(Object o) {
+			if (o == this) return true;
+			if (o == null || o.getClass() != this.getClass()) return false;
+			
+			Column x = (Column) o;
+			if (x.col.length != col.length) return false;
+			for (int i=0; i<x.col.length; i++) {
+				if (x.col[i] != col[i]) return false;
+			}
+			return true;
+		}
+		public int hashCode() {
+			return Arrays.hashCode(col);
+		}
+	}
 	/**
 	 * extracts the specified rows and columns of a 2d array
 	 * @param matrix, 2d array from which to extract; rows, rows to extract; cols, columns to extract
@@ -858,13 +968,16 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				for(int j = i; j < tree.names.length; j++)
 					covar[j][i] = covar[i][j] = tau * Math.exp(-distanceMatrix[i][j]);
 		}
-		for(int i = 0; i < tree.names.length; i++)
-			covar[i][i] += epsilon;
+		for(int i = 0; i < tree.names.length; i++) {
+			if (!localEpsilon) covar[i][i] += epsilon;			
+		}
+			
 		
-		multiNorms = new HashMap<Integer, MultiNormCholesky>(); 
+		if (localEpsilon)  ;//multiNormsLocal = new HashMap<Column, MultiNormCholesky>();
+		else multiNorms = new HashMap<Integer, MultiNormCholesky>(); 
 		
 		return covar;
-	}
+	}	
 	
 
 	public void printTree(Vertex v, String vname){
@@ -977,7 +1090,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		oldCovar = fullCovar;
 		oldAlign = curAlign;
 		oldLogLi = curLogLike;
-		oldMultiNorms = multiNorms;
+		if (localEpsilon) ;//oldMultiNormsLocal = multiNormsLocal;
+		else oldMultiNorms = multiNorms;
 	}
 	@Override
 	public double logLikeTreeChange(Tree tree, Vertex nephew) {		
@@ -996,7 +1110,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		fullCovar = oldCovar;
 		curAlign = oldAlign;
 		curLogLike = oldLogLi;
-		multiNorms = oldMultiNorms;
+		if (localEpsilon) ;//multiNormsLocal = oldMultiNormsLocal;
+		else multiNorms = oldMultiNorms;
 	}
 	
 	public void beforeContinuousParamChange(Tree tree) {
@@ -1045,6 +1160,11 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			int ind) {
 		// does not affect log-likelihood
 		return curLogLike;
+	}
+	
+	@Override
+	public double calcLogEm(int[] aligned) {
+		return columnContrib(aligned);
 	}
 
 	// </StructAlign>

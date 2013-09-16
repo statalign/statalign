@@ -18,11 +18,6 @@ import statalign.postprocess.utils.NewickParser;
 
 public class CurrentTreeVisualizer extends TreeVisualizer {
 
-    // Variables
-
-	private ArrayList<String> newickTrees;
-    private InputData input;
-
     // Functions
 
     public CurrentTreeVisualizer() {
@@ -70,8 +65,8 @@ public class CurrentTreeVisualizer extends TreeVisualizer {
     @Override
     public void newPeek(State state) {
 //    	System.out.println("CurrentTreeVisualizer: New peek.");
-        String treeString = state.getNewickString();
-        NewickParser parser = new NewickParser(treeString);
+        String sampledTree = state.getNewickStringWithLabels();
+        NewickParser parser = new NewickParser(sampledTree);
         TreeNode node = parser.parse();
 
         if(show) {
@@ -92,20 +87,35 @@ public class CurrentTreeVisualizer extends TreeVisualizer {
     public void beforeFirstSample(InputData input) {
         super.beforeFirstSample(input); // Mandatory.
 
-        this.input = input;
-        newickTrees = new ArrayList<String>(input.pars.cycles/input.pars.sampRate);
+        String[] names = new String[input.seqs.seqNames.size()];
+		
+		for (int i = 0; i < names.length; i++) {
+			names[i] = input.seqs.seqNames.get(i).replaceAll(" ", "");
+		}
+		if (postprocessWrite) {
+			try {
+		        outputFile.write("#nexus\n\nBEGIN Taxa;\nDIMENSIONS ntax="
+						+ names.length + ";\nTAXLABELS\n");
+				for (int i = 0; i < names.length; i++) {
+					outputFile.write("[" + (i + 1) + "] '" + names[i] + "'\n");
+				}
+				outputFile.write(";\nEND; [Taxa]\nBEGIN Trees;\n");
+			} catch (IOException e) {
+	            e.printStackTrace();
+	        }
+		}
     }
 
     @Override
     public void newSample(State state, int no, int total) {
 //    	System.out.println("CurrentTreeVisualizer: New sample.");
-        String sampledTree = state.getNewickString();
-
-        // TODO: START OF FIX
-        NewickParser parser = new NewickParser(sampledTree);
-        TreeNode node = parser.parse();
+    	//state.updateNewickStringWithLabels();
+        String sampledTree = state.getNewickStringWithLabels();
 
         if(show) {
+        	 // TODO: START OF FIXif (withNumbers) sb.append("["+node+"]");
+            NewickParser parser = new NewickParser(sampledTree);
+            TreeNode node = parser.parse();
         	for (TreeView view : treeViews) {
         		view.newSample(node);
         	}
@@ -114,10 +124,18 @@ public class CurrentTreeVisualizer extends TreeVisualizer {
         }
         // TODO: END OF FIX 
         
-        newickTrees.add(sampledTree);
         if (sampling) {
             try {
-                file.write("Sample " + no + "\tTree:\t" + sampledTree + "\n");
+                if (state.isBurnin) file.write("Burnin " + no + "\tTree:\t" + sampledTree + "\n");
+                else file.write("Sample " + no + "\tTree:\t" + sampledTree + "\n");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        if (postprocessWrite) {
+            try {
+                outputFile.write("[" + no + "] tree 'tree_" + no + "'= "
+        				+ sampledTree + "\n");
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -127,28 +145,13 @@ public class CurrentTreeVisualizer extends TreeVisualizer {
     @Override
     public void afterLastSample() {
 		if (postprocessWrite) {
-			String[] names = new String[input.seqs.seqNames.size()];
-			
-			for (int i = 0; i < names.length; i++) {
-				names[i] = input.seqs.seqNames.get(i).replaceAll(" ", "");
-			}
-			
-			try {
-				outputFile.write("#nexus\n\nBEGIN Taxa;\nDIMENSIONS ntax="
-						+ names.length + ";\nTAXLABELS\n");
-				for (int i = 0; i < names.length; i++) {
-					outputFile.write("[" + (i + 1) + "] '" + names[i] + "'\n");
-				}
-				outputFile.write(";\nEND; [Taxa]\nBEGIN Trees;\n");
-				for (int i = 0; i < newickTrees.size(); i++) {
-					outputFile.write("[" + i + "] tree 'tree_" + i + "'= "
-							+ newickTrees.get(i) + "\n");
-				}
+			try {								
 				outputFile.write("END; [Trees]\n" + "BEGIN st_Assumptions;\n"
 						+ "\ttreestransform=TreeSelector;\n"
 						+ "\tsplitstransform=EqualAngle;\n"
 						+ "\tSplitsPostProcess filter=dimension value=4;\n"
 						+ "\tautolayoutnodelabels;\nEND; [st_Assumptions]");
+				outputFile.flush();
 				outputFile.close();
 			} catch (IOException ioex) {
 				ioex.printStackTrace();

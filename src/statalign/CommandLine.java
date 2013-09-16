@@ -76,7 +76,8 @@ public class CommandLine {
 		Options opt = new Options(args, Multiplicity.ZERO_OR_ONE, 0,
 				Integer.MAX_VALUE);
 		opt.addSet("run")
-				.addOption("debug", Separator.NONE)
+				.addOption("debug", Separator.EQUALS)
+				.addOption("reportBurnin", Separator.EQUALS)
 				.addOption("subst", Separator.EQUALS)
 				.addOption("mcmc", Separator.EQUALS)
 				.addOption("seed", Separator.EQUALS)
@@ -96,6 +97,10 @@ public class CommandLine {
 		if (set.isSet("debug")) {
 			Utils.DEBUG = true;
 			System.out.println("Debug mode enabled.");
+		}
+		if (set.isSet("reportBurnin")) {
+			manager.inputData.doReportDuringBurnin = true;
+			System.out.println("Enabled printing of logging information during burnin.");
 		}
 		if (set.isSet("help")) {
 			OptionData help = set.getOption("help");
@@ -287,8 +292,8 @@ public class CommandLine {
 				if(useAlign.length() != 1 || (manager.inputData.useAlign =
 						"NIF".indexOf(Character.toUpperCase(useAlign.charAt(0)))) == -1)
 					return error("bad format for parameter -usealign: "+useAlign);
-				if(manager.inputData.useAlign == 2)
-					return error("fixing the alignment is currently not supported");
+//				if(manager.inputData.useAlign == 2)
+//					return error("fixing the alignment is currently not supported");
 				if(manager.inputData.useAlign > 0 && !manager.inputData.seqs.isAligned())
 					return error("input sequences must be aligned when -usealign="+useAlign+" is used");
 				if(manager.inputData.useAlign == 1)
@@ -336,8 +341,8 @@ public class CommandLine {
 			// TODO allow rnaMode to be switched off even for RNA sequences (plugin param)
 			// TODO move rnaMode to a "RNA container" plugin
 			if(manager.inputData.seqs.isRNA()) {
-				PostprocessManager.rnaMode = true;
-				System.out.println("RNA mode activated.");
+//				PostprocessManager.rnaMode = true;
+//				System.out.println("RNA mode activated.");
 			}
 
 			AutomateParameters.setAutomateBurnIn(false);
@@ -485,6 +490,11 @@ public class CommandLine {
 			  .append("          identical input and settings)\n")
 			  .append("        Default: 1\n\n")
 	
+			  .append("    -reportBurnin=true\n")
+			  .append("        Enables the printing of logging information during the burnin.\n")
+			  .append("        Default: false\n\n")
+	
+			  
 			  .append("    -ot=OUTTYPE\n")
 			  .append("        Sets output alignment type.\n")
 			  .append("          (One of: "

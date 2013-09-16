@@ -32,7 +32,7 @@ public class LogLikelihoodTrace extends statalign.postprocess.Postprocess{
 	int current;
 	int step;
 	int count;
-	ArrayList<double[]> loglikelihoods;
+	//ArrayList<double[]> loglikelihoods;
 	private LogLikelihoodTraceGUI gui;
 
 	/**
@@ -106,11 +106,17 @@ public class LogLikelihoodTrace extends statalign.postprocess.Postprocess{
 		double[] logLike = new double[2];
 		logLike[0] = state.logLike;
 		logLike[1] = coreModel.curLogLike;
-		if(postprocessWrite)
-			loglikelihoods.add(logLike);
+		if(postprocessWrite) {
+			try {						
+				outputFile.write(logLike[0]+"\t"+logLike[1]+"\n");				
+			} catch (IOException e) {
+				new ErrorMessage(null," "+e.getLocalizedMessage(),true);
+			}
+		}
 		if(sampling){
 			try {
-				file.write("Sample "+no+"\tLoglikelihood:\t"+logLike+"\n");
+				if (state.isBurnin) file.write("Burnin "+no+"\tLoglikelihood:\t"+logLike[1]+"\n");
+				else file.write("Sample "+no+"\tLoglikelihood:\t"+logLike[1]+"\n");										
 			} catch (IOException e) {
 				new ErrorMessage(null," "+e.getLocalizedMessage(),true);
 			}
@@ -163,7 +169,7 @@ public class LogLikelihoodTrace extends statalign.postprocess.Postprocess{
 		current = 0;
 		step = 2;
 		count = 0;
-		loglikelihoods = new ArrayList<double[]>();
+		//loglikelihoods = new ArrayList<double[]>();
 	}
 
 	/**
@@ -172,10 +178,8 @@ public class LogLikelihoodTrace extends statalign.postprocess.Postprocess{
 	@Override
 	public void afterLastSample() {
 		if (postprocessWrite) {
-			try {
-				for (double[] ll : loglikelihoods) {
-					outputFile.write(ll[0]+"\t"+ll[1]+"\n");
-				}
+			try {				
+				outputFile.flush();
 				outputFile.close();
 			} catch (IOException e) {
 				e.printStackTrace();

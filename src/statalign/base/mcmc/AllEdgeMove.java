@@ -89,6 +89,8 @@ public class AllEdgeMove extends ContinuousPositiveParameterMove {
 			tree.vertex[i].edgeChangeUpdate();
 		}
 //		tree.root.edgeChangeUpdateRecursively();
+		// TODO Save the old likelihoods and seq vectors,
+		// and restore rather than recomputing
 		tree.root.calcFelsenRecursively();
 		tree.root.calcIndelLogLikeRecursively();
 	}

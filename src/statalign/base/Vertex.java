@@ -4,6 +4,7 @@ import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.FieldPosition;
 import java.util.ArrayList;
+import static java.util.Arrays.*;
 import static statalign.base.AlignColumn.*;
 
 import statalign.ui.ErrorMessage;
@@ -123,8 +124,13 @@ public class Vertex {
         int size = owner.substitutionModel.e.length;
         first = new AlignColumn(this);
         first.seq = new double[size];
+        if (Utils.USE_MODEXT_EM) {
+        	first.aligned = new int[owner.vertex.length/2 + 1];
+        	fill(first.aligned,-1);
+        }
         for (int i = 0; i < first.seq.length; i++) {
             first.seq[i] = seq[0][i];
+            if (Utils.USE_MODEXT_EM) first.aligned[index] = 0;
         }
         first.prev = null;
         AlignColumn prev = first;
@@ -133,10 +139,15 @@ public class Vertex {
             prev.next = actual;
             actual.prev = prev;
             actual.seq = new double[size];
+            if (Utils.USE_MODEXT_EM) {
+            	actual.aligned = new int[owner.vertex.length/2 + 1];
+            	fill(actual.aligned,-1);
+            }
             for (int j = 0; j < first.seq.length; j++) {
                 actual.seq[j] = seq[i][j];
             }
             prev = actual;
+			if (Utils.USE_MODEXT_EM) actual.aligned[index] = i;
         }
         last = new AlignColumn(this);
         last.prev = prev;
@@ -280,6 +291,17 @@ public class Vertex {
     }
 
     void updateHmm2Matrix() {
+    	updateHmm2Matrix(1.0);
+    }
+    void updateHmm2Matrix(double R, double lambda, double mu) {
+        hmm2TransMatrix = owner.hmm2.preCalcTransMatrix(hmm2TransMatrix, edgeLength,new double[] {R,lambda,mu});
+        hmm2PropTransMatrix = hmm2TransMatrix;
+    }
+    public void updateHmm2Matrix(double[] params) {
+        hmm2TransMatrix = owner.hmm2.preCalcTransMatrix(hmm2TransMatrix, edgeLength,params);
+        hmm2PropTransMatrix = hmm2TransMatrix;
+    }
+    void updateHmm2Matrix(double heat) {
         hmm2TransMatrix = owner.hmm2.preCalcTransMatrix(hmm2TransMatrix, edgeLength);
         hmm2PropTransMatrix = hmm2TransMatrix;
         // This is commented out for now. Uncomment to use the rescaling of the transition matrices.
@@ -288,28 +310,29 @@ public class Vertex {
 //        double heat = owner.heat;
         //double heat = PROPOSAL_HEAT;
 //        double heat = 1.0;
-//        hmm2PropTransMatrix = new double[hmm2TransMatrix.length][];
-//        for (int i = 0; i < hmm2TransMatrix.length; i++) {
-//            hmm2PropTransMatrix[i] = hmm2TransMatrix[i].clone();
-//            /**/
-//			double tempSum = Utils.log0;
-//			for (int j = 0; j < hmm2PropTransMatrix[i].length; j++) {
-//
-//				hmm2PropTransMatrix[i][j] = hmm2PropTransMatrix[i][j]* heat;
-//				//hmm2PropTransMatrix[i][j] = -Math.pow(Math.abs(hmm2PropTransMatrix[i][j]),heat);
-//
-//				tempSum = Utils.logAdd(tempSum, hmm2TransMatrix[i][j]);
-//				
-//			}
-//			if(tempSum != Double.NEGATIVE_INFINITY){
-//				for (int j = 0; j < hmm2PropTransMatrix[i].length; j++) {
-//
-//					hmm2PropTransMatrix[i][j] = hmm2PropTransMatrix[i][j]-tempSum;
-//				}
-//			}
-//            /**/
-//        }
-
+        if (heat != 1.0) {
+	        hmm2PropTransMatrix = new double[hmm2TransMatrix.length][];
+	        for (int i = 0; i < hmm2TransMatrix.length; i++) {
+	            hmm2PropTransMatrix[i] = hmm2TransMatrix[i].clone();
+	            /**/
+				double tempSum = Utils.log0;
+				for (int j = 0; j < hmm2PropTransMatrix[i].length; j++) {
+	
+					hmm2PropTransMatrix[i][j] = hmm2PropTransMatrix[i][j]* heat;
+					//hmm2PropTransMatrix[i][j] = -Math.pow(Math.abs(hmm2PropTransMatrix[i][j]),heat);
+	
+					tempSum = Utils.logAdd(tempSum, hmm2TransMatrix[i][j]);
+					
+				}
+				if(tempSum != Double.NEGATIVE_INFINITY){
+					for (int j = 0; j < hmm2PropTransMatrix[i].length; j++) {
+	
+						hmm2PropTransMatrix[i][j] = hmm2PropTransMatrix[i][j]-tempSum;
+					}
+				}
+	            /**/
+	        }
+        }
 
     }
 
@@ -358,6 +381,32 @@ public class Vertex {
             // recomputed after every move, because that's unnecessary
         }
         updateHmmMatrices();        
+    }
+    public void updateHmm2Matrices() {
+        if (parent != null)
+            updateHmm2Matrix();
+    }
+    public void recursivelyUpdateHmm2Matrices() {
+    	if (!selected) return;
+        if (left != null && right != null) {
+            // System.out.println("calling the left child");
+            left.recursivelyUpdateHmm2Matrices();
+            //System.out.println("calling the right child");
+            right.recursivelyUpdateHmm2Matrices();
+            //calcUpperWithCheck(); 
+        }
+        updateHmm2Matrices();        
+    }    
+    public void recursivelyUpdateHmm3Matrices() {
+        if (!selected) return;
+    	if (left != null && right != null) {
+            // System.out.println("calling the left child");
+            left.recursivelyUpdateHmm3Matrices();
+            //System.out.println("calling the right child");
+            right.recursivelyUpdateHmm3Matrices();
+            //calcUpperWithCheck(); 
+        }
+        updateHmm3Matrix();        
     }
 
     public void setEdgeLength(double x) {
@@ -473,6 +522,21 @@ public class Vertex {
         calcOrphan();
         calcIndelLogLike();
     }
+    public void recomputeLogLikeSelected() {
+    	if (!selected) return;
+        if (left != null && right != null) {
+            // System.out.println("calling the left child");
+            left.recomputeLogLike();
+            //System.out.println("calling the right child");
+            right.recomputeLogLike();
+            //calcUpperWithCheck(); 
+            // we shouldn't require all upp vectors to be
+            // recomputed after every move, because that's unnecessary
+        }
+        calcFelsen();
+        calcOrphan();
+        calcIndelLogLike();
+    }
 
     public void recomputeCheckLogLike() {
         if (left != null && right != null) {
@@ -484,11 +548,18 @@ public class Vertex {
             // we shouldn't require all upp vectors to be
             // recomputed after every move, because that's unnecessary
         }
+        //if (Utils.USE_MODEXT_EM) updateAlignedWithCheck();
         calcFelsenWithCheck();
         calcOrphanWithCheck();
         calcIndelLogLikeWithCheck();
     }
 
+    public void calcUpperFromRoot() {
+    	for (Vertex v = parent; v != null; v = v.parent) {
+    		v.calcUpperFromRoot();
+    		v.calcUpper();
+    	}    	
+    }
     /**
      * This function calculates the upper probability vectors, which contain
      * the partial likelihoods for everything except this subtree.
@@ -871,7 +942,8 @@ public class Vertex {
         double probMatrix[][][];                                                                // DP matrix used for 3-seq HMM alignment
         probMatrix = new double[leftLen + 1][rightLen + 1][END];        // don't reserve space for end state
 
-        double emissionProb, felsen[] = new double[equDist.length], tr;
+        double logEmissionProb, felsen[] = new double[equDist.length], tr;
+        int[] aligned;
         AlignColumn l = null, r = null;
         int i, j, k, previ, prevj, prevk;
 
@@ -887,10 +959,37 @@ public class Vertex {
                         if (hmm3Parent[k] != 0) {
                             // there's a parent character in alignment column, but still can be an (even double-) deletion
                             Utils.calcFelsen(felsen, hmm3Left[k] != 0 ? l.seq : null, left.charTransMatrix, hmm3Right[k] != 0 ? r.seq : null, right.charTransMatrix);
-                            emissionProb = Utils.calcEmProb(felsen, equDist);
+                            logEmissionProb = Math.log(Utils.calcEmProb(felsen, equDist));
+                            if (Utils.USE_MODEXT_EM && owner.owner != null) {
+                        		aligned = new int[owner.vertex.length / 2 + 1];
+                        		for (int ii=0; ii<aligned.length; ii++) aligned[ii] = -1;
+                        		if (hmm3Left[k] != 0) {
+                        			for (int ii=0; ii<aligned.length; ii++) {
+                        				if (l.aligned[ii] > 0) aligned[ii] = l.aligned[ii];
+                        			}
+                        		}
+                        		if (hmm3Right[k] != 0) {
+                        			for (int ii=0; ii<aligned.length; ii++) {
+                        				if (r.aligned[ii] > 0) aligned[ii] = r.aligned[ii];
+                        			}
+                        		}    
+//                        		System.out.println();                 		
+                        		//System.out.print(logEmissionProb);
+                        		logEmissionProb += owner.owner.calcEm(aligned);
+                        		//System.out.println(" "+logEmissionProb);
+                        	}
                         } else {
                             // no parent, it's an insertion on either of (but never both) branches
-                            emissionProb = Utils.calcEmProb(hmm3Left[k] != 0 ? l.seq : r.seq, equDist);
+                            logEmissionProb = Math.log(Utils.calcEmProb(hmm3Left[k] != 0 ? l.seq : r.seq, equDist));
+                            if (Utils.USE_MODEXT_EM  && owner.owner != null) {
+                            	if (hmm3Left[k] != 0) {
+                            		logEmissionProb += owner.owner.calcEm(l.aligned);
+                            	}
+                            	else if (hmm3Right[k] != 0) {
+                            		logEmissionProb += owner.owner.calcEm(r.aligned);
+                            	}
+                            	// Shouldn't be any other cases
+                            }
                         }
                         if (previ == 0 && prevj == 0)
                             tr = hmm3RedTransMatrix[START][k];
@@ -898,7 +997,7 @@ public class Vertex {
                             for (tr = Utils.log0, prevk = START + 1; prevk < END; prevk++)
                                 tr = Utils.logAdd(tr, probMatrix[previ][prevj][prevk] + hmm3RedTransMatrix[prevk][k]);
                         }
-                        probMatrix[i][j][k] = heat*(Math.log(emissionProb) + tr);
+                        probMatrix[i][j][k] = heat*(logEmissionProb + tr);
                     } else
                         probMatrix[i][j][k] = Utils.log0;
                 }
@@ -1125,6 +1224,10 @@ public class Vertex {
         //s = right.printedAlignment();
         //System.out.println(s[0]+"\n"+s[1]+"\n");
 
+        if (Utils.USE_MODEXT_EM) {
+        	updateAlignedInWindow();
+        }
+
         return retVal.value;
     }
 
@@ -1267,6 +1370,10 @@ public class Vertex {
         //s = right.printedAlignment();
         //System.out.println(s[0]+"\n"+s[1]+"\n");
 
+        if (Utils.USE_MODEXT_EM) {
+        	updateAlignedInWindow();
+        }
+        
         return retVal.value;
     }
 
@@ -1285,7 +1392,7 @@ public class Vertex {
         double probMatrix[][][];                                          // DP matrix used for 2-seq HMM alignment
         probMatrix = new double[parentLen + 1][childLen + 1][END];        // don't reserve space for end state
 
-        double emissionProb, felsen[] = new double[equDist.length], tr;
+        double logEmissionProb, felsen[] = new double[equDist.length], tr;
         AlignColumn c = null;                // child
         AlignColumn p = null;                // parent
         AlignColumn b;                            // brother
@@ -1299,19 +1406,41 @@ public class Vertex {
                     previ = i - hmm2Parent[k];
                     prevj = j - hmm2Child[k];
                     if (previ >= 0 && prevj >= 0) {
+                    	int[] aligned;                    	
                         if (hmm2Parent[k] != 0) {                // parent present: substitution (* *) or deletion (* -)
                             b = (this == parent.left) ? p.right : p.left;
                             Utils.calcFelsen(felsen, hmm2Child[k] != 0 ? c.seq : null, charTransMatrix, b != null ? b.seq : null, brother.charTransMatrix);
                             if (parent == owner.root || p.orphan || !Utils.USE_UPPER) {
-                                emissionProb = Utils.calcEmProb(felsen, equDist);
+                                logEmissionProb = Math.log(Utils.calcEmProb(felsen, equDist));
                             }
                             else {
-                            	emissionProb = Utils.calcEmProb(felsen, p.upp);
+                            	logEmissionProb = Math.log(Utils.calcEmProb(felsen, p.upp));
                             	// If a double deletion (childless parent) then the above
                             	// should just yield the sum of p.upp
                             }
+                            if (Utils.USE_MODEXT_EM && owner.owner != null) {
+                        		aligned = new int[owner.vertex.length / 2 + 1];
+                        		for (int ii=0; ii<aligned.length; ii++) aligned[ii] = -1;
+                        		if (hmm2Child[k] != 0) {
+                        			for (int ii=0; ii<aligned.length; ii++) {
+                        				if (c.aligned[ii] > 0) aligned[ii] = c.aligned[ii];
+                        			}
+                        		}
+                        		if (b != null) {
+                        			for (int ii=0; ii<aligned.length; ii++) {
+                        				if (b.aligned[ii] > 0) aligned[ii] = b.aligned[ii];
+                        			}
+                        		}
+                        		if (Utils.USE_MODEXT_UPP) {
+                        			for (int ii=0; ii<aligned.length; ii++) {
+                        				if (p.alignedUpp[ii] > 0) aligned[ii] = p.alignedUpp[ii];                        			
+                        			}
+                        		}
+                        		logEmissionProb += owner.owner.calcEm(aligned);
+                        	}
                         } else {                    // insertion (- *)
-                            emissionProb = Utils.calcEmProb(c.seq, equDist);
+                            logEmissionProb = Math.log(Utils.calcEmProb(c.seq, equDist));
+                            if (Utils.USE_MODEXT_EM && owner.owner != null) logEmissionProb += owner.owner.calcEm(c.aligned);
                         }
                         if (previ == 0 && prevj == 0) tr = hmm2PropTransMatrix[START][k];
                         else {
@@ -1319,7 +1448,7 @@ public class Vertex {
                                 tr = Utils.logAdd(tr, probMatrix[previ][prevj][prevk] + hmm2PropTransMatrix[prevk][k]);
                             }
                         }
-                        probMatrix[i][j][k] = 1.0*(Math.log(emissionProb) + tr);
+                        probMatrix[i][j][k] = 1.0*(logEmissionProb + tr);
                     } else probMatrix[i][j][k] = Utils.log0;
                 }
                 c = (j > 0) ? c.next : winFirst;
@@ -1406,6 +1535,11 @@ public class Vertex {
         boolean isLeft = parent.left == this;
         //System.out.println("Aligning "+(isLeft ? "left" : "right")+" in hmm2Align");
 
+//        if (Utils.USE_MODEXT_UPP) {
+//        	if (Utils.DEBUG) updateAlignedUppFromRootWithCheck();
+//        	updateAlignedUppFromRoot();
+//        }
+        
         int k, previ, prevj, prevk;
         double probMatrix[][][] = hmm2ProbMatrix();
         MuDouble retVal = new MuDouble(0.0);
@@ -1470,6 +1604,12 @@ public class Vertex {
 //        if (Utils.DEBUG) {
 //        	printToScreenAlignment(0,0);
 //        }
+        
+        if (Utils.USE_MODEXT_EM) {
+        	parent.updateAlignedInWindow();
+        	parent.updateAlignedParentInWindow();
+        }
+        
         return retVal.value;
     }
 
@@ -1489,8 +1629,14 @@ public class Vertex {
         int parentLen = parent.winLength, childLen = winLength;
         boolean isLeft = parent.left == this;
 
+//        if (Utils.USE_MODEXT_UPP) {
+//        	if (Utils.DEBUG) updateAlignedUppFromRootWithCheck();
+//        	updateAlignedUppFromRoot();
+//        }
+//        if (Utils.USE_UPPER) calcUpperFromRoot();
+        
         int k, previ, prevj, prevk;
-        double probMatrix[][][] = hmm2ProbMatrix();
+        double probMatrix[][][] = hmm2ProbMatrix(heat);
         MuDouble retVal = new MuDouble(0.0);
         double prJump[] = new double[END];                        // no need to have an element for end state
 
@@ -1514,7 +1660,7 @@ public class Vertex {
 
         for (k = END; k != START; k = prevk) {
             for (prevk = START; prevk < END; prevk++)
-                prJump[prevk] = heat*(probMatrix[previ][prevj][prevk] + hmm2PropTransMatrix[prevk][k]);
+                prJump[prevk] = (probMatrix[previ][prevj][prevk] + hmm2PropTransMatrix[prevk][k]);
             prevk = Utils.logWeightedChoose(prJump, retVal);
 
             if (hmm2Parent[prevk] != 0) {
@@ -1569,12 +1715,17 @@ public class Vertex {
         if (Utils.USE_UPPER) { 
         	// Then we may have modified the Felsenstein vectors
         	// for `this', so need to restore them.
-        	calcFelsen();
+        	//calcFelsen();
         }
         calcOrphan();
         parent.calcFelsen();
         parent.calcOrphan();
         parent.calcIndelLogLike();
+        
+        if (Utils.USE_MODEXT_EM) {
+        	parent.updateAlignedInWindow();
+        	parent.updateAlignedParentInWindow();
+        }
 
 //        if (Utils.DEBUG) {
 //        	printToScreenAlignment(0,0);
@@ -1594,6 +1745,7 @@ public class Vertex {
     /** Selects a subtree */
     public void selectSubtree(double[] weights, int level) {
         selected = true;
+        if (Utils.DEBUG) System.out.println("Selected vertex "+index);
         // continue below with prescribed probability
         if (left != null && right != null) {
             if (Utils.generator.nextDouble() < weights[level]) {
@@ -1621,9 +1773,10 @@ public class Vertex {
     	if (Utils.DEBUG) {
 	    	System.out.println(index+" "+name+" "+edgeLength);
 	    	System.out.println(owner.hmm2.params[0]+" "+owner.hmm2.params[1]+" "+owner.hmm2.params[2]);
-	    	System.out.println(owner.printedTree());
+	    	System.out.println(owner.printedTreeWithNumbers());
     	}
-        //printToScreenAlignment(0,0,true);
+        //if (Utils.DEBUG) printToScreenAlignment(0,0,true);
+    	//printToScreenAlignment(0,0,true);
     	StringBuffer sb = new StringBuffer();
     	
 //    	 owner.root.calcFelsenRecursively();
@@ -1670,7 +1823,7 @@ public class Vertex {
 	        	System.err.println("Window length: "+winLength+"\t");
 	        }
         }
-        int b = (length - winLength == 0 ? 0 : Utils.generator.nextInt(length - winLength));
+        int b = (length - winLength == 0 ? 0 : Utils.generator.nextInt(length - winLength + 1));
         if (Utils.DEBUG) System.out.println("Initial window length\t "+winLength);
         //System.out.print("b: "+b+"\t");
         AlignColumn actualAC = first;
@@ -1709,10 +1862,19 @@ public class Vertex {
 //        calcOrphanRecursively();
 //        calcIndelLogLikeRecursively();
         //calcAllUp();
-        if (Utils.USE_UPPER) {
-        	//owner.root.calcFelsenRecursively();
-        	owner.root.calcUpperRecursively();
-        }   
+//        if (Utils.USE_UPPER) {
+//        	//owner.root.calcFelsenRecursively();
+//        	owner.root.calcUpperRecursively();
+//        }   
+        
+        if (this != owner.root) {
+        	if (Utils.USE_MODEXT_UPP) updateAlignedUppFromRootInWindow();
+        	if (Utils.USE_UPPER) calcUpperFromRoot();        	        	
+        }
+//        if (Utils.USE_MODEXT_EM) {
+//        	updateAlignedRecursively();
+//        	updateAlignedParent();
+//        }
         
         //printToScreenAlignment(b,b+winLength);
         // compute alignment backproposal
@@ -1748,10 +1910,9 @@ public class Vertex {
 //        owner.root.calcOrphanRecursively();
 //        owner.root.calcIndelLogLikeRecursively();
         calcAllUp();
-        if (Utils.USE_UPPER) {
-        	//owner.root.calcFelsenRecursively();
-        	owner.root.calcUpperRecursively();
-        }   
+//        if (Utils.USE_UPPER) {        	
+//        	owner.root.calcUpperRecursively();
+//        }   
         //owner.root.recomputeCheckLogLike();
         //if (Utils.USE_UPPER) owner.checkUppFelsProducts();
 
@@ -1765,12 +1926,19 @@ public class Vertex {
         }
 
         if(Utils.DEBUG) {
+        	 if (Utils.USE_MODEXT_EM) owner.root.updateAlignedRecursivelyWithCheck();
+        	// check proposal - backproposal consistency
+        	 if (this != owner.root) {
+             	if (Utils.USE_MODEXT_UPP) updateAlignedUppFromRootInWindow();
+             	if (Utils.USE_UPPER) calcUpperFromRoot();        
+             }          	
         	// check proposal - backproposal consistency
         	double bppBack = doRecBackprop();
         	if(parent != null)
         		bppBack += hmm2BackProp();
         	if(Math.abs(bppProp+bppBack) > 1e-5) {
         		System.out.println("Proposal - backproposal inconsistent! Prop: "+bppProp+" Back: "+bppBack);
+        		throw new RuntimeException("Inconsistency.");
         	}
         }
 
@@ -1790,10 +1958,15 @@ public class Vertex {
         return bpp;
     }
     
-    public double realignToParent() {
-    	return realignToParent(false);
+    public double realignToParent(double heat) {
+    	return realignToParent(false,heat);
     }
-    
+    public double realignToParent() {
+    	return realignToParent(false,1.0);
+    }
+    public double realignToParent(boolean useCurrentWin) {
+    	return realignToParent(useCurrentWin,1.0);
+    }
     /**
      * Samples a new alignment between the subtree rooted at this vertex and the rest of the sequences.
      * Only the alignment between this vertex and its parent is changed.
@@ -1801,52 +1974,79 @@ public class Vertex {
      * 		(backproposal and proposal for window selection must be computed by the caller)
      * @return the ratio between backproposal and proposal probabilities
      */
-    public double realignToParent(boolean useCurrentWin) {
+    public double realignToParent(boolean useCurrentWin, double heat) {
     	if(parent == null)
     		throw new Error("realignToParent was called on the root vertex");
     	
+   	 if (Utils.DEBUG && Utils.USE_MODEXT_EM) owner.root.updateAlignedRecursivelyWithCheck();
+
+    	//updateHmm2Matrix(heat);
     	double bpp = 0;
-    	owner.root.calcUpperRecursively();
         if(!useCurrentWin) {
         	MuDouble p = new MuDouble(1.0);
 	        winLength = Utils.linearizerWeight(length, p, Utils.WINDOW_MULTIPLIER*Math.sqrt(length));
 	        //System.out.print("Length: "+length+"\t");
 	        //System.out.print("Window length: "+winLength+"\t");
-	        int b = (length - winLength == 0 ? 0 : Utils.generator.nextInt(length - winLength));
+	        int b = (length - winLength == 0 ? 0 : Utils.generator.nextInt(length - winLength + 1));
 	        //System.out.print("b: "+b+"\t");
 	        AlignColumn actualAC = first;
 	        for (int i = 0; i < b; i++) {
 	            actualAC = actualAC.next;
 	        }
 	        winFirst = actualAC;
+	        if (Utils.DEBUG) System.out.print("b = "+b+", ");
 	        for (int i = 0; i < winLength; i++) {
-	            actualAC = actualAC.next;
+	        	if (Utils.DEBUG) System.out.print(actualAC.mostLikely());
+	        	actualAC = actualAC.next;	            
 	        }
+	        if (Utils.DEBUG) System.out.println();
 	        winLast = actualAC;
 	        
 	        //double bpp = -Math.log(p.value * (length - winLength == 0 ? 1 : length - winLength));
 	        bpp -= Math.log(p.value / (length - winLength + 1));
         }
 
-        // nothing is selected for realignment below this vertex
+        for (Vertex v : owner.vertex) v.selected = false;
         lastSelected();
+        parent.selected = true;
+        // nothing is selected for realignment below this vertex
+        
 
         // window is projected to parent
         selectWindowUp();
 
+    	//if (Utils.USE_UPPER) owner.root.calcUpperRecursively();
+        if (this != owner.root) {
+        	if (Utils.USE_MODEXT_UPP) updateAlignedUppFromRootInWindow();
+        	if (Utils.USE_UPPER) calcUpperFromRoot();        
+        }
+        
         // compute alignment backproposal
         bpp += hmm2BackProp();
+
+		if (Utils.DEBUG) owner.root.recomputeCheckLogLike();
 
         // align the sequences
         double bppProp = hmm2AlignWithSave();
         bpp += bppProp;
+        //calcAllUp();
         parent.calcAllUp();
+        //if (Utils.USE_MODEXT_EM) updateAlignedParentInWindow();
+
+		if (Utils.DEBUG) owner.root.recomputeCheckLogLike();
 
         if(Utils.DEBUG) {
+        	 if (Utils.USE_MODEXT_EM) owner.root.updateAlignedRecursivelyWithCheck();
+             owner.root.recomputeCheckLogLike();
         	// check proposal - backproposal consistency
+        	 if (this != owner.root) {
+             	if (Utils.USE_MODEXT_UPP) updateAlignedUppFromRootInWindow();
+             	if (Utils.USE_UPPER) calcUpperFromRoot();        
+             }
         	double bppBack = hmm2BackProp();
-        	if(Math.abs(bppProp+bppBack) > 1e-5) {
-        	  System.out.println("Proposal - backproposal inconsistent in realignToParent! Prop: "+bppProp+" Back: "+bppBack);
+        	if(Math.abs(bppProp+bppBack) > 1e-6) {
+        		System.out.println("Proposal - backproposal inconsistent! Prop: "+bppProp+" Back: "+bppBack+" diff = "+(bppProp+bppBack));
+        		throw new RuntimeException("Inconsistency.");
         	}
         }
 
@@ -1858,6 +2058,7 @@ public class Vertex {
 
         // 	System.out.print(" Prop: "+bppProp+" it's doublecheck: "+bppBack+" bpp: "+bpp+" ");
 
+        //updateHmm2Matrix(1.0);
         return bpp;
     }
 
@@ -1877,6 +2078,186 @@ public class Vertex {
         }
     }
     
+    public void updateAligned() {
+    	updateAligned(false,false);
+    }
+    void updateAlignedWithCheck() {
+    	updateAligned(true,false);
+    }
+    public void updateAlignedInWindow() {
+    	updateAligned(false,true);
+    }
+    void updateAlignedInWindowWithCheck() {
+    	updateAligned(true,true);
+    }
+    void updateAligned(boolean withCheck, boolean inWindow) {
+    	if (left == null && right == null) return;
+    	if (Utils.DEBUG) System.out.println(index+".updateAligned()");
+    	int[] oldAligned = null;    	
+    	for (AlignColumn p = inWindow?winLast.prev:last.prev; p != null; p = p.prev) {    		
+    		if (withCheck) oldAligned = p.aligned.clone();
+//    		if (withCheck) {
+//	     		for (int j=0; j<p.aligned.length; j++) System.out.print(oldAligned[j]+" ");
+//				System.out.print("\t");
+//     		}
+    		if (p.aligned == null) p.aligned = new int[owner.vertex.length / 2 + 1];
+    		for (int i=0; i<p.aligned.length; i++) p.aligned[i] = -1;
+     		if (p.left != null) {
+     			//if (Utils.DEBUG) System.out.println("left = "+left.index);
+     			for (int i=0; i<p.aligned.length; i++) {
+     				if (p.left.aligned[i] >= 0) p.aligned[i] = p.left.aligned[i];
+     			}
+     		}
+     		if (p.right != null) {
+     			//if (Utils.DEBUG) System.out.println("right = "+right.index);
+     			for (int i=0; i<p.aligned.length; i++) {
+     				if (p.right.aligned[i] >= 0) p.aligned[i] = p.right.aligned[i];
+     			}
+     		}             		
+//     		if (true|!withCheck) {
+//	     		for (int j=0; j<p.aligned.length; j++) System.out.print(p.aligned[j]+" ");
+//				System.out.println();
+//     		}
+     		if (withCheck) {
+     			for (int i=0; i<p.aligned.length; i++) {
+     				if (p.aligned[i] != oldAligned[i]) {
+     					for (int j=0; j<p.aligned.length; j++) {
+     						System.out.println(p.aligned[j]+" "+oldAligned[j]);
+     					}
+     					throw new RuntimeException("Inconsistency in aligned vectors:");
+     				}
+     			}
+     		}
+     		if (p==(inWindow?winFirst:first)) break;
+    	}    	
+    }
+    public void updateAlignedParentInWindow() {
+    	selectWindowUp();
+	    for (Vertex v = parent; v != null; v = v.parent) {
+	    	v.selectWindowUp();
+			v.updateAlignedInWindow();
+		}
+    }
+    public void updateAlignedParent() {    	
+	    for (Vertex v = parent; v != null; v = v.parent) {	    	
+			v.updateAligned();
+		}
+    }
+    void updateAlignedUpp() {
+    	updateAlignedUpp(false,false);
+    }
+    void updateAlignedUppWithCheck() {
+    	updateAlignedUpp(true,false);
+    }
+    void updateAlignedUppInWindow() {
+    	updateAlignedUpp(false,true);
+    }
+    void updateAlignedUppWithCheckInWindow() {
+    	updateAlignedUpp(true,true);
+    }
+    void updateAlignedUpp(boolean withCheck, boolean inWindow) {    
+    	if (Utils.DEBUG) System.out.println(index+".updateAlignedUpp()");
+    	int[] oldAlignedUpp = null;
+    	AlignColumn b = null;
+    	for (AlignColumn c = (inWindow?winLast.prev:last.prev); c != null; c = c.prev) {
+    		if (withCheck) oldAlignedUpp = c.alignedUpp.clone();
+    		c.alignedUpp = new int[owner.vertex.length / 2 + 1];
+    		for (int i=0; i<c.alignedUpp.length; i++) {
+    			c.alignedUpp[i] = c.orphan ? -1 : c.parent.alignedUpp[i];
+    		}
+    		if (c.orphan) continue;
+    		if (this != parent.left) {
+    			b = c.parent.left;
+	     		if (b != null) {
+	     			for (int i=0; i<c.alignedUpp.length; i++) {
+	     				if (b.aligned[i] >= 0) c.alignedUpp[i] = b.aligned[i];
+	     			}
+	     		}
+    		}
+    		else {
+    			b = c.parent.right;
+	     		if (b != null) {
+	     			for (int i=0; i<c.alignedUpp.length; i++) {
+	     				if (b.aligned[i] >= 0) c.alignedUpp[i] = b.aligned[i];
+	     			}
+	     		}
+    		}
+//    		if (!withCheck) {
+//	     		for (int j=0; j<c.aligned.length; j++) System.out.print(c.alignedUpp[j]+" ");
+//				System.out.println();
+//     		}
+    		if (withCheck) {
+     			for (int i=0; i<c.alignedUpp.length; i++) {
+     				if (c.alignedUpp[i] != oldAlignedUpp[i]) {
+     					for (int j=0; j<c.alignedUpp.length; j++) {
+     						System.out.println(c.alignedUpp[j]+" "+oldAlignedUpp[j]);
+     					}
+     					throw new RuntimeException("Inconsistency in alignedUpp vectors:");
+     				}
+     			}
+     		}
+     		if (c==(inWindow?winFirst:first)) break;
+    	}
+    }
+    void updateAlignedUppFromRoot() {
+    	selectWindowUp();
+    	for (Vertex v = parent; v != null; v = v.parent) {
+    		if (v != owner.root) {    			 	
+    			v.updateAlignedUppFromRoot();
+    		}    		
+    		v.updateAlignedUpp();
+    	}    	
+    }
+    void updateAlignedUppFromRootInWindow() {
+    	selectWindowUp();
+    	for (Vertex v = parent; v != null; v = v.parent) {
+    		if (v != owner.root) {    			 	
+    			v.selectWindowUp();
+    			v.updateAlignedUppFromRootInWindow();
+    		}    		
+    		v.updateAlignedUpp();
+    	}    	
+    }
+    void updateAlignedUppFromRootWithCheck() {
+    	for (Vertex v = parent; v != null; v = v.parent) {
+    		v.updateAlignedUppFromRootWithCheck();
+    		v.updateAlignedUppWithCheck();
+    	}    	
+    }
+    public void updateAlignedRecursively() {
+    	if (!selected) return;
+    	if (left != null && right != null) {
+    	//if (left != null && right != null) {
+    		left.updateAlignedRecursively();
+    		right.updateAlignedRecursively();
+    	}
+    	updateAligned();    	
+    }
+    public void updateAlignedRecursivelyInWindow() {
+    	if (!selected) return;    	
+    	if (left != null && right != null) {
+    	//if (left != null && right != null) {
+    		left.updateAlignedRecursivelyInWindow();
+    		right.updateAlignedRecursivelyInWindow();
+    	}
+    	updateAlignedInWindow();
+    	selectWindowUp();
+    }
+    public void updateAlignedRecursivelyInWindowWithCheck() {
+    	if (left != null && right != null) {
+    		left.updateAlignedRecursivelyInWindowWithCheck();
+    		right.updateAlignedRecursivelyInWindowWithCheck();
+    	}
+    	updateAlignedInWindowWithCheck();
+    	selectWindowUp();
+    }
+    public void updateAlignedRecursivelyWithCheck() {
+    	if (left != null && right != null) {
+    		left.updateAlignedRecursivelyWithCheck();
+    		right.updateAlignedRecursivelyWithCheck();
+    	}
+    	updateAlignedWithCheck();
+    }
     double doRecAlign() {
         if (left != null && right != null && left.selected && right.selected) {
             double ret = left.doRecAlign() + right.doRecAlign();
@@ -1921,7 +2302,11 @@ public class Vertex {
                     }
                 }
             }
-            parent.calcAllUp();
+            //parent.calcAllUp();
+            // TODO No idea why the following two lines have to be here
+            // but if they're not then very occasionally there are inconsistencies.
+            calcOrphan();            
+            calcAllUp();
         }
      
         //indelLogLike = old.indelLogLike;
@@ -1958,6 +2343,8 @@ public class Vertex {
      * Also restores orphan and indel likelihoods.
      */
     void doRestore() {
+    	
+    	if (Utils.DEBUG) System.out.println(index+".doRestore()");
         winFirst = old.winFirst;
         winLength = old.winLength;
         length = old.length;
@@ -2435,8 +2822,12 @@ public class Vertex {
          
          
         //DEBUG=2; // Activate verbose print statements 
-        owner.root.recomputeLogLike();
-     	uncle.calcAllUp(); // uncle is now lower 
+		
+ 		uncle.selectAllUp();
+ 		selected = true;
+ 		
+        owner.root.recomputeLogLikeSelected();
+     	//uncle.calcAllUp(); // uncle is now lower 
      	//DEBUG=0; // Deactivate verbose print statements
     	
     }
@@ -3347,7 +3738,9 @@ public class Vertex {
  		if (Utils.DEBUG) {
  			owner.checkPointers();
  		}
-		owner.root.recomputeLogLike();
+ 		uncle.selectAllUp();
+ 		selected = true;
+		owner.root.recomputeLogLikeSelected();
  		
     	//uncle.calcAllUp();
     	
@@ -4406,6 +4799,9 @@ public class Vertex {
     public double fastSwapWithUncle() {
     	boolean old_USE_UPPER = Utils.USE_UPPER; 
     	Utils.USE_UPPER = false;
+    	boolean old_USE_MODEXT_UPP = Utils.USE_MODEXT_UPP; 
+    	Utils.USE_MODEXT_UPP = false;
+    	
         Vertex uncle = parent.brother(), grandpa = parent.parent;
         double ret = 0.0;
         Vertex starter;
@@ -4693,6 +5089,7 @@ public class Vertex {
         //	System.out.println("RET after backproposing anchors (final value) "+ret);
 
         Utils.USE_UPPER = old_USE_UPPER;
+        Utils.USE_MODEXT_UPP =  old_USE_MODEXT_UPP;     	
         return ret;
     }
 
@@ -5102,6 +5499,16 @@ public class Vertex {
 //        	owner.root.calcUpperRecursively();
 //        }
     }
+    void selectAllUp() {   	
+        selected = true;
+        for (Vertex v = parent; v != null; v = v.parent) {
+    		v.selected = true;
+    	}
+        if (left != null && right != null) {
+            left.selected = false;
+            right.selected = false;
+        }
+    }   
 
     void parentNewChild(Vertex child) {
         child.last.parent = parent.last;

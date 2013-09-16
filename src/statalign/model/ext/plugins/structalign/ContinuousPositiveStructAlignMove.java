@@ -46,6 +46,7 @@ public class ContinuousPositiveStructAlignMove extends ContinuousPositiveParamet
 	}
 	public void copyState(Object externalState) {
 		super.copyState(externalState);
+
 		oldcovar = structAlign.fullCovar; // TODO handle in more abstract fashion
 		oldll = structAlign.curLogLike; // TODO handle in more abstract fashion
 		oldMultiNorms = structAlign.multiNorms; // TODO handle in more abstract fashion
@@ -101,7 +102,6 @@ public class ContinuousPositiveStructAlignMove extends ContinuousPositiveParamet
 		moveParams.setFixedToParent(fixedToParent);
 		if (fixedToParent) nFixedToParent++;		
 		else param.set(proposalDistribution.sample());
-		autoTune = !fixedToParent;
 		
 		if (param.get() < minValue || param.get() > maxValue) {
 			return(Double.NEGATIVE_INFINITY);
@@ -163,6 +163,8 @@ public class ContinuousPositiveStructAlignMove extends ContinuousPositiveParamet
 	}
 	public void afterMove(Object externalState) {
 		super.afterMove(externalState);		
+		autoTune = !fixedToParent;
+		if (fixedToParent) proposalWidthControlVariable = parentPriors.get(0).proposalWidthControlVariable;
 	}
 }
 

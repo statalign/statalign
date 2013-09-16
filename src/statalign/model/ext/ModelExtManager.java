@@ -66,7 +66,7 @@ public class ModelExtManager {
 				String [] pluginPair = args.get(i).split("\\[",2);
 				for(ModelExtension plugin : pluginList) {
 					if (plugin.getPluginID().equals(pluginPair[0])) {
-						plugin.setActive(true);
+						plugin.setActive(true);						
 						if (pluginPair.length == 2) { // Then we have some parameters
 							if (pluginPair[1].endsWith("]")) {
 								String paramString = pluginPair[1].substring(0,pluginPair[1].length()-1);
@@ -366,4 +366,17 @@ public class ModelExtManager {
 			plugin.incrementWeights();		
 	}
 	
+	/**
+	 * 
+	 * @param aligned Vector indicating which characters are aligned to the current
+	 * column in the subtrees below.
+	 * @return Logarithm of emission probability for subtrees
+	 */
+	public double calcLogEm(int[] aligned) {
+		double logEm = 0;
+		for(ModelExtension plugin : activeList) {
+			logEm += plugin.calcLogEm(aligned);
+		}
+		return logEm;
+	}
 }

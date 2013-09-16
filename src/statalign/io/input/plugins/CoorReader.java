@@ -16,7 +16,7 @@ public class CoorReader extends DataReader {
 	/** minimum dimension allowed */
 	private int allowDimMin = 3;
 	/** maximum dimension allowed */
-	private int allowDimMax = 3;
+	private int allowDimMax = 4;
 	
 	public CoorReader() {
 	}
@@ -43,6 +43,7 @@ public class CoorReader extends DataReader {
 						throw new IllegalFormatException("CoorReader: structure "+data.names.get(cur)+" contains no atoms.");
 					data.names.add(line.substring(1).trim());
 					data.coords.add(new ArrayList<double[]>());
+					data.bFactors.add(new ArrayList<Double>());
 					cur++;
 				} else {
 					line = line.trim();
@@ -53,10 +54,18 @@ public class CoorReader extends DataReader {
 					String[] tokens = line.split("[:,; \t]+");
 					if(tokens.length < allowDimMin || tokens.length > allowDimMax)
 						throw new IllegalFormatException("CoorReader: number of dimensions incorrect");
-					double[] vals = new double[tokens.length];
-					for(int i = 0; i < tokens.length; i++)
-						vals[i] = Double.parseDouble(tokens[i]);
-					data.coords.get(cur).add(vals);
+										
+					if (tokens.length >= 3) {
+						double[] vals = new double[3];
+						for(int i = 0; i < 3; i++) {
+							vals[i] = Double.parseDouble(tokens[i]);
+						}
+						data.coords.get(cur).add(vals);
+					}
+					if (tokens.length == 4) {
+						double b = Double.parseDouble(tokens[3]);
+						data.bFactors.get(cur).add(b);						
+					}									
 				}
 			}
 		} catch (NumberFormatException e) {

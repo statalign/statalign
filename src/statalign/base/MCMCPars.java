@@ -51,6 +51,8 @@ public class MCMCPars {
 	public boolean fixAlign = false;
 	public boolean fixTopology = false;
 	public boolean fixEdge = false;
+	/** If <code>true</true> then logging information is also printed during the burnin. */
+	public boolean doReportDuringBurnin = false;
 	
 	/**
 	 * This constructor sets the values in the class

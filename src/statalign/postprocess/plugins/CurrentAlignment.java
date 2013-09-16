@@ -9,6 +9,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
 import statalign.base.InputData;
+import statalign.base.McmcStep;
 import statalign.base.State;
 import statalign.base.Utils;
 import statalign.postprocess.gui.AlignmentGUI;
@@ -96,7 +97,7 @@ public class CurrentAlignment extends statalign.postprocess.Postprocess{
 	public void newPeek(State state){
 		if(show) {
 			updateAlignment(state);
-		}
+		}		
 	}
 	
 	private void updateAlignment(State state) {
@@ -169,14 +170,14 @@ public class CurrentAlignment extends statalign.postprocess.Postprocess{
 			try {
 				String[] alignment = Utils.alignmentTransformation(allAlignment, seqNames, alignmentType, input);
 				for(int i = 0; i < alignment.length; i++){
-					file.write("Sample "+no+"\tAlignment:\t"+"\t"+alignment[i]+"\n");
+					if (state.isBurnin) file.write("Burnin "+no+"\tAlignment:"+"\t"+alignment[i]+"\n");
+					else file.write("Sample "+no+"\tAlignment:"+"\t"+alignment[i]+"\n");
 				}
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 		}
 	}
-	
 	
 	/**
 	 * Temporary fileprinting method to generate single files containing the current alignment. Used when testing

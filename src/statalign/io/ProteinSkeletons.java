@@ -40,4 +40,6 @@ public class ProteinSkeletons implements DataType {
 	
 	/** coordinates */
 	public List<List<double[]>> coords = new ArrayList<List<double[]>>();
+
+	public List<List<Double> > bFactors = new ArrayList<List<Double> >();
 }

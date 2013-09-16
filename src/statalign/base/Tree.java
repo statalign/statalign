@@ -63,6 +63,8 @@ public class Tree extends Stoppable implements DataType {
     
     public String[] previousFullAlign;
 
+    Mcmc owner;
+    
     public Tree() {
     }
     
@@ -488,6 +490,7 @@ COLUMN:    	while (c != v.last) {
 		state.indelParams = hmm2.params.clone();
 		state.substParams = substitutionModel.params.clone();
 		state.logLike = getLogLike();
+		state.isBurnin = this.owner.burnin;
 		
 		return state;
 	}

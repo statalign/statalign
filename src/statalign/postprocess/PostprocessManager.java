@@ -192,6 +192,30 @@ public class PostprocessManager {
 		}
 	}
 	
+	public void flushAll() {
+		if(rnaMode) {
+			for(Postprocess plugin : plugins){
+				if(plugin.selected && plugin.postprocessWrite){
+					try { plugin.outputFile.flush(); }
+					catch (IOException ioex) {
+						ioex.printStackTrace();
+					} 
+				}
+			}
+		}
+		
+		else {
+			for(Postprocess plugin : plugins){
+				if(plugin.selected && plugin.postprocessWrite && 
+						!plugin.rnaAssociated){
+					try { plugin.outputFile.flush(); }
+					catch (IOException ioex) {
+						ioex.printStackTrace();
+					}
+				}
+			}
+		}		
+	}
 	/**
 	 * Calls the plug-ins after an MCMC step.
 	 */
