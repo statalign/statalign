@@ -787,7 +787,9 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	}
 
 	public HashMap<Integer, MultiNormCholesky> multiNorms = new HashMap<Integer, MultiNormCholesky>();	
+	//public HashMap<Column, MultiNormCholesky> multiNormsLocal = new HashMap<Column, MultiNormCholesky>();
 	private HashMap<Integer, MultiNormCholesky> oldMultiNorms = new HashMap<Integer, MultiNormCholesky>();
+	//public HashMap<Column, MultiNormCholesky> oldMultiNormsLocal = new HashMap<Column, MultiNormCholesky>();
 	/**
 	 * Calculates the structural likelihood contribution of a single alignment column
 	 * @param col the column, id of the residue for each sequence (or -1 if gapped in column)
@@ -816,7 +818,20 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			}						
 		}
 		
-		MultiNormCholesky multiNorm2=null, multiNorm = multiNorms.get(columnCode);
+		/*
+		 * Under localEpsilon mode, the covariance depends on the column,
+		 * not just the indel pattern of the column, but we can still
+		 * cache the Cholesky decompositions to be re-used for columns
+		 * that do not change (since most of the alignment columns do 
+		 * not change during an alignment move, this could still yield
+		 * a significant speedup).
+		 */
+			
+		
+		MultiNormCholesky multiNorm = null;
+		if (localEpsilon) ;//multiNorm = multiNormsLocal.get(new Column(col));
+		else multiNorm = multiNorms.get(columnCode);				
+		MultiNormCholesky multiNorm2 = null;
 		if (Utils.DEBUG){
 			double[][] subCovar = Funcs.getSubMatrix(fullCovar, notgap, notgap);
 			// create normal distribution with mean 0 and covariance subCovar
@@ -824,13 +839,14 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			multiNorm2 = new MultiNormCholesky(new double[numMatch], subCovar);
 		}
 		
-		if (localEpsilon || multiNorm == null) {
+		if (multiNorm == null) {
 			// extract covariance corresponding to ungapped positions
 			double[][] subCovar = Funcs.getSubMatrix(fullCovar, notgap, notgap);
 			if (localEpsilon) addLocalEpsilonToDiagonal(subCovar,notgap,col);
 			// create normal distribution with mean 0 and covariance subCovar
 			multiNorm = new MultiNormCholesky(new double[numMatch], subCovar);
-			if (!localEpsilon) multiNorms.put(columnCode, multiNorm);
+			if (localEpsilon) ;//multiNormsLocal.put(new Column(col), multiNorm);
+			else multiNorms.put(columnCode, multiNorm);
 		}		
 			
 		double logli = 0;
@@ -841,7 +857,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			for(int i = 0; i < numMatch; i++)
 				vals[i] = rotCoords[notgap[i]][col[notgap[i]]][j];
 			
-			if (Utils.DEBUG && multiNorm.logDensity(vals) != multiNorm2.logDensity(vals)) {
+			if (Utils.DEBUG  && multiNorm.logDensity(vals) != multiNorm2.logDensity(vals)) {
 				System.out.print("col = [");
 				for (int k=0; k<col.length; k++) System.out.print(col[k]+",");
 				System.out.println("] ("+columnCode+")");
@@ -866,6 +882,27 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		}
 	}
 
+	private class Column {
+		public int[] col;
+		Column(int[] x) {
+			col = x.clone();
+		}
+		@Override
+		public boolean equals(Object o) {
+			if (o == this) return true;
+			if (o == null || o.getClass() != this.getClass()) return false;
+			
+			Column x = (Column) o;
+			if (x.col.length != col.length) return false;
+			for (int i=0; i<x.col.length; i++) {
+				if (x.col[i] != col[i]) return false;
+			}
+			return true;
+		}
+		public int hashCode() {
+			return Arrays.hashCode(col);
+		}
+	}
 	/**
 	 * extracts the specified rows and columns of a 2d array
 	 * @param matrix, 2d array from which to extract; rows, rows to extract; cols, columns to extract
@@ -914,7 +951,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		}
 			
 		
-		multiNorms = new HashMap<Integer, MultiNormCholesky>(); 
+		if (localEpsilon)  ;//multiNormsLocal = new HashMap<Column, MultiNormCholesky>();
+		else multiNorms = new HashMap<Integer, MultiNormCholesky>(); 
 		
 		return covar;
 	}	
@@ -1030,7 +1068,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		oldCovar = fullCovar;
 		oldAlign = curAlign;
 		oldLogLi = curLogLike;
-		oldMultiNorms = multiNorms;
+		if (localEpsilon) ;//oldMultiNormsLocal = multiNormsLocal;
+		else oldMultiNorms = multiNorms;
 	}
 	@Override
 	public double logLikeTreeChange(Tree tree, Vertex nephew) {		
@@ -1049,7 +1088,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		fullCovar = oldCovar;
 		curAlign = oldAlign;
 		curLogLike = oldLogLi;
-		multiNorms = oldMultiNorms;
+		if (localEpsilon) ;//multiNormsLocal = oldMultiNormsLocal;
+		else multiNorms = oldMultiNorms;
 	}
 	
 	public void beforeContinuousParamChange(Tree tree) {
