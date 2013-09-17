@@ -6199,8 +6199,11 @@ public class Vertex {
     }
     
     public void setMaxDistBelow(){
-    	maxDistBelow = left.getMaxDist() + right.getMaxDist() - 2.0 * distToRoot;
     	if(left != null){
+    		System.out.println("Index: " + index);
+    		System.out.println("Left: " + left.getMaxDist() + "   Right: " + right.getMaxDist());
+    		System.out.println("To root: " + distToRoot);
+    		maxDistBelow = left.getMaxDist() + right.getMaxDist() - 2.0 * distToRoot;
     		left.setMaxDistBelow();
     		right.setMaxDistBelow();
     	}
@@ -6211,7 +6214,7 @@ public class Vertex {
     	collectIndicesBelow(this, indices);
     	double max = 0;
     	for(int i = 0; i < indices.size(); i++)
-    		max = Math.max(max, indices.get(i));
+    		max = Math.max(max, owner.vertex[indices.get(i)].distToRoot);
     	return max;
     }
 }

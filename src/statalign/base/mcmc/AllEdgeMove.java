@@ -67,6 +67,13 @@ public class AllEdgeMove extends ContinuousPositiveParameterMove {
 //		tree.root.edgeChangeUpdateRecursively();
 		tree.root.calcFelsenRecursively();
 		tree.root.calcIndelLogLikeRecursively();
+		
+		// ---------------------------- test tree diameter ----------------------------------------
+		System.out.println("Tree diameter: " + tree.getDiameter());
+		System.out.println(tree.printedTree());
+		System.out.println();
+		System.out.println();
+		
 		return logProposalRatio;
 	}
 	@Override

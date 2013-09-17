@@ -642,8 +642,14 @@ COLUMN:    	while (c != v.last) {
     	// set max distance between two leaves below each vertex
     	root.setMaxDistBelow();
     	double max = 0;
-    	for(int i = 0; i < vertex.length; i++)
+    	System.out.println("Dist to root");
+    	for(int i = 0; i < vertex.length; i++){
+    		System.out.println(i + ": " + vertex[i].distToRoot);
+    	}
+    	for(int i = 0; i < vertex.length; i++){
+    		System.out.println(i + ": " + vertex[i].maxDistBelow);
     		max = Math.max(max, vertex[i].maxDistBelow);
+    	}
     	return max;
     }
 }
