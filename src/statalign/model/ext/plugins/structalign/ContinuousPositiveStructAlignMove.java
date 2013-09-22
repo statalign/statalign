@@ -16,7 +16,8 @@ public class ContinuousPositiveStructAlignMove extends ContinuousPositiveParamet
 
 	StructAlign structAlign;
 	double[][] oldcovar;
-	private HashMap<Integer, MultiNormCholesky> oldMultiNorms; // TODO handle this inside StructAlign	
+	//private HashMap<Integer, MultiNormCholesky> oldMultiNorms; // TODO handle this inside StructAlign
+	//private HashMap<Integer, MultiNormCholesky> oldMultiNormsLocal; // TODO handle this inside StructAlign	
 	boolean oldFixedToParent;
 	
 	List<HierarchicalContinuousPositiveStructAlignMove> parentPriors = null;
@@ -49,7 +50,8 @@ public class ContinuousPositiveStructAlignMove extends ContinuousPositiveParamet
 
 		oldcovar = structAlign.fullCovar; // TODO handle in more abstract fashion
 		oldll = structAlign.curLogLike; // TODO handle in more abstract fashion
-		oldMultiNorms = structAlign.multiNorms; // TODO handle in more abstract fashion
+		
+		//oldMultiNorms = structAlign.multiNorms; // TODO handle in more abstract fashion
 		structAlign.beforeContinuousParamChange(tree);
 		oldFixedToParent = fixedToParent;
 	}
@@ -147,15 +149,20 @@ public class ContinuousPositiveStructAlignMove extends ContinuousPositiveParamet
 	}
 	public void restoreState(Object externalState) {
 		super.restoreState(externalState);
-		if (!(fixedToParent && oldFixedToParent)) {
+		if (!structAlign.globalSigmaSpike || !(fixedToParent && oldFixedToParent)) {
 			structAlign.fullCovar = oldcovar; // TODO handle in more abstract fashion
 			structAlign.curLogLike = oldll; // TODO handle in more abstract fashion
-			structAlign.multiNorms = oldMultiNorms; // TODO handle in more abstract fashion
+			//structAlign.multiNorms = oldMultiNorms; // TODO handle in more abstract fashion
 			
-			structAlign.afterContinuousParamChange(tree, lastMoveAccepted);
+			//System.out.println(lastMoveAccepted);
+			structAlign.afterContinuousParamChange(tree, false);
+			// Can't refer to lastMoveAccepted here, because the restoreState
+			// function may be called from an McmcCombinationMove.
 			
-			fixedToParent = oldFixedToParent;
-			moveParams.setFixedToParent(fixedToParent);
+			if (structAlign.globalSigmaSpike) {
+				fixedToParent = oldFixedToParent;
+				moveParams.setFixedToParent(fixedToParent);
+			}
 		}
 	}
 	public void setParam(double x) {
