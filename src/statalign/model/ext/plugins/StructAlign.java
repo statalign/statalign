@@ -283,7 +283,6 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			if (argString[1].endsWith("}")) {				
 				String [] args = argString[1].substring(0,argString[1].length()-1).split("_",2);
 				if (args.length == 2) {
-					addToFilenameExtension(paramName+"_spike_"+args[0]+"_"+args[1]);
 					System.out.println("Using Gamma("+Double.parseDouble(args[0])+","+Double.parseDouble(args[1])+
 							") prior for "+paramName+".");
 					globalSigmaSpikeParams = new double[] {Double.parseDouble(args[0]),Double.parseDouble(args[1])};
