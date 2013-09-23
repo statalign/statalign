@@ -278,7 +278,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		else if (paramName.equals("sigmaSpike")) {
 			globalSigmaSpike = true;
 			globalSigma = false;
-			addToFilenameExtension("spike_");
+			addToFilenameExtension("spike");
 			String[] argString = paramValue.split("\\{",2);
 			if (argString[1].endsWith("}")) {				
 				String [] args = argString[1].substring(0,argString[1].length()-1).split("_",2);
@@ -339,7 +339,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		else if (paramName.equals("sigmaSpike")) {
 			globalSigmaSpike = true;
 			globalSigma = false;
-			addToFilenameExtension("spike_");
+			addToFilenameExtension("spike");
 			addToFilenameExtension(globalSigmaSpikeParams[0]+"_"+globalSigmaSpikeParams[1]);
 			System.out.println("Activating spike prior for local sigmas.");
 		}
