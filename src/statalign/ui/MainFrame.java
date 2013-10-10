@@ -68,7 +68,7 @@ public class MainFrame extends JFrame implements ActionListener {
 	  public static final String WELCOME_MSG = 
 		          "<html><div style='padding: 20px 20px 20px 20px; font-family: Arial; font-size: 12px'>" +
 		        "<h2>Welcome to StatAlign!</h2><br>" +
-		        "<p>To get started, please <a href='http://add'>add sequences</a> to analyse." +
+		        "<p>To get started, please add sequences to analyse." +
 		        "<p>If you need any help along the way, please refer to the <a href='http://doc'>manual</a> that is also available from the <b>Help menu.</b>" +
 		        "<br><br>" +
 		        "<p>Happy StatAligning!" +
