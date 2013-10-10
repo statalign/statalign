@@ -88,7 +88,7 @@ public class StatAlign{
 					} catch(Exception e) {}
 				}
 			} catch(Exception e) {
-				new ErrorMessage(mf,e,true);
+				ErrorMessage.showPane(mf, e, true);
 			}
 		}
 	}

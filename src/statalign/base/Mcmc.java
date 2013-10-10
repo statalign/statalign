@@ -214,7 +214,6 @@ public class Mcmc extends Stoppable {
 		this.tree.heat = 1.0d;
 		randomisationPeriod = mcmcpars.randomisationPeriod;
 	}
-
 	public Mcmc(Tree tree, MCMCPars pars, PostprocessManager ppm, ModelExtManager modelExtMan,
 			int noOfProcesses, int rank, double heat) {
 		this(tree, pars, ppm, modelExtMan);
@@ -851,7 +850,7 @@ public class Mcmc extends Stoppable {
 			}
 		} catch (IOException e) {
 			if (postprocMan.mainManager.frame != null) {
-				new ErrorMessage(null, e.getLocalizedMessage(), true);
+				ErrorMessage.showPane(postprocMan.mainManager.frame, e, true);
 			} else {
 				e.printStackTrace(System.out);
 			}
