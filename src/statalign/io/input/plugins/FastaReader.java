@@ -105,7 +105,6 @@ public class FastaReader extends DataReader {
 				throw new IllegalFormatException("FastaReader: data without sequence name");
 			}
 		}
-<<<<<<< HEAD
 		if(!inSeq)
 			throw new IllegalFormatException("FastaReader: empty file");
 		
@@ -114,17 +113,6 @@ public class FastaReader extends DataReader {
 			if(seen[ch])
 				alpha.append((char)(ch+'A'));
 		result.alphabet = alpha.toString();
-=======
-
-
-//		for(int i = 0; i < result.sequences.size(); i++){
-//			System.out.println(">"+result.seqNames.get(i)+"\n"+result.sequences.get(i));
-//		}
-		if(errors > 0)
-			System.out.println("Errors: "+errors);
-//		else
-//			System.out.println("FastaReader: successfully read "+result.sequences.size()+" sequences.");
->>>>>>> 4f5754a4b72b1826e346cf125e8a624b1992b417
 		
 		return result;
 	}

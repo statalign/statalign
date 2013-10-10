@@ -1,6 +1,8 @@
 package statalign.postprocess.plugins;
 
 import java.awt.BorderLayout;
+import java.awt.Font;
+import java.awt.SystemColor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -11,8 +13,10 @@ import javax.swing.ButtonGroup;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
 import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
 
@@ -63,7 +67,7 @@ public class Structure extends statalign.postprocess.Postprocess {
 
 	@Override
 	public String getTabName() {
-		return "Consensus Structure";
+		return "PPFold Consensus Structure";
 	}
 
 	@Override
@@ -143,7 +147,7 @@ public class Structure extends statalign.postprocess.Postprocess {
 		
 		JToggleButton normalButton = new JToggleButton(new ImageIcon(ClassLoader.getSystemResource("icons/normalRNA.png")));
 		//JToggleButton normalButton = new JToggleButton(new ImageIcon(ClassLoader.getSystemResource("icons/phylogram.png")));
-		String text = "Normal mode";
+		String text = "Normal mode: Color by nucleotide base.";
 		normalButton.setToolTipText(text);
     	normalButton.setActionCommand(text);
     	normalButton.setEnabled(false);
@@ -152,14 +156,14 @@ public class Structure extends statalign.postprocess.Postprocess {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				RNA.probMode = false;
-				//probMode = false;
+				gui.probMode = false;
 				gui.repaint();
 			}
     		
     	});
 		
     	JToggleButton probButton = new JToggleButton(new ImageIcon(ClassLoader.getSystemResource("icons/probRNA.png")));
-    	String probText = "Probability mode";
+    	String probText = "Probability mode: Color gradient depends on probability of base-pairing.";
     	probButton.setToolTipText(probText);
     	probButton.setActionCommand(probText);
     	probButton.addActionListener(new ActionListener() {
@@ -167,7 +171,7 @@ public class Structure extends statalign.postprocess.Postprocess {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				RNA.probMode = true;
-				//probMode = true;
+				gui.probMode = true;
 				gui.repaint();
 			}
     		
@@ -176,8 +180,17 @@ public class Structure extends statalign.postprocess.Postprocess {
     	group.add(normalButton);
     	group.add(probButton);
     	
+    	JPanel panel = new JPanel(new BorderLayout(1,3));
+    	
     	toolbar.add(normalButton);
     	toolbar.add(probButton);
+    	
+    	
+    	JLabel ta = new JLabel("     " + "PPFold Consensus Structure");
+    	ta.setFont(new Font("Monospaced",Font.CENTER_BASELINE,14));
+    	ta.setOpaque(false);
+    	
+    	toolbar.add(ta);
     	
     	probButton.setSelected(true);
 	}

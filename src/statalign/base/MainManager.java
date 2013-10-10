@@ -19,6 +19,7 @@ import statalign.postprocess.Postprocess;
 import statalign.postprocess.PostprocessManager;
 import statalign.postprocess.gui.InputGUI;
 import statalign.ui.MainFrame;
+import statalign.ui.SavedFilesPopup;
 
 /**
  * 
@@ -250,8 +251,10 @@ public class MainManager {
 				@Override
 				public void run() {
 					frame.finished();
+					SavedFilesPopup.showPane(frame);
 				}
 			});
+			
 		}
 	}
 	
