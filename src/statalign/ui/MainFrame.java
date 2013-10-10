@@ -4,6 +4,7 @@ import java.awt.BorderLayout;
 import java.awt.Container;
 import java.awt.Cursor;
 import java.awt.Dimension;
+import java.awt.Desktop;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -61,9 +62,19 @@ public class MainFrame extends JFrame implements ActionListener {
 
     // Constants
 
-    public static final String IDLE_STATUS_MESSAGE = " Phylogeny Cafe :: Statistical Alignment";
-    private static final long serialVersionUID = 1L;
+	public static final String IDLE_STATUS_MESSAGE = " StatAlign :: Ready";
+	private static final long serialVersionUID = 1L;
 
+	  public static final String WELCOME_MSG = 
+		          "<html><div style='padding: 20px 20px 20px 20px; font-family: Arial; font-size: 12px'>" +
+		        "<h2>Welcome to StatAlign!</h2><br>" +
+		        "<p>To get started, please <a href='http://add'>add sequences</a> to analyse." +
+		        "<p>If you need any help along the way, please refer to the <a href='http://doc'>manual</a> that is also available from the <b>Help menu.</b>" +
+		        "<br><br>" +
+		        "<p>Happy StatAligning!" +
+		  //      "<div style='padding: 20px 100px 0px 0px' align=right>" +
+		  //      "<p><i>The StatAlign team</i>" +
+		        "</div></html>";
     // Variables
 
     private JTabbedPane tab;
@@ -156,13 +167,17 @@ public class MainFrame extends JFrame implements ActionListener {
         JMenuItem item;
 
         String openText = "Add sequence(s)...";
+        ImageIcon icon = new ImageIcon(ClassLoader.getSystemResource("icons/open.png"));
+        
         openItem = createMenuItem(openText, true);
         openItem.setAccelerator(KeyStroke.getKeyStroke("control O"));
         openItem.setMnemonic(KeyEvent.VK_A);
+        openItem.setIcon(icon);
         menu.add(openItem);
 
         openButton = createButton(new ImageIcon(ClassLoader.
         		getSystemResource("icons/open.png")), "Add sequence(s)...");
+        openButton = createButton(icon, "Add sequence(s)...");
         toolBar.add(openButton);
 
         toolBar.addSeparator();
@@ -212,52 +227,57 @@ public class MainFrame extends JFrame implements ActionListener {
 //		menubar.add(menu);
 
 
-        menu = new JMenu("MCMC");
+        menu = new JMenu("Analysis");
         menu.setMnemonic(KeyEvent.VK_M);
 
-        item = createMenuItem("Settings", true);
-        item.setAccelerator(KeyStroke.getKeyStroke("control M"));
-        item.setMnemonic(KeyEvent.VK_S);
-        menu.add(item);
+//        item = createMenuItem("Settings", true);
+//        item.setAccelerator(KeyStroke.getKeyStroke("control M"));
+//        item.setMnemonic(KeyEvent.VK_S);
+//        menu.add(item);
 
 
         String runText = "Run";
+        icon = new ImageIcon(ClassLoader.getSystemResource("icons/play.png"));
         runItem = createMenuItem(runText, false);
         runItem.setAccelerator(KeyStroke.getKeyStroke("control ENTER"));
+        runItem.setIcon(icon);
         menu.add(runItem);
-
-        runButton = createButton(new ImageIcon(ClassLoader.
-        		getSystemResource("icons/play.png")), runText);
+        
+        runButton = createButton(icon, runText);
+        menu.addSeparator();
         runButton.setEnabled(false);
         toolBar.add(runButton);
 
         String pauseText = "Pause";
+        icon = new ImageIcon(ClassLoader.getSystemResource("icons/pause.png"));
         pauseItem = createMenuItem("Pause", false);
+        pauseItem.setIcon(icon);
         menu.add(pauseItem);
 
-        pauseButton = createButton(new ImageIcon(ClassLoader.
-        		getSystemResource("icons/pause.png")), pauseText);
+        pauseButton = createButton(icon, pauseText);
         pauseButton.setEnabled(false);
         toolBar.add(pauseButton);
 
 
         String resumeText = "Resume";
+        icon = new ImageIcon(ClassLoader.getSystemResource("icons/resume.png"));
         resumeItem = createMenuItem(resumeText, false);
+        resumeItem.setIcon(icon);
         menu.add(resumeItem);
 
-        resumeButton = createButton(new ImageIcon(ClassLoader.
-        		getSystemResource("icons/resume.png")), resumeText);
+        resumeButton = createButton(icon, resumeText);
         resumeButton.setEnabled(false);
         toolBar.add(resumeButton);
 
 
         String stopText = "Stop";
+        icon = new ImageIcon(ClassLoader.getSystemResource("icons/stop.png"));
         stopItem = createMenuItem("Stop", false);
+        stopItem.setIcon(icon);
         menu.add(stopItem);
         menubar.add(menu);
 
-        stopButton = createButton(new ImageIcon(ClassLoader.
-        		getSystemResource("icons/stop.png")), stopText);
+        stopButton = createButton(icon, stopText);
         stopButton.setEnabled(false);
         toolBar.add(stopButton);
         
@@ -640,8 +660,7 @@ public class MainFrame extends JFrame implements ActionListener {
                     ClassLoader.getSystemResource("doc/plugin_description/index.html"), true);
 
         } else if (ev.getActionCommand() == "Help for users") {
-            new HelpWindow(this, "Help for users",
-                    ClassLoader.getSystemResource("doc/help/index.html"), true);
+        	 helpUsers();
         } else {        // new substitution model selected
             for (Class<? extends SubstitutionModel> cl : substModels) {
                 try {
@@ -665,6 +684,15 @@ public class MainFrame extends JFrame implements ActionListener {
         }
     }
 
+    public void helpUsers() {
+    	try {	
+    		File dir = new File(System.getProperty("user.dir")+"/doc/help/index.html");
+    		Desktop.getDesktop().browse(dir.toURI());
+    	} catch (Exception e) {
+    		new HelpWindow(this, "Help for users",
+    				ClassLoader.getSystemResource("doc/help/index.html"), true);    
+    	    }
+    }	
     private String tryModels() {
         String message = "";
         try {
@@ -731,6 +759,7 @@ public class MainFrame extends JFrame implements ActionListener {
         stopItem.setEnabled(false);
         stopButton.setEnabled(false);
         
+        statusText.setText(MainFrame.IDLE_STATUS_MESSAGE);
         //SavedFilesPopup.showPane(this);
 		
     }
