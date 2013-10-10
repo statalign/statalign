@@ -123,6 +123,7 @@ public class McmcSettingsDlg extends JDialog implements ActionListener, KeyListe
 		box.add(Box.createHorizontalStrut(100));
 		box.add(butt=new JButton("Cancel"));
 		butt.addActionListener(this);
+		bigBox.add(Box.createVerticalStrut(20));
 		bigBox.add(box);
 		cp.add(bigBox, SwingConstants.CENTER);
 		cp.add(Box.createHorizontalStrut(20), BorderLayout.LINE_START);
