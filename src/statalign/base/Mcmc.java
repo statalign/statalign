@@ -746,9 +746,6 @@ public class Mcmc extends Stoppable {
 				report(i, period);
 			}
 		} catch (StoppedException ex) {
-			postprocMan.afterLastSample();
-			modelExtMan.afterSampling();
-			printMcmcInfo();
 			errorCode = 1;
 			// stopped: report and save state
 		}
