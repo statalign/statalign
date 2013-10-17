@@ -135,7 +135,7 @@ public class MainManager {
 					String name = fullPath + "." + filenameExtension + p.getFileExtension();
 					System.out.println("Output file for " + p.getTabName()
 							+ ": " + name);
-					p.outputFile = new FileWriter(name);
+					p.outputFile = new FileWriter(name);					
 				}
 			}
 

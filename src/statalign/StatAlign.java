@@ -34,7 +34,7 @@ public class StatAlign{
 	
 	public static final boolean allowVersionCheck = false;
 	
-	public static final String webPageURL = "http://statalign.github.com/";
+	public static final String webPageURL = "http://statalign.github.io/";
 
 	/**
 	 * Only method of the class.
