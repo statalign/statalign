@@ -39,7 +39,7 @@ public class ConsensusTreeVisualizer extends TreeVisualizer {
 			super.init(new TreeView[]{
     				new HorizontalCladogramTreeView(),
     				new HorizontalPhylogramTreeView()
-    		});
+    		});	
 		}
     }
 
@@ -98,7 +98,9 @@ public class ConsensusTreeVisualizer extends TreeVisualizer {
         }
         if (postprocessWrite) {
             try {
-				outputFile.write(outputRootString + "\n");
+            	if(consensusTrees != null && consensusTrees.size() > 0) {
+            		outputFile.write(consensusTrees.get(consensusTrees.size()-1) + "\n");
+            	}
             } catch (IOException e) {
                 e.printStackTrace();
             }

@@ -183,13 +183,13 @@ public class MainManager {
 			// remove gaps and whitespace
 			RawSequences seqs = inputData.seqs;
 			inputData.title = new File(fullPath).getName();
-			String[] nongapped = new String[seqs.sequences.size()];
+			String[] nongapped = new String[seqs.size()];
 			StringBuilder builder = new StringBuilder();
 			int i, j;
 			char ch;
 			for(i = 0; i < nongapped.length; i++) {
 				builder.setLength(0);
-				String seq = seqs.sequences.get(i);
+				String seq = seqs.getSequence(i);
 				for(j = 0; j < seq.length(); j++) {
 					ch = seq.charAt(j);
 					if(Character.isWhitespace(ch) || ch == '-')
@@ -233,24 +233,26 @@ public class MainManager {
 
 			System.out.println(mcmc.getInfoString() + " Heat: " + mcmc.tree.heat);
 
-			finished();
+			finished(0, null);
 			System.out.println("Ready.");
 
 		} catch (StoppedException stex) {
 			stex.printStackTrace(System.err);
+			 finished(1, null);
 		}
 	}
 
 	/**
 	 * Called when the MCMC thread terminates, signals end of the process back
 	 * to MainFrame.
+	 * @param errorCode -1: error 0: completed 1: stopped after sampling 2: stopped before sampling
 	 */
-	public void finished() {
+	public void finished(final int errorCode, final Exception ex) {
 		if (frame != null) {
 			SwingUtilities.invokeLater(new Runnable() {
 				@Override
 				public void run() {
-					frame.finished();
+					frame.finished(errorCode, ex);
 					SavedFilesPopup.showPane(frame);
 				}
 			});

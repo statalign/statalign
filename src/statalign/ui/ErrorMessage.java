@@ -18,6 +18,9 @@ public class ErrorMessage extends JDialog implements ActionListener {
     /**
 	 * 
 	 */
+	public static void showPane(JFrame owner, String message, String title, boolean error) {
+	     JOptionPane.showMessageDialog(owner, message, title == null ? (error ? "Error" : "Message") : title, error ? JOptionPane.ERROR_MESSAGE : JOptionPane.INFORMATION_MESSAGE);
+	}
 	private static final long serialVersionUID = 1L;
 	Container cp = getContentPane();
     private JButton btOK;

@@ -115,7 +115,7 @@ public class MpdAlignment extends statalign.postprocess.Postprocess {
 
 		this.input = input;
 
-		sizeOfAlignments = input.seqs.sequences.size();
+		sizeOfAlignments = input.seqs.size();
 		alignment = new String[sizeOfAlignments];
 		sequenceNames = new String[sizeOfAlignments];
 		if(show) {

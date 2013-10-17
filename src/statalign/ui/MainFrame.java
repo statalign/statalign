@@ -439,6 +439,8 @@ public class MainFrame extends JFrame implements ActionListener {
         statusText = new JLabel(IDLE_STATUS_MESSAGE);
         statusBar.add(statusText, BorderLayout.CENTER);
         cp.add(statusBar, BorderLayout.SOUTH);
+        
+        manager.inputgui.grabFocus();
 
 //		setSize(300, 200);
 //		setLocationByPlatform(true);
@@ -505,10 +507,15 @@ public class MainFrame extends JFrame implements ActionListener {
 	                		runItem.setEnabled(true);
 	                		runButton.setEnabled(true);
 	                		
-	                		if(!manager.inputData.seqs.isRNA()) {
-	                			rnaButton.setEnabled(false);
-	                		} else { 
+	                		if(manager.inputData.seqs.isRNA()) {
 	                			rnaButton.setEnabled(true);
+	                				   // only pop up if it looks very much like RNA (and not DNA)
+	                				   String text = "<html><div style='padding: 0 10px 10px 10px'>StatAlign has detected that these are RNA sequences.<br>" +
+	                				   "To enable RNA secondary structure prediction,<br>" +
+	                				   "please toggle the RNA icon on the toolbar.</div></html>";
+	                				   ErrorMessage.showPane(this, text, "RNA sequences found", false);	                			              			                   
+	                		} else { 
+	                			rnaButton.setEnabled(false);
 	                		}
 	                	}
 	                } else {
@@ -516,6 +523,7 @@ public class MainFrame extends JFrame implements ActionListener {
 	                	manager.inputData.auxData.add(data);
 	                	manager.inputgui.updateSequences();
 	                }
+	                	                
 //	                FileFormatReader reader = new FastaReader();
 //	                try {
 //	                	manager.inputData.seqs.alphabet = "";
@@ -560,7 +568,7 @@ public class MainFrame extends JFrame implements ActionListener {
         } else if (ev.getActionCommand() == "Settings") {
             mcmcSettingsDlg.display(this);
         } else if (ev.getActionCommand() == "Run") {
-        	if (manager.inputData.seqs.sequences.size() < 2) {
+        	if (manager.inputData.seqs.size() < 2) {
                 JOptionPane.showMessageDialog(this, "At least two sequences are needed!!!",
                         "Not enough sequences", JOptionPane.ERROR_MESSAGE);
 //    			manager.finished();
@@ -593,13 +601,17 @@ public class MainFrame extends JFrame implements ActionListener {
             final String savTit = getTitle();
             setTitle("Stopping...");
             manager.thread.stopSoft();
-            finished();
+            //finished();
             setTitle(savTit);
             setCursor(Cursor.getDefaultCursor());
         } else if (ev.getActionCommand() == "RNA mode") {
         	if(rnaButton.isSelected()) {
            		dlg = new RNASettingsDlg (this);
-        		dlg.display(this);
+           	  if(!dlg.display(this)) {
+           		rnaButton.setSelected(false);
+           		manager.inputgui.grabFocus();  // transfer focus
+           		return;
+           	  }
         		
         		//manager.inputgui = input.inputgui;
 				//manager.inputgui.updateSequences();
@@ -649,7 +661,7 @@ public class MainFrame extends JFrame implements ActionListener {
         		
         		
         	}
-    
+        	 manager.inputgui.grabFocus();  
         	
         } else if (ev.getActionCommand() == "About...") {
             new HelpWindow(this, "About", getClass().getClassLoader().getResource("doc/about/index.html"), false);
@@ -743,13 +755,17 @@ public class MainFrame extends JFrame implements ActionListener {
         }
     }
 
-    /** Enables several menu items that were kept disabled during the run. */
-    public void finished() {
+    /**
+     * Enables several menu items that were kept disabled during the run.
+     * @param errorCode -1: error 0: completed 1: stopped after sampling 2: stopped before sampling
+     * @param ex the exception that was thrown when <tt>errorCode = -1</tt>
+     */
+    public void finished(int errorCode, Exception ex) {
         openItem.setEnabled(true);
         openButton.setEnabled(true);
         runItem.setEnabled(true);
         runButton.setEnabled(true);
-        rnaButton.setEnabled(true);
+        rnaButton.setEnabled(manager.inputData.seqs.isRNA());
         
         //rnaButton.setSelected(false);
         pauseItem.setEnabled(false);
@@ -761,9 +777,11 @@ public class MainFrame extends JFrame implements ActionListener {
         
         statusText.setText(MainFrame.IDLE_STATUS_MESSAGE);
         //SavedFilesPopup.showPane(this);
+        
+        if(errorCode < 0) ErrorMessage.showPane(this, ex, true);        	
 		
     }
-    
+     
     public void deactivateRNA() {
     	
     	int count = 0;

@@ -485,7 +485,7 @@ public class Mcmc extends Stoppable {
 	 * <tt>postprocMan</tt> to trigger data transfer to postprocessing modules 
 	 * when necessary
 	 */
-	public void doMCMC() {
+	public int doMCMC() {
 		if (isParallel) {
 			String str = String.format(
 					"Starting MCMC chain no. %d/%d (heat: %.2f)\n\n", 
@@ -524,6 +524,8 @@ public class Mcmc extends Stoppable {
 		
 		ArrayList<Double> logLikeList = new ArrayList<Double>();
 
+		int errorCode = 0;
+		
 		try {
 			stoppable();
 			//only to use if AutomateParameters.shouldAutomate() == true
@@ -747,8 +749,8 @@ public class Mcmc extends Stoppable {
 			postprocMan.afterLastSample();
 			modelExtMan.afterSampling();
 			printMcmcInfo();
+			errorCode = 1;
 			// stopped: report and save state
-			// should we still call afterLastSample?
 		}
 
 		//if(Utils.DEBUG) {
@@ -772,7 +774,7 @@ public class Mcmc extends Stoppable {
 		if (frame != null) {
 			frame.statusText.setText(MainFrame.IDLE_STATUS_MESSAGE);
 		}
-
+		return errorCode;
 	}
 
 	private void printMcmcInfo() {

@@ -104,8 +104,8 @@ public abstract class NucleotideModel extends SubstitutionModel{
 		String acceptableCharacters = "acgturyswmkbdhvn";
 
 		int[] count = new int[5];	// nucleotide counts
-		for(int i = 0; i < r.sequences.size(); i++){
-			String sequence = r.sequences.get(i);
+		for(int i = 0; i < r.size(); i++){
+			String sequence = r.getSequence(i);
 			for(int j = 0; j < sequence.length(); j++){
 				char ch = sequence.charAt(j);
 				if(ch != '-' && ch != ' ') {

@@ -54,14 +54,15 @@ public class MainThread extends StoppableThread {
 			System.out.println("\nPreparing initial tree and alignment...\n");
 
 			// remove gaps and whitespace
-			owner.inputData.title = new File(owner.fullPath).getName();
-			String[] nongapped = new String[seqs.sequences.size()];
+			//owner.inputData.title = new File(owner.fullPath).getName();
+			owner.inputData.setBaseFile(new File(owner.fullPath));			
+			String[] nongapped = new String[seqs.size()];
 			StringBuilder builder = new StringBuilder();
 			int i, j;
 			char ch;
 			for(i = 0; i < nongapped.length; i++) {
 				builder.setLength(0);
-				String seq = seqs.sequences.get(i);
+				String seq = seqs.getSequence(i);
 				for(j = 0; j < seq.length(); j++) {
 					ch = seq.charAt(j);
 					if(Character.isWhitespace(ch) || ch == '-')
@@ -70,7 +71,7 @@ public class MainThread extends StoppableThread {
 				}
 				nongapped[i] = builder.toString();
 			}
-			String[] names = seqs.seqNames.toArray(new String[seqs.seqNames.size()]);
+			String[] names = seqs.getSeqnames().toArray(new String[seqs.size()]);
 
 			TreeAlgo treeAlgo = new TreeAlgo();
 			Tree tree;
@@ -79,7 +80,7 @@ public class MainThread extends StoppableThread {
 				treeAlgo.addAlignSeqsToTree(tree, nongapped, names,
 						owner.inputData.model, new File(owner.fullPath).getName());
 			} else {
-				tree = treeAlgo.buildNJTree(nongapped, seqs.seqNames.toArray(new String[seqs.seqNames.size()]), 	
+				tree = treeAlgo.buildNJTree(nongapped, seqs.getSeqnames().toArray(new String[seqs.size()]), 	
 						owner.inputData.model, new File(owner.fullPath).getName());
 			}
 			System.out.println("Initial tree: "+tree.printedTree()+"\n");
@@ -89,14 +90,14 @@ public class MainThread extends StoppableThread {
 //					new File(owner.fullPath).getName());
 			
 			Mcmc mcmc = new Mcmc(tree, owner.inputData.pars, owner.postProcMan, owner.modelExtMan);
-			mcmc.doMCMC();
-			
-			System.out.println("Ready.");
+			int errorCode = mcmc.doMCMC();
+			owner.finished(errorCode, null);
+			System.out.println(errorCode == 0 ? "Ready." : "Stopped.");
 		} catch(StoppedException e) {
-			owner.finished();
 			if (owner.frame != null) {
 				owner.frame.statusText.setText(MainFrame.IDLE_STATUS_MESSAGE);
 			}
+			owner.finished(2, null);
 			System.out.println("Stopped.");
 		} catch (IllegalArgumentException e) {
 			e.printStackTrace();
@@ -106,7 +107,6 @@ public class MainThread extends StoppableThread {
 			if(msg != null)
 				System.err.println("Plugin error: "+msg);
 		} catch(Exception e) {
-			owner.finished();
 			e.printStackTrace();
 			printStateInfo();
 
@@ -115,8 +115,8 @@ public class MainThread extends StoppableThread {
 				owner.frame.statusText.setText(MainFrame.IDLE_STATUS_MESSAGE);
 				//ErrorMessage.showPane(owner.frame,e.getLocalizedMessage(),true);
 			}			
+			owner.finished(-1, e);
 		}
-		owner.finished();
 	}
 	
 	private void printStateInfo() {

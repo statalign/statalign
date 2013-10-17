@@ -142,7 +142,7 @@ public class PPFold extends statalign.postprocess.Postprocess {
 	RNAFoldingTools rnaTools = new RNAFoldingTools();
 	ArrayList<Double> distanceList;
 
-	public static String outDir = "output/";
+	public String outDir;
 	
 	String rnaAlifoldParameters = "";
 	boolean samplingAndAveragingPPfold = false;
@@ -218,17 +218,17 @@ public class PPFold extends statalign.postprocess.Postprocess {
 	public void selectReferenceSequence(InputData input)
 	{
 		int maxLength = 0;
-		refSeq = input.seqs.sequences.get(0).replaceAll("-", "");
-		refSeqName = input.seqs.seqNames.get(0);
-		refSeqGapped = input.seqs.sequences.get(0);
+		refSeq = input.seqs.getSequence(0).replaceAll("-", "");
+		refSeqName = input.seqs.getSeqName(0);
+		refSeqGapped = input.seqs.getSequence(0);
 		maxLength = refSeq.length();
-		for (int i = 0; i < input.seqs.sequences.size(); i++) {
-			String seq = input.seqs.sequences.get(i).replaceAll("-", "");
+		for (int i = 0; i < input.seqs.size(); i++) {
+			String seq = input.seqs.getSequence(i).replaceAll("-", "");
 			if (seq.length() > maxLength) {
 				maxLength = seq.length();
 				refSeq = seq;
-				refSeqName = input.seqs.seqNames.get(i);
-				refSeqGapped = input.seqs.sequences.get(i);
+				refSeqName = input.seqs.getSeqName(i);
+				refSeqGapped = input.seqs.getSequence(i);
 				seqNo = i;
 			}
 		}
@@ -237,6 +237,7 @@ public class PPFold extends statalign.postprocess.Postprocess {
 
 	@Override
 	public void beforeFirstSample(InputData input) {
+		outDir = input.outputPath;
 		title = input.title;
 		if(input.pars.seed != 1)
 		{
@@ -274,20 +275,14 @@ public class PPFold extends statalign.postprocess.Postprocess {
 			
 			if(pluginParameters.getParameter("experimental") != null)
 			{
-				new File(outDir).mkdirs();
+//				new File(outDir).mkdirs();
 				samplingAndAveragingPPfold = true;
 				samplingAndAveragingRNAalifold = true; // TODO SHOULD CHANGE BACK TO TRUE
 				fuzzyFolding = true;
 				experimental = true;
 			}
 			
-			if(RNAalifold.checkRNAalifold())
-			{
-				//System.out.println(split[0]);
-				//System.out.println(split[1]);
-			}
-			else
-			{
+			if(samplingAndAveragingRNAalifold && !RNAalifold.checkRNAalifold()) {
 				samplingAndAveragingRNAalifold = false;
 				System.err.println("Disabling RNAalifold. Could not launch the executable, check that you have specified it correctly and have the latest version.");						
 			}					
@@ -352,12 +347,12 @@ public class PPFold extends statalign.postprocess.Postprocess {
 		dataset = new Dataset();
 			
 
-		String [] [] inputAlignment = new String[input.seqs.sequences.size()][2];
+		String [] [] inputAlignment = new String[input.seqs.size()][2];
 
 		for(int k = 0 ; k < inputAlignment.length ; k++)
 		{
-			inputAlignment[k][0] = input.seqs.seqNames.get(k);
-			inputAlignment[k][1] = input.seqs.sequences.get(k);
+			inputAlignment[k][0] = input.seqs.getSeqName(k);
+			inputAlignment[k][1] = input.seqs.getSequence(k);
 		}
 		Arrays.sort(inputAlignment, compStringArr);
 
@@ -368,22 +363,22 @@ public class PPFold extends statalign.postprocess.Postprocess {
 			dataset.inputAlignment.sequences.add(inputAlignment[i][1]);
 		}		
 		
-		// write sample file
-		try
-		{
-			boolean append = false;
-			BufferedWriter buffer = new BufferedWriter(new FileWriter(new File(outDir+"/"+title+".samples"), append));
-			AlignmentData referenceAlignment = new AlignmentData();
-			referenceAlignment.sequences = dataset.inputAlignment.sequences;
-			referenceAlignment.names = dataset.inputAlignment.names;
-			buffer.write("%reference\n");
-			buffer.write(referenceAlignment.toString());
-			buffer.close();
-		}
-		catch(IOException ex)
-		{
-			ex.printStackTrace();
-		}
+//		// write sample file
+//		try
+//		{
+//			boolean append = false;
+//			BufferedWriter buffer = new BufferedWriter(new FileWriter(new File(outDir, title+".samples"), append));
+//			AlignmentData referenceAlignment = new AlignmentData();
+//			referenceAlignment.sequences = dataset.inputAlignment.sequences;
+//			referenceAlignment.names = dataset.inputAlignment.names;
+//			buffer.write("%reference\n");
+//			buffer.write(referenceAlignment.toString());
+//			buffer.close();
+//		}
+//		catch(IOException ex)
+//		{
+//			ex.printStackTrace();
+//		}
 
 
 		if(experimental)
@@ -391,13 +386,13 @@ public class PPFold extends statalign.postprocess.Postprocess {
 						// perform calculation on reference sample
 			try {
 				
-				ResultBundle refResult = PPfoldMain.fold(progress, input.seqs.sequences, input.seqs.seqNames, null, param, extradata);
+				ResultBundle refResult = PPfoldMain.fold(progress, input.seqs.getSequences(), input.seqs.getSeqnames(), null, param, extradata);
 				int [] refPairedSites = rnaTools.getPosteriorDecodingConsensusStructureMultiThreaded(refResult.getFinalMatrix());
 				dataset.resultBundlePPfold = refResult.getSmallBundle();
-				dataset.pairedSitesPPfoldProjected = Benchmarks.projectPairedSites(RNAFoldingTools.getSequenceByName(refSeqName, input.seqs.sequences, input.seqs.seqNames), refPairedSites);
+				dataset.pairedSitesPPfoldProjected = Benchmarks.projectPairedSites(RNAFoldingTools.getSequenceByName(refSeqName, input.seqs.getSequences(), input.seqs.getSeqnames()), refPairedSites);
 				
-				dataset.rnaAlifoldRef = RNAalifold.fold(input.seqs.sequences, input.seqs.seqNames, rnaAlifoldParameters).getSmallResult();
-				dataset.pairedSitesRNAalifoldRefProjected = Benchmarks.projectPairedSites(RNAFoldingTools.getSequenceByName(refSeqName, input.seqs.sequences, input.seqs.seqNames), dataset.rnaAlifoldRef.pairedSites);
+				dataset.rnaAlifoldRef = RNAalifold.fold(input.seqs.getSequences(), input.seqs.getSeqnames(), rnaAlifoldParameters).getSmallResult();
+				dataset.pairedSitesRNAalifoldRefProjected = Benchmarks.projectPairedSites(RNAFoldingTools.getSequenceByName(refSeqName, input.seqs.getSequences(), input.seqs.getSeqnames()), dataset.rnaAlifoldRef.pairedSites);
 				//dataset.pairedSitesRNAalifoldRefProjected = Benchmarks.projectPairedSites(refSeq, dataset.rnaAlifoldRef.pairedSites);
 				
 				//RNAFoldingTools.writeToFile(new File(outDir+title+"_ref_structure.txt"), ""+refResult.getPPfoldReliability()+"\n"+RNAFoldingTools.getDotBracketStringFromPairedSites(pairedSites)+"\n", false);
@@ -430,22 +425,22 @@ public class PPFold extends statalign.postprocess.Postprocess {
 				}
 			}
 			
-			// write sample file
-			try
-			{
-				boolean append = true;
-				BufferedWriter buffer = new BufferedWriter(new FileWriter(new File(outDir+"/"+title+".samples"), append));
-				AlignmentData referenceAlignment = new AlignmentData();
-				referenceAlignment.sequences = mpdSequences;
-				referenceAlignment.names = mpdNames;
-				buffer.write("%mpd\n");
-				buffer.write(referenceAlignment.toString());
-				buffer.close();
-			}
-			catch(IOException ex)
-			{
-				ex.printStackTrace();
-			}
+//			// write sample file
+//			try
+//			{
+//				boolean append = true;
+//				BufferedWriter buffer = new BufferedWriter(new FileWriter(new File(outDir, title+".samples"), append));
+//				AlignmentData referenceAlignment = new AlignmentData();
+//				referenceAlignment.sequences = mpdSequences;
+//				referenceAlignment.names = mpdNames;
+//				buffer.write("%mpd\n");
+//				buffer.write(referenceAlignment.toString());
+//				buffer.close();
+//			}
+//			catch(IOException ex)
+//			{
+//				ex.printStackTrace();
+//			}
 			
 
 			List<ExtraData> extradata = new ArrayList<ExtraData>();
@@ -962,22 +957,22 @@ public class PPFold extends statalign.postprocess.Postprocess {
 		}
 		alignments.add(al);
 		
-		if(experimental)
-		{
-			// write sample file
-			try
-			{
-				boolean append = true;
-				BufferedWriter buffer = new BufferedWriter(new FileWriter(new File(outDir+"/"+title+".samples"), append));
-				buffer.write("%"+no+"\n");
-				buffer.write(al.toString());
-				buffer.close();
-			}
-			catch(IOException ex)
-			{
-				ex.printStackTrace();
-			}
-		}
+//		if(experimental)
+//		{
+//			// write sample file
+//			try
+//			{
+//				boolean append = true;
+//				BufferedWriter buffer = new BufferedWriter(new FileWriter(new File(outDir, title+".samples"), append));
+//				buffer.write("%"+no+"\n");
+//				buffer.write(al.toString());
+//				buffer.close();
+//			}
+//			catch(IOException ex)
+//			{
+//				ex.printStackTrace();
+//			}
+//		}
 		
 		if(fuzzyFolding)
 		{
@@ -1090,14 +1085,18 @@ public class PPFold extends statalign.postprocess.Postprocess {
 		List<ExtraData> extradata = new ArrayList<ExtraData>();
 		try {
 			Tree tree = null;
+			String name;
 			ResultBundle fuzzyResultObs = PPfoldMain.foldFuzzyAlignment(progress, fuzzyAlignment, tree, param, extradata, false);
 			//System.out.println("Fuzzy matrix size"+fuzzyResultObs.finalmatrix[0].length);
 			int [] fuzzyPairedSitesObs = rnaTools.getPosteriorDecodingConsensusStructureMultiThreaded(fuzzyResultObs.finalmatrix);			
 			char [] structure = fuzzyResultObs.getStructure();
 			
-			RNAFoldingTools.saveCtFile(new File(title+".fuzzy.ct"), fuzzyPairedSitesObs, title, refSeq);
-			RNAFoldingTools.saveDotBracketFile(new File(title+".fuzzy.dbn"), fuzzyPairedSitesObs, title, refSeq);
-			RNAFoldingTools.writeMatrix(RNAFoldingTools.getDoubleMatrix(fuzzyResultObs.finalmatrix), new File(title+".fuzzy.bp"));
+			RNAFoldingTools.saveCtFile(new File(outDir, name=title+".fuzzy.ct"), fuzzyPairedSitesObs, title, refSeq);
+			fileList.add(name); fileDesc.add("Fuzzy alignment RNA structure using PPfold in CT format");
+			RNAFoldingTools.saveDotBracketFile(new File(outDir, name=title+".fuzzy.dbn"), fuzzyPairedSitesObs, title, refSeq);
+			fileList.add(name); fileDesc.add("Fuzzy alignment RNA structure using PPfold in DBN format");
+			RNAFoldingTools.writeMatrix(RNAFoldingTools.getDoubleMatrix(fuzzyResultObs.finalmatrix), new File(outDir, name=title+".fuzzy.bp"));
+			fileList.add(name); fileDesc.add("Fuzzy alignment RNA base-pairing matrix using PPfold");
 			
 			//if(experimental)
 			//{
@@ -1119,9 +1118,21 @@ public class PPFold extends statalign.postprocess.Postprocess {
 	
 	}
 
+	List<String> fileList;
+	List<String> fileDesc;
 
 	@Override
 	public void afterLastSample() {
+		fileList = new ArrayList<String>();
+		fileDesc = new ArrayList<String>();
+		String name;
+		
+//		fileList.add(title+".samples");
+//		fileDesc.add("RNA structure samples");
+		
+		if(noSamples == 0)
+			return;
+		
 		// calculate posterior avg
 		posteriorProbabilityAvg = 0;
 		for(int i = 0 ; i < mpdAlignment.decoding.length ; i++)
@@ -1152,9 +1163,12 @@ public class PPFold extends statalign.postprocess.Postprocess {
 			dataset.ppfoldReliabilityScoreRNAalifold = RNAFoldingTools.calculatePPfoldReliabilityScore(dataset.pairedSitesRNAalifold, doubleSummedArrayRNAalifold);
 			dataset.pairsOnlyReliabilityScoreRNAalifold =  RNAFoldingTools.calculatePairsOnlyReliabilityScore(dataset.pairedSitesRNAalifold, doubleSummedArrayRNAalifold);		
 			
-			RNAFoldingTools.saveCtFile(new File(title+".rnaalifold.ct"), pairedSitesRNAalifold, title, refSeq);
-			RNAFoldingTools.saveDotBracketFile(new File(title+".rnaalifold.dbn"), pairedSitesRNAalifold, title, refSeq);
-			RNAFoldingTools.writeMatrix(doubleSummedArrayRNAalifold, new File(title+".rnaalifold.bp"));
+			RNAFoldingTools.saveCtFile(new File(outDir, name=title+".rnaalifold.ct"), pairedSitesRNAalifold, title, refSeq);
+			fileList.add(name); fileDesc.add("Consensus (MPD) RNA structure using RNAalifold in CT format");
+			RNAFoldingTools.saveDotBracketFile(new File(outDir, name=title+".rnaalifold.dbn"), pairedSitesRNAalifold, title, refSeq);
+			fileList.add(name); fileDesc.add("Consensus (MPD) RNA structure using RNAalifold in DBN format");
+			RNAFoldingTools.writeMatrix(doubleSummedArrayRNAalifold, new File(outDir, name=title+".rnaalifold.bp"));
+			fileList.add(name); fileDesc.add("Consensus RNA base-pairing matrix using RNAalifold");
 		}
 		
 		
@@ -1171,9 +1185,12 @@ public class PPFold extends statalign.postprocess.Postprocess {
 			}
 			int[] pairedSites = rnaTools.getPosteriorDecodingConsensusStructureMultiThreaded(doubleSummedArrayPPfold);
 			double statalignPpfoldReliablityScore = RNAFoldingTools.calculatePPfoldReliabilityScore(pairedSites, doubleSummedArrayPPfold);
-			RNAFoldingTools.saveCtFile(new File(title+".ppfold.ct"), pairedSites, title, refSeq);
-			RNAFoldingTools.saveDotBracketFile(new File(title+".ppfold.dbn"), pairedSites, title, refSeq);
-			RNAFoldingTools.writeMatrix(doubleSummedArrayPPfold, new File(title+".ppfold.bp"));
+			RNAFoldingTools.saveCtFile(new File(outDir, name=title+".ppfold.ct"), pairedSites, title, refSeq);
+			fileList.add(name); fileDesc.add("Consensus (MPD) RNA structure using PPfold in CT format");
+			RNAFoldingTools.saveDotBracketFile(new File(outDir, name=title+".ppfold.dbn"), pairedSites, title, refSeq);
+			fileList.add(name); fileDesc.add("Consensus (MPD) RNA structure using PPfold in DBN format");
+			RNAFoldingTools.writeMatrix(doubleSummedArrayPPfold, new File(outDir, name=title+".ppfold.bp"));
+			fileList.add(name); fileDesc.add("Consensus RNA base-pairing matrix using PPfold");
 			
 			//if(experimental)
 			//{
@@ -1235,9 +1252,12 @@ public class PPFold extends statalign.postprocess.Postprocess {
 			//}
 				
 				ResultBundle consensusEvolutionPrediction = performConsensusEvolutionPrediction();
-				RNAFoldingTools.saveCtFile(new File(title+".cons_evol.ct"), dataset.pairedSitesMatrix, title, refSeq);
-				RNAFoldingTools.saveDotBracketFile(new File(title+".cons_evol.dbn"),  dataset.pairedSitesMatrix, title, refSeq);
-				RNAFoldingTools.writeMatrix(RNAFoldingTools.getDoubleMatrix(consensusEvolutionPrediction.finalmatrix), new File(title+".cons_evol.bp"));
+				RNAFoldingTools.saveCtFile(new File(outDir, name=title+".cons_evol.ct"), dataset.pairedSitesMatrix, title, refSeq);
+				fileList.add(name); fileDesc.add("Consensus evolution RNA structure in CT format");
+				RNAFoldingTools.saveDotBracketFile(new File(outDir, name=title+".cons_evol.dbn"),  dataset.pairedSitesMatrix, title, refSeq);
+				fileList.add(name); fileDesc.add("Consensus evolution RNA structure in DBN format");
+				RNAFoldingTools.writeMatrix(RNAFoldingTools.getDoubleMatrix(consensusEvolutionPrediction.finalmatrix), new File(outDir, name=title+".cons_evol.bp"));
+				fileList.add(name); fileDesc.add("Consensus evolution RNA base-pairing matrix");
 		}	
 		
 		if(samplingAndAveragingPPfold && samplingAndAveragingRNAalifold)
@@ -1257,9 +1277,12 @@ public class PPFold extends statalign.postprocess.Postprocess {
 			dataset.ppfoldReliabilityScoreCombined = RNAFoldingTools.calculatePPfoldReliabilityScore(combinedPairedSites, combinedBasePairProb);
 			dataset.pairsOnlyReliabilityScoreCombined = RNAFoldingTools.calculatePairsOnlyReliabilityScore(combinedPairedSites, combinedBasePairProb);
 			
-			RNAFoldingTools.saveCtFile(new File(title+".rnaalifold_and_ppfold.ct"), combinedPairedSites, title, refSeq);
-			RNAFoldingTools.saveDotBracketFile(new File(title+".rnaalifold_and_ppfold.dbn"), combinedPairedSites, title, refSeq);
-			RNAFoldingTools.writeMatrix(combinedBasePairProb, new File(title+".rnaalifold_and_ppfold.bp"));
+			RNAFoldingTools.saveCtFile(new File(outDir, name=title+".rnaalifold_and_ppfold.ct"), combinedPairedSites, title, refSeq);
+			fileList.add(name); fileDesc.add("Consensus (MPD) RNA structure using RNAalifold and PPfold combined, in CT format");
+			RNAFoldingTools.saveDotBracketFile(new File(outDir, name=title+".rnaalifold_and_ppfold.dbn"), combinedPairedSites, title, refSeq);
+			fileList.add(name); fileDesc.add("Consensus (MPD) RNA structure using RNAalifold and PPfold combined, in DBN format");
+			RNAFoldingTools.writeMatrix(combinedBasePairProb, new File(outDir, name=title+".rnaalifold_and_ppfold.bp"));
+			fileList.add(name); fileDesc.add("Consensus RNA base-pairing matrix using RNAalifold and PPfold combined");
 		}
 
 		if(fuzzyFolding)
@@ -1269,14 +1292,16 @@ public class PPFold extends statalign.postprocess.Postprocess {
 		
 		if(experimental)
 		{
-			dataset.saveDatasetResult(new File(outDir+title+".serialized"));
+			dataset.saveDatasetResult(new File(outDir, name=title+".serialized"));
+			fileList.add(name); fileDesc.add("RNA structure dataset serialized");
 		}
 		
 		DecimalFormat df = new DecimalFormat("0.000");
 		
 		try
 		{
-			File outFile = new File(title+".info");
+			File outFile = new File(outDir, name=title+".info");
+			fileList.add(name); fileDesc.add("RNA secondary structure info file");
 			BufferedWriter buffer = new BufferedWriter(new FileWriter(outFile));
 			if(samplingAndAveragingPPfold)
 			{
@@ -1314,7 +1339,7 @@ public class PPFold extends statalign.postprocess.Postprocess {
 			ex.printStackTrace();
 		}
 	}
-
+	
 	public void saveScores(File outFile, double ppfoldReliabilityStatAlign, double ppfoldReliabilityMPD)
 	{
 		boolean writeHeaders = !outFile.exists();
@@ -1373,24 +1398,6 @@ public class PPFold extends statalign.postprocess.Postprocess {
 			ex.printStackTrace();
 		}
 	}
-
-//	public static void appendAlignment(String label, String [] alignment, File outFile, boolean append, InputData input)
-//	{
-//		try
-//		{
-//			BufferedWriter buffer = new BufferedWriter(new FileWriter(outFile, append));
-//			buffer.write("%"+label+"\n");
-//			String [] fastaAlignment = Utils.alignmentTransformation(alignment,"Fasta", input);
-//			for (int i = 0; i < fastaAlignment.length; i++) {
-//				buffer.write(fastaAlignment[i] + "\n");
-//			}
-//			buffer.close();
-//		}
-//		catch(IOException ex)
-//		{
-//			ex.printStackTrace();
-//		}
-//	}
 
 	public static String getSequenceByName(String[][] sequences, String name) {
 		for (int i = 0; i < sequences.length; i++) {

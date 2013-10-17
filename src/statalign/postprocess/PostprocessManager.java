@@ -244,23 +244,19 @@ public class PostprocessManager {
 	 */
 	public void afterLastSample() {
 		if(rnaMode) {
-			for(Postprocess plugin : plugins){
-				if(plugin.postprocessWrite){
+			for(Postprocess plugin : plugins) {
+				if(plugin.rnaAssociated) {
 					plugin.afterLastSample();
 				}
 			}
 		}
-		
 		else {
-			for(Postprocess plugin : plugins){
+			for(Postprocess plugin : plugins) {
 				if(!plugin.rnaAssociated) {
-					if(plugin.postprocessWrite){
-						plugin.afterLastSample();
-					}
+					plugin.afterLastSample();
 				}
 			}
-		}
-
+		}			
 		try {
 			logFile.close();
 		} catch (IOException e) {

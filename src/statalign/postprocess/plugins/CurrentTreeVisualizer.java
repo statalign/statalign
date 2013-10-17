@@ -87,10 +87,10 @@ public class CurrentTreeVisualizer extends TreeVisualizer {
     public void beforeFirstSample(InputData input) {
         super.beforeFirstSample(input); // Mandatory.
 
-        String[] names = new String[input.seqs.seqNames.size()];
+        String[] names = new String[input.seqs.size()];
 		
 		for (int i = 0; i < names.length; i++) {
-			names[i] = input.seqs.seqNames.get(i).replaceAll(" ", "");
+			names[i] = input.seqs.getSeqName(i).replaceAll(" ", "");
 		}
 		if (postprocessWrite) {
 			try {

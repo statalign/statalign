@@ -158,7 +158,6 @@ public class Entropy extends statalign.postprocess.Postprocess{
 			scroll.setViewportView(gui);
 			
 			pan.add(scroll);
-			System.out.println("Entropy parent: " + pan.getParent());
 			if(pan.getParent() != null)
 			{
 				pan.getParent().getParent().getParent().validate();

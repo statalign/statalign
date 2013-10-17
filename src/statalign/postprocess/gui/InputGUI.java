@@ -117,12 +117,12 @@ public class InputGUI extends JPanel implements ActionListener, ListSelectionLis
 			}
 //			System.out.println("sequences size: "+manager.seqs.sequences.size()+
 //					" names size: "+manager.seqs.seqNames.size());		    
-			for(int i = 0; i < manager.inputData.seqs.sequences.size(); i++){
-				String s1 = manager.inputData.seqs.sequences.get(i);
-				String seqTitle = "<font color=\"000099\">&gt; "+manager.inputData.seqs.seqNames.get(i)+"</font>";
+			for(int i = 0; i < manager.inputData.seqs.size(); i++){
+				String s1 = manager.inputData.seqs.getSequence(i);
+				String seqTitle = "<font color=\"000099\">&gt; "+manager.inputData.seqs.getSeqName(i)+"</font>";
 				for (DataType d : manager.inputData.auxData) {
-					if (d.perSequenceData() && !d.getSummaryAssociatedWith(manager.inputData.seqs.seqNames.get(i)).isEmpty()) {
-						seqTitle += "<font color=\"C80000\"> + "+d.getSummaryAssociatedWith(manager.inputData.seqs.seqNames.get(i))+"</font>";
+					if (d.perSequenceData() && !d.getSummaryAssociatedWith(manager.inputData.seqs.getSeqName(i)).isEmpty()) {
+						seqTitle += "<font color=\"C80000\"> + "+d.getSummaryAssociatedWith(manager.inputData.seqs.getSeqName(i))+"</font>";
 					}
 				}
 				String s2 = "";
@@ -183,12 +183,7 @@ public class InputGUI extends JPanel implements ActionListener, ListSelectionLis
 	public void actionPerformed(ActionEvent e) {
 		int index = sequences.getSelectedIndex();
 
-		// This is apparently the best way to reverse a int[] array in Java... jeez.
-		ArrayList<Integer> indices = new ArrayList<Integer>(sequences.getSelectedIndices().length);
-		for (int i : sequences.getSelectedIndices()) {
-			indices.add(i);
-		}
-		Collections.sort(indices, Collections.reverseOrder());
+		int[] indices = sequences.getSelectedIndices();
 
 		// Removes the sequences from the model AND from the sequences arrays, i.e.
 		// there is a one-to-one mapping between those.
@@ -196,16 +191,16 @@ public class InputGUI extends JPanel implements ActionListener, ListSelectionLis
 		
 		if("Remove".equals(e.getActionCommand())) {
 			//listListener();
-			for (int i : indices) {
+			for (int i = indices.length-1; i >= 0; i--) {
+				int ind = indices[i];
 				for (DataType d : manager.inputData.auxData) {
 					if (d.perSequenceData()) {
-						d.removeDataAssociatedWith(manager.inputData.seqs.seqNames.get(i));
+						d.removeDataAssociatedWith(manager.inputData.seqs.getSeqName(ind));
 					}
 				}
-				manager.inputData.seqs.seqNames.remove(i);
-				manager.inputData.seqs.sequences.remove(i);
-				dlmSequences.remove(i);
-			}
+				manager.inputData.seqs.remove(ind);
+				dlmSequences.remove(ind);
+			}			
 	
 			// Moves the selected index of the list.
 			if(dlmSequences.getSize() != 0){
@@ -217,15 +212,14 @@ public class InputGUI extends JPanel implements ActionListener, ListSelectionLis
 		}
 		
 		else if("Remove all".equals(e.getActionCommand())) {
-			for (String seqName : manager.inputData.seqs.seqNames) {
+			for (String seqName : manager.inputData.seqs.getSeqnames()) {
 				for (DataType d : manager.inputData.auxData) {
 					if (d.perSequenceData()) {
 						d.removeDataAssociatedWith(seqName);
 					}
 				}
 			}
-			manager.inputData.seqs.seqNames.clear();
-			manager.inputData.seqs.sequences.clear();
+			manager.inputData.seqs.clear();			
 			manager.deactivateRNA();
 			dlmSequences.clear();
 			jbDeleteAll.setEnabled(false);

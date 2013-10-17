@@ -49,6 +49,7 @@ public class FastaReader extends DataReader {
 		BufferedReader br = new BufferedReader(reader);
 
 		String line;
+		String name = null;
 		boolean inSeq = false;
 		StringBuilder actSeq = new StringBuilder();
 		boolean[] seen = new boolean['Z'-'A'+1];
@@ -59,9 +60,9 @@ public class FastaReader extends DataReader {
 			if(line == null || line.charAt(0) == '>') {
 				if(inSeq) {
 					if(actSeq.length() == 0) {
-						throw new IllegalFormatException("FastaReader: empty sequence "+result.seqNames.get(result.seqNames.size()-1));
+						throw new IllegalFormatException("FastaReader: empty sequence "+result.getSeqnames().get(result.getSeqnames().size()-1));
 					} else {
-						result.sequences.add(actSeq.toString());
+						result.add(name, actSeq.toString());
 					}
 				}
 				if(line == null)
@@ -84,7 +85,7 @@ public class FastaReader extends DataReader {
 				line = line.replaceAll("\\(", "{");
 				line = line.replaceAll("\\)", "}");
 //				System.out.println("new name: "+line);
-				result.seqNames.add(line);
+				name = line;
 			} else if(inSeq) {
 				
 				
@@ -108,11 +109,6 @@ public class FastaReader extends DataReader {
 		if(!inSeq)
 			throw new IllegalFormatException("FastaReader: empty file");
 		
-		StringBuilder alpha = new StringBuilder();
-		for(int ch = 0; ch <= 'Z'-'A'; ch++)
-			if(seen[ch])
-				alpha.append((char)(ch+'A'));
-		result.alphabet = alpha.toString();
 		
 		return result;
 	}

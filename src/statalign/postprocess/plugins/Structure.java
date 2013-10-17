@@ -147,7 +147,7 @@ public class Structure extends statalign.postprocess.Postprocess {
 		
 		JToggleButton normalButton = new JToggleButton(new ImageIcon(ClassLoader.getSystemResource("icons/normalRNA.png")));
 		//JToggleButton normalButton = new JToggleButton(new ImageIcon(ClassLoader.getSystemResource("icons/phylogram.png")));
-		String text = "Normal mode: Color by nucleotide base.";
+		String text = "Nucleotide mode: color by nucleotide base.";
 		normalButton.setToolTipText(text);
     	normalButton.setActionCommand(text);
     	normalButton.setEnabled(false);
@@ -163,7 +163,7 @@ public class Structure extends statalign.postprocess.Postprocess {
     	});
 		
     	JToggleButton probButton = new JToggleButton(new ImageIcon(ClassLoader.getSystemResource("icons/probRNA.png")));
-    	String probText = "Probability mode: Color gradient depends on probability of base-pairing.";
+    	String probText = "Probability mode: color gradient depends on probability of base-pairing.";
     	probButton.setToolTipText(probText);
     	probButton.setActionCommand(probText);
     	probButton.addActionListener(new ActionListener() {
@@ -180,17 +180,17 @@ public class Structure extends statalign.postprocess.Postprocess {
     	group.add(normalButton);
     	group.add(probButton);
     	
-    	JPanel panel = new JPanel(new BorderLayout(1,3));
+    	//JPanel panel = new JPanel(new BorderLayout(1,3));
     	
     	toolbar.add(normalButton);
     	toolbar.add(probButton);
     	
     	
-    	JLabel ta = new JLabel("     " + "PPFold Consensus Structure");
-    	ta.setFont(new Font("Monospaced",Font.CENTER_BASELINE,14));
-    	ta.setOpaque(false);
-    	
-    	toolbar.add(ta);
+//    	JLabel ta = new JLabel("     " + "PPFold Consensus Structure");
+//    	ta.setFont(new Font("Monospaced",Font.CENTER_BASELINE,14));
+//    	ta.setOpaque(false);
+//    	
+//    	toolbar.add(ta);
     	
     	probButton.setSelected(true);
 	}
@@ -215,7 +215,6 @@ public class Structure extends statalign.postprocess.Postprocess {
 			
 			JScrollPane scroll = new JScrollPane(gui);
 			pan.add(scroll, BorderLayout.CENTER);
-			System.out.println("Structure parent: " + pan.getParent());
 			if(pan.getParent() != null)
 			{
 				pan.getParent().validate();
