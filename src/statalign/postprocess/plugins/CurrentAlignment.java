@@ -29,6 +29,7 @@ public class CurrentAlignment extends statalign.postprocess.Postprocess{
 	
 	InputData input;
 	String[] seqNames;
+	String[] leafNames;
 	
 	AlignmentGUI gui;
 	
@@ -107,12 +108,14 @@ public class CurrentAlignment extends statalign.postprocess.Postprocess{
 			allAlignment[i] = rows[i];
 		int ind = 0;
 		//System.out.println("allAlignment.length = "+allAlignment.length+"leafAlignment.length = "+leafAlignment.length);
-		for(int i = 0; i < leafAlignment.length; i++) {
+		for(int i = 0; i < allAlignment.length; i++) {
 			if (seqNames[i].charAt(0) != ' ') {
-				leafAlignment[ind++] = allAlignment[i];
+				leafAlignment[ind] = allAlignment[i];
+				leafNames[ind] = seqNames[i];
+				ind++;
 			}
 			//leafAlignment[i] = allAlignment[i];
-		}
+		}		
 			//if(allAlignment[i].charAt(0) != ' ')
 				//leafAlignment[ind++] = allAlignment[i];
 				
@@ -138,14 +141,17 @@ public class CurrentAlignment extends statalign.postprocess.Postprocess{
 			pan.add(scroll, BorderLayout.CENTER);
 		}
 		leafAlignment = new String[input.seqs.size()];
+		leafNames = new String[input.seqs.size()];
 		this.input = input;
 		
 		// seqNames
 		int nl = input.seqs.size();
 		int nn = nl*2-1, i;
 		seqNames = new String[nn];
-		for(i = 0; i < nl; i++)
+		for(i = 0; i < nl; i++) {
 			seqNames[i] = input.seqs.getSeqNamePadded(i);
+			leafNames[i] = seqNames[i];
+		}
 		StringBuilder b = new StringBuilder();
 		for(int j = 0; j < seqNames[0].length(); j++)
 			b.append(' ');
