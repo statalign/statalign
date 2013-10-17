@@ -48,13 +48,16 @@ public class AboutDlg extends JDialog {
 			"<p>(c) 2008&ndash;2013 &Aacute;d&aacute;m Nov&aacute;k et al.<br>"+
 			"<a href='http://STATALIGN-www'>"+StatAlign.webPageURL+"</a><br><br>" +
 			
-			"<p><b>Created by</b><br>"+
-			"<p>&Aacute;d&aacute;m Nov&aacute;k<br>Istv&aacute;n Mikl&oacute;s<br>Rune Lyngs&oslash;<br><br>" +
+			"<p><b>Core software by</b><br>"+
+			"<p>&Aacute;d&aacute;m Nov&aacute;k<br>Istv&aacute;n Mikl&oacute;s<br>Rune Lyngs&oslash;<br>Joe Herman<br><br>" +
 
-			"<p><b>RNA structure prediction plugin by</b><br>"+
+			"<p><b>Protein structural alignment by</b><br>"+
+			"<p>Christopher Challis<br>Joe Herman<br><br>" +
+
+			"<p><b>RNA structure prediction by</b><br>"+
 			"<p>Preeti Arunapuram<br>Ing&oacute;lfur E&eth;var&eth;sson<br>Michael Golden<br><br>" +
 
-			"<p><b>Consensus tree plugin and<br>parallelised MC^3 by</b><br>" +
+			"<p><b>Consensus tree and<br>parallelised MC^3 by</b><br>" +
 			"<p>Hrafn Eir&iacute;ksson<br>Viktor Jonsson<br>David Wood<br><br>" +
 
 			"<p><b>Special thanks to</b><br>" +
