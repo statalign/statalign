@@ -30,9 +30,9 @@ public class StatAlign{
 
 	public static final int majorVersion = 3;
 	public static final int minorVersion = 0;
-	public static final String version = "v3.0 (a1)";
+	public static final String version = "v3.0";
 	
-	public static final boolean allowVersionCheck = false;
+	public static boolean allowVersionCheck = true;
 	
 	public static final String webPageURL = "http://statalign.github.io/";
 
@@ -46,11 +46,7 @@ public class StatAlign{
 	 * @throws IOException
 	 */
 	public static void main(String args[]) {
-		
-//		for (String s : args) {
-//			System.out.println("args: " + s);
-//		}
-		
+			
 		System.out.println("StatAlign "+version);
 		
 		if(args.length != 0) {
@@ -60,34 +56,15 @@ public class StatAlign{
 			cl.setVerbose(true);
 			if(cl.fillParams(args, manager) > 0)
 				System.exit(1);
-			// TODO add pluginParameters as a param to fillParams, remove from Postprocess
-			manager.init(cl.pluginParameters);
 			
+			manager.init(cl.pluginParameters);			
 			manager.start();
 
 		} else {
-			// GUI mode
-			
+			// GUI mode			
 			MainFrame mf = null;
 			try {
-				mf = new MainFrame();
-				
-				if(allowVersionCheck) {
-					URL urlVersion = new URL("http://raw.github.com/statalign/statalign/master/version.txt");
-					try {
-						URLConnection connection = urlVersion.openConnection();
-						connection.setConnectTimeout(2000);
-						String s = new BufferedReader(new InputStreamReader(connection.getInputStream())).readLine();
-						if(!s.equals(version)) {
-							JOptionPane.showMessageDialog(mf, "You are using StatAlign "+version+
-															". StatAlign "+s+" is now available!\n"+
-															"To download the new version, please visit" +
-															" http://statalign.github.com/statalign/",
-															"New version available!",
-															JOptionPane.INFORMATION_MESSAGE);
-						}
-					} catch(Exception e) {}
-				}
+				mf = new MainFrame();				
 			} catch(Exception e) {
 				ErrorMessage.showPane(mf, e, true);
 			}

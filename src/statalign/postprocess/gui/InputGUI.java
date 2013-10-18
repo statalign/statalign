@@ -90,7 +90,7 @@ public class InputGUI extends JPanel implements ActionListener, ListSelectionLis
 		        if (HyperlinkEvent.EventType.ACTIVATED.equals(hle.getEventType())) {
 		          String url = hle.getURL().toString();
 		          if(url.endsWith("add")) {
-		            //manager.frame.addSequences();
+		            manager.frame.addSequences();
 		      } else if(url.endsWith("doc"))
 		        manager.frame.helpUsers();
 		    }  

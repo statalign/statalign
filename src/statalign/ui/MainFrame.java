@@ -9,8 +9,10 @@ import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.lang.reflect.Modifier;
 import java.net.URI;
 import java.net.URL;
@@ -21,6 +23,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 
+import javax.net.ssl.HttpsURLConnection;
 import javax.swing.ButtonGroup;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
@@ -71,7 +74,7 @@ public class MainFrame extends JFrame implements ActionListener {
     public static final String WELCOME_MSG = 
     		"<html><div style='padding: 20px 20px 20px 20px; font-family: Arial; font-size: 12px'>" +
 			"<h2>Welcome to StatAlign!</h2><br>" +
-			"<p>To get started, please <a href='http://add'>add sequences</a> to analyse." +
+			"<p>To get started, please <a href='http://add'>add sequences</a> (and optionally structures) to analyse." +
 			"<p>If you need any help along the way, please refer to the <a href='http://doc'>manual</a>, which is available from the <b>Help menu.</b>" +
 			"<br><br>" +
 			"<p>Happy StatAligning!" +
@@ -380,10 +383,15 @@ public class MainFrame extends JFrame implements ActionListener {
         item = new JMenuItem("Javadocs for StatAlign");
         item.setMnemonic(KeyEvent.VK_J);
         item.addActionListener(this);
+        menu.add(item);        
+        menu.addSeparator();
+        item = new JMenuItem("Check for updates");
+        item.setMnemonic(KeyEvent.VK_UP);
+        item.addActionListener(this);
         menu.add(item);
-
+        
         menubar.add(menu);
-
+        
         setJMenuBar(menubar);
         add(toolBar, BorderLayout.PAGE_START);
 
@@ -501,89 +509,12 @@ public class MainFrame extends JFrame implements ActionListener {
     @Override
 	public void actionPerformed(ActionEvent ev) {
         if (ev.getActionCommand() == "Add sequence(s)...") {
-            JFileChooser choose = new JFileChooser("Add sequence(s)...");
-            choose.setCurrentDirectory(new File(System.getProperty("user.dir")));
-            choose.setMultiSelectionEnabled(true);
-            if (choose.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-            	for(File file : choose.getSelectedFiles()) {
-	                DataType data = manager.dataMan.read(file);
-	                if(data == null) {
-	                	JOptionPane.showMessageDialog(this, "The following file was not recognised to be in a known format:\n"+file+"\n\n", "Error reading input file", JOptionPane.ERROR_MESSAGE);
-	                	continue;
-	                }
-	                if(data instanceof RawSequences) {
-	                	if(inFile == null)
-	                		inFile = file;
-	                	manager.inputData.seqs.add((RawSequences)data);
-	                	manager.inputgui.updateSequences();
-	                	manager.fullPath = inFile.getAbsolutePath();
-	                	if (manager.inputData.model != null) {
-	                		try {
-	                			manager.inputData.model.acceptable(manager.inputData.seqs);
-	                		} catch (RecognitionError e) {
-	                			tryModels();
-	                		}
-	                	} else {
-	                		tryModels();
-	                	}
-	                	if (manager.inputData.model != null) {
-	                		runItem.setEnabled(true);
-	                		runButton.setEnabled(true);
-	                		
-	                		if(manager.inputData.seqs.isRNA()) {
-	                			rnaButton.setEnabled(true);
-	                				   // only pop up if it looks very much like RNA (and not DNA)
-	                				   String text = "<html><div style='padding: 0 10px 10px 10px'>StatAlign has detected that these are RNA sequences.<br>" +
-	                				   "To enable RNA secondary structure prediction,<br>" +
-	                				   "please toggle the RNA icon on the toolbar.</div></html>";
-	                				   ErrorMessage.showPane(this, text, "RNA sequences found", false);	                			              			                   
-	                		} else { 
-	                			rnaButton.setEnabled(false);
-	                		}
-	                	}
-	                } else {
-	                	// TODO add Tree type as in console version
-	                	manager.inputData.auxData.add(data);
-	                	manager.inputgui.updateSequences();
-	                }
-	                	                
-//	                FileFormatReader reader = new FastaReader();
-//	                try {
-//	                	manager.inputData.seqs.alphabet = "";
-//	                	manager.inputData.seqs.add(reader.read(inFile));
-//	                	manager.inputgui.updateSequences();
-//	                	manager.fullPath = inFile.getAbsolutePath();
-//	                	if (manager.inputData.model != null) {
-//	                		try {
-//	                			manager.inputData.model.acceptable(manager.inputData.seqs);
-//	                		} catch (RecognitionError e) {
-//	                			tryModels();
-//	                		}
-//	                	} else {
-//	                		tryModels();
-//	                	}
-//	                	if (manager.inputData.model != null) {
-//	                		runItem.setEnabled(true);
-//	                		runButton.setEnabled(true);
-//
-//	                		if(!manager.inputData.seqs.isRNA()) {
-//	                			rnaButton.setEnabled(false);
-//	                		}
-//
-//	                		else { 
-//	                			rnaButton.setEnabled(true);
-//	                		}
-//	                	}
-//	                } catch (IOException e) {
-//	                	JOptionPane.showMessageDialog(this, e.getLocalizedMessage(), "Error reading input file", JOptionPane.ERROR_MESSAGE);
-//	                } catch (ExceptionNonFasta e) {
-//	                	// TODO Auto-generated catch block
-//	                	ErrorMessage.showPane(this, e.getMessage(), true);
-//	                }
-            	}           
-            }
-            
-        } else if (ev.getActionCommand() == "Exit") {
+        	addSequences();                        
+        }
+        if (ev.getActionCommand() == "Add structure(s)...") {
+        	addSequences();                        
+        }
+        else if (ev.getActionCommand() == "Exit") {
             System.exit(0);
         } else if (ev.getActionCommand() == "Output settings...") {
             //System.out.println("here!!!");
@@ -709,6 +640,9 @@ public class MainFrame extends JFrame implements ActionListener {
             
         } else if (ev.getActionCommand() == "Javadocs for StatAlign") {
         	helpJavadocs();
+        	
+        } else if (ev.getActionCommand() == "Check for updates") {
+        	checkForUpdates();
 
         } else {        // new substitution model selected
             for (Class<? extends SubstitutionModel> cl : substModels) {
@@ -733,6 +667,56 @@ public class MainFrame extends JFrame implements ActionListener {
         }
     }
 
+    public void addSequences() {
+    	JFileChooser choose = new JFileChooser("Add sequence(s)...");
+        choose.setCurrentDirectory(new File(System.getProperty("user.dir")));
+        choose.setMultiSelectionEnabled(true);
+        if (choose.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+        	for(File file : choose.getSelectedFiles()) {
+                DataType data = manager.dataMan.read(file);
+                if(data == null) {
+                	JOptionPane.showMessageDialog(this, "The following file was not recognised to be in a known format:\n"+file+"\n\n", "Error reading input file", JOptionPane.ERROR_MESSAGE);
+                	continue;
+                }
+                if(data instanceof RawSequences) {
+                	if(inFile == null)
+                		inFile = file;
+                	manager.inputData.seqs.add((RawSequences)data);
+                	manager.inputgui.updateSequences();
+                	manager.fullPath = inFile.getAbsolutePath();
+                	if (manager.inputData.model != null) {
+                		try {
+                			manager.inputData.model.acceptable(manager.inputData.seqs);
+                		} catch (RecognitionError e) {
+                			tryModels();
+                		}
+                	} else {
+                		tryModels();
+                	}
+                	if (manager.inputData.model != null) {
+                		runItem.setEnabled(true);
+                		runButton.setEnabled(true);
+                		
+                		if(manager.inputData.seqs.isRNA()) {
+                			rnaButton.setEnabled(true);
+                				   // only pop up if it looks very much like RNA (and not DNA)
+                				   String text = "<html><div style='padding: 0 10px 10px 10px'>StatAlign has detected that these are RNA sequences.<br>" +
+                				   "To enable RNA secondary structure prediction,<br>" +
+                				   "please toggle the RNA icon on the toolbar.</div></html>";
+                				   ErrorMessage.showPane(this, text, "RNA sequences found", false);	                			              			                   
+                		} else { 
+                			rnaButton.setEnabled(false);
+                		}
+                	}
+                } else {
+                	// TODO add Tree type as in console version
+                	manager.inputData.auxData.add(data);
+                	manager.inputgui.updateSequences();
+                }                	                
+        	}    
+        }
+
+    }
     
     public boolean checkPage() {
     	try {
@@ -744,6 +728,36 @@ public class MainFrame extends JFrame implements ActionListener {
     	} catch (Exception e) {
     		return false;
 		}
+    }
+    
+    public void checkForUpdates() {
+	    if(StatAlign.allowVersionCheck && checkPage()) {	
+	    	try {
+		    	URL urlVersion = new URL("https://raw.github.com/statalign/statalign/master/version.txt");
+		    	HttpsURLConnection con = (HttpsURLConnection)urlVersion.openConnection();
+				BufferedReader br = 
+					new BufferedReader(
+						new InputStreamReader(con.getInputStream()));
+				String s = br.readLine();
+				if(!s.equals(StatAlign.version)) {
+					JOptionPane.showMessageDialog(this, "You are using StatAlign "+StatAlign.version+
+													". StatAlign "+s+" is now available!\n"+
+													"To download the new version, please visit "
+													+ StatAlign.webPageURL,
+													"New version available!",
+													JOptionPane.INFORMATION_MESSAGE);
+				}
+				else {
+					JOptionPane.showMessageDialog(this, "You are using StatAlign "+StatAlign.version+".",
+							"Version up-to-date.\n",
+							JOptionPane.INFORMATION_MESSAGE);
+				}
+	    	} catch(Exception e) {
+	    		JOptionPane.showMessageDialog(this, "Could not open connection to "+StatAlign.webPageURL+".\n"+e.getStackTrace(),
+						"Connection error.\n",
+						JOptionPane.INFORMATION_MESSAGE);
+	    	}
+	    }
     }
     
     public void browseManual(String path, String description) {
