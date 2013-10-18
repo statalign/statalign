@@ -22,6 +22,7 @@ public abstract class McmcModule {
 	public void setMcmc(Mcmc m) {
 		mcmc = m;
 	}
+	public boolean printExtraInfo = false;
 	public boolean isFirstHalfBurnin() {
 		return mcmc.firstHalfBurnin;
 	}

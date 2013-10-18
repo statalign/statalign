@@ -77,6 +77,7 @@ public class CommandLine {
 				Integer.MAX_VALUE);
 		opt.addSet("run")
 				.addOption("debug", Separator.EQUALS)
+				.addOption("verbose", Separator.EQUALS)
 				.addOption("reportBurnin", Separator.EQUALS)
 				.addOption("subst", Separator.EQUALS)
 				.addOption("mcmc", Separator.EQUALS)
@@ -97,6 +98,10 @@ public class CommandLine {
 		if (set.isSet("debug")) {
 			Utils.DEBUG = true;
 			System.out.println("Debug mode enabled.");
+		}
+		if (set.isSet("verbose")) {
+			Utils.VERBOSE = true;
+			System.out.println("Verbose output enabled.");
 		}
 		if (set.isSet("reportBurnin")) {
 			manager.inputData.doReportDuringBurnin = true;
@@ -477,6 +482,10 @@ public class CommandLine {
 			
 			  .append("    -help:PLUGIN_NAME\n")
 			  .append("        Prints usage information for the specified plugin.\n\n")
+	
+			  .append("    -verbose=true\n")
+			  .append("        Enables printing of additional MCMC information, such as locations\n")
+			  .append("        of topology switches, and acceptance rates at regular intervals.\n")
 	
 			  .append("    -list:subst\n")
 			  .append("        Prints the list of available substition models.\n\n")

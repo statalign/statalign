@@ -105,7 +105,7 @@ public class PPFold extends statalign.postprocess.Postprocess {
 	int sizeOfAlignments;
 
 	int[] firstDescriptor;
-	static String t[][];
+	String t[][];
 	String[] sequences;
 	String[] viterbialignment;
 	int d;
@@ -557,8 +557,11 @@ public class PPFold extends statalign.postprocess.Postprocess {
 
 	@Override	
 	public void newSample(State state, int no, int total) {
+		//System.out.println(t.length+" "+curAlig.leafNames.length+" "+curAlig.leafAlignment.length);
+		//System.out.println(curAlig.leafNames);
 		for (int i = 0; i < t.length; i++) {
-			t[i] = curAlig.leafAlignment[i].split("\t");
+			//System.out.println(i+" "+curAlig.leafNames[i]);
+			t[i] = new String[]{curAlig.leafNames[i],curAlig.leafAlignment[i]};
 		}
 		Arrays.sort(t, compStringArr);	
 		
@@ -1233,8 +1236,8 @@ public class PPFold extends statalign.postprocess.Postprocess {
 		
 				for(int i = 0 ; i < mpdAlignment.alignment.length ; i++)
 				{
-					mpdNames.add(mpdAlignment.alignment[i].split("(\\s)+")[0]);
-					mpdSequences.add(mpdAlignment.alignment[i].split("(\\s)+")[1]);
+					mpdNames.add(mpdAlignment.sequenceNames[i]);
+					mpdSequences.add(mpdAlignment.alignment[i]);
 				}			
 				dataset.mpdVsInputSim = Distance.AMA(mpdSequences, dataset.inputAlignment.sequences);
 		
@@ -1450,7 +1453,7 @@ public class PPFold extends statalign.postprocess.Postprocess {
 		return null;
 	}
 
-	public static String[][] getSequences() {
+	public String[][] getSequences() {
 		return t;
 	}
 

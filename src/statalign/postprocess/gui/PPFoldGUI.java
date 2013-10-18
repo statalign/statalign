@@ -75,7 +75,7 @@ public class PPFoldGUI extends JPanel {
 		for(int i = x; i < x+dimension; i = i+OFFSET) {
 			int sum = 0;
 		
-			if((double)sum / PPFold.getSequences().length >= 0.25) {
+			if((double)sum / owner.getSequences().length >= 0.25) {
 				gr2.setPaint(Color.GRAY);
 				gr2.fillRect(i, y, OFFSET, dimension);
 				continue;
