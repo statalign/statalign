@@ -57,6 +57,7 @@ public class PostprocessManager {
 		this.mainManager = mainManager;
 		List<String> pluginNames = Utils.classesInPackage(Postprocess.class.getPackage().getName()+".plugins");
 		HashMap<String,Integer> nameMap = new HashMap<String,Integer>();
+		HashMap<Postprocess,Boolean> selectedMap = new HashMap<Postprocess, Boolean>();
 		plugins = new ArrayList<Postprocess>(pluginNames.size());
 		for(int i = 0; i < pluginNames.size(); i++)
 			plugins.add(null);
@@ -67,6 +68,7 @@ public class PostprocessManager {
 				if(!Postprocess.class.isAssignableFrom(cl))
 					continue;
 				Postprocess plugin = (Postprocess)cl.newInstance();
+				selectedMap.put(plugin, plugin.selected);
 				plugin.selected = plugin.active = true;
 				plugins.set(i, plugin);
 			} catch (Exception e) {
@@ -81,11 +83,11 @@ public class PostprocessManager {
 
 		boolean show = mainManager.frame != null;
 		for(Postprocess plugin : plugins){
-			plugin.selected = true;
+			plugin.selected = selectedMap.get(plugin);
 			if(plugin.screenable) {
 				plugin.show = show;
 			}
-			plugin.init();
+//			plugin.init();
 		}
 	}
 	
@@ -121,6 +123,7 @@ public class PostprocessManager {
 	
 	public void init(ModelExtManager modelExtMan) {
 		for(Postprocess plugin : plugins){
+			plugin.postprocessManager = this;
 			plugin.init(modelExtMan);
 		}
 	}
@@ -263,6 +266,11 @@ public class PostprocessManager {
 		} catch (IOException e) {
 			new ErrorMessage(mainManager.frame, " "+e.getLocalizedMessage(), true);
 		}
+	}
+
+	public void updateSelectedList() {
+		if(mainManager.frame != null)
+			mainManager.frame.updateTabs();
 	}
 	
 }

@@ -1,8 +1,6 @@
 package statalign.postprocess.plugins;
 
 import java.awt.BorderLayout;
-import java.awt.Font;
-import java.awt.SystemColor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -13,15 +11,14 @@ import javax.swing.ButtonGroup;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
 import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
 
 import statalign.base.InputData;
 import statalign.base.State;
+import statalign.model.ext.ModelExtManager;
 import statalign.postprocess.Postprocess;
 import statalign.postprocess.gui.StructureGUI;
 import statalign.postprocess.utils.RNAFoldingTools;
@@ -57,10 +54,11 @@ public class Structure extends statalign.postprocess.Postprocess {
 //		postprocessWrite = true;
 		hasToolBar = true;
 		rnaAssociated = true;
+		selected = false;
 	}
 
 	@Override
-	public void init() {
+	public void init(ModelExtManager manager) {
 		toolbar = new ArrayList<JComponent>();
 		createToolBar();
 	}

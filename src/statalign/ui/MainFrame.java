@@ -3,14 +3,13 @@ package statalign.ui;
 import java.awt.BorderLayout;
 import java.awt.Container;
 import java.awt.Cursor;
-import java.awt.Dimension;
 import java.awt.Desktop;
+import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Modifier;
 import java.net.URI;
@@ -43,8 +42,6 @@ import javax.swing.JToolBar;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 
 import statalign.StatAlign;
 import statalign.base.Input;
@@ -404,9 +401,7 @@ public class MainFrame extends JFrame implements ActionListener {
         tab = new JTabbedPane();
 
         input = new Input(manager);
-        tab.addTab(input.getTabName(), input.getIcon(), input.getJPanel(), input.getTip());
-        manager.inputgui = input.inputgui;
-
+        
         // Sorts the tab according to their getTabOrder()
         pluginTabs = new ArrayList(manager.postProcMan.getPlugins());
         Collections.sort(pluginTabs, new Comparator<Postprocess>() {
@@ -416,45 +411,49 @@ public class MainFrame extends JFrame implements ActionListener {
             }
         });
 
-        tabPluginMap = new HashMap<Integer, Postprocess>();
-        for (int i = 0; i < pluginTabs.size(); i++) {
-            Postprocess plugin = pluginTabs.get(i);
-            if (plugin.selected && !plugin.rnaAssociated) {
-                tabPluginMap.put(i + 1, plugin); // TODO: Jesus Java, horrible.
-                tab.addTab(plugin.getTabName(), plugin.getIcon(), plugin.getJPanel(), plugin.getTip());
-            }
-        }
+        updateTabs();
+        
+        manager.inputgui = input.inputgui;
 
-        tab.addChangeListener(new ChangeListener() {
-            @Override
-			public void stateChanged(ChangeEvent changeEvent) {
-                JTabbedPane pane = (JTabbedPane) changeEvent.getSource();
-                Integer i = pane.getSelectedIndex();
-
-                // Remove the last tabs toolbar items.
-                if (lastSelectedTabIndex != -1) {
-                    Postprocess lastPlugin = tabPluginMap.get(lastSelectedTabIndex);
-                    if (lastPlugin != null && lastPlugin.hasToolBar) {
-                        for (JComponent item : lastPlugin.getToolBarItems()) {
-                            toolBar.remove(item);
-                        }
-                        toolBar.revalidate(); // TODO: optimize.
-                        toolBar.repaint();
-                    }
-                }
-
-                // Add the currents tab toolbar items.
-                Postprocess plugin = tabPluginMap.get(i);
-                if (plugin != null && plugin.hasToolBar) {
-                    for (JComponent item : plugin.getToolBarItems()) {
-                        toolBar.add(item);
-                    }
-                    toolBar.revalidate();
-                    toolBar.repaint();
-                }
-                lastSelectedTabIndex = i;
-            }
-        });
+//        tabPluginMap = new HashMap<Integer, Postprocess>();
+//        for (int i = 0; i < pluginTabs.size(); i++) {
+//            Postprocess plugin = pluginTabs.get(i);
+//            if (plugin.selected && !plugin.rnaAssociated) {
+//                tabPluginMap.put(i + 1, plugin); // TODO: Jesus Java, horrible.
+//                tab.addTab(plugin.getTabName(), plugin.getIcon(), plugin.getJPanel(), plugin.getTip());
+//            }
+//        }
+//
+//        tab.addChangeListener(new ChangeListener() {
+//            @Override
+//			public void stateChanged(ChangeEvent changeEvent) {
+//                JTabbedPane pane = (JTabbedPane) changeEvent.getSource();
+//                Integer i = pane.getSelectedIndex();
+//
+//                // Remove the last tabs toolbar items.
+//                if (lastSelectedTabIndex != -1) {
+//                    Postprocess lastPlugin = tabPluginMap.get(lastSelectedTabIndex);
+//                    if (lastPlugin != null && lastPlugin.hasToolBar) {
+//                        for (JComponent item : lastPlugin.getToolBarItems()) {
+//                            toolBar.remove(item);
+//                        }
+//                        toolBar.revalidate(); // TODO: optimize.
+//                        toolBar.repaint();
+//                    }
+//                }
+//
+//                // Add the currents tab toolbar items.
+//                Postprocess plugin = tabPluginMap.get(i);
+//                if (plugin != null && plugin.hasToolBar) {
+//                    for (JComponent item : plugin.getToolBarItems()) {
+//                        toolBar.add(item);
+//                    }
+//                    toolBar.revalidate();
+//                    toolBar.repaint();
+//                }
+//                lastSelectedTabIndex = i;
+//            }
+//        });
 
         mainPanel.add(tab, BorderLayout.CENTER);
 
@@ -630,61 +629,70 @@ public class MainFrame extends JFrame implements ActionListener {
             setCursor(Cursor.getDefaultCursor());
         } else if (ev.getActionCommand() == "RNA mode") {
         	if(rnaButton.isSelected()) {
-           		dlg = new RNASettingsDlg (this);
-           	  if(!dlg.display(this)) {
-           		rnaButton.setSelected(false);
-           		manager.inputgui.grabFocus();  // transfer focus
-           		return;
-           	  }
-        		
-        		//manager.inputgui = input.inputgui;
-				//manager.inputgui.updateSequences();
-				//tab.addTab(input.getTabName(), input.getIcon(), input.getJPanel(), input.getTip());
-				manager.inputgui = input.inputgui;
-				manager.inputgui.updateSequences();
-				//System.out.println("SELECTED!!!");
-				
-				manager.postProcMan.rnaMode = true;
-				//manager.postProcMan.reload();
-   
-				int count = tab.getTabCount();
-				for(Postprocess plugin : pluginTabs) {
-					//System.out.println(plugin.getTabName() + ": " + plugin.screenable);
-					if(plugin.rnaAssociated) {
-						tabPluginMap.put(count, plugin);
-						tab.addTab(plugin.getTabName(), plugin.getIcon(), plugin.getJPanel(), plugin.getTip());
-						count++;
-					}
-					
-					//manager.postProcMan.init();
-				}
-        		
+        		dlg = new RNASettingsDlg (this);
+        		if(!dlg.display(this)) {
+        			rnaButton.setSelected(false);
+        			manager.inputgui.grabFocus();  // transfer focus
+        			return;
         		}
-        	
-        	
-        	else {
-        		
-        		manager.postProcMan.rnaMode = false;
-        		//System.out.println("NOT SELECTED!!!");
-        		manager.inputgui = input.inputgui;
-        		manager.inputgui.updateSequences();
-        		
-        		int count = 0;
-        		for(Postprocess plugin : pluginTabs) {
-        			if(plugin.rnaAssociated) {
-        				tabPluginMap.remove(plugin);
-        				String removePlugin = tab.getTitleAt(count+1);
-        				tab.remove(count + 1);
-        				count--;
-        			}
-        			
-        			count++;
-        			
-        				
-        		}
-        		
-        		
         	}
+        	boolean sel = rnaButton.isSelected();
+			manager.postProcMan.rnaMode = sel;
+			for(Postprocess plugin : pluginTabs) {
+				if(plugin.rnaAssociated) {
+					plugin.selected = sel;
+				}
+			}
+			updateTabs();
+//        		
+//        		//manager.inputgui = input.inputgui;
+//				//manager.inputgui.updateSequences();
+//				//tab.addTab(input.getTabName(), input.getIcon(), input.getJPanel(), input.getTip());
+//				manager.inputgui = input.inputgui;
+//				manager.inputgui.updateSequences();
+//				//System.out.println("SELECTED!!!");
+//				
+//				manager.postProcMan.rnaMode = true;
+//				//manager.postProcMan.reload();
+//   
+//				int count = tab.getTabCount();
+//				for(Postprocess plugin : pluginTabs) {
+//					//System.out.println(plugin.getTabName() + ": " + plugin.screenable);
+//					if(plugin.rnaAssociated) {
+//						tabPluginMap.put(count, plugin);
+//						tab.addTab(plugin.getTabName(), plugin.getIcon(), plugin.getJPanel(), plugin.getTip());
+//						count++;
+//					}
+//					
+//					//manager.postProcMan.init();
+//				}
+//        		
+//        		}
+//        	
+//        	
+//        	else {
+//        		
+//        		manager.postProcMan.rnaMode = false;
+//        		//System.out.println("NOT SELECTED!!!");
+//        		manager.inputgui = input.inputgui;
+//        		manager.inputgui.updateSequences();
+//        		
+//        		int count = 0;
+//        		for(Postprocess plugin : pluginTabs) {
+//        			if(plugin.rnaAssociated) {
+//        				tabPluginMap.remove(plugin);
+//        				String removePlugin = tab.getTitleAt(count+1);
+//        				tab.remove(count + 1);
+//        				count--;
+//        			}
+//        			
+//        			count++;
+//        			
+//        				
+//        		}
+//        		
+//        		
+//        	}
 
 			manager.inputgui.grabFocus();	// transfer focus
         	
@@ -902,5 +910,48 @@ public class MainFrame extends JFrame implements ActionListener {
     public static void main(String[] args) throws Exception {
         new MainFrame();
     }
+
+	public void updateTabs() {
+		tab.removeAll();
+        tab.addTab(input.getTabName(), input.getIcon(), input.getJPanel(), input.getTip());
+        for (int i = 0; i < pluginTabs.size(); i++) {
+            Postprocess plugin = pluginTabs.get(i);
+            if (plugin.selected) {
+//                tabPluginMap.put(i + 1, plugin); // TODO: Jesus Java, horrible.
+                tab.addTab(plugin.getTabName(), plugin.getIcon(), plugin.getJPanel(), plugin.getTip());
+            }
+        }
+
+//        tab.addChangeListener(new ChangeListener() {
+//            @Override
+//			public void stateChanged(ChangeEvent changeEvent) {
+//                JTabbedPane pane = (JTabbedPane) changeEvent.getSource();
+//                Integer i = pane.getSelectedIndex();
+//
+//                // Remove the last tabs toolbar items.
+//                if (lastSelectedTabIndex != -1) {
+//                    Postprocess lastPlugin = tabPluginMap.get(lastSelectedTabIndex);
+//                    if (lastPlugin != null && lastPlugin.hasToolBar) {
+//                        for (JComponent item : lastPlugin.getToolBarItems()) {
+//                            toolBar.remove(item);
+//                        }
+//                        toolBar.revalidate(); // TODO: optimize.
+//                        toolBar.repaint();
+//                    }
+//                }
+//
+//                // Add the currents tab toolbar items.
+//                Postprocess plugin = tabPluginMap.get(i);
+//                if (plugin != null && plugin.hasToolBar) {
+//                    for (JComponent item : plugin.getToolBarItems()) {
+//                        toolBar.add(item);
+//                    }
+//                    toolBar.revalidate();
+//                    toolBar.repaint();
+//                }
+//                lastSelectedTabIndex = i;
+//            }
+//        });
+	}
 
 }

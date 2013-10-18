@@ -8,6 +8,7 @@ import javax.swing.ImageIcon;
 
 import statalign.base.InputData;
 import statalign.base.State;
+import statalign.model.ext.ModelExtManager;
 import statalign.postprocess.TreeVisualizer;
 import statalign.postprocess.gui.treeviews.HorizontalCladogramTreeView;
 import statalign.postprocess.gui.treeviews.HorizontalPhylogramTreeView;
@@ -34,7 +35,7 @@ public class ConsensusTreeVisualizer extends TreeVisualizer {
     }
     
     @Override
-    public void init() {
+    public void init(ModelExtManager manager) {
     	if(show) {
 			super.init(new TreeView[]{
     				new HorizontalCladogramTreeView(),

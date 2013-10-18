@@ -1,8 +1,8 @@
 package statalign.postprocess.plugins.structalign;
 
 import java.awt.BorderLayout;
-import java.io.IOException;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -15,10 +15,8 @@ import org.apache.commons.math3.geometry.euclidean.threed.Rotation;
 import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
 
 import statalign.base.InputData;
-import statalign.base.Mcmc;
 import statalign.base.McmcStep;
 import statalign.base.State;
-import statalign.base.Utils;
 import statalign.mcmc.McmcMove;
 import statalign.model.ext.ModelExtManager;
 import statalign.model.ext.ModelExtension;
@@ -57,7 +55,7 @@ public class StructTrace extends Postprocess {
 		outputable = true;
 		postprocessable = true;
 		postprocessWrite = true;
-		selected = true;
+		selected = false;
 		active = true;
 	}
 
@@ -101,6 +99,7 @@ public class StructTrace extends Postprocess {
 		for(ModelExtension modExt : modelExtMan.getPluginList()) {
 			if(modExt instanceof StructAlign) {
 				structAlign = (StructAlign) modExt;
+				structAlign.connectStructTrace(this);
 			}
 		}
 	}

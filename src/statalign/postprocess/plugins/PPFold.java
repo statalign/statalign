@@ -24,7 +24,6 @@ import javax.swing.JScrollPane;
 import statalign.base.InputData;
 import statalign.base.Mcmc;
 import statalign.base.State;
-import statalign.base.Utils;
 import statalign.distance.Distance;
 import statalign.postprocess.Postprocess;
 import statalign.postprocess.gui.PPFoldGUI;
@@ -155,6 +154,7 @@ public class PPFold extends statalign.postprocess.Postprocess {
 //		postprocessWrite = true;; // TODO might need to change to false
 		rnaAssociated = true;
 		Entropy.allowed = true;
+		selected = false;
 	}
 
 	@Override

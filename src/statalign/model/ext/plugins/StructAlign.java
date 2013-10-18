@@ -2,8 +2,6 @@ package statalign.model.ext.plugins;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.BufferedWriter;
-import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -32,19 +30,26 @@ import statalign.mcmc.GammaProposal;
 import statalign.mcmc.GaussianProposal;
 import statalign.mcmc.HyperbolicPrior;
 import statalign.mcmc.InverseGammaPrior;
-import statalign.mcmc.LinearPrior;
 import statalign.mcmc.McmcCombinationMove;
 import statalign.mcmc.McmcMove;
-import statalign.mcmc.MultiplicativeProposal;
 import statalign.mcmc.ParameterInterface;
 import statalign.mcmc.PriorDistribution;
-import statalign.mcmc.ProposalDistribution;
 import statalign.mcmc.UniformPrior;
 import statalign.model.ext.ModelExtension;
-import statalign.model.ext.plugins.structalign.*;
-
+import statalign.model.ext.plugins.structalign.AlignmentMove;
+import statalign.model.ext.plugins.structalign.ContinuousPositiveStructAlignMove;
+import statalign.model.ext.plugins.structalign.Funcs;
+import statalign.model.ext.plugins.structalign.HierarchicalContinuousPositiveStructAlignMove;
+import statalign.model.ext.plugins.structalign.LibraryMove;
+import statalign.model.ext.plugins.structalign.LinearLink;
+import statalign.model.ext.plugins.structalign.MultiNormCholesky;
+import statalign.model.ext.plugins.structalign.QuadraticLink;
+import statalign.model.ext.plugins.structalign.RotationMove;
+import statalign.model.ext.plugins.structalign.RotationProposal;
+import statalign.model.ext.plugins.structalign.StructAlignParameterInterface;
+import statalign.model.ext.plugins.structalign.TranslationMove;
 import statalign.model.subst.SubstitutionModel;
-import statalign.postprocess.PluginParameters;
+import statalign.postprocess.plugins.structalign.StructTrace;
 import statalign.utils.LinkFunction;
 
 public class StructAlign extends ModelExtension implements ActionListener {
@@ -200,7 +205,10 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	public double MIN_EPSILON = 0.01;
 	/** Value to fix epsilon at if we're not estimating it. */
 	public double fixedEpsilonValue = 0.0;
-	
+
+	// reference to the postprocessing plugin
+	private StructTrace structTrace;
+
 	@Override
 	public List<JComponent> getToolBarItems() {
 		myButton = new JToggleButton(new ImageIcon(ClassLoader.getSystemResource("icons/protein.png")));
@@ -214,6 +222,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		setActive(myButton.isSelected());
+		structTrace.setSelected(active);
 	}
 	
 
@@ -616,7 +625,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		
 		ParameterInterface tauInterface = paramInterfaceGenerator.new TauInterface();
 		ContinuousPositiveStructAlignMove tauMove = 
-			new ContinuousPositiveStructAlignMove(this,tauInterface,tauPrior,new GammaProposal(0.001,0.001),"τ");
+			new ContinuousPositiveStructAlignMove(this,tauInterface,tauPrior,new GammaProposal(0.001,0.001),"tau");
 		tauMove.moveParams.setPlottable();
 		tauMove.moveParams.setPlotSide(1);
 		addMcmcMove(tauMove,tauWeight);
@@ -625,8 +634,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		if (!fixedEpsilon) {
 			ParameterInterface epsilonInterface = paramInterfaceGenerator.new EpsilonInterface();
 			epsilonMove = 
-				new ContinuousPositiveStructAlignMove(this,epsilonInterface,epsilonPrior,new GaussianProposal(),"ε");
-				//new ContinuousPositiveStructAlignMove(this,epsilonInterface,epsilonPrior,new GammaProposal(0.001,0.001),"ε");
+				new ContinuousPositiveStructAlignMove(this,epsilonInterface,epsilonPrior,new GaussianProposal(),"eps");
+				//new ContinuousPositiveStructAlignMove(this,epsilonInterface,epsilonPrior,new GammaProposal(0.001,0.001),"eps");
 			epsilonMove.setMinValue(MIN_EPSILON);
 			epsilonMove.moveParams.setPlottable();
 			epsilonMove.moveParams.setPlotSide(1);
@@ -637,13 +646,13 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			HierarchicalContinuousPositiveStructAlignMove nuMove = null;
 			if (!globalSigma) {
 				ParameterInterface sigma2HInterface = paramInterfaceGenerator.new Sigma2HInterface();
-				sigma2HMove = new HierarchicalContinuousPositiveStructAlignMove(this,sigma2HInterface,sigma2HPrior,new GammaProposal(0.001,0.001),"σ_g");				
+				sigma2HMove = new HierarchicalContinuousPositiveStructAlignMove(this,sigma2HInterface,sigma2HPrior,new GammaProposal(0.001,0.001),"s2_g");
 				sigma2HMove.moveParams.setPlottable();
 				sigma2HMove.moveParams.setPlotSide(0);
 				addMcmcMove(sigma2HMove,sigma2HierWeight); 
 				
 				ParameterInterface nuInterface = paramInterfaceGenerator.new NuInterface();
-				nuMove = new HierarchicalContinuousPositiveStructAlignMove(this,nuInterface,nuPrior,new GammaProposal(0.001,0.001),"ν");
+				nuMove = new HierarchicalContinuousPositiveStructAlignMove(this,nuInterface,nuPrior,new GammaProposal(0.001,0.001),"nu");
 				nuMove.moveParams.setPlottable();
 				nuMove.moveParams.setPlotSide(1);
 				addMcmcMove(nuMove,nuWeight);
@@ -652,10 +661,10 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			for (int j=0; j<sigma2.length; j++) {
 				String sigmaName;
 				if (sigma2.length == 1) {
-					sigmaName = "σ2";
+					sigmaName = "s2";
 				}
 				else {
-					sigmaName = "σ2_"+j;
+					sigmaName = "s2_"+j;
 				}
 				ParameterInterface sigma2Interface = paramInterfaceGenerator.new Sigma2Interface(j);
 //				ProposalDistribution prop = null;
@@ -951,6 +960,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			}
 			return true;
 		}
+		@Override
 		public int hashCode() {
 			return Arrays.hashCode(col);
 		}
@@ -1197,6 +1207,10 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	@Override
 	public double calcLogEm(int[] aligned) {
 		return columnContrib(aligned);
+	}
+	
+	public void connectStructTrace(StructTrace structTrace) {
+		this.structTrace = structTrace;
 	}
 
 	// </StructAlign>

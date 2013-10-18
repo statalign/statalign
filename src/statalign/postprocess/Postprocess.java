@@ -38,6 +38,8 @@ public abstract class Postprocess {
 	/** TODO: REMOVE!!!!!!!!!! */
 	public Mcmc mcmc;
 	
+	PostprocessManager postprocessManager;
+	
     /**
      * True, if the plugin implements the {@link Postprocess#getToolBarItems()} function.
      * Defaults to false.
@@ -122,8 +124,8 @@ public abstract class Postprocess {
 	 * Called by {@link PostprocessManager} after setting the {@link #show} field to allow initialisation,
 	 * possibly involving GUI (toolbar etc.) 
 	 */
-	public void init() {
-	}
+//	public void init() {
+//	}
 
 	public void init(ModelExtManager modelExtMan) {
 	}
@@ -267,7 +269,9 @@ public abstract class Postprocess {
     	return mcmc.modelExtMan.getPluginList();
     }
 	
-
-
+    public void setSelected(boolean selected) {
+    	this.selected = selected;
+    	postprocessManager.updateSelectedList();
+    }
 
 }

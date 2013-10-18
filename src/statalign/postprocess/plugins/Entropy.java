@@ -50,7 +50,7 @@ public class Entropy extends statalign.postprocess.Postprocess{
 //		postprocessWrite = true;
 		sampling = true;
 		rnaAssociated = true;
-		
+		selected = false;
 	}
 
 	/**

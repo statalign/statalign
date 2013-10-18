@@ -35,6 +35,7 @@ public class VisualDistance extends statalign.postprocess.Postprocess {
 //		postprocessable = true;
 //		postprocessWrite = true;
 		rnaAssociated = true;
+		selected = false;
 	}
 
 	@Override
