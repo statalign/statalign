@@ -235,6 +235,8 @@ public class Mcmc extends Stoppable {
 	 */
 	private void initCoreModel() {
 		
+		coreModel.printExtraInfo = Utils.VERBOSE;
+		
 		double[] lambdaMuPriorParams = {1,1};
 		
 		IndelMove rMove = new RMove(coreModel,new BetaPrior(1,1),new LogisticProposal(),"R");
@@ -680,7 +682,7 @@ public class Mcmc extends Stoppable {
 			for (int i = 0; i < period && !shouldStop; i++) {
 				if (i > 0 && (i % LOG_INTERVAL == 0)) {
 					postprocMan.flushAll();
-					printMcmcInfo();
+					if (coreModel.printExtraInfo) printMcmcInfo();
 				}
 				for (int j = 0; j < sampRate; j++) {
 					

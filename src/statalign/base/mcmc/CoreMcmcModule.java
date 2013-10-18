@@ -20,6 +20,7 @@ import statalign.model.ext.ModelExtManager;
 public class CoreMcmcModule extends McmcModule {
 	
 	private ModelExtManager modelExtMan;
+	
 	public ModelExtManager getModelExtMan() {
 		return modelExtMan;
 	}

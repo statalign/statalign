@@ -193,6 +193,8 @@ public class Utils{
 	
 	private static double[] tempDoubleArray;
 
+	public static boolean VERBOSE = false;
+
 	/**
 	 * This function selects a random integer with expected value given by expectedLength.
 	 * The probability of the selection of that particular index is returned in selectLike.

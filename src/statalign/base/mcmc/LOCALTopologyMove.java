@@ -206,7 +206,7 @@ public class LOCALTopologyMove extends McmcMove {
 	@Override
 	public void afterMove(Object externalState) {
 		if (lastMoveAccepted && topologyChange && nephew.parent != tree.root) {
-			System.out.println("Topology change (LOCAL).");
+			if (owner.printExtraInfo) System.out.println("Topology change (LOCAL).");
 			nTopologyChanges++;
 		}
 		((CoreMcmcModule) owner).getModelExtMan().afterTreeChange(tree,lastMoveAccepted ? uncle : nephew,lastMoveAccepted);
