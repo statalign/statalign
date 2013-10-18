@@ -165,7 +165,7 @@ public abstract class McmcModule {
 			if (mcmcMoveWeightIncrements.get(i) != 0) {
 				mcmcMoveWeights.set(i,mcmcMoveWeights.get(i)+
 						mcmcMoveWeightIncrements.get(i));				
-				System.out.println("Move \""+mcmcMoves.get(i).name+"\" now has weight "+mcmcMoveWeights.get(i));
+				if (printExtraInfo) System.out.println("Move \""+mcmcMoves.get(i).name+"\" now has weight "+mcmcMoveWeights.get(i));
 			}
 		}
 	}

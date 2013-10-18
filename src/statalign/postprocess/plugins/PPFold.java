@@ -26,6 +26,7 @@ import statalign.base.Mcmc;
 import statalign.base.State;
 import statalign.distance.Distance;
 import statalign.postprocess.Postprocess;
+import statalign.postprocess.PostprocessManager;
 import statalign.postprocess.gui.PPFoldGUI;
 import statalign.postprocess.plugins.benchmarks.Benchmarks;
 import statalign.postprocess.plugins.benchmarks.Dataset;
@@ -241,13 +242,13 @@ public class PPFold extends statalign.postprocess.Postprocess {
 		}
 		selectReferenceSequence(input);
 		
-		if(pluginParameters != null)
+		if(PostprocessManager.pluginParameters != null)
 		{
 //			System.out.println("Parameters");
 //			pluginParameters.print();
-			String ppfoldParameter = pluginParameters.getParameter("ppfold");
-			String rnaAlifoldParameter = pluginParameters.getParameter("rnaalifold");
-			String fuzzyParameter = pluginParameters.getParameter("fuzzy");
+			String ppfoldParameter = PostprocessManager.pluginParameters.getParameter("ppfold");
+			String rnaAlifoldParameter = PostprocessManager.pluginParameters.getParameter("rnaalifold");
+			String fuzzyParameter = PostprocessManager.pluginParameters.getParameter("fuzzy");
 			
 			samplingAndAveragingPPfold = ppfoldParameter != null;
 			samplingAndAveragingRNAalifold = rnaAlifoldParameter != null;
@@ -269,8 +270,9 @@ public class PPFold extends statalign.postprocess.Postprocess {
 				}
 			}
 			
-			if(pluginParameters.getParameter("experimental") != null)
+			if(PostprocessManager.pluginParameters.getParameter("experimental") != null)
 			{
+				System.out.println("Experimental RNA mode enabled.");
 //				new File(outDir).mkdirs();
 				samplingAndAveragingPPfold = true;
 				samplingAndAveragingRNAalifold = true; // TODO SHOULD CHANGE BACK TO TRUE

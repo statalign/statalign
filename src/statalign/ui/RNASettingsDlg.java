@@ -36,6 +36,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import statalign.postprocess.Postprocess;
+import statalign.postprocess.PostprocessManager;
 import statalign.postprocess.utils.RNAalifold;
 
 /**
@@ -446,11 +447,11 @@ public class RNASettingsDlg extends JDialog implements ActionListener, ChangeLis
 		if(useSamplingAndAveragingButton.isSelected())
 		{
 			String ppfold = "";
-			Postprocess.pluginParameters.setParameter("ppfold", "");
+			PostprocessManager.pluginParameters.setParameter("ppfold", "");
 		}
 		else
 		{
-			Postprocess.pluginParameters.removeParameter("ppfold");
+			PostprocessManager.pluginParameters.removeParameter("ppfold");
 		}
 		
 		if(useSamplingAndAveragingRNAalifoldButton.isSelected())
@@ -461,11 +462,11 @@ public class RNASettingsDlg extends JDialog implements ActionListener, ChangeLis
 			{
 				rnaalifold += " -circ ";
 			}
-			Postprocess.pluginParameters.setParameter("rnaalifold", rnaalifold);
+			PostprocessManager.pluginParameters.setParameter("rnaalifold", rnaalifold);
 		}
 		else
 		{
-			Postprocess.pluginParameters.removeParameter("rnaalifold");
+			PostprocessManager.pluginParameters.removeParameter("rnaalifold");
 		}
 	}
 	

@@ -477,7 +477,7 @@ public class CommandLine {
 			
 			  .append("    -plugin:PLUGIN_NAME\n")
 			  .append("        Specify additional plugins to be run and the corresponding parameters for each.\n")
-			  .append("        Each plugin should be specified seperately, e.g. -plugin:ppfold -plugin:rnaalifold\n")
+			  .append("        Each plugin should be specified seperately, e.g. -plugin:ppfold -plugin:structal\n")
 			  .append("        For additional usage information for a specific plugin, use -help:PLUGIN_NAME.\n\n")
 			
 			  .append("    -help:PLUGIN_NAME\n")

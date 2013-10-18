@@ -127,12 +127,8 @@ public abstract class ModelExtension extends McmcModule {
 
 	/**
 	 * Called during StatAlign startup, after all ModelExtension plugins have been loaded and command line
-	 * has been processed (if present).
-	 * 
-	 * <p>It is the plugin's responsibility to activate itself using {@link #setActive(boolean)}
-	 * when the appropriate command line arguments have been specified.
-	 * 
-	 * @param params reference to plugin command line parameters or null when StatAlign was run with a GUI
+	 * arguments have been processed (if present).
+	 *  
 	 */
 	public void init() {}
 	

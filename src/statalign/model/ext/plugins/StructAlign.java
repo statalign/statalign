@@ -232,7 +232,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		usage.append("___________________________\n\n");
 		usage.append("  StructAlign version 1.0\n\n");
 		usage.append("^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\n");
-		usage.append("java -jar statalign.jar -plugin:structal[OPTIONS]\n");
+		usage.append("java -jar statalign.jar -plugin:structal[[OPTION1,OPTION2,...]]\n");
 		usage.append("OPTIONS: \n");
 		usage.append("\tsigma2=X\t\t(Fixes sigma2 at X)\n");
 		usage.append("\tepsilon=X\t\t(Fixes epsilon at X)\n");

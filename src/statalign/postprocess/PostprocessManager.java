@@ -50,6 +50,12 @@ public class PostprocessManager {
 	public static boolean rnaMode = false;
 	
 	/**
+	 * Static object holding parameters, which are visible to all plugins.
+	 */
+	public static PluginParameters pluginParameters = new PluginParameters();
+
+	
+	/**
 	 * This constructor recognizes the plugins
 	 * @param mainManager The MainManager that manages the MCMC run.
 	 */

@@ -59,7 +59,6 @@ public class ModelExtManager {
 		pluginList = Utils.findPlugins(ModelExtension.class);
 		for(ModelExtension plugin : pluginList) {
 			plugin.setManager(this);
-			plugin.init();
 		}
 		if (args != null) {
 			ARG: for(int i = 0 ; i < args.size() ; i++) {
@@ -86,6 +85,7 @@ public class ModelExtManager {
 										"Plugin parameters must be specifed in the form\n-plugin:pluginName[par1=x,par2=y]\n");
 							}
 						}
+						plugin.init();
 						break ARG;
 					}
 				}
