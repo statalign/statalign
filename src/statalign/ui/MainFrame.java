@@ -199,8 +199,10 @@ public class MainFrame extends JFrame implements ActionListener {
         toolBar.addSeparator();
         
         for(ModelExtension plugin : manager.modelExtMan.getPluginList()) {
-        	for(JComponent comp : plugin.getToolBarItems())
-        		toolBar.add(comp);
+        	if (plugin.getToolBarItems() != null) {
+        		for(JComponent comp : plugin.getToolBarItems())
+        			toolBar.add(comp);
+        	}
         }
         
         String rnaText = "RNA mode";
