@@ -44,7 +44,7 @@ public abstract class McmcModule {
 		for (int i=0; i<mcmcMoves.size(); i++) {
 			if (mcmcMoves.get(i).name.contains(name)) {
 				mcmcMoveWeights.set(i, weight);
-				System.out.println("Move \""+mcmcMoves.get(i).name+"\" now has weight "+weight);
+				if (printExtraInfo) System.out.println("Move \""+mcmcMoves.get(i).name+"\" now has weight "+weight);
 			}
 		}
 	}

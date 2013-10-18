@@ -908,7 +908,7 @@ public class MainFrame extends JFrame implements ActionListener {
         stopItem.setEnabled(true);
         stopButton.setEnabled(true);
         
-        rnaButton.setEnabled(false);
+        rnaButton.setEnabled(false);        
     }
     
     public void start() {
