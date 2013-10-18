@@ -853,10 +853,10 @@ public class PPFold extends statalign.postprocess.Postprocess {
 						}
 					}
 					
-					System.out.println("RNAalifold over here " + samplingAndAveragingPPfold );
+					//System.out.println("RNAalifold over here " + samplingAndAveragingPPfold );
 					if(!samplingAndAveragingPPfold) // if ppfold not running, display RNAalifold on the GUI
 					{
-						System.out.println("HERE");
+						//System.out.println("HERE");
 						probMatrix = new float[d][d];					
 	
 						double [] summedRNAalifoldSingleBaseProb = RNAFoldingTools.getSingleBaseProb(summedBasePairProbRNAalifold);
