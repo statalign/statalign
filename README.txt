@@ -1,10 +1,6 @@
-<<<<<<< HEAD
 StatAlign v3.0a
-=======
 
-StatAlign v2.1
->>>>>>> 8d7e42d... gui update, resources, version update
-http://statalign.github.com/
+http://statalign.github.io/
  
  
 ### INTRODUCTION ###
