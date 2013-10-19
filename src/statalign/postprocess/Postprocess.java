@@ -266,6 +266,6 @@ public abstract class Postprocess {
     public void setSelected(boolean selected) {
     	this.selected = selected;
     	postprocessManager.updateSelectedList();
-    }
+    }    
 
 }

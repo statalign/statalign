@@ -49,6 +49,7 @@ import statalign.model.ext.plugins.structalign.RotationProposal;
 import statalign.model.ext.plugins.structalign.StructAlignParameterInterface;
 import statalign.model.ext.plugins.structalign.TranslationMove;
 import statalign.model.subst.SubstitutionModel;
+import statalign.postprocess.plugins.structalign.RmsdTrace;
 import statalign.postprocess.plugins.structalign.StructTrace;
 import statalign.utils.LinkFunction;
 
@@ -208,6 +209,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 
 	// reference to the postprocessing plugin
 	private StructTrace structTrace;
+	private RmsdTrace rmsdTrace;
+	private boolean printRmsd = false; 
 
 	@Override
 	public List<JComponent> getToolBarItems() {
@@ -234,6 +237,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		usage.append("^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\n");
 		usage.append("java -jar statalign.jar -plugin:structal[[OPTION1,OPTION2,...]]\n");
 		usage.append("OPTIONS: \n");
+		usage.append("\tprintRmsd=true\t\t(Prints RMSD and sequence identity for each sample.)\n");
 		usage.append("\tsigma2=X\t\t(Fixes sigma2 at X)\n");
 		usage.append("\tepsilon=X\t\t(Fixes epsilon at X)\n");
 		usage.append("\tminEpsilon=X\t\t(Sets minimum value for epsilon to X) [default 0.01]\n");
@@ -341,6 +345,9 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		else if (paramName.equals("localEpsilon")) {
 			localEpsilon = true;
 			System.out.println("Using B-factor information to scale epsilon.");
+		}
+		else if (paramName.equals("printRmsd")) {
+			printRmsd = true;			
 		}
 		else if (paramName.equals("useLibrary")) {
 			useLibrary = true;
@@ -1212,6 +1219,11 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	public void connectStructTrace(StructTrace structTrace) {
 		this.structTrace = structTrace;
 	}
+	public void connectRmsdTrace(RmsdTrace _rmsdTrace) {
+		rmsdTrace = _rmsdTrace;
+		rmsdTrace.active = printRmsd;
+	}
+	
 
 	// </StructAlign>
 }

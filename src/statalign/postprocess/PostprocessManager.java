@@ -138,6 +138,7 @@ public class PostprocessManager {
 	 * It opens information chanels towards postrocessing plug-ins.
 	 */
 	public void beforeFirstSample() {
+		
 		if(rnaMode) {
 			for(Postprocess plugin : plugins){
 				plugin.mcmc = mcmc;

@@ -27,12 +27,9 @@ import statalign.postprocess.gui.StructAlignTraceGUI;
 
 public class StructTrace extends Postprocess {
 
-	FileWriter rmsdOut;
-	FileWriter radiiOut;
-	
-	boolean PRINT_RMSD = false; // TODO have this set by StructAlign
-	public StructAlign structAlign;
 	List<StructAlignTraceParameters> parameterHistory;
+
+	public StructAlign structAlign;
 	
 	public int burninLength; 
 	public int MAX_HISTORY_SIZE = 1000;
@@ -54,11 +51,23 @@ public class StructTrace extends Postprocess {
 		screenable = true;
 		outputable = true;
 		postprocessable = true;
-		postprocessWrite = true;
+		postprocessWrite = false;
 		selected = false;
-		active = true;
+		active = false;
 	}
 
+	@Override
+	public void init(ModelExtManager modelExtMan) {
+		for(ModelExtension modExt : modelExtMan.getPluginList()) {
+			if(modExt instanceof StructAlign) {
+				structAlign = (StructAlign) modExt;
+				structAlign.connectStructTrace(this);
+			}
+		}
+		active = structAlign.isActive();
+		postprocessWrite = active;
+	}
+	
 	@Override
 	public String getTabName() {
 		return "Structural parameters";
@@ -94,15 +103,7 @@ public class StructTrace extends Postprocess {
 	public void setSampling(boolean enabled) {
 	}
 	
-	@Override
-	public void init(ModelExtManager modelExtMan) {
-		for(ModelExtension modExt : modelExtMan.getPluginList()) {
-			if(modExt instanceof StructAlign) {
-				structAlign = (StructAlign) modExt;
-				structAlign.connectStructTrace(this);
-			}
-		}
-	}
+
 	
 	@Override
 	public void beforeFirstSample(InputData inputData) {
@@ -111,7 +112,7 @@ public class StructTrace extends Postprocess {
 //				structAlign = (StructAlign) modExt;
 //			}
 //		}
-		active = structAlign.isActive();
+		
 		if(!active)
 			return;
 		try {
@@ -142,36 +143,7 @@ public class StructTrace extends Postprocess {
 		// will start to shift.
 		count = 0;
 		
-		if (PRINT_RMSD) {
-			try{
-				rmsdOut = new FileWriter("rmsd.txt");
-				radiiOut = new FileWriter("radii.txt");
-			} catch (IOException e){}
-			
-			double[] rad = calcGyration();
-			int leaves = structAlign.coords.length;
-			try {
-				for(int i = 0; i < leaves-1; i++)
-					for(int j = i+1; j < leaves; j++)
-						rmsdOut.write("msd" + i + "_" + j + "\t");
-				for(int i = 0; i < leaves-1; i++)
-					for(int j = i+1; j < leaves; j++)
-						rmsdOut.write("t" + i + "_" + j + "\t");
-				for(int i = 0; i < leaves-1; i++)
-					for(int j = i+1; j < leaves; j++)
-						rmsdOut.write("seqID" + i + "_" + j + "\t");
-				rmsdOut.write("\n");
-				
-				for(int i = 0; i < rad.length; i++)
-					radiiOut.write(mcmc.tree.names[i] + "\t");
-				radiiOut.write("\n");
-				for(int i = 0; i < rad.length; i++)
-					radiiOut.write(rad[i] + "\t"); 
-				radiiOut.close();
-			} catch (IOException e){}
-		}
-	}
-	
+	}	
 	@Override
 	public void newSample(State state, int no, int total) {
 		if(!active)
@@ -194,26 +166,6 @@ public class StructTrace extends Postprocess {
 				e.printStackTrace(); 
 			}
 			//structAlign.setAllMovesNotProposed();
-			
-			if (PRINT_RMSD) {	
-				double[][] msd = calcMSD();
-				double[][] seqID = calcSeqID();
-				
-				try {
-					for(int i = 0; i < msd.length-1; i++)
-						for(int j = i+1; j < msd.length; j++)
-							rmsdOut.write(msd[i][j] + "\t");
-					for(int i = 0; i < msd.length-1; i++)
-						for(int j = i+1; j < msd.length; j++) 
-							rmsdOut.write(structAlign.distanceMatrix[i][j] + "\t");
-					for(int i = 0; i < msd.length-1; i++)
-						for(int j = i+1; j < msd.length; j++)
-							rmsdOut.write(seqID[i][j] + "\t");
-					rmsdOut.write("\n");
-				} catch (IOException e){
-					e.printStackTrace();
-				}
-			}
 		}
 	}
 	
@@ -226,13 +178,7 @@ public class StructTrace extends Postprocess {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		if (PRINT_RMSD) {
-			try {
-				rmsdOut.close();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
+		
 		//if(Utils.DEBUG) {
 			System.out.println("final rotation matrices:");
 			for(int i = 1; i < structAlign.xlats.length; i++) {
@@ -280,75 +226,5 @@ public class StructTrace extends Postprocess {
 			}
 		}
 		++count;
-	}
-	
-	public double[][] calcMSD(){
-		double[][][] coor = structAlign.rotCoords;
-		String[] align = structAlign.curAlign;
-		int leaves = coor.length;
-		boolean igap, jgap;
-		double[][] msd = new double[leaves][leaves];
-		for(int i = 0; i < leaves-1; i++){
-			for(int j = i+1; j < leaves; j++){
-				int ii = 0, jj = 0, n = 0;
-				for(int k = 0; k < align[0].length(); k++){
-					igap = align[i].charAt(k) == '-';
-					jgap = align[j].charAt(k) == '-';
-					if(!igap & !jgap){
-						msd[i][j] += sqDistance(coor[i][ii], coor[j][jj]);
-						n++;
-					}
-					ii += igap ? 0 : 1;
-					jj += jgap ? 0 : 1;
-				}
-				msd[i][j] /= n;
-			}
-		}
-		return msd;
-	}
-	
-	public double sqDistance(double[] x, double[] y){
-		double d = 0;
-		for(int i = 0; i < x.length; i++)
-			d += Math.pow(x[i] - y[i], 2.0);
-		return d;
-	}
-	
-	public double[] calcGyration(){
-		double[][][] coor = structAlign.coords;
-		int leaves = coor.length;
-		double[] radii = new double[leaves];
-		for(int i = 0; i < leaves; i++){
-			radii[i] = 0;
-			// coordinates are centered in StructAlign.initRun()
-			for(int j = 0; j < coor[i].length; j++)
-				for(int k = 0; k < coor[i][0].length; k++)
-					radii[i] += Math.pow(coor[i][j][k], 2.0);
-			radii[i] /= coor[0].length;
-			radii[i] = Math.pow(radii[i], 0.5);
-		}
-		return radii;
-	}
-	
-	public double[][] calcSeqID(){
-		String[] align = structAlign.curAlign;
-		int leaves = align.length;
-		boolean igap, jgap;
-		double[][] seqID = new double[leaves][leaves];
-		for(int i = 0; i < leaves-1; i++){
-			for(int j = i+1; j < leaves; j++){
-				double match = 0, id = 0;
-				for(int k = 0; k < align[0].length(); k++){
-					igap = align[i].charAt(k) == '-';
-					jgap = align[j].charAt(k) == '-';
-					if(!igap & !jgap){
-						id += align[i].charAt(k) == align[j].charAt(k) ? 1 : 0;
-						match++;
-					}
-				}
-				seqID[i][j] = id / match;
-			}
-		}
-		return seqID;
 	}
 }
