@@ -2,7 +2,7 @@ This file lists major changes between StatAlign releases.
 
 ------------------------------------------------------------------------------
 
-StatAlign v2.1 on 24 Feb 2013
+StatAlign v3.0 on 20 Oct 2013
 
   New features include:
 
