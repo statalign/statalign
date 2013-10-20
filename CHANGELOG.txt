@@ -1,5 +1,27 @@
-
 This file lists major changes between StatAlign releases.
+
+------------------------------------------------------------------------------
+
+StatAlign v2.1 on 24 Feb 2013
+
+  New features include:
+
+    * StructAlign plugin for alignment of protein structures
+    * Introduced framework for handling extensions to the evolutionary model
+    * Significant improvements to mixing on tree topologies
+    * Several new types of MCMC moves to improve mixing and convergence
+    * Automatic tuning for MCMC moves
+    * Restructured code to allow for easy addition of new MCMC move objects
+    * Code now allows for prior distributions to be easily specified
+    * Selection of standard priors added (Gaussian, Gamma, etc.)
+
+  Bugfixes:
+    * Corrected an error that may have led to a small bias in the distribution of
+      alignment proposal window lengths in certain cases
+    * RNA mode now not activated for DNA sequences
+    * Persistent regions of insertions with no descendants are stochastically 
+      removed using a new type of MCMC move
+    
 
 ------------------------------------------------------------------------------
 
