@@ -291,7 +291,9 @@ public class CommandLine {
 				}
 			}
 			
-			if(set.isSet("usealign")) {
+			if(set.isSet("usealign")) {				
+				return error("Specification of initial alignment is not yet supported");
+/* 				
 				String useAlign = set.getOption("usealign").getResultValue(0);
 				if(useAlign.length() != 1 || (manager.inputData.useAlign =
 						"NIF".indexOf(Character.toUpperCase(useAlign.charAt(0)))) == -1)
@@ -302,6 +304,7 @@ public class CommandLine {
 					return error("input sequences must be aligned when -usealign="+useAlign+" is used");
 				if(manager.inputData.useAlign == 1)
 					return error("initial alignment is not yet supported");
+*/
 			}
 			
 			if(set.isSet("usetree")) {
@@ -460,12 +463,12 @@ public class CommandLine {
 			  .append("        Automate MCMC parameters: burn-in, cycles after burn-in, sampling rate.\n")
 			  .append("        Select which parameters to automate by listing one or more of: burn, cycl, rate\n\n")
 			
-			  .append("    -usealign=N|I|F\n")
-			  .append("        Specifies how the alignment of the input sequences is used\n")
-			  .append("          N: it is ignored and sequences are re-aligned from scratch\n")
-			  .append("          I: it is used as the initial alignment and sampled during MCMC\n")
-			  .append("          F: it is fixed throughout the MCMC analysis\n")
-			  .append("        Default: N\n\n")
+//			  .append("    -usealign=N|I|F\n")
+//			  .append("        Specifies how the alignment of the input sequences is used\n")
+//			  .append("          N: it is ignored and sequences are re-aligned from scratch\n")
+//			  .append("          I: it is used as the initial alignment and sampled during MCMC\n")
+//			  .append("          F: it is fixed throughout the MCMC analysis\n")
+//			  .append("        Default: N\n\n")
 			
 			  .append("    -usetree=N|I|T|E\n")
 			  .append("        Defines how the specified tree should be used\n")
