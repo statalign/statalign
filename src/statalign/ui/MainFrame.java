@@ -511,10 +511,10 @@ public class MainFrame extends JFrame implements ActionListener {
     @Override
 	public void actionPerformed(ActionEvent ev) {
         if (ev.getActionCommand() == "Add sequence(s)...") {
-        	addSequences();                        
+        	addSequences();
         }
         if (ev.getActionCommand() == "Add structure(s)...") {
-        	addSequences();                        
+        	addSequences();         
         }
         else if (ev.getActionCommand() == "Exit") {
             System.exit(0);
