@@ -388,7 +388,7 @@ public class MainFrame extends JFrame implements ActionListener {
         menu.add(item);        
         menu.addSeparator();
         item = new JMenuItem("Check for updates");
-        item.setMnemonic(KeyEvent.VK_UP);
+        item.setMnemonic(KeyEvent.VK_C);
         item.addActionListener(this);
         menu.add(item);
         
