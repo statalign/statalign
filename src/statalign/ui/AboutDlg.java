@@ -18,12 +18,6 @@ import statalign.utils.Libraries;
 
 public class AboutDlg extends JDialog {
 	
-	public static final String STATAL_LICENSE = "license/STATALIGN.txt";
-	public static final String VARNA_WWW = "http://";
-	public static final String VARNA_LICENSE = "license/VARNA.txt";
-	public static final String MPJ_WWW = "http://";
-	public static final String MPJ_LICENSE = "license/MPJ.txt";
-	
 	private static String ABOUT_MSG;
 	
 	private JFrame owner;
