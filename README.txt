@@ -3,7 +3,7 @@ StatAlign v3.0
 http://statalign.github.io/
  
  
-### INTRODUCTION ###
+*** INTRODUCTION ***
 
 StatAlign is an extendable software package for Bayesian analysis of
 Protein, DNA and RNA sequences. Multiple alignments, phylogenetic trees
@@ -24,7 +24,7 @@ and amino acid data is included in the package and the plug-in management
 system ensures that new models can be easily added.
 
 
-### USAGE ###
+*** USAGE ***
 
 StatAlign is written in Java and thus requires no installation, but you
 must have Java 6 or newer on your system. If you do not have such a Java
@@ -56,7 +56,7 @@ the Help menu and on-line for tips on how to set these values. The input
 file must contain the sequences to align in Fasta format.
 
 
-### LICENSE ###
+*** LICENSE ***
 
 StatAlign is distributed under the GNU General Public License Version 3.
 A copy of the license is found in LICENSE.txt.

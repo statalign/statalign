@@ -2,7 +2,7 @@ This file lists major changes between StatAlign releases.
 
 ------------------------------------------------------------------------------
 
-StatAlign v3.0 on 20 Oct 2013
+StatAlign v3.0 on 26 Oct 2013
 
   New features include:
 
@@ -16,8 +16,8 @@ StatAlign v3.0 on 20 Oct 2013
     * Selection of standard priors added (Gaussian, Gamma, etc.)
 
   Bugfixes:
-    * Corrected an error that may have led to a small bias in the distribution of
-      alignment proposal window lengths in certain cases
+    * Corrected an error that may have led to a small bias in the
+      distribution of alignment proposal window lengths in certain cases
     * RNA mode now not activated for DNA sequences
     * Persistent regions of insertions with no descendants are stochastically 
       removed using a new type of MCMC move
