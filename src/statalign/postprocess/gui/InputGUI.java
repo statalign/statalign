@@ -2,27 +2,25 @@ package statalign.postprocess.gui;
 
 import java.awt.BorderLayout;
 import java.awt.TextArea;
-import javax.swing.event.HyperlinkEvent;
-import statalign.ui.MainFrame;
-import javax.swing.JEditorPane;
-import javax.swing.event.HyperlinkListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.Collections;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
+import javax.swing.JEditorPane;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.border.EtchedBorder;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
-import statalign.io.DataType;
 import statalign.base.Input;
 import statalign.base.MainManager;
+import statalign.io.DataType;
+import statalign.ui.MainFrame;
 
 /**
  * This is the graphical interface for showing the input data
@@ -98,7 +96,7 @@ public class InputGUI extends JPanel implements ActionListener, ListSelectionLis
 		});  
 		add(jep, BorderLayout.NORTH);
 		
-		updateSequences();
+//		updateSequences();
 	}
 	
 	/**
@@ -180,6 +178,7 @@ public class InputGUI extends JPanel implements ActionListener, ListSelectionLis
 	/**
 	 * Handles removing sequences.
 	 */
+	@Override
 	public void actionPerformed(ActionEvent e) {
 		int index = sequences.getSelectedIndex();
 
@@ -229,6 +228,7 @@ public class InputGUI extends JPanel implements ActionListener, ListSelectionLis
 	/**
 	 * It invokes the list listener when a value changed.
 	 */
+	@Override
 	public void valueChanged(ListSelectionEvent arg0) {
 		listListener();
 		

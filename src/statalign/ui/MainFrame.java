@@ -84,7 +84,7 @@ public class MainFrame extends JFrame implements ActionListener {
     
     /** Set to true if StatAlign is allowed to open the online documentation */
     private static final boolean ALLOW_ONLINE_DOCS = true;
-    private static final int CONNECT_TIMEOUT = 200;
+    private static final int CONNECT_TIMEOUT = 500;
     
     public static final String USER_MANUAL = "doc/user_manual.html";
     public static final String DEV_MANUAL = "doc/developer_manual.html";
@@ -624,7 +624,8 @@ public class MainFrame extends JFrame implements ActionListener {
                 	// TODO add Tree type as in console version
                 	manager.inputData.auxData.add(data);
                 	manager.inputgui.updateSequences();
-                }                	                
+                }
+                manager.modelExtMan.dataAdded(file, data);
         	}    
         }
 

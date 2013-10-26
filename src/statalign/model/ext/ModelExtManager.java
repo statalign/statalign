@@ -1,5 +1,6 @@
 package statalign.model.ext;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -11,9 +12,9 @@ import statalign.base.Tree;
 import statalign.base.Utils;
 import statalign.base.Vertex;
 import statalign.base.hmm.Hmm;
+import statalign.io.DataType;
 import statalign.mcmc.McmcMove;
 import statalign.model.subst.SubstitutionModel;
-import statalign.postprocess.PluginParameters;
 
 /**
  * Interface between StatAlign core and the {@link ModelExtension} plugins.
@@ -379,4 +380,15 @@ public class ModelExtManager {
 		}
 		return logEm;
 	}
+	
+	/**
+	 * Called in GUI mode only when new data is added to the analysis.
+	 * This is transferred to the plugins to allow them to respond.
+	 */
+	public void dataAdded(File file, DataType data) {
+		for(ModelExtension plugin : pluginList) {
+			plugin.dataAdded(file, data);
+		}
+	}
+	
 }

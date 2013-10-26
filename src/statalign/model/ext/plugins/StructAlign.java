@@ -2,6 +2,7 @@ package statalign.model.ext.plugins;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -217,7 +218,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		myButton = new JToggleButton(new ImageIcon(ClassLoader.getSystemResource("icons/protein.png")));
     	myButton.setToolTipText("Structural alignment mode (for proteins only)");
     	myButton.addActionListener(this);
-    	myButton.setEnabled(true);
+    	myButton.setEnabled(false);
     	myButton.setSelected(false);
     	return Arrays.asList((JComponent)myButton);
 	}
@@ -1226,6 +1227,11 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	public void connectRmsdTrace(RmsdTrace _rmsdTrace) {
 		rmsdTrace = _rmsdTrace;
 		rmsdTrace.active = printRmsd;
+	}
+	
+	@Override
+	public void dataAdded(File file, DataType data) {
+		myButton.setEnabled(true);
 	}
 	
 

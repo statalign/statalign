@@ -40,9 +40,11 @@ public class Input extends statalign.postprocess.Postprocess{
 	
 	@Override
 	public JPanel getJPanel() {
-		pan = new JPanel(new BorderLayout());
-		inputgui = new InputGUI(manager); 
-		pan.add(inputgui);
+		if(pan == null) {
+			pan = new JPanel(new BorderLayout());
+			inputgui = new InputGUI(manager); 
+			pan.add(inputgui);
+		}
 		return pan;
 	}
 
