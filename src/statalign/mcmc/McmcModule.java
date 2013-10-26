@@ -2,6 +2,7 @@ package statalign.mcmc;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import statalign.base.Mcmc;
 import statalign.base.Tree;
@@ -85,7 +86,7 @@ public abstract class McmcModule {
 		String info = "";
 		for (McmcMove mcmcMove : mcmcMoves) {
 			String infoFormat = "%-24s%8s%8d%8d%8.4f%8.4f\n";
-			info += String.format(infoFormat,
+			info += String.format(Locale.US, infoFormat,
 					mcmcMove.name,
 					Utils.convertTime(mcmcMove.getTime()),
 					mcmcMove.proposalCount,

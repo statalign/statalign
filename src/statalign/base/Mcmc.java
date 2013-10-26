@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Random;
 
 import mpi.MPI;
@@ -30,11 +31,9 @@ import statalign.base.mcmc.ThetaMove;
 import statalign.base.mcmc.TopologyMove;
 import statalign.base.thread.Stoppable;
 import statalign.base.thread.StoppedException;
-import statalign.distance.Distance;
 import statalign.mcmc.BetaPrior;
 import statalign.mcmc.GammaPrior;
 import statalign.mcmc.GaussianProposal;
-import statalign.mcmc.HyperbolicPrior;
 import statalign.mcmc.LogisticProposal;
 import statalign.mcmc.McmcCombinationMove;
 import statalign.mcmc.McmcModule;
@@ -47,11 +46,6 @@ import statalign.postprocess.plugins.contree.CNetwork;
 import statalign.ui.ErrorMessage;
 import statalign.ui.MainFrame;
 import statalign.utils.BetaDistribution;
-import statalign.utils.GammaDistribution;
-import statalign.utils.NormalDistribution;
-
-import com.ppfold.algo.AlignmentData;
-import com.ppfold.algo.FuzzyAlignment;
 
 /**
  * 
@@ -454,7 +448,7 @@ public class Mcmc extends Stoppable {
 	public String getInfoString() {
 		String info = "Acceptance rates: ";
 		for (McmcMove m : coreModel.getMcmcMoves()) {
-			info += m.name+": "+String.format("%f ", m.acceptanceRate());
+			info += m.name+": "+String.format(Locale.US, "%f ", m.acceptanceRate());
 		}
 		return info;
 	}
@@ -766,9 +760,9 @@ public class Mcmc extends Stoppable {
 		
 		System.out.println(getInfoString());
 		System.out.println("Acceptance rate for LOCAL moves resulting in topology change = "+
-				String.format("%8.4f",(double)localTopologyMove.nTopologyChanges/(double)localTopologyMove.proposalCount));
+				String.format(Locale.US, "%.4f",(double)localTopologyMove.nTopologyChanges/(double)localTopologyMove.proposalCount));
 		System.out.println("Acceptance rate for Topology moves resulting in topology change = "+
-				String.format("%8.4f",(double)topologyMove.topologyChangeAcceptanceCount/(double)topologyMove.proposalCount));
+				String.format(Locale.US, "%.4f",(double)topologyMove.topologyChangeAcceptanceCount/(double)topologyMove.proposalCount));
 		
 		if (frame != null) {
 			frame.statusText.setText(MainFrame.IDLE_STATUS_MESSAGE);

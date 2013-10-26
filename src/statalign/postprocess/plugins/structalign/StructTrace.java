@@ -1,7 +1,6 @@
 package statalign.postprocess.plugins.structalign;
 
 import java.awt.BorderLayout;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -205,13 +204,6 @@ public class StructTrace extends Postprocess {
 	
 	@Override
 	public void newStep(McmcStep mcmcStep) {
-		System.out.println("screenable = "+screenable); 
-		System.out.println("outputable = "+outputable);
-		System.out.println("postprocessable = "+postprocessable);
-		System.out.println("postprocessWrite = "+postprocessWrite); 
-		System.out.println("selected = "+selected); 
-		System.out.println("active = "+active);
-		
 		if(!active)
 			return;
 		if (screenable && (count % refreshRate == 0)) {
