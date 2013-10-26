@@ -58,6 +58,7 @@ import statalign.model.subst.SubstitutionModel;
 import statalign.model.subst.plugins.Dayhoff;
 import statalign.model.subst.plugins.Kimura3;
 import statalign.postprocess.Postprocess;
+import statalign.postprocess.PostprocessManager;
 
 /**
  * The main frame of the program.
@@ -117,8 +118,6 @@ public class MainFrame extends JFrame implements ActionListener {
     public JLabel statusText;
 
     private HashMap<Integer, Postprocess> tabPluginMap;
-    private Integer lastSelectedTabIndex = -1;
-    private ArrayList<JTabbedPane> allTabs;
 
     /** The main manager that handles the MCMC run. */
     public MainManager manager;
@@ -413,7 +412,7 @@ public class MainFrame extends JFrame implements ActionListener {
         input = new Input(manager);
         
         // Sorts the tab according to their getTabOrder()
-        pluginTabs = new ArrayList(manager.postProcMan.getPlugins());
+        pluginTabs = new ArrayList<Postprocess>(manager.postProcMan.getPlugins());
         Collections.sort(pluginTabs, new Comparator<Postprocess>() {
             @Override
             public int compare(Postprocess firstTab, Postprocess secondTab) {
@@ -530,7 +529,7 @@ public class MainFrame extends JFrame implements ActionListener {
         		}
         	}
         	boolean sel = rnaButton.isSelected();
-			manager.postProcMan.rnaMode = sel;
+			PostprocessManager.rnaMode = sel;
 			for(Postprocess plugin : pluginTabs) {
 				if(plugin.rnaAssociated) {
 					plugin.selected = sel;
@@ -726,7 +725,6 @@ public class MainFrame extends JFrame implements ActionListener {
             }
             if (manager.inputData.model == null) {
                 double max = 0.0;
-                int wrong = 0;
                 for (Class<? extends SubstitutionModel> cl : substModels) {
                     SubstitutionModel m;
                     try {
@@ -737,7 +735,6 @@ public class MainFrame extends JFrame implements ActionListener {
                             selectModel(m);
                         }
                     } catch (RecognitionError e) {
-                        wrong++;
                         message += e.message;
                     }
                 }
@@ -789,7 +786,7 @@ public class MainFrame extends JFrame implements ActionListener {
     public void deactivateRNA() {
     	
     	int count = 0;
-    	if(manager.postProcMan.rnaMode) {
+    	if(PostprocessManager.rnaMode) {
 			for(Postprocess plugin : pluginTabs) {
 				if(plugin.rnaAssociated) {
 					plugin.reloadPanel();
@@ -802,7 +799,7 @@ public class MainFrame extends JFrame implements ActionListener {
 			}
     	}
     	
-    	manager.postProcMan.rnaMode = false;
+    	PostprocessManager.rnaMode = false;
     	rnaButton.setSelected(false);
     	rnaButton.setEnabled(false);
     }
