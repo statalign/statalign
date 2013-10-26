@@ -225,7 +225,11 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		setActive(myButton.isSelected());
+		structTrace.active = active;
+		structTrace.postprocessWrite = active;
 		structTrace.setSelected(active);
+		rmsdTrace.active = active;
+		rmsdTrace.postprocessWrite = active;
 	}
 	
 

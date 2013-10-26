@@ -107,7 +107,7 @@ public class InputGUI extends JPanel implements ActionListener, ListSelectionLis
 	public void updateSequences(){
 		//if(dlmSequences.size() > 0){
 			dlmSequences.removeAllElements();
-		//}
+		//}			
 		if(manager.inputData.seqs != null){
 			if(showWelcome && manager.inputData.seqs.size() > 0) {
 		        showWelcome = false;

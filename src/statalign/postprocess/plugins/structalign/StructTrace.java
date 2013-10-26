@@ -131,7 +131,7 @@ public class StructTrace extends Postprocess {
 			gui = new StructAlignTraceGUI(pan, this);
 			pan.add(gui);
 			pan.getParent().getParent().getParent().validate();
-		}
+		}		
 		
 		parameterHistory = new ArrayList<StructAlignTraceParameters>();
 		burninLength = inputData.pars.burnIn;
@@ -166,7 +166,7 @@ public class StructTrace extends Postprocess {
 				e.printStackTrace(); 
 			}
 			//structAlign.setAllMovesNotProposed();
-		}
+		}				
 	}
 	
 	@Override
@@ -205,6 +205,13 @@ public class StructTrace extends Postprocess {
 	
 	@Override
 	public void newStep(McmcStep mcmcStep) {
+		System.out.println("screenable = "+screenable); 
+		System.out.println("outputable = "+outputable);
+		System.out.println("postprocessable = "+postprocessable);
+		System.out.println("postprocessWrite = "+postprocessWrite); 
+		System.out.println("selected = "+selected); 
+		System.out.println("active = "+active);
+		
 		if(!active)
 			return;
 		if (screenable && (count % refreshRate == 0)) {
@@ -226,5 +233,7 @@ public class StructTrace extends Postprocess {
 			}
 		}
 		++count;
+		
+		 
 	}
 }
