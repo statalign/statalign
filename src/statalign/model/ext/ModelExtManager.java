@@ -62,7 +62,7 @@ public class ModelExtManager {
 			plugin.setManager(this);
 		}
 		if (args != null) {
-			ARG: for(int i = 0 ; i < args.size() ; i++) {
+			ARG: for(int i = 0 ; i < args.size() ; ) {
 				String [] pluginPair = args.get(i).split("\\[",2);
 				for(ModelExtension plugin : pluginList) {
 					if (plugin.getPluginID().equals(pluginPair[0])) {
@@ -87,12 +87,13 @@ public class ModelExtManager {
 							}
 						}
 						plugin.init();
-						break ARG;
+						++i;
+						continue ARG;
 					}
 				}
 				String s = "";
 				for(ModelExtension plugin : pluginList) {
-					s += plugin.getPluginID()+"\n";
+					s += plugin.getPluginID()+" ("+(plugin.active?"active":"inactive")+")\n";
 				}
 				System.out.println("\nUnrecognised plugin: "+pluginPair[0]+"\n"
 				+"Available plugins:\n"
