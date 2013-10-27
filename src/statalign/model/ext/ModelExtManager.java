@@ -90,6 +90,14 @@ public class ModelExtManager {
 						break ARG;
 					}
 				}
+				String s = "";
+				for(ModelExtension plugin : pluginList) {
+					s += plugin.getPluginID()+"\n";
+				}
+				System.out.println("\nUnrecognised plugin: "+pluginPair[0]+"\n"
+				+"Available plugins:\n"
+				+s);				
+				throw new IllegalArgumentException("Unrecognised plugin: "+pluginPair[0]);
 			}
 		}
 	}
