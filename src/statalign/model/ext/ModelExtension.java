@@ -29,7 +29,9 @@ public abstract class ModelExtension extends McmcModule {
 	private ModelExtManager manager;
 	
 	protected boolean active;
-	
+	/** Determines whether the plugin is selectable by default in GUI mode.*/
+	protected boolean selectable = true;	
+	public boolean isSelectable() { return selectable; 	}	
 	public void addToFilenameExtension(String s) {
 		manager.addToFilenameExtension(s);
 	}
@@ -95,6 +97,12 @@ public abstract class ModelExtension extends McmcModule {
 		return active;
 	}
 
+//	/**
+//	 * Resets all the fields that are initialised during {@link #initRun(InputData)}.
+//	 */
+//	public ModelExtension reset() {
+//		return null;
+//	}
 	/**
 	 * Enables or disables this plugin.
 	 * @param active <code>true</code> if plugin should be enabled
@@ -104,8 +112,10 @@ public abstract class ModelExtension extends McmcModule {
 		if (useInAlignmentProposals()) {
 			Utils.USE_MODEXT_EM = true;
 			Utils.USE_MODEXT_UPP = true;
-			System.out.println("Using information from '"+getPluginID()+
-								"' in alignment proposals.");
+			if (active) {
+				System.out.println("Using information from '"+getPluginID()+
+									"' in alignment proposals.");
+			}
 		}
 	}
 	
@@ -332,6 +342,7 @@ public abstract class ModelExtension extends McmcModule {
 	public double calcLogEm(int[] aligned) {
 		return 0;
 	}
+
 	
 	/**
 	 * Allows access to the Mcmc class. Generally not recommended.

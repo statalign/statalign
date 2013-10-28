@@ -199,8 +199,10 @@ public class MainFrame extends JFrame implements ActionListener {
         
         for(ModelExtension plugin : manager.modelExtMan.getPluginList()) {
         	if (plugin.getToolBarItems() != null) {
-        		for(JComponent comp : plugin.getToolBarItems())
-        			toolBar.add(comp);
+        		for(JComponent comp : plugin.getToolBarItems()) {
+        			comp.setEnabled(plugin.isSelectable());
+        			toolBar.add(comp);        			
+        		}
         	}
         }
         
@@ -516,9 +518,11 @@ public class MainFrame extends JFrame implements ActionListener {
             final String savTit = getTitle();
             setTitle("Stopping...");
             manager.thread.stopSoft();
+            //manager.modelExtMan.resetAll();
             //finished();
             setTitle(savTit);
             setCursor(Cursor.getDefaultCursor());
+            
         } else if (ev.getActionCommand() == "RNA mode") {
         	if(rnaButton.isSelected()) {
         		dlg = new RNASettingsDlg (this);
@@ -776,6 +780,8 @@ public class MainFrame extends JFrame implements ActionListener {
         stopItem.setEnabled(false);
         stopButton.setEnabled(false);
         
+        manager.inputgui.sequencesAreRemovable = true;        
+        
         statusText.setText(MainFrame.IDLE_STATUS_MESSAGE);
         //SavedFilesPopup.showPane(this);
         
@@ -818,7 +824,9 @@ public class MainFrame extends JFrame implements ActionListener {
         stopItem.setEnabled(true);
         stopButton.setEnabled(true);
         
-        rnaButton.setEnabled(false);        
+        rnaButton.setEnabled(false);
+        
+        manager.inputgui.sequencesAreRemovable = false;            
     }
     
     public void start() {

@@ -217,6 +217,14 @@ public class ModelExtManager {
 			modExt.zeroAllMoveCounts();
 		}
 	}
+	
+//	public void resetAll() {
+//		for(ModelExtension modExt : activeList) {
+//			ModelExtension m = modExt.reset();
+//			if (m != null) modExt = m;
+//			m.init();
+//		}
+//	}
 	/**
 	 * Calculates the total log-likelihood of the state by adding the log-likelihood factor
 	 * contributions from all model extension plugins to the log-likelihood of the tree.

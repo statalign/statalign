@@ -10,6 +10,7 @@ import java.util.List;
 import statalign.io.ProteinSkeletons;
 import statalign.io.input.DataReader;
 import statalign.io.input.IllegalFormatException;
+import statalign.model.ext.plugins.StructAlign;
 
 public class CoorReader extends DataReader {
 
@@ -75,7 +76,7 @@ public class CoorReader extends DataReader {
 			throw new IllegalFormatException("CoorReader: empty file");
 		if(data.coords.get(cur).size() == 0)
 			throw new IllegalFormatException("CoorReader: sequence "+data.names.get(cur)+" is without a structure");
-
+		
 		return data;
 	}
 	

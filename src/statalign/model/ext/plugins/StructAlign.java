@@ -26,6 +26,7 @@ import statalign.base.Vertex;
 import statalign.base.hmm.Hmm;
 import statalign.io.DataType;
 import statalign.io.ProteinSkeletons;
+import statalign.io.RawSequences;
 import statalign.mcmc.GammaPrior;
 import statalign.mcmc.GammaProposal;
 import statalign.mcmc.GaussianProposal;
@@ -64,6 +65,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	public String getPluginID() {
 		return pluginID;
 	}
+		
 	
 	JToggleButton myButton;
 	
@@ -213,10 +215,16 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	private RmsdTrace rmsdTrace;
 	private boolean printRmsd = false; 
 
+	public StructAlign() {
+		// By default this plugin is unselectable unless we read in 
+		// coordinate data.
+		selectable = false;
+	}
+	
 	@Override
 	public List<JComponent> getToolBarItems() {
 		myButton = new JToggleButton(new ImageIcon(ClassLoader.getSystemResource("icons/protein.png")));
-    	myButton.setToolTipText("Structural alignment mode (for proteins only)");
+    	myButton.setToolTipText("Structural alignment mode");
     	myButton.addActionListener(this);
     	myButton.setEnabled(false);
     	myButton.setSelected(false);
@@ -225,7 +233,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		setActive(myButton.isSelected());
+		setActive(myButton.isSelected());		
 		structTrace.active = active;
 		structTrace.postprocessWrite = active;
 		structTrace.setSelected(active);
@@ -240,7 +248,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		usage.append("___________________________\n\n");
 		usage.append("  StructAlign version 1.0\n\n");
 		usage.append("^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\n");
-		usage.append("java -jar statalign.jar -plugin:structal[[OPTION1,OPTION2,...]]\n");
+		usage.append("java -jar statalign.jar -plugin:structal[OPTION1,OPTION2,...]\n");
 		usage.append("OPTIONS: \n");
 		usage.append("\tprintRmsd=true\t\t(Prints RMSD and sequence identity for each sample.)\n");
 		usage.append("\tsigma2=X\t\t(Fixes sigma2 at X)\n");
@@ -442,9 +450,12 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	}
 	@Override
 	public void init() {
-
 	}
 	
+//	@Override
+//	public ModelExtension reset() {
+//		return new StructAlign();
+//	}
 	@Override
 	public void initRun(InputData inputData) throws IllegalArgumentException {
 		HashMap<String, Integer> seqMap = new HashMap<String, Integer>();
@@ -1231,7 +1242,28 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	
 	@Override
 	public void dataAdded(File file, DataType data) {
-		myButton.setEnabled(true);
+		if(data instanceof ProteinSkeletons) {
+			myButton.setEnabled(true);	
+			myButton.setSelected(true);
+			
+			setActive(true);			
+			selectable = true;
+								
+			structTrace.active = active;
+			structTrace.postprocessWrite = active;
+			structTrace.setSelected(active);
+			rmsdTrace.active = active;
+			rmsdTrace.postprocessWrite = active;
+			
+			// By default we'll switch on localSigma mode in GUI
+			globalSigma = false;
+			
+			// If there is B-factor information in the .coor file
+			// then we will also switch on localEpsilon by default
+			if ((((ProteinSkeletons) data).bFactors) != null) {
+				localEpsilon = true;
+			}
+		}
 	}
 	
 

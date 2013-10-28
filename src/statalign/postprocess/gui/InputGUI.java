@@ -45,6 +45,8 @@ public class InputGUI extends JPanel implements ActionListener, ListSelectionLis
 	JButton jbDelete;
 	JButton jbDeleteAll;
 	
+	public boolean sequencesAreRemovable = true;
+	
 	boolean showWelcome = true;
 	private JScrollPane spSeq;
 	
@@ -161,7 +163,7 @@ public class InputGUI extends JPanel implements ActionListener, ListSelectionLis
 		jbDeleteAll.setEnabled(false);
 		
 		if(sequences.getModel().getSize() != 0) {
-			jbDeleteAll.setEnabled(true);
+			jbDeleteAll.setEnabled(sequencesAreRemovable);
 		}
 		
 		int index = sequences.getSelectedIndex();
@@ -170,7 +172,7 @@ public class InputGUI extends JPanel implements ActionListener, ListSelectionLis
 			updateUI();
 		}
 		else{
-			jbDelete.setEnabled(true);
+			jbDelete.setEnabled(sequencesAreRemovable);
 			updateUI();
 		}
 	}
