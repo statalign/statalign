@@ -29,6 +29,8 @@ public class RmsdTrace extends Postprocess {
 
 	
 	public StructAlign structAlign;
+	
+	public double[][] distanceMatrix;
 
 	public RmsdTrace() {
 		screenable = false;
@@ -99,7 +101,7 @@ public class RmsdTrace extends Postprocess {
 			return;
 		if(postprocessWrite) {
 			double[][] msd = calcMSD();
-			double[][] seqID = calcSeqID();
+			double[][] seqID = calcSeqID();			
 			
 			try {
 				for(int i = 0; i < msd.length-1; i++)
@@ -107,7 +109,7 @@ public class RmsdTrace extends Postprocess {
 						outputFile.write(msd[i][j] + "\t");
 				for(int i = 0; i < msd.length-1; i++)
 					for(int j = i+1; j < msd.length; j++) 
-						outputFile.write(structAlign.distanceMatrix[i][j] + "\t");
+						outputFile.write(distanceMatrix[i][j] + "\t");
 				for(int i = 0; i < msd.length-1; i++)
 					for(int j = i+1; j < msd.length; j++)
 						outputFile.write(seqID[i][j] + "\t");

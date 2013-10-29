@@ -1020,6 +1020,11 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		double[][] covar = new double[tree.names.length][tree.names.length];
 		calcDistanceMatrix(tree.root, distanceMatrix);
 		
+		if (printRmsd) {
+			rmsdTrace.distanceMatrix = new double[tree.names.length][tree.names.length];
+			calcUnweightedDistanceMatrix(tree.root,rmsdTrace.distanceMatrix);
+		}
+		
 		// for hierarchical sigma, distance matrix calculation already incorporates multiplication 
 		// by theta_i = sigma_i^2 / (2 tau)
 		if(globalSigma){
@@ -1052,16 +1057,23 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	}
 	
 	
+	
+	public int[] calcUnweightedDistanceMatrix(Vertex vertex, double[][] distMat){
+		return calcDistanceMatrix(vertex,distMat, true);
+	}
+	public int[] calcDistanceMatrix(Vertex vertex, double[][] distMat){
+		return calcDistanceMatrix(vertex,distMat, false);
+	}
 	/**
 	 * recursive algorithm to traverse tree and calculate distance matrix between leaves 
-	 */		
-	public int[] calcDistanceMatrix(Vertex vertex, double[][] distMat){
+	 */			
+	public int[] calcDistanceMatrix(Vertex vertex, double[][] distMat, boolean unweighted){
 		int[] subTree = new int[distMat.length + 1];
 		
 		// either both left and right are null or neither is
 		if(vertex.left != null){
-			int[] subLeft  = calcDistanceMatrix(vertex.left, distMat);
-			int[] subRight = calcDistanceMatrix(vertex.right, distMat);
+			int[] subLeft  = calcDistanceMatrix(vertex.left, distMat, unweighted);
+			int[] subRight = calcDistanceMatrix(vertex.right, distMat, unweighted);
 			int i = 0;
 			while(subLeft[i] > -1){
 				subTree[i] = subLeft[i];
@@ -1076,7 +1088,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				subTree[j] = -1;
 		}
 
-		if (globalSigma) {
+		if (globalSigma || unweighted) {
 			addEdgeLength(distMat, subTree, vertex.edgeLength);	
 		}
 		else {
