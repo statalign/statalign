@@ -6,6 +6,7 @@ StatAlign v3.0 on 26 Oct 2013
 
   New features include:
 
+    * Option to keep tree fixed when phylogeny is known
     * StructAlign plugin for alignment of protein structures
     * Introduced framework for handling extensions to the evolutionary model
     * Significant improvements to mixing on tree topologies
