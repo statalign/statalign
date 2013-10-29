@@ -2826,7 +2826,7 @@ public class Vertex {
  		uncle.selectAllUp();
  		selected = true;
  		
-        owner.root.recomputeLogLikeSelected();
+        owner.root.recomputeLogLikeSelected(); // Is this necessary?
      	//uncle.calcAllUp(); // uncle is now lower 
      	//DEBUG=0; // Deactivate verbose print statements
     	
@@ -3740,7 +3740,7 @@ public class Vertex {
  		}
  		uncle.selectAllUp();
  		selected = true;
-		owner.root.recomputeLogLikeSelected();
+		owner.root.recomputeLogLikeSelected(); // Is this necessary?
  		
     	//uncle.calcAllUp();
     	
