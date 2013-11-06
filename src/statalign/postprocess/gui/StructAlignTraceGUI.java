@@ -154,7 +154,7 @@ public class StructAlignTraceGUI extends JPanel {
 			gr.setColor(burninColor);
 		}
 		//gr.drawString(paramName, (int) minX + 3, (int)((minY+maxY)/2));
-		gr.drawString(paramName, (int) minX + 2, (int)((minY+maxY)/2));
+		gr.drawString(paramName, (int) minX + 0, (int)((minY+maxY)/2));
 		gr.setFont(STR_FONT);
 				
 		// drawing the trace
@@ -222,7 +222,7 @@ public class StructAlignTraceGUI extends JPanel {
 		
 		gr.setFont(new Font("Dialog", Font.BOLD, 10));
 		double acceptanceRate = (Double) parameterHistory.get(parameterHistory.size()-1).plottableParameters.get(parameterIndex).acceptanceRate;
-		gr.drawString("α = " + String.format("%.2f",acceptanceRate), 5 + (int)textShift + (int) minX, 15 + (int)minY);
+		gr.drawString("acc = " + String.format("%.2f",acceptanceRate), 5 + (int)textShift + (int) minX, 15 + (int)minY);
 		gr.setFont(STR_FONT);
 	}
 }
