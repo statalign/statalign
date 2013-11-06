@@ -1,9 +1,14 @@
 package statalign.postprocess.gui;
 
 import javax.swing.*;
+
+import org.apache.commons.math3.util.Pair;
+
 import java.awt.*;
 
 import statalign.model.subst.SubstitutionModel;
+import statalign.postprocess.Postprocess;
+import statalign.postprocess.Track;
 
 /**
  * This is the graphical interface for showing alignments.
@@ -20,6 +25,7 @@ public class AlignmentGUI extends JPanel{
 	//	JPanel pan;
 //	CurrentAlignment owner;
 	SubstitutionModel subst;
+	Postprocess owner = null;
 	/**
 	 *  The alignment that is written onto the screen is stored in this array
 	 */
@@ -64,6 +70,24 @@ public class AlignmentGUI extends JPanel{
 		this.subst = subst;
 	}
 
+	/**
+	 * It initializes a new panel for alignments.
+	 * 
+	 * @param title This is the title of the current analysis
+	 * @param subst The substitution model defines the background colors of characters
+	 * @param _owner The Postprocess plugin that owns this GUI.
+	 */
+	public AlignmentGUI(String title, SubstitutionModel subst, Postprocess _owner) {//CurrentAlignment inp, String[] s){
+//			String a = "";
+//			for(int i = 0; i < s.length; i++){
+//				a += s[i]+"\n";
+//			}
+//			this.pan = pan;
+//			this.owner = inp;
+		this.title = title;
+		this.subst = subst;
+		owner = _owner;
+	}
 //	private static boolean allTab(String[] s, int p){
 //		boolean b = true;
 //		for(int i = 0; i < s.length && b; i++){
@@ -79,7 +103,7 @@ public class AlignmentGUI extends JPanel{
 		// System.out.println("Updating current alignment");
 //		super.paintComponent(gr);
 		//System.out.println("Updating current alignment");
-		double max = 1.0;
+		double maxScore = 1.0;
 		//setSize((int)(owner.pan.getSize().width*0.9),(int)(owner.pan.getSize().height*0.9));
 		// text.setRows(pan.getHeight()/13);
 		// text.setColumns((int)(pan.getWidth()/6.6));
@@ -96,9 +120,10 @@ public class AlignmentGUI extends JPanel{
 		if(alignment != null && alignment[0] != null) {
 
 			//int colHeight = (decoding == null ? 0 :  Math.min(200, g.getClipBounds().height - (2 * OFFSET_Y + TITLE_Y + alignment.length * FONT_HEIGHT)));
-
+			
 			// Changed this to fixed height:
-			int colHeight = (decoding == null ? 0 : 130);
+			boolean extraTracks = owner != null && owner.getTracks() != null && owner.getTracks().size() > 0;
+			int colHeight = ((decoding == null && !extraTracks) ? 0 : 130);
 			int maxNameLength = 0;
 			aligNum = alignment.length;			
 			for (int i=0; i<aligNum; i++) {
@@ -165,16 +190,15 @@ public class AlignmentGUI extends JPanel{
 			}
 			if(decoding != null){
 //				System.out.println(decoding[1]);
+				//System.out.println("Printing decoding.");
 				g.setColor(Color.BLUE);
-				//int colHeight = Math.min(100, g.getClipBounds().height - (2 * OFFSET_Y + TITLE_Y + alignment.length * FONT_HEIGHT));
-				for(int i = 1; i < decoding.length; i++){
-					g.drawLine( OFFSET_X + (maxNameLength + i) * COLUMN_WIDTH + COLUMN_WIDTH / 2,
-							(int)(OFFSET_Y + TITLE_Y + colHeight - Math.round(decoding[i-1] * (colHeight) / max)),
-//							(int)(OFFSET_Y + TITLE_Y - Math.round(decoding[i-1] * (TITLE_Y) / max)),
-							OFFSET_X + (maxNameLength + i + 1) * COLUMN_WIDTH + COLUMN_WIDTH / 2,
-							(int)(OFFSET_Y + TITLE_Y + colHeight - Math.round(decoding[i] * (colHeight) / max))
-//							(int)(OFFSET_Y + TITLE_Y - Math.round(decoding[i] * (TITLE_Y) / max))
-							);
+				plotScore(g,decoding,maxNameLength,colHeight,maxScore);								
+			}
+			if (extraTracks) {
+				//System.out.println("Printing "+owner.getTracks().size()+" extra track(s).");
+				for (Track track : owner.getTracks()) {
+					g.setColor(track.color);					
+					plotScore(g,track.scores,maxNameLength,colHeight,maxScore);
 				}
 			}
 
@@ -187,6 +211,19 @@ public class AlignmentGUI extends JPanel{
 //		this.updateUI();
 	}
 
+	private void plotScore(Graphics2D g, double[] score, int maxNameLength, int colHeight, double maxScore) {
+		//int colHeight = Math.min(100, g.getClipBounds().height - (2 * OFFSET_Y + TITLE_Y + alignment.length * FONT_HEIGHT));
+		//System.out.println("Score length = "+score.length);
+		for(int i = 1; i < score.length; i++){
+			g.drawLine( OFFSET_X + (maxNameLength + i - 1) * COLUMN_WIDTH + COLUMN_WIDTH / 2,
+					(int)(OFFSET_Y + TITLE_Y + colHeight - Math.round(score[i-1] * (colHeight) / maxScore)),
+//					(int)(OFFSET_Y + TITLE_Y - Math.round(decoding[i-1] * (TITLE_Y) / max)),
+					OFFSET_X + (maxNameLength + i) * COLUMN_WIDTH + COLUMN_WIDTH / 2,
+					(int)(OFFSET_Y + TITLE_Y + colHeight - Math.round(score[i] * (colHeight) / maxScore))
+//					(int)(OFFSET_Y + TITLE_Y - Math.round(decoding[i] * (TITLE_Y) / max))
+					);
+		}
+	}
 	/**
 	 * This function tells the minimum size of the panel
 	 */

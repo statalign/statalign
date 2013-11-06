@@ -238,7 +238,10 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		structTrace.postprocessWrite = active;
 		structTrace.setSelected(active);
 		rmsdTrace.active = active;
-		rmsdTrace.postprocessWrite = active;
+		//rmsdTrace.postprocessWrite = active;
+		rmsdTrace.postprocessWrite = false; 
+		// probably the average GUI user doesn't want massive files 
+		// with pairwise RMSD printed at every sample
 	}
 	
 
@@ -767,7 +770,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	public double computeLogLikeFactor(Tree tree) {
 		String[] align = tree.getState().getLeafAlign();
 		checkConsAlign(align); 		
-		curAlign = align;
+		curAlign = align;				 
 		
 		double[][] covar = calcFullCovar(tree);
 		checkConsCovar(covar); 
@@ -1265,7 +1268,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			structTrace.postprocessWrite = active;
 			structTrace.setSelected(active);
 			rmsdTrace.active = active;
-			rmsdTrace.postprocessWrite = active;
+			//rmsdTrace.postprocessWrite = active;
+			rmsdTrace.postprocessWrite = false;
 			
 			// By default we'll switch on localSigma mode in GUI
 			globalSigma = false;

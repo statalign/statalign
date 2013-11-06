@@ -1,6 +1,8 @@
 package statalign.postprocess.plugins;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -12,11 +14,14 @@ import javax.swing.ImageIcon;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
+import org.apache.commons.math3.util.Pair;
+
 import statalign.base.CircularArray;
 import statalign.base.InputData;
 import statalign.base.State;
 import statalign.base.Utils;
 import statalign.postprocess.Postprocess;
+import statalign.postprocess.Track;
 import statalign.postprocess.gui.AlignmentGUI;
 
 public class MpdAlignment extends statalign.postprocess.Postprocess {
@@ -49,9 +54,9 @@ public class MpdAlignment extends statalign.postprocess.Postprocess {
 		outputable = true;
 		postprocessable = true;
 		postprocessWrite = true;
-		rnaAssociated = false;
+		rnaAssociated = false;		
 	}
-
+	
 	@Override
 	public JPanel getJPanel() {
 		pan = new JPanel(new BorderLayout());
@@ -107,7 +112,7 @@ public class MpdAlignment extends statalign.postprocess.Postprocess {
 			pan.removeAll();
 			title = input.title;
 			JScrollPane scroll = new JScrollPane();
-			scroll.setViewportView(gui = new AlignmentGUI(title,input.model));//, mcmc.tree.printedAlignment()));
+			scroll.setViewportView(gui = new AlignmentGUI(title,input.model,this));//, mcmc.tree.printedAlignment()));
 			pan.add(scroll, BorderLayout.CENTER);
 			//System.out.println("Mpd Alignment parent: " + pan.getParent());
 			pan.getParent().validate();
@@ -282,7 +287,11 @@ public class MpdAlignment extends statalign.postprocess.Postprocess {
 				outputFile.write("\n#scores\n\n");
 				if (decoding != null) {
 					for (int i = 0; i < decoding.length; i++) {
-						outputFile.write(decoding[i] + "\n");
+						outputFile.write(decoding[i]+"");
+						for (Track track : tracks) {
+							outputFile.write("\t"+track.scores[i]);
+						}
+						outputFile.write("\n");
 					}
 				} else {
 					outputFile.write("No posterior values so far\n");

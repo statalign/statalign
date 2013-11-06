@@ -153,7 +153,8 @@ public class StructAlignTraceGUI extends JPanel {
 		if (parameterHistory.get(parameterHistory.size()-1).plottableParameters.get(parameterIndex).fixedToParent) {
 			gr.setColor(burninColor);
 		}
-		gr.drawString(paramName, (int) minX + 3, (int)((minY+maxY)/2));
+		//gr.drawString(paramName, (int) minX + 3, (int)((minY+maxY)/2));
+		gr.drawString(paramName, (int) minX + 2, (int)((minY+maxY)/2));
 		gr.setFont(STR_FONT);
 				
 		// drawing the trace

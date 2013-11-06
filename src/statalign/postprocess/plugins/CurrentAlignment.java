@@ -2,6 +2,7 @@ package statalign.postprocess.plugins;
 
 import java.awt.BorderLayout;
 import java.io.IOException;
+import java.util.ArrayList;
 
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
@@ -12,6 +13,7 @@ import statalign.base.InputData;
 import statalign.base.McmcStep;
 import statalign.base.State;
 import statalign.base.Utils;
+import statalign.postprocess.Track;
 import statalign.postprocess.gui.AlignmentGUI;
 
 /**
@@ -44,8 +46,8 @@ public class CurrentAlignment extends statalign.postprocess.Postprocess{
 		postprocessable = false;
 		sampling = true;
 		rnaAssociated = false;
-	}
-	
+	}		
+		
 	/**
 	 * It constructs a new JPanel, and returns with it
 	 */
@@ -136,7 +138,7 @@ public class CurrentAlignment extends statalign.postprocess.Postprocess{
 			pan.removeAll();
 			title = input.title;
 			JScrollPane scroll = new JScrollPane();
-			scroll.setViewportView(gui = new AlignmentGUI(title,input.model));//, mcmc.tree.printedAlignment()));
+			scroll.setViewportView(gui = new AlignmentGUI(title,input.model,this));//, mcmc.tree.printedAlignment()));
 			gui.title = input.title;
 			pan.add(scroll, BorderLayout.CENTER);
 		}

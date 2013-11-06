@@ -8,6 +8,10 @@ import javax.swing.Icon;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 
+import java.awt.Color;
+
+import org.apache.commons.math3.util.Pair;
+
 import statalign.base.InputData;
 import statalign.base.Mcmc;
 import statalign.base.McmcStep;
@@ -96,6 +100,17 @@ public abstract class Postprocess {
 	public boolean rnaAssociated;
 	
 	
+	protected ArrayList<Track> tracks = new ArrayList<Track>();
+	/** The extra tracks to be plotted */	
+	public ArrayList<Track> getTracks() { return tracks; }	
+	
+	/**
+	 * NB because the track is added as a Pair, it will be passed by reference,
+	 * which allows it to be modified from the place where it was added, i.e.
+	 * the desired behaviour.
+	 * @param track
+	 */
+	public void addTrack(Track track) {	tracks.add(track); }
 	
 	/**
 	 * This string tells the alignment type in which alignment must be presented

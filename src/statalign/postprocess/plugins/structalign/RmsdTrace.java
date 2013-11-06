@@ -1,6 +1,7 @@
 package statalign.postprocess.plugins.structalign;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -13,6 +14,7 @@ import javax.swing.JPanel;
 
 import org.apache.commons.math3.geometry.euclidean.threed.Rotation;
 import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
+import org.apache.commons.math3.util.Pair;
 
 import statalign.base.InputData;
 import statalign.base.McmcStep;
@@ -22,23 +24,34 @@ import statalign.model.ext.ModelExtManager;
 import statalign.model.ext.ModelExtension;
 import statalign.model.ext.plugins.StructAlign;
 import statalign.postprocess.Postprocess;
+import statalign.postprocess.Track;
 import statalign.postprocess.gui.StructAlignTraceGUI;
+import statalign.postprocess.plugins.CurrentAlignment;
+import statalign.postprocess.plugins.MpdAlignment;
 
 
 public class RmsdTrace extends Postprocess {
 
 	
 	public StructAlign structAlign;
+		
+	/** For adding to the MPD alignment panel in the GUI. */
+	Track rmsdTrack = new Track(Color.RED, new double[1]);
 	
 	public double[][] distanceMatrix;
+	
+	/** Determines scaling for RMSD annotation above sequence in GUI */
+	double SCALE_FACTOR = 2.5;
+	
+	public String[] fullAlign;
 
 	public RmsdTrace() {
-		screenable = false;
+		screenable = true;
 		outputable = true;
 		postprocessable = true;
 		postprocessWrite = false;
 		selected = false;
-		active = false;
+		active = false;		
 	}
 
 	
@@ -63,6 +76,20 @@ public class RmsdTrace extends Postprocess {
 	}
 	
 	@Override
+	public String[] getDependences() {
+		return new String[] { "statalign.postprocess.plugins.CurrentAlignment", 
+							  "statalign.postprocess.plugins.MpdAlignment"};
+	}
+
+	CurrentAlignment curAli;
+	MpdAlignment mpdAli;
+	@Override
+	public void refToDependences(Postprocess[] plugins) {
+		curAli = (CurrentAlignment) plugins[0];
+		mpdAli = (MpdAlignment) plugins[1];
+	}
+	
+	@Override
 	public void beforeFirstSample(InputData inputData) {
 //		for(ModelExtension modExt : getModExtPlugins()) {
 //			if(modExt instanceof StructAlign) {
@@ -72,6 +99,7 @@ public class RmsdTrace extends Postprocess {
 		if(!active)	return;									
 		
 		//double[] rad = calcGyration();
+		if(postprocessWrite) {
 		int leaves = structAlign.coords.length;
 		try {
 			for(int i = 0; i < leaves-1; i++)
@@ -92,7 +120,21 @@ public class RmsdTrace extends Postprocess {
 //				outputFile.write(rad[i] + "\t"); 
 
 			outputFile.write("\n");
-		} catch (IOException e){}		
+		} catch (IOException e){}
+		}
+		if (show) {			
+			//mpdAli.addTrack(rmsdTrack);
+			curAli.addTrack(rmsdTrack);
+		}			
+	}
+	
+	@Override
+	public void newPeek(State state) {
+		if (!active) return;
+		if (show) {
+			fullAlign = state.getFullAlign();
+			updateRmsdTrack();
+		}
 	}
 	
 	@Override
@@ -117,6 +159,10 @@ public class RmsdTrace extends Postprocess {
 			} catch (IOException e){
 				e.printStackTrace();
 			}		
+		}		
+		if (show) {
+			fullAlign = state.getFullAlign();
+			updateRmsdTrack();
 		}
 	}
 	
@@ -124,11 +170,13 @@ public class RmsdTrace extends Postprocess {
 	public void afterLastSample() {
 		if(!active)
 			return;		
+		if(postprocessWrite) {
 		try {
 			outputFile.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}		
+		}
 	}
 	
 	public static void printMatrix(double[][] m) {
@@ -160,6 +208,51 @@ public class RmsdTrace extends Postprocess {
 			}
 		}
 		return msd;
+	}
+	public void updateRmsdTrack(){
+		double[][][] coor = structAlign.rotCoords;
+		String[] align = fullAlign;
+		int leaves = coor.length;
+		boolean igap, jgap;		
+		//int n = leaves * (leaves-1) / 2; // Number of pairwise comparisons
+		
+		int alignmentLength = align[0].length();
+		boolean[] allGapped = new boolean[alignmentLength];
+		for(int k = 0; k < align[0].length(); k++){
+			allGapped[k] = true;
+			for(int i = 0; i < align.length; i++){
+				allGapped[k] &= (align[i].charAt(k) == '-');				
+			}
+			if (allGapped[k]) alignmentLength--;
+		}
+		rmsdTrack.scores = new double[alignmentLength];
+		double max = 0.0, min = Double.POSITIVE_INFINITY, mean = 0.0;
+		int[] index = new int[leaves];		
+		for(int k = 0, kk=0; k < align[0].length(); k++){			
+			int n=0;
+			if (allGapped[k]) continue;			
+			for(int i = 0; i < leaves-1; i++){
+				for(int j = i+1; j < leaves; j++){													
+					igap = align[i].charAt(k) == '-';
+					jgap = align[j].charAt(k) == '-';
+					if(!igap & !jgap){
+						rmsdTrack.scores[kk] += sqDistance(coor[i][index[i]], coor[j][index[j]]);
+						++n;
+					}					
+				}					
+			}
+			for(int i = 0; i < leaves; i++) index[i] += (align[i].charAt(k) == '-') ? 0 : 1; 			
+			if (n > 0) rmsdTrack.scores[kk] /= n;
+			if (rmsdTrack.scores[kk] > max) max = rmsdTrack.scores[kk];
+			if (rmsdTrack.scores[kk] > 0 && rmsdTrack.scores[kk] < min) min = rmsdTrack.scores[kk];
+			mean += rmsdTrack.scores[kk] / alignmentLength;
+			kk++;			
+		}
+		for(int kk = 0; kk < alignmentLength; kk++) {			
+			if (rmsdTrack.scores[kk] == 0) rmsdTrack.scores[kk] = min; 
+			if (max > SCALE_FACTOR * mean) max = SCALE_FACTOR * mean;
+			rmsdTrack.scores[kk] /= max;
+		}		
 	}
 	
 	public double sqDistance(double[] x, double[] y){
