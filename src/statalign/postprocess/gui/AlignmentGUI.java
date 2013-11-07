@@ -42,6 +42,8 @@ public class AlignmentGUI extends JPanel{
 	private int aligNum = 15;
 	private int aligLen = 200;
 
+	/** Values greater than SCALE_FACTOR * mean will be cropped */
+	static double SCALE_FACTOR = 2.5;
 	static final int COLUMN_WIDTH = 9;
 	static final int FONT_HEIGHT = 15;
 	static final int OFFSET_X = 10;
@@ -191,14 +193,13 @@ public class AlignmentGUI extends JPanel{
 			if(decoding != null){
 //				System.out.println(decoding[1]);
 				//System.out.println("Printing decoding.");
-				g.setColor(Color.BLUE);
-				plotScore(g,decoding,maxNameLength,colHeight,maxScore);								
+				Track decodingTrack = new Track(Color.BLUE,decoding,1,0,1);				
+				plotScore(g,decodingTrack,maxNameLength,colHeight);								
 			}
 			if (extraTracks) {
 				//System.out.println("Printing "+owner.getTracks().size()+" extra track(s).");
 				for (Track track : owner.getTracks()) {
-					g.setColor(track.color);					
-					plotScore(g,track.scores,maxNameLength,colHeight,maxScore);
+					plotScore(g,track,maxNameLength,colHeight);
 				}
 			}
 
@@ -211,18 +212,25 @@ public class AlignmentGUI extends JPanel{
 //		this.updateUI();
 	}
 
-	private void plotScore(Graphics2D g, double[] score, int maxNameLength, int colHeight, double maxScore) {
+	private void plotScore(Graphics2D g, Track track, int maxNameLength, int colHeight) {
 		//int colHeight = Math.min(100, g.getClipBounds().height - (2 * OFFSET_Y + TITLE_Y + alignment.length * FONT_HEIGHT));
 		//System.out.println("Score length = "+score.length);
-		for(int i = 1; i < score.length; i++){
+		Color oldColor = g.getColor();
+		g.setColor(track.color);
+		double maxScore = track.max;
+		if (maxScore > SCALE_FACTOR * track.mean) maxScore = SCALE_FACTOR * track.mean;
+		for(int i = 1; i < track.scores.length; i++){
+			if (Double.isNaN(track.scores[i-1])) { continue; }
+			if (Double.isNaN(track.scores[i])) { ++i; continue; }
 			g.drawLine( OFFSET_X + (maxNameLength + i - 1) * COLUMN_WIDTH + COLUMN_WIDTH / 2,
-					(int)(OFFSET_Y + TITLE_Y + colHeight - Math.round(score[i-1] * (colHeight) / maxScore)),
+					(int)(OFFSET_Y + TITLE_Y + colHeight - Math.round(track.scores[i-1] * (colHeight) / maxScore)),
 //					(int)(OFFSET_Y + TITLE_Y - Math.round(decoding[i-1] * (TITLE_Y) / max)),
 					OFFSET_X + (maxNameLength + i) * COLUMN_WIDTH + COLUMN_WIDTH / 2,
-					(int)(OFFSET_Y + TITLE_Y + colHeight - Math.round(score[i] * (colHeight) / maxScore))
+					(int)(OFFSET_Y + TITLE_Y + colHeight - Math.round(track.scores[i] * (colHeight) / maxScore))
 //					(int)(OFFSET_Y + TITLE_Y - Math.round(decoding[i] * (TITLE_Y) / max))
 					);
 		}
+		g.setColor(oldColor);
 	}
 	/**
 	 * This function tells the minimum size of the panel

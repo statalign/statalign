@@ -12,4 +12,11 @@ public class Track {
 		color = _color;
 		scores = _scores;
 	}
+	public Track(Color _color, double[] _scores, double _max, double _min, double _mean) {
+		color = _color;
+		scores = _scores;
+		max = _max;
+		min = _min;
+		mean = _mean;
+	}
 }

@@ -247,15 +247,21 @@ public class RmsdTrace extends Postprocess {
 					}					
 				}				
 			}
+			int nBfactor = 0;
 			for(int i = 0; i < leaves; i++) {
 				if (align[i].charAt(k) != '-') {
 					if (structAlign.localEpsilon) bFactorTrack.scores[kk] += structAlign.bFactors[i][index[i]] * Math.sqrt(structAlign.epsilon);
+					nBfactor++;
 					index[i]++;
 				}
-			}			 						
+			}			 	
+			bFactorTrack.scores[kk] /= nBfactor;
+			
 			if (n > 0) rmsdTrack.scores[kk] /= n;
+			if (n==0) { rmsdTrack.scores[kk] = Double.NaN; kk++; continue; }
+			
 			if (rmsdTrack.scores[kk] > 0) rmsdTrack.scores[kk] = Math.sqrt(rmsdTrack.scores[kk]);
-						
+			
 			if (rmsdTrack.scores[kk] > rmsdTrack.max) rmsdTrack.max = rmsdTrack.scores[kk];
 			if (rmsdTrack.scores[kk] > 0 && rmsdTrack.scores[kk] < rmsdTrack.min) rmsdTrack.min = rmsdTrack.scores[kk];
 			rmsdTrack.mean += rmsdTrack.scores[kk] / alignmentLength;
@@ -267,21 +273,10 @@ public class RmsdTrace extends Postprocess {
 			}
 						
 			kk++;			
-		}
-		for(int kk = 0; kk < alignmentLength; kk++) {			
-			if (rmsdTrack.scores[kk] == 0) rmsdTrack.scores[kk] = rmsdTrack.min; 
-			if (rmsdTrack.max > SCALE_FACTOR * rmsdTrack.mean) rmsdTrack.max = SCALE_FACTOR * rmsdTrack.mean;
-			rmsdTrack.scores[kk] /= rmsdTrack.max;
-			
-			if (structAlign.localEpsilon) {
-				if (bFactorTrack.scores[kk] == 0) bFactorTrack.scores[kk] = bFactorTrack.min; 
-				if (bFactorTrack.max > SCALE_FACTOR * bFactorTrack.mean) bFactorTrack.max = SCALE_FACTOR * bFactorTrack.mean;
-				bFactorTrack.scores[kk] /= bFactorTrack.max;
-			}
-		}		
+		}				
 	}
 	
-	public double sqDistance(double[] x, double[] y){
+	public double sqDistance(double[] x, double[] y){		
 		double d = 0;
 		for(int i = 0; i < x.length; i++)
 			d += Math.pow(x[i] - y[i], 2.0);
