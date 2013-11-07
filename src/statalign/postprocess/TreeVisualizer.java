@@ -44,15 +44,16 @@ public abstract class TreeVisualizer extends Postprocess {
     
     public void init(TreeView[] views) {
         // Object initialization
+    	//System.out.println("Initialising TreeView");
         treeViews = new ArrayList<TreeView>();
         treeViewsMap = new HashMap<String, TreeView>();
         for (TreeView view : views) {
             addTreeView(view);
         }
 
-        // Initialize toolbar
+        // Initialize toolbar        
         toolBar = new ArrayList<JComponent>();
-        createToolBar();
+        createToolBar();    
     }
 
     @Override

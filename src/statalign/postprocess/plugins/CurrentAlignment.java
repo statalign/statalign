@@ -13,6 +13,7 @@ import statalign.base.InputData;
 import statalign.base.McmcStep;
 import statalign.base.State;
 import statalign.base.Utils;
+import statalign.postprocess.Postprocess;
 import statalign.postprocess.Track;
 import statalign.postprocess.gui.AlignmentGUI;
 
@@ -32,6 +33,11 @@ public class CurrentAlignment extends statalign.postprocess.Postprocess{
 	InputData input;
 	String[] seqNames;
 	String[] leafNames;
+	
+	/** We will refer to this to get the posterior probabilities of the current alignment. */
+	MpdAlignment mpdAli; 
+	double[] decoding;
+	boolean plotPosterior = true;
 	
 	AlignmentGUI gui;
 	
@@ -92,7 +98,7 @@ public class CurrentAlignment extends statalign.postprocess.Postprocess{
 	public String getFileExtension() {
 		return "aln";
 	}
-
+	
 	/**
 	 * Updates the alignment.
 	 */
@@ -121,9 +127,12 @@ public class CurrentAlignment extends statalign.postprocess.Postprocess{
 			//if(allAlignment[i].charAt(0) != ' ')
 				//leafAlignment[ind++] = allAlignment[i];
 				
+		if (plotPosterior) decoding = mpdAli.getPosteriorSplus();
+		
 		if(show) {
 			gui.alignment = allAlignment;
 			gui.sequenceNames = seqNames;
+			if (plotPosterior) gui.decoding = decoding;
 			gui.repaint();
 		}
 

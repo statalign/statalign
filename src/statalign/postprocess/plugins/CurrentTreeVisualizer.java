@@ -94,7 +94,7 @@ public class CurrentTreeVisualizer extends TreeVisualizer {
 		}
 		if (postprocessWrite) {
 			try {
-		        outputFile.write("#nexus\n\nBEGIN Taxa;\nDIMENSIONS ntax="
+		        outputFile.write("#NEXUS\n\nBEGIN Taxa;\nDIMENSIONS ntax="
 						+ names.length + ";\nTAXLABELS\n");
 				for (int i = 0; i < names.length; i++) {
 					outputFile.write("[" + (i + 1) + "] '" + names[i] + "'\n");

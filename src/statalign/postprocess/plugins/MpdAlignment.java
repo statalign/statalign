@@ -98,6 +98,7 @@ public class MpdAlignment extends statalign.postprocess.Postprocess {
 	@Override
 	public void refToDependences(Postprocess[] plugins) {
 		curAlig = (CurrentAlignment) plugins[0];
+		curAlig.mpdAli = this;
 	}
 
 	static Comparator<String[]> compStringArr = new Comparator<String[]>() {
@@ -330,11 +331,49 @@ public class MpdAlignment extends statalign.postprocess.Postprocess {
 		sampling = enabled;
 
 	}
+	double[] getPosteriorSplus() {
+		return getPosterior(true);
+	}
+	double[] getPosterior() {
+		return getPosterior(false);
+	}
+	double[] getPosterior(boolean useSplus) {
+		
+		int[] previousDescriptor = firstDescriptor;
 
+		int j, len = curAlig.leafAlignment[0].length();
+		double[] scores = new double[len];
+		double max = 0.0;
+		for(j = 0; j < len; j++){
+			int[] nextDescriptor =  new int[sizeOfAlignments];
+			boolean allGap = true;
+			for(int k = 0; k < sizeOfAlignments; k++){
+				if(curAlig.leafAlignment[k].charAt(j) == '-')
+					nextDescriptor[k] = ColumnKey.colNext(previousDescriptor[k]);
+				else {
+					nextDescriptor[k] = ColumnKey.colNext(previousDescriptor[k])+1;
+					allGap = false;
+				}
+			}
+			scores[j] = 0;
+			if(!allGap) {
+				Column c = null;
+				if (useSplus) c=network.splusMap.get(ColumnNetwork.splusKey(new ColumnKey(nextDescriptor)));
+				else 		  c=network.contMap.get(new ColumnKey(nextDescriptor));
+				if (c != null)	scores[j] = (double) c.count;
+			}			
+			if (scores[j] > max) max = scores[j];
+			
+			previousDescriptor = nextDescriptor;
+		}
+		for (j=0; j<len; j++) scores[j] /= (double) max;
+		return scores;
+	}
 }
 
 class ColumnNetwork {
 	HashMap<ColumnKey,Column> contMap = new HashMap<ColumnKey,Column>();
+	HashMap<ColumnKey,Column> splusMap = new HashMap<ColumnKey,Column>();
 	HashMap<ColumnKey,ArrayList<Column>> preMap = new HashMap<ColumnKey,ArrayList<Column>>();
 	HashMap<ColumnKey,ArrayList<Column>> postMap = new HashMap<ColumnKey,ArrayList<Column>>();
 
@@ -352,12 +391,17 @@ class ColumnNetwork {
 		Column val;
 
 		ColumnKey key = new ColumnKey(descriptor);
+		ColumnKey splus = splusKey(key);	
+		if((val=splusMap.get(splus)) != null) {
+			val.logcnt = Math.log(++val.count);					
+		}
 		if((val=contMap.get(key)) != null) {
-			val.logcnt = Math.log(++val.count);
+			val.logcnt = Math.log(++val.count);			
 			return null;
 		}
 		val = new Column(key);
 		contMap.put(key, val);
+		splusMap.put(splus,new Column(splus));
 		if(numberOfNodes == 0)
 			first = val;
 		numberOfNodes++;
@@ -389,9 +433,18 @@ class ColumnNetwork {
 		}
 
 		return val;
+	}	
+
+	public static ColumnKey splusKey(ColumnKey key) {
+		int len = key.desc.length, d;
+		int[] desc = key.desc, sdesc = new int[len]; 
+		for(int i = 0; i < len; i++) {
+			d = desc[i];
+			sdesc[i] = ((d&1)==1)?d:0;
+		}
+		return new ColumnKey(sdesc);
 	}
-
-
+	
 	void updateViterbi(int n) {
 		double logN = Math.log(n);
 		CircularArray<Column> calculable = new CircularArray<Column>();

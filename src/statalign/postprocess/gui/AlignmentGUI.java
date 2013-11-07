@@ -153,7 +153,7 @@ public class AlignmentGUI extends JPanel{
 
 			g.setColor(Color.BLACK);
 			g.setFont(new Font("SANS_SERIF", Font.BOLD, 16));
-			g.drawString(title, OFFSET_X, TITLE_Y);
+			//g.drawString(title, OFFSET_X, TITLE_Y);
 			g.setFont(new Font("MONOSPACED", Font.PLAIN, 12));
 //			g.setClip(0,0, COLUMN_WIDTH * alignment[0].length() + 2 * OFFSET_X, g.getClipBounds().height);			
 

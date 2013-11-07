@@ -110,7 +110,6 @@ public class MainManager {
 	 * @param params plugin parameters 
 	 */
 	public void init(ArrayList<String> args) {
-		// TODO add postProcMan here and an init() for postprocess plugins
 		modelExtMan.init(args);
 		postProcMan.init(modelExtMan);
 	}

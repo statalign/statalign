@@ -93,8 +93,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	public double[][][] coords;
 	
 	/** Crystallographic temperature factors, for weighting epsilon. */
-	private double[][] bFactors;
-	
+	public double[][] bFactors;
+		
 	/** Alpha-C atomic coordinates under the current set of rotations/translations */
 	public double[][][] rotCoords;
 	
@@ -483,7 +483,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				List<double[]> cl = ps.coords.get(i);
 				List<Double> bF = ps.bFactors.get(i);
 				if (localEpsilon && bF.size() == 0) {
-					throw new RuntimeException("No B-factor data available for "+name+": cannot use localEpsilon mode.");					
+					localEpsilon = false;
+					System.out.println("No B-factor data available for "+name+": cannot use localEpsilon mode.");					
 				}
 				if(len != cl.size())
 					throw new IllegalArgumentException("structalign: sequence length mismatch with structure file for seq "+name);
