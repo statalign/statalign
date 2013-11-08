@@ -43,7 +43,7 @@ public class AlignmentGUI extends JPanel{
 	private int aligLen = 200;
 
 	/** Values greater than SCALE_FACTOR * mean will be cropped */
-	static double SCALE_FACTOR = 2.5;
+	static double SCALE_FACTOR = 3;
 	static final int COLUMN_WIDTH = 9;
 	static final int FONT_HEIGHT = 15;
 	static final int OFFSET_X = 10;

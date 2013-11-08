@@ -12,8 +12,7 @@ import statalign.model.subst.plugins.NucleotideModelUtils;
 public class Felsenstein81 extends NucleotideModel{
 	
 	public static final String menuName = "Felsenstein 1981";
-
-	static final double span = 0.1; // largest parameter change when resampling
+//static final double span = 0.1; // largest parameter change when resampling
 
 	/**
 	 * This constructor uses the analytical solution to diagonalising

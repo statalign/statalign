@@ -17,21 +17,15 @@ public class SubstMove extends McmcMove {
 	
 	Tree tree = null;
 	
-	class RInterface implements ParameterInterface {
-		public double get() {
-			return tree.hmm2.params[0];
-		}
-		public void set(double x) {
-			tree.hmm2.params[0] = x;
-		}
-	}
-	
 	public SubstMove (McmcModule m, String n) {
 		param = null; // SubstitutionModel handles the parameter access itself
 		owner = m;
 		prior = null;
 		name = n;
-		autoTune = false;
+		proposalWidthControlVariable = 0.1;		
+		maxProposalWidthControlVariable = 10.0;
+		spanMultiplier = 0.9;
+		//autoTune = false;
 	}
 
 	public void copyState(Object externalState) {
@@ -58,7 +52,10 @@ public class SubstMove extends McmcMove {
 		else {
 			throw new IllegalArgumentException("ContinuousPositiveParameterMove.proposal must take an argument of type Tree.");
 		}
-		double logProposalDensity = tree.substitutionModel.sampleParameter();
+		tree.substitutionModel.updateSpan(proposalWidthControlVariable);
+		double logProposalDensity = -tree.substitutionModel.sampleParameter();
+		// For some reason all the SubstitutionModel sampleParameter() functions
+		// return the inverse of the Hastings ratio, hence the minus sign above.
 		return logProposalDensity;
 	}
 	

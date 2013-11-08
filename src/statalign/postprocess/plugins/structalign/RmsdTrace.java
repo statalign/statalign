@@ -39,6 +39,12 @@ public class RmsdTrace extends Postprocess {
 	Track rmsdTrack = new Track(Color.RED, new double[1]);
 	Track bFactorTrack = new Track(Color.GREEN, new double[1]);
 	
+	double maxLikelihood = Double.NEGATIVE_INFINITY;
+	int sampleNumberMLE;
+	String[] fullAlignMLE;
+	double[][][] coorMLE;
+	double[] rmsdMLE, bFactorMLE;
+	
 	public double[][] distanceMatrix;
 	
 	/** Determines scaling for RMSD annotation above sequence in GUI */
@@ -134,11 +140,21 @@ public class RmsdTrace extends Postprocess {
 	public void newPeek(State state) {
 		if (!active) return;
 		if (show) {
-			fullAlign = state.getFullAlign();
-			updateTracks();
+			doUpdate(state,0);
 		}
 	}
 	
+	private void doUpdate(State state, int sampleNumber) {				
+		updateTracks(curAli.showFullAlignment ? state.getFullAlign() : state.getLeafAlign());
+		if (!state.isBurnin && state.logLike > maxLikelihood) {
+			maxLikelihood = state.logLike;			
+			sampleNumberMLE = sampleNumber;
+			fullAlignMLE = state.getFullAlign().clone();
+			//coorMLE = structAlign.rotCoords.clone();
+			rmsdMLE = rmsdTrack.scores.clone();
+			bFactorMLE = bFactorTrack.scores.clone();
+		}
+	}
 	@Override
 	public void newSample(State state, int no, int total) {
 		if(!active)
@@ -163,8 +179,7 @@ public class RmsdTrace extends Postprocess {
 			}		
 		}		
 		if (show) {
-			fullAlign = state.getFullAlign();
-			updateTracks();
+			doUpdate(state,no);
 		}
 	}
 	
@@ -174,11 +189,31 @@ public class RmsdTrace extends Postprocess {
 			return;		
 		if(postprocessWrite) {
 		try {
-			outputFile.close();
+			outputFile.close();			
 		} catch (IOException e) {
 			e.printStackTrace();
 		}		
 		}
+		try { // Should this be printed if !postprocessWrite?
+			FileWriter mle = new FileWriter(getBaseFileName()+getFileExtension()+".mle");
+			mle.write("Maximum likelihood = "+maxLikelihood+" at sample "+sampleNumberMLE+"\n");
+			for (int i=0; i<rmsdMLE.length; i++) {
+				boolean allGap = true;
+				for (int j=0; j<structAlign.rotCoords.length; j++) { // Assume first sequences are non-internals
+					if (fullAlignMLE[j].charAt(i) != '-') allGap = false;
+				}
+				if (!allGap) {
+					mle.write(rmsdMLE[i]+"");
+					if (structAlign.localEpsilon) mle.write("\t"+bFactorMLE[i]);
+					mle.write("\n");
+				}
+				
+			}
+			mle.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		//}
 	}
 	
 	public static void printMatrix(double[][] m) {
@@ -211,21 +246,24 @@ public class RmsdTrace extends Postprocess {
 		}
 		return msd;
 	}
-	public void updateTracks(){
+	public void updateTracks(String[] align){
 		double[][][] coor = structAlign.rotCoords;
-		String[] align = fullAlign;
 		int leaves = coor.length;
 		boolean igap, jgap;		
 		//int n = leaves * (leaves-1) / 2; // Number of pairwise comparisons
 		
 		int alignmentLength = align[0].length();
+		int leafAlignmentLength = align[0].length();
 		boolean[] allGapped = new boolean[alignmentLength];
+		boolean[] allGappedLeaf = new boolean[alignmentLength];
 		for(int k = 0; k < align[0].length(); k++){
 			allGapped[k] = true;
 			for(int i = 0; i < align.length; i++){
 				allGapped[k] &= (align[i].charAt(k) == '-');				
+				if (i < leaves) allGappedLeaf[k] &= (align[i].charAt(k) == '-');
 			}
 			if (allGapped[k]) alignmentLength--;
+			if (allGappedLeaf[k]) leafAlignmentLength--;
 		}
 		rmsdTrack.scores = new double[alignmentLength];
 		rmsdTrack.max = 0.0; rmsdTrack.min = Double.POSITIVE_INFINITY; rmsdTrack.mean = 0.0;
@@ -234,7 +272,8 @@ public class RmsdTrace extends Postprocess {
 			bFactorTrack.max = 0.0; bFactorTrack.min = Double.POSITIVE_INFINITY; bFactorTrack.mean = 0.0;
 		}
 		int[] index = new int[leaves];		
-		for(int k = 0, kk=0; k < align[0].length(); k++){			
+		for(int k = 0, kk=0; k < align[0].length(); k++){				
+
 			int n=0;
 			if (allGapped[k]) continue;			
 			for(int i = 0; i < leaves-1; i++){
@@ -246,32 +285,36 @@ public class RmsdTrace extends Postprocess {
 						++n;
 					}					
 				}				
+			}			
+			if (n > 0) rmsdTrack.scores[kk] /= n;
+			if (n==0)  rmsdTrack.scores[kk] = Double.NaN;
+			if (!Double.isNaN(rmsdTrack.scores[kk])) {			
+				if (rmsdTrack.scores[kk] > 0) rmsdTrack.scores[kk] = Math.sqrt(rmsdTrack.scores[kk]);
+				
+				if (rmsdTrack.scores[kk] > rmsdTrack.max) rmsdTrack.max = rmsdTrack.scores[kk];
+				if (rmsdTrack.scores[kk] > 0 && rmsdTrack.scores[kk] < rmsdTrack.min) rmsdTrack.min = rmsdTrack.scores[kk];
+				rmsdTrack.mean += rmsdTrack.scores[kk] / leafAlignmentLength;
 			}
+			
 			int nBfactor = 0;
 			for(int i = 0; i < leaves; i++) {
 				if (align[i].charAt(k) != '-') {
-					if (structAlign.localEpsilon) bFactorTrack.scores[kk] += structAlign.bFactors[i][index[i]] * Math.sqrt(structAlign.epsilon);
+					if (structAlign.localEpsilon) bFactorTrack.scores[kk] += Math.pow(structAlign.bFactors[i][index[i]],2) * structAlign.epsilon;
 					nBfactor++;
 					index[i]++;
 				}
 			}			 	
-			bFactorTrack.scores[kk] /= nBfactor;
-			
-			if (n > 0) rmsdTrack.scores[kk] /= n;
-			if (n==0) { rmsdTrack.scores[kk] = Double.NaN; kk++; continue; }
-			
-			if (rmsdTrack.scores[kk] > 0) rmsdTrack.scores[kk] = Math.sqrt(rmsdTrack.scores[kk]);
-			
-			if (rmsdTrack.scores[kk] > rmsdTrack.max) rmsdTrack.max = rmsdTrack.scores[kk];
-			if (rmsdTrack.scores[kk] > 0 && rmsdTrack.scores[kk] < rmsdTrack.min) rmsdTrack.min = rmsdTrack.scores[kk];
-			rmsdTrack.mean += rmsdTrack.scores[kk] / alignmentLength;
-			
 			if (structAlign.localEpsilon) {
-				if (bFactorTrack.scores[kk] > bFactorTrack.max) bFactorTrack.max = bFactorTrack.scores[kk];
-				if (bFactorTrack.scores[kk] > 0 && bFactorTrack.scores[kk] < bFactorTrack.min) bFactorTrack.min = bFactorTrack.scores[kk];
-				bFactorTrack.mean += bFactorTrack.scores[kk] / alignmentLength;
+				bFactorTrack.scores[kk] /= nBfactor;
+				bFactorTrack.scores[kk] = Math.sqrt(bFactorTrack.scores[kk]);				 
+				if (bFactorTrack.scores[kk] == 0) bFactorTrack.scores[kk] = Double.NaN; 									
+				if (!Double.isNaN(bFactorTrack.scores[kk])) { 							
+					if (bFactorTrack.scores[kk] > bFactorTrack.max) bFactorTrack.max = bFactorTrack.scores[kk];
+					if (bFactorTrack.scores[kk] > 0 && bFactorTrack.scores[kk] < bFactorTrack.min) bFactorTrack.min = bFactorTrack.scores[kk];
+					bFactorTrack.mean += bFactorTrack.scores[kk] / leafAlignmentLength;		
+				}					
 			}
-						
+			
 			kk++;			
 		}				
 	}

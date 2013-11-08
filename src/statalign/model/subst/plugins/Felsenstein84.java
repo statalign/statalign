@@ -14,7 +14,7 @@ public class Felsenstein84 extends NucleotideModel{
 
 	public static final String menuName = "Felsenstein 1984";
 	
-	static final double span = 0.1; // largest parameter change when resampling
+	//static final double span = 0.1; // largest parameter change when resampling
 
 	/**
 	 * This constructor uses numerical methods to diagonalise the rate

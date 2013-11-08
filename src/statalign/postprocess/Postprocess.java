@@ -282,5 +282,9 @@ public abstract class Postprocess {
     	this.selected = selected;
     	postprocessManager.updateSelectedList();
     }    
+    
+    protected String getBaseFileName() {
+    	return postprocessManager.getBaseFileName();
+    }
 
 }

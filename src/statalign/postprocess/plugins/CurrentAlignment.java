@@ -39,6 +39,9 @@ public class CurrentAlignment extends statalign.postprocess.Postprocess{
 	double[] decoding;
 	boolean plotPosterior = true;
 	
+	/** Whether to plot the full alignment with internal nodes. */
+	public boolean showFullAlignment = true;
+	
 	AlignmentGUI gui;
 	
 	/**
@@ -110,7 +113,7 @@ public class CurrentAlignment extends statalign.postprocess.Postprocess{
 	}
 	
 	private void updateAlignment(State state) {
-		String[] rows = state.getFullAlign();
+		String[] rows = showFullAlignment ? state.getFullAlign() : state.getLeafAlign();
 		for(int i = 0; i < rows.length; i++)
 			//allAlignment[i] = seqNames[i]+'\t'+rows[i];
 			allAlignment[i] = rows[i];

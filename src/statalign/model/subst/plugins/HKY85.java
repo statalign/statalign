@@ -14,7 +14,7 @@ public class HKY85 extends NucleotideModel{
 
 	public static final String menuName = "Hasegawa/Kishino/Yano 1985";
 
-	static final double span = 0.1; // largest parameter change when resampling
+	//static final double span = 0.1; // largest parameter change when resampling
 
 	/**
 	 * This constructor uses numerical methods to diagonalise the rate

@@ -54,6 +54,10 @@ public class PostprocessManager {
 	 */
 	public static PluginParameters pluginParameters = new PluginParameters();
 
+	/** The base filename where output is to be sent. Each plugin appends a suffix to this. */ 
+	private String baseFileName;
+	public String getBaseFileName() { return baseFileName; }
+	public void setBaseFileName(String s) { baseFileName = s; }
 	
 	/**
 	 * This constructor recognizes the plugins
@@ -101,6 +105,20 @@ public class PostprocessManager {
 		return Collections.unmodifiableList(plugins);
 	}
 	
+	public void createPluginFiles() {
+		try{
+		for (Postprocess p : plugins) {
+			if (p.postprocessWrite) {				
+				String name = baseFileName + p.getFileExtension();
+				System.out.println("Output file for " + p.getTabName()
+						+ ": " + name);
+				p.outputFile = new FileWriter(name);					
+			}
+		}		
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
 	/**
 	 * Finds dependency problems. Adds working plugins in dependency order to workingPlugins.
 	 */

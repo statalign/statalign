@@ -12,7 +12,7 @@ public class JukesCantor extends NucleotideModel {
 
 	public static final String menuName = "Jukes-Cantor";
 
-	static final double span = 0.1;
+	//static final double span = 0.1;
 
 	/**
 	 * This constructor reads transition rates from the file data/jukescantor_rate.dat,

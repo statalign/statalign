@@ -13,7 +13,7 @@ public class Kimura3 extends NucleotideModel {
 
 	public static final String menuName = "Kimura 3 parameters";
 	
-	static final double span = 0.1;
+	//static final double span = 0.1;
 
 	/**
 	 * This constructor reads transition rates from the file data/kimura3_rate.dat,

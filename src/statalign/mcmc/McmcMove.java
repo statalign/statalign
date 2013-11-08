@@ -31,6 +31,7 @@ public abstract class McmcMove {
 	public int lowCounts = 0;
 	
 	public double proposalWidthControlVariable = 1.0;
+	public double maxProposalWidthControlVariable = Double.POSITIVE_INFINITY;
 	public double spanMultiplier = Utils.SPAN_MULTIPLIER;
 	public double minAcceptance = Utils.MIN_ACCEPTANCE;
 	public double maxAcceptance = Utils.MAX_ACCEPTANCE;

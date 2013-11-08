@@ -17,7 +17,7 @@ import statalign.model.score.plugins.Blosum62;
  */
 public class CpRev extends AminoAcidModel {
 
-	static String menuName = "Cloroplast REV";
+	static String menuName = "Chloroplast REV";
 	
 	/**
 	 * Constructor used when instantiation is necessary. 

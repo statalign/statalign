@@ -66,6 +66,11 @@ public abstract class SubstitutionModel{
 	 * initial tree.
 	 */
 	public SubstitutionScore attachedScoringScheme;
+	
+	
+	/** Determines the span for proposing new parameters. Updated automatically during MCMC. */
+	protected double span = 0.1;	
+	public void updateSpan(double newSpan) { span = newSpan; }
 
 	/**
 	 * 
@@ -113,7 +118,7 @@ public abstract class SubstitutionModel{
 	/**
 	 * Abstract method to sample a new model parameter and update v,w,d,e accordingly.
 	 * 
-	 * @return log of quotient of backproposal and proposal probability
+	 * @return log(fwd proposal probability/bwd proposal probability) [i.e. inverse Hastings ratio]
 	 */
 	public abstract double sampleParameter();
 	

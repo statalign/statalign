@@ -76,6 +76,11 @@ public class MainManager {
 	 * The full path of the input file from which we read the sequences.
 	 */
 	public String fullPath;
+	
+	/**
+	 * After adding on extensions from ModelExtension objects.
+	 */
+	public String fullPathWithExtensions;
 
 	/**
 	 * Alignment formats in which StatAlign can generate output
@@ -127,16 +132,9 @@ public class MainManager {
 			if (!filenameExtension.isEmpty()) {
 				filenameExtension += ".";
 			}
-			postProcMan.logFile = new FileWriter(fullPath + "." + filenameExtension + "log");
-
-			for (Postprocess p : postProcMan.getPlugins()) {
-				if (p.postprocessWrite) {		
-					String name = fullPath + "." + filenameExtension + p.getFileExtension();
-					System.out.println("Output file for " + p.getTabName()
-							+ ": " + name);
-					p.outputFile = new FileWriter(name);					
-				}
-			}
+			postProcMan.logFile = new FileWriter(fullPath + "." + filenameExtension + "log");					
+			postProcMan.setBaseFileName(fullPath + "." + filenameExtension);
+			postProcMan.createPluginFiles();		
 
 			thread = new MainThread(this);
 			thread.start();

@@ -148,7 +148,8 @@ public abstract class McmcModule {
 					m.acceptanceCount = 0;
 					m.lowCounts++;
 				}
-				else if (m.acceptanceRate() > m.maxAcceptance) {
+				else if (m.acceptanceRate() > m.maxAcceptance && 
+						m.proposalWidthControlVariable <= m.maxProposalWidthControlVariable) {
 					m.proposalWidthControlVariable /= m.spanMultiplier;
 					m.proposalCount = 0;
 					m.acceptanceCount = 0;
