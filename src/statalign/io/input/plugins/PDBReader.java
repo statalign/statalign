@@ -66,13 +66,13 @@ public class PDBReader extends DataReader {
 			throw new IllegalFormatException("PDBReader: sequence "+data.names.get(0)+" is without a structure");
 		
 		data.seqs = new RawSequences(sequence,data.names.get(0));
-		for (int i=0; i<data.bFactors.get(0).size(); i++) {				
-			System.out.println(i+"\t"+data.seqs.getSequence(0).charAt(i)+"\t"
-									+data.coords.get(0).get(i)[0]+"\t"
-									+data.coords.get(0).get(i)[1]+"\t"
-									+data.coords.get(0).get(i)[2]+"\t"
-									+data.bFactors.get(0).get(i));
-		}
+//		for (int i=0; i<data.bFactors.get(0).size(); i++) {				
+//			System.out.println(i+"\t"+data.seqs.getSequence(0).charAt(i)+"\t"
+//									+data.coords.get(0).get(i)[0]+"\t"
+//									+data.coords.get(0).get(i)[1]+"\t"
+//									+data.coords.get(0).get(i)[2]+"\t"
+//									+data.bFactors.get(0).get(i));
+//		}
 		return data;
 	}
 	
