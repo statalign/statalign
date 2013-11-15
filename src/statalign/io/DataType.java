@@ -13,6 +13,8 @@ public interface DataType {
 	 * for example protein structure coordinates. 
 	 */
 	public abstract boolean perSequenceData();
+	public RawSequences getSeqs();
+	public void setSeqs(RawSequences rs);
 	public abstract String getSummaryAssociatedWith(String sequenceName);
 	public abstract void removeDataAssociatedWith(String sequenceName);
 	

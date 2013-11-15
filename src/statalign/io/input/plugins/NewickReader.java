@@ -272,10 +272,10 @@ public class NewickReader extends DataReader {
 
 	public static enum FormatExceptType {
 
-		PARSE_ERROR("Parse error"),
-		PREMATURE_END("Premature end of input"),
-		EDGELEN_ERROR("Ill-formatted edge length"),
-		EMPTY_FIELD("Edge length or node name field has zero length");
+		PARSE_ERROR("NewickReader: Parse error"),
+		PREMATURE_END("NewickReader: Premature end of input"),
+		EDGELEN_ERROR("NewickReader: Ill-formatted edge length"),
+		EMPTY_FIELD("NewickReader: Edge length or node name field has zero length");
 
 		private String message;
 

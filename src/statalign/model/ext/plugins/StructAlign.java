@@ -281,8 +281,11 @@ public class StructAlign extends ModelExtension implements ActionListener {
 
 	@Override
 	public void setActive(boolean active) {
-		super.setActive(active);
-		System.out.println("StructAlign plugin is now "+(active?"enabled":"disabled"));		
+		boolean oldActive = this.active;
+		if (oldActive != active) {
+			super.setActive(active);
+			System.out.println("StructAlign plugin is now "+(active?"enabled":"disabled"));
+		}
 	}
 	
 	@Override

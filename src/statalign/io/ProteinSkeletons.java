@@ -17,6 +17,11 @@ public class ProteinSkeletons implements DataType {
 		return true;
 	}
 	
+	public RawSequences seqs = null;
+	
+	public RawSequences getSeqs() { return seqs; }
+	public void setSeqs(RawSequences rs) { seqs = rs; }
+	
 	@Override
 	public void removeDataAssociatedWith(String sequenceName) {
 		for (int i=0; i<names.size(); i++) {
@@ -36,7 +41,7 @@ public class ProteinSkeletons implements DataType {
 		return "";
 	}
 	/** names of sequences */
-	public List<String> names = new ArrayList<String>();
+	public List<String> names = new ArrayList<String>();		
 	
 	/** coordinates */
 	public List<List<double[]>> coords = new ArrayList<List<double[]>>();

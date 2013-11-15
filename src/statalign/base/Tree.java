@@ -5,7 +5,9 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 
 import statalign.base.hmm.Hmm2;
 import statalign.base.hmm.HmmNonParam;
@@ -13,6 +15,7 @@ import statalign.base.hmm.HmmSilent;
 import statalign.base.hmm.HmmTkf92;
 import statalign.base.thread.Stoppable;
 import statalign.io.DataType;
+import statalign.io.RawSequences;
 import statalign.model.score.SubstitutionScore;
 import statalign.model.subst.SubstitutionModel;
 import statalign.model.subst.plugins.Dayhoff;
@@ -68,6 +71,10 @@ public class Tree extends Stoppable implements DataType {
     public Tree() {
     }
     
+    public RawSequences getSeqs() { return null; }
+	public void setSeqs(RawSequences rs) {}
+	
+	
     /**
      * Constructor to read a tree and an alignment from an output file.
      * Not used in the current version. It aims at letting the possibility to

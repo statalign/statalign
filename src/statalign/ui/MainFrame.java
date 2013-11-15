@@ -593,10 +593,10 @@ public class MainFrame extends JFrame implements ActionListener {
                 	JOptionPane.showMessageDialog(this, "The following file was not recognised to be in a known format:\n"+file+"\n\n", "Error reading input file", JOptionPane.ERROR_MESSAGE);
                 	continue;
                 }
-                if(data instanceof RawSequences) {
-                	if(inFile == null)
+                if(data.getSeqs() != null) {
+                	if(inFile == null) 
                 		inFile = file;
-                	manager.inputData.seqs.add((RawSequences)data);
+                	manager.inputData.seqs.add(data.getSeqs());
                 	manager.inputgui.updateSequences();
                 	manager.fullPath = inFile.getAbsolutePath();
                 	if (manager.inputData.model != null) {
@@ -623,7 +623,8 @@ public class MainFrame extends JFrame implements ActionListener {
                 			rnaButton.setEnabled(false);
                 		}
                 	}
-                } else {
+                } 
+                if (!(data instanceof RawSequences))  {
                 	// TODO add Tree type as in console version
                 	manager.inputData.auxData.add(data);
                 	manager.inputgui.updateSequences();

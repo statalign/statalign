@@ -21,6 +21,9 @@ public class RawSequences implements DataType {
 	 */
 	private List<String> sequences = new ArrayList<String>();
 
+	public RawSequences getSeqs() { return this; }
+	public void setSeqs(RawSequences rs) { }
+	
 	/**
 	 * Dynamic array of sequence names. Any name can be null.
 	 */
@@ -47,6 +50,13 @@ public class RawSequences implements DataType {
 	public RawSequences() {
 		sequences = new ArrayList<String>();
 		seqNames = new ArrayList<String>();		
+	}
+	
+	public RawSequences(String seq, String name) {
+		sequences = new ArrayList<String>();
+		sequences.add(seq);
+		seqNames = new ArrayList<String>();
+		seqNames.add(name);
 	}
 	
 	public boolean isAligned() {

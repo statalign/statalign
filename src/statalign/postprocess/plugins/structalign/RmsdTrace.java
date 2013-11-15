@@ -195,21 +195,23 @@ public class RmsdTrace extends Postprocess {
 		}		
 		}
 		try { // Should this be printed if !postprocessWrite?
-			FileWriter mle = new FileWriter(getBaseFileName()+getFileExtension()+".mle");
-			mle.write("Maximum likelihood = "+maxLikelihood+" at sample "+sampleNumberMLE+"\n");
-			for (int i=0; i<rmsdMLE.length; i++) {
-				boolean allGap = true;
-				for (int j=0; j<structAlign.rotCoords.length; j++) { // Assume first sequences are non-internals
-					if (fullAlignMLE[j].charAt(i) != '-') allGap = false;
+			if (rmsdMLE != null) {
+				FileWriter mle = new FileWriter(getBaseFileName()+getFileExtension()+".mle");
+				mle.write("Maximum likelihood = "+maxLikelihood+" at sample "+sampleNumberMLE+"\n");
+				for (int i=0; i<rmsdMLE.length; i++) {
+					boolean allGap = true;
+					for (int j=0; j<structAlign.rotCoords.length; j++) { // Assume first sequences are non-internals
+						if (fullAlignMLE[j].charAt(i) != '-') allGap = false;
+					}
+					if (!allGap) {
+						mle.write(rmsdMLE[i]+"");
+						if (structAlign.localEpsilon) mle.write("\t"+bFactorMLE[i]);
+						mle.write("\n");
+					}
+					
 				}
-				if (!allGap) {
-					mle.write(rmsdMLE[i]+"");
-					if (structAlign.localEpsilon) mle.write("\t"+bFactorMLE[i]);
-					mle.write("\n");
-				}
-				
+				mle.close();
 			}
-			mle.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
