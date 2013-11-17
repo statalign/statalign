@@ -10,6 +10,7 @@ import statalign.io.DataType;
 
 public abstract class DataReader {
 
+	protected String filename;
 	/**
 	 * DataReader plugins must override this to return a list of supported file extensions.
 	 * @return a list of all lower case file extensions supported by this plugin
@@ -17,10 +18,12 @@ public abstract class DataReader {
 	public abstract List<String> supportedExtensions();
 	
 	public DataType read(File file) throws IOException {
+		filename = file.getName();
 		return read(new FileReader(file));
 	}
 
 	public DataType read(String fileName) throws IOException {
+		filename = fileName;
 		return read(new File(fileName));
 	}
 	

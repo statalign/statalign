@@ -42,7 +42,6 @@ public class RmsdTrace extends Postprocess {
 	double maxLikelihood = Double.NEGATIVE_INFINITY;
 	int sampleNumberMLE;
 	String[] fullAlignMLE;
-	double[][][] coorMLE;
 	double[] rmsdMLE, bFactorMLE;
 	
 	public double[][] distanceMatrix;
@@ -139,9 +138,9 @@ public class RmsdTrace extends Postprocess {
 	@Override
 	public void newPeek(State state) {
 		if (!active) return;
-		if (show) {
+		//if (show) {
 			doUpdate(state,0);
-		}
+		//}
 	}
 	
 	private void doUpdate(State state, int sampleNumber) {				
@@ -150,7 +149,6 @@ public class RmsdTrace extends Postprocess {
 			maxLikelihood = state.logLike;			
 			sampleNumberMLE = sampleNumber;
 			fullAlignMLE = state.getFullAlign().clone();
-			//coorMLE = structAlign.rotCoords.clone();
 			rmsdMLE = rmsdTrack.scores.clone();
 			bFactorMLE = bFactorTrack.scores.clone();
 		}
@@ -178,9 +176,9 @@ public class RmsdTrace extends Postprocess {
 				e.printStackTrace();
 			}		
 		}		
-		if (show) {
+		//if (show) {
 			doUpdate(state,no);
-		}
+		//}
 	}
 	
 	@Override

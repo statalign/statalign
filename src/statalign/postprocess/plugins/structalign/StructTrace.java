@@ -1,6 +1,7 @@
 package statalign.postprocess.plugins.structalign;
 
 import java.awt.BorderLayout;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -16,6 +17,8 @@ import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
 import statalign.base.InputData;
 import statalign.base.McmcStep;
 import statalign.base.State;
+import statalign.base.Utils;
+import statalign.io.input.plugins.PDBReader;
 import statalign.mcmc.McmcMove;
 import statalign.model.ext.ModelExtManager;
 import statalign.model.ext.ModelExtension;
@@ -33,6 +36,11 @@ public class StructTrace extends Postprocess {
 	public int burninLength; 
 	public int MAX_HISTORY_SIZE = 1000;
 	public int refreshRate;
+	
+	double maxLikelihood = Double.NEGATIVE_INFINITY;
+	int sampleNumberMLE;
+	double[][][] coorMLE;
+	String[] seqs, names;
 	
 	public List<StructAlignTraceParameters> getParameterHistory() {
 		return parameterHistory;
@@ -142,7 +150,25 @@ public class StructTrace extends Postprocess {
 		// will start to shift.
 		count = 0;
 		
-	}	
+	}
+	private void doUpdate(State state, int sampleNumber) {				
+		if (!state.isBurnin && state.logLike > maxLikelihood) {
+			maxLikelihood = state.logLike;			
+			sampleNumberMLE = sampleNumber;
+			coorMLE = structAlign.rotCoords.clone();
+			if (seqs == null) { 
+				seqs = state.seq; 
+				names = state.name;
+			}
+		}
+	}
+	@Override
+	public void newPeek(State state) {
+		if (!active) return;
+		//if (show) {
+			doUpdate(state,0);
+		//}
+	}
 	@Override
 	public void newSample(State state, int no, int total) {
 		if(!active)
@@ -166,6 +192,7 @@ public class StructTrace extends Postprocess {
 			}
 			//structAlign.setAllMovesNotProposed();
 		}				
+		doUpdate(state,no);
 	}
 	
 	@Override
@@ -177,8 +204,18 @@ public class StructTrace extends Postprocess {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		
-		//if(Utils.DEBUG) {
+		if (coorMLE != null) {
+			try {
+				FileWriter mle = new FileWriter(getBaseFileName()+getFileExtension()+".super.pdb");
+				PDBReader.writePDB(coorMLE, seqs, names, mle);				
+				mle.close();
+			}catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+
+
+		if(Utils.DEBUG) {
 			System.out.println("final rotation matrices:");
 			for(int i = 1; i < structAlign.xlats.length; i++) {
 				Rotation rot = new Rotation(new Vector3D(structAlign.axes[i]), structAlign.angles[i]);
@@ -193,7 +230,7 @@ public class StructTrace extends Postprocess {
 			for (McmcMove mcmcMove : structAlign.getMcmcMoves()) {
 				System.out.println(mcmcMove.name+"\t"+mcmcMove.acceptanceRate());
 			}
-		//}
+		}
 	}
 	
 	public static void printMatrix(double[][] m) {
