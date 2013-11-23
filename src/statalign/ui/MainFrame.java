@@ -45,6 +45,8 @@ import javax.swing.JToolBar;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import statalign.StatAlign;
 import statalign.base.Input;
@@ -117,7 +119,8 @@ public class MainFrame extends JFrame implements ActionListener {
 
     public JLabel statusText;
 
-    private HashMap<Integer, Postprocess> tabPluginMap;
+    private HashMap<Integer, Postprocess> tabPluginMap = new HashMap<Integer, Postprocess>();
+    private int lastSelectedTabIndex;
 
     /** The main manager that handles the MCMC run. */
     public MainManager manager;
@@ -410,6 +413,35 @@ public class MainFrame extends JFrame implements ActionListener {
         mainPanel.setPreferredSize(new Dimension(screenSize.width / 2, screenSize.height / 2));
 
         tab = new JTabbedPane();
+        tab.addChangeListener(new ChangeListener() {
+            @Override
+			public void stateChanged(ChangeEvent changeEvent) {
+                JTabbedPane pane = (JTabbedPane) changeEvent.getSource();
+                Integer i = pane.getSelectedIndex();
+
+                // Remove the last tab's toolbar items.
+                if (lastSelectedTabIndex != -1) {
+                    Postprocess lastPlugin = tabPluginMap.get(lastSelectedTabIndex);
+                    if (lastPlugin != null && lastPlugin.hasToolBar) {
+                        for (JComponent item : lastPlugin.getToolBarItems()) {
+                            toolBar.remove(item);
+                        }
+                        toolBar.repaint();
+                    }
+                }
+
+                // Add the current tab's toolbar items.
+                Postprocess plugin = tabPluginMap.get(i);
+                if (plugin != null && plugin.hasToolBar) {
+                    for (JComponent item : plugin.getToolBarItems()) {
+                        toolBar.add(item);
+                    }
+                    toolBar.repaint();
+                }
+                lastSelectedTabIndex = i;
+            }
+        });
+
 
         input = new Input(manager);
         
@@ -847,9 +879,11 @@ public class MainFrame extends JFrame implements ActionListener {
 	public void updateTabs() {
 		tab.removeAll();
         tab.addTab(input.getTabName(), input.getIcon(), input.getJPanel(), input.getTip());
+        tabPluginMap.clear();
         for (int i = 0; i < pluginTabs.size(); i++) {
             Postprocess plugin = pluginTabs.get(i);
             if (plugin.selected) {
+                tabPluginMap.put(tab.getTabCount(), plugin);
                 tab.addTab(plugin.getTabName(), plugin.getIcon(), plugin.getJPanel(), plugin.getTip());
             }
         }
