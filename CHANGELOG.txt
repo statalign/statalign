@@ -2,14 +2,31 @@ This file lists major changes between StatAlign releases.
 
 ------------------------------------------------------------------------------
 
+StatAlign v3.1 on 24 Nov 2013
+
+  New features include:
+
+    * Introduced automatic proposal variance tuning for substitution parameters.
+    
+    StructAlign plugin:
+    * Added PDBReader for reading sequences and structures from a .pdb file
+    * B-factors and pairwise RMSD used to annotate current alignment sample in GUI.
+    * Posterior probabilities added above current alignment sample in GUI.
+    * Maximum likelihood structural superpositions are written to a PDB file.
+
+  Bugfixes:
+    * Restored missing toolbar icons for tree and RNA postprocessing plugins in GUI.
+      
+------------------------------------------------------------------------------
+
 StatAlign v3.0 on 26 Oct 2013
 
   New features include:
 
-    * Option to keep tree fixed when phylogeny is known
     * StructAlign plugin for alignment of protein structures
     * Introduced framework for handling extensions to the evolutionary model
     * Significant improvements to mixing on tree topologies
+    * Option to keep tree fixed when phylogeny is known
     * Several new types of MCMC moves to improve mixing and convergence
     * Automatic tuning for MCMC moves
     * Restructured code to allow for easy addition of new MCMC move objects
