@@ -5,11 +5,9 @@ This file lists major changes between StatAlign releases.
 StatAlign v3.1 on 24 Nov 2013
 
   New features include:
-
     * Introduced automatic proposal variance tuning for substitution parameters.
     
   StructAlign plugin:
-  
     * Added PDBReader for reading sequences and structures from a .pdb file
     * B-factors and pairwise RMSD used to annotate current alignment sample in GUI.
     * Posterior probabilities added above current alignment sample in GUI.
@@ -23,7 +21,6 @@ StatAlign v3.1 on 24 Nov 2013
 StatAlign v3.0 on 26 Oct 2013
 
   New features include:
-
     * StructAlign plugin for alignment of protein structures
     * Introduced framework for handling extensions to the evolutionary model
     * Significant improvements to mixing on tree topologies
