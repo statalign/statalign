@@ -4,17 +4,18 @@ This file lists major changes between StatAlign releases.
 
 StatAlign v3.1 on 24 Nov 2013
 
-  New features include:
-    * Introduced automatic proposal variance tuning for substitution parameters.
+  New features:
+    * Automatic proposal variance tuning for substitution parameters
     
   Updates to StructAlign plugin:
-    * Added PDBReader for reading sequences and structures from a .pdb file
-    * B-factors and pairwise RMSD used to annotate current alignment sample in GUI.
-    * Posterior probabilities added above current alignment sample in GUI.
-    * Maximum likelihood structural superpositions are written to a PDB file.
+    * PDBReader for reading sequences and structures from a PDB file
+    * B-factors and pairwise RMSD to annotate current alignment sample in GUI
+    * Posterior probabilities shown above current alignment sample in GUI
+    * Maximum likelihood structural superpositions are written to a PDB file
 
   Bugfixes:
-    * Restored missing toolbar icons for tree and RNA postprocessing plugins in GUI.
+    * Restored the toolbar icons of the postprocessing plugins
+	* Fixed an issue that caused bias when sampling substitution parameters
       
 ------------------------------------------------------------------------------
 
@@ -38,7 +39,6 @@ StatAlign v3.0 on 26 Oct 2013
     * Persistent regions of insertions with no descendants are stochastically 
       removed using a new type of MCMC move
     
-
 ------------------------------------------------------------------------------
 
 StatAlign v2.1 on 24 Feb 2013
