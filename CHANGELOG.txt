@@ -8,7 +8,8 @@ StatAlign v3.1 on 24 Nov 2013
 
     * Introduced automatic proposal variance tuning for substitution parameters.
     
-    StructAlign plugin:
+  StructAlign plugin:
+  
     * Added PDBReader for reading sequences and structures from a .pdb file
     * B-factors and pairwise RMSD used to annotate current alignment sample in GUI.
     * Posterior probabilities added above current alignment sample in GUI.
