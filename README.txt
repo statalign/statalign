@@ -1,4 +1,4 @@
-StatAlign v3.0
+StatAlign v3.1
 
 http://statalign.github.io/
  
