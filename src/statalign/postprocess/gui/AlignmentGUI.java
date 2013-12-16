@@ -220,6 +220,7 @@ public class AlignmentGUI extends JPanel{
 		double maxScore = track.max;
 		if (maxScore > SCALE_FACTOR * track.mean) maxScore = SCALE_FACTOR * track.mean;
 		for(int i = 1; i < track.scores.length; i++){
+			//System.out.println(track.scores[i-1]);
 			if (Double.isNaN(track.scores[i-1])) { continue; }
 			if (Double.isNaN(track.scores[i])) { ++i; continue; }
 			g.drawLine( OFFSET_X + (maxNameLength + i - 1) * COLUMN_WIDTH + COLUMN_WIDTH / 2,

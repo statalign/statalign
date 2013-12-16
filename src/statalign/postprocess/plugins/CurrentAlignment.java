@@ -32,6 +32,7 @@ public class CurrentAlignment extends statalign.postprocess.Postprocess{
 	
 	InputData input;
 	String[] seqNames;
+	public String[] getSeqNames() { return seqNames; }
 	String[] leafNames;
 	
 	/** We will refer to this to get the posterior probabilities of the current alignment. */
