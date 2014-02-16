@@ -39,10 +39,17 @@ public class PDBReader extends DataReader {
 			while((line = br.readLine()) != null) {				
 				if(++lineNumber == 1) {										 
 					if (line.startsWith("HEADER") && line.length() > 62) {
-						data.names.set(0,line.substring(62,66).toLowerCase());
+						if (line.length() > 66)
+							data.names.set(0,line.substring(62,67).toLowerCase());
+						else 
+							data.names.set(0,line.substring(62,66).toLowerCase());
 					}
 					else { // If HEADER lines have been removed from PDB
-						data.names.set(0,filename.toLowerCase().substring(0,4));
+						if (filename.length() > 4) 
+							data.names.set(0,filename.toLowerCase().substring(0,5));
+						else 
+							data.names.set(0,filename.toLowerCase().substring(0,4));
+						
 						// then use the filename to define the name for this structure
 					}
 					continue;

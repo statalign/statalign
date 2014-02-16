@@ -28,6 +28,7 @@ public class ProteinSkeletons implements DataType {
 			if (names.get(i).toUpperCase().equals(sequenceName.toUpperCase())) {
 				names.remove(i);
 				coords.remove(i);
+				bFactors.remove(i);
 			}
 		}
 	}

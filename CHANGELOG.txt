@@ -15,7 +15,7 @@ StatAlign v3.1 on 24 Nov 2013
 
   Bugfixes:
     * Restored the toolbar icons of the postprocessing plugins
-	* Fixed an issue that caused bias when sampling substitution parameters
+    * Fixed an issue that caused bias when sampling substitution parameters
       
 ------------------------------------------------------------------------------
 

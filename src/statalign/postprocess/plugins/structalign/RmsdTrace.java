@@ -19,6 +19,7 @@ import org.apache.commons.math3.util.Pair;
 import statalign.base.InputData;
 import statalign.base.McmcStep;
 import statalign.base.State;
+import statalign.base.Utils;
 import statalign.mcmc.McmcMove;
 import statalign.model.ext.ModelExtManager;
 import statalign.model.ext.ModelExtension;
@@ -41,8 +42,9 @@ public class RmsdTrace extends Postprocess {
 	
 	double maxLikelihood = Double.NEGATIVE_INFINITY;
 	int sampleNumberMLE;
-	String[] fullAlignMLE;
+	String[] leafAlignMLE, leafAlignMLENames;
 	double[] rmsdMLE, bFactorMLE;
+	double epsilonMLE;
 	
 	public double[][] distanceMatrix;
 	
@@ -50,6 +52,7 @@ public class RmsdTrace extends Postprocess {
 	double SCALE_FACTOR = 2.5;
 	
 	public String[] fullAlign;
+	InputData input;
 
 	public RmsdTrace() {
 		screenable = true;
@@ -102,7 +105,8 @@ public class RmsdTrace extends Postprocess {
 //				structAlign = (StructAlign) modExt;
 //			}
 //		}				
-		if(!active)	return;									
+		if(!active)	return;		
+		input = inputData;
 		
 		//double[] rad = calcGyration();
 		if(postprocessWrite) {
@@ -148,9 +152,11 @@ public class RmsdTrace extends Postprocess {
 		if (!state.isBurnin && state.logLike > maxLikelihood) {
 			maxLikelihood = state.logLike;			
 			sampleNumberMLE = sampleNumber;
-			fullAlignMLE = state.getFullAlign().clone();
+			leafAlignMLE = state.getLeafAlign().clone();
+			leafAlignMLENames = state.name.clone();
 			rmsdMLE = rmsdTrack.scores.clone();
 			bFactorMLE = bFactorTrack.scores.clone();
+			epsilonMLE = structAlign.epsilon;
 		}
 	}
 	@Override
@@ -195,20 +201,28 @@ public class RmsdTrace extends Postprocess {
 		try { // Should this be printed if !postprocessWrite?
 			if (rmsdMLE != null) {
 				FileWriter mle = new FileWriter(getBaseFileName()+getFileExtension()+".mle");
-				mle.write("Maximum likelihood = "+maxLikelihood+" at sample "+sampleNumberMLE+"\n");
+				mle.write("# Maximum likelihood = "+maxLikelihood+" at sample "+sampleNumberMLE+"\n");
 				for (int i=0; i<rmsdMLE.length; i++) {
 					boolean allGap = true;
 					for (int j=0; j<structAlign.rotCoords.length; j++) { // Assume first sequences are non-internals
-						if (fullAlignMLE[j].charAt(i) != '-') allGap = false;
+						if (leafAlignMLE[j].charAt(i) != '-') allGap = false;
 					}
 					if (!allGap) {
 						mle.write(rmsdMLE[i]+"");
-						if (structAlign.localEpsilon) mle.write("\t"+bFactorMLE[i]);
+						if (structAlign.localEpsilon) mle.write("\t"+3*epsilonMLE*bFactorMLE[i]);
 						mle.write("\n");
 					}
 					
 				}
 				mle.close();
+				
+				FileWriter aliMLE = new FileWriter(getBaseFileName()+"mle.fasta");
+				String[] aln = Utils.alignmentTransformation(leafAlignMLE, leafAlignMLENames,
+						"Fasta", input);
+				for (int i = 0; i < aln.length; i++) {
+					aliMLE.write(aln[i] + "\n");
+				}
+				aliMLE.close();
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
