@@ -22,7 +22,7 @@ public class ConsensusTreeVisualizer extends TreeVisualizer {
     // Variables
 
     private CTMain main;
-    private ArrayList<String> consensusTrees;
+    //private ArrayList<String> consensusTrees;
 
     // Functions
 
@@ -32,6 +32,7 @@ public class ConsensusTreeVisualizer extends TreeVisualizer {
         postprocessable = true;
         postprocessWrite = true;
         rnaAssociated = false;
+        noOfSamples = 1;
     }
     
     @Override
@@ -73,6 +74,8 @@ public class ConsensusTreeVisualizer extends TreeVisualizer {
     @Override
     public void newSample(State state, int no, int total) {
     	if (state.isBurnin) return;
+    	
+    	++noOfSamples;
     	String treeString = state.getNewickStringWithLabels();
         NewickParser parser = new NewickParser(treeString);
         TreeNode root = parser.parse();
@@ -85,9 +88,10 @@ public class ConsensusTreeVisualizer extends TreeVisualizer {
         }
         main.addNewTree(root);
         CTree output = main.constructMajorityTree();
-        mcmc.tree.network = main.constructNetwork(output); 
         TreeNode outputRoot = output.getRoot();
-        String outputRootString = outputRoot.toString();
+        String outputRootString = outputRoot.toStringWithProbs(noOfSamples);       
+        
+        mcmc.tree.network = main.constructNetwork(output); 
         
         // Logging.
         if (sampling) {
@@ -99,9 +103,7 @@ public class ConsensusTreeVisualizer extends TreeVisualizer {
         }
         if (postprocessWrite) {
             try {
-            	if(consensusTrees != null && consensusTrees.size() > 0) {
-            		outputFile.write(consensusTrees.get(consensusTrees.size()-1) + "\n");
-            	}
+           		outputFile.write(outputRootString + "\n");
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -120,7 +122,7 @@ public class ConsensusTreeVisualizer extends TreeVisualizer {
         super.beforeFirstSample(input); // Mandatory.
 
         main = new CTMain();
-        consensusTrees = new ArrayList<String>();
+        //consensusTrees = new ArrayList<String>();
     }
 
     @Override

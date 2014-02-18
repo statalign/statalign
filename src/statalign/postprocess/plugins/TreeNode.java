@@ -120,6 +120,36 @@ public class TreeNode {
 
         return sb.toString();
     }
+    
+    /**
+     * Constructs a Newick string from this subtree.
+     * @return a string representation of this subtree in a Newick format.
+     */
+    public String toStringWithProbs(int noOfSamples) {
+        StringBuilder sb = new StringBuilder();
+        if (!children.isEmpty()) {
+            sb.append('(').append(children.get(0));
+            for (int i = 1; i < children.size(); i++)
+                sb.append(',').append(children.get(i).toStringWithProbs(noOfSamples));
+            sb.append(')');
+            String s = "";
+            if (hasProperty("noOfOccurrences")) {                
+            	Integer noOfOccurrences = (Integer) getProperty("noOfOccurrences");            	
+             	s = String.format("%.0f", noOfOccurrences * 100 / (double) noOfSamples);
+            }                                   
+            sb.append(s);
+        } else {
+        	sb.append(name);
+        }
+        if (parent != null) {
+            sb.append(":").append(String.format(Locale.US, "%.5f", edgeLength));
+        } else {
+        	sb.append(";");
+        }
+
+        return sb.toString();
+    }
+
 
     // Properties functions
 

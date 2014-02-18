@@ -293,7 +293,7 @@ public class CTMain {
 	            // 2. Constructs a new internal node.
 	            String nodeName = "int" + Integer.toString(numOfNode);
 	            TreeNode internalNode = new TreeNode(nodeName);
-	            internalNode.addProperty("noOfOccurrences", cluster.noOfOccurrences);
+	            internalNode.addProperty("noOfOccurrences", cluster.noOfOccurrences);	            
 	            internalNode.edgeLength = cluster.edgeLength;
 	            internalNode.parent = parent;
 	

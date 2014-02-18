@@ -27,6 +27,8 @@ public abstract class TreeVisualizer extends Postprocess {
     private JPanel treePanel;
     private String currentPanel;
     private ButtonGroup group;
+    
+    protected int noOfSamples = 0;
 
     protected ArrayList<TreeView> treeViews;
     private HashMap<String, TreeView> treeViewsMap;

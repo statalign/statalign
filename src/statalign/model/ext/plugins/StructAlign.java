@@ -173,7 +173,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	 *  align, topology, edge, indel param, subst param, modelext param 
 	 *  { 35, 20, 25, 15, 10, 0 };
 	 */
-	private final int pluginProposalWeight = 50; // Currently not used  
+	private final int pluginProposalWeight = 50;  
 	
 	//int sigma2Weight = 5; //15;
 	int sigma2Weight = 18; // 
@@ -191,8 +191,10 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	int alignmentWeightIncrement = 0;
 	
 	/* Weights for combination moves */
-	int alignmentRotationWeight = 8;
-	int alignmentTranslationWeight = 6;
+	int alignmentRotationWeight = 8; // ORIGINAL
+	int alignmentTranslationWeight = 6; // ORIGINAL
+	//int alignmentRotationWeight = 15;
+	//int alignmentTranslationWeight = 10;
 	int alignmentLibraryWeight = 6;
 	int sigmaEpsilonWeight = 4; //
 	// This is reallocated to sigma2Weight if epsilon is being fixed 
