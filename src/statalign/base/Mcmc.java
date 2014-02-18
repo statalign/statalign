@@ -323,7 +323,7 @@ public class Mcmc extends Stoppable {
 		double fastSwapProb = 0.05;
 		if (mcmcpars.fixAlign) fastSwapProb = 0.0;
 		
-		if(!mcmcpars.fixTopology && !mcmcpars.fixEdge) {
+		if(!mcmcpars.fixTopology && !mcmcpars.fixEdge && tree.vertex.length > 3) {
 			topologyMove = new TopologyMove(coreModel,edgePrior,
 					//0.5*multiplicativeProposalWidthControlVariable,"Topology"); // works ok with glob_25
 					0.75*uniformProposalWidthControlVariable,fastSwapProb,"Topology"); // experimental
