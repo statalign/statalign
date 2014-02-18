@@ -315,6 +315,7 @@ public class Mcmc extends Stoppable {
 		}
 
 		GammaPrior edgePrior = new GammaPrior(1,0.01);
+		//GammaPrior edgePrior = new GammaPrior(1,2);
 		double uniformProposalWidthControlVariable = 0.25;
 		double multiplicativeProposalWidthControlVariable = 0.5;
 		
@@ -524,6 +525,11 @@ public class Mcmc extends Stoppable {
 		
 		try {
 			stoppable();
+			
+			// Recompute progressive alignment now that everything is initialised.
+			//TreeAlgo treeAlgo = new TreeAlgo();
+			//treeAlgo.alignSeqsRec(tree.root);
+			
 			//only to use if AutomateParameters.shouldAutomate() == true
 //			final int SAMPLE_RATE_WHEN_DETERMINING_THE_SPACE = 100;
 //			final int BURNIN_TO_CALCULATE_THE_SPACE = 25000;
