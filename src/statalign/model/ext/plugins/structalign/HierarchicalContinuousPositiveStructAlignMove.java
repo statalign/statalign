@@ -16,6 +16,7 @@ public class HierarchicalContinuousPositiveStructAlignMove extends ContinuousPos
 
 	private List<ContinuousPositiveStructAlignMove> children = new ArrayList<ContinuousPositiveStructAlignMove>();
 	public PriorDistribution<Double> hierarchicalPrior;
+	private boolean onlySampleIfAtLeastTwoChildrenNotFixed = false;
 	
 	boolean allowSpikeSelection = false;
 	public void disallowSpikeSelection() { allowSpikeSelection = false; }
@@ -38,6 +39,12 @@ public class HierarchicalContinuousPositiveStructAlignMove extends ContinuousPos
 	}
 	public double getLogChildDensity(ContinuousPositiveStructAlignMove child) {
 		return hierarchicalPrior.logDensity(child.getParam().get());
+	}
+	public void onlySampleIfAtLeastTwoChildrenNotFixed() {
+		onlySampleIfAtLeastTwoChildrenNotFixed = true;
+	}
+	public void alwaysSample() {
+		onlySampleIfAtLeastTwoChildrenNotFixed = false;
 	}
 	public void setSpikeParams(double[] params) {
 		spikeParams = params;
@@ -64,11 +71,11 @@ public class HierarchicalContinuousPositiveStructAlignMove extends ContinuousPos
 	}
 	@Override
 	public double proposal(Object externalState) {		
-		if (countFixedToParent() == countChildren()) {
+		if (onlySampleIfAtLeastTwoChildrenNotFixed && (countChildren() - countFixedToParent() < 2)){
 			if (children.get(0).parentPriors.get(0) != this) {				
 				// Then this must be a nuMove
 				// and in this case we keep nu the same,
-				// because all the local sigmas are fixed at 
+				// because all (or all but one) of the local sigmas are fixed at 
 				// the global.
 				autoTune = false;
 				proposalWidthControlVariable = 0.1;

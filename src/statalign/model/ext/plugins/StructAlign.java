@@ -74,9 +74,12 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	public boolean fixedEpsilon = false;
 	public boolean fixedSigma2 = false;
 	
-	/** If globalSigma = false then this switches on a spike prior at sigma2Hier. */
+	/** 
+	 *  If globalSigma = false then this switches on a spike prior at sigma2Hier. 
+	 *  This can also be switched on via a command-line option.
+	 * */
 	public boolean globalSigmaSpike = false; 
-	double[] globalSigmaSpikeParams = {3.1,1.1};
+	double[] globalSigmaSpikeParams = {1.35,1.1};
 	
 	public boolean localEpsilon = false;
 	
@@ -164,7 +167,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	private double nuPriorShape = 1;
 	private double nuPriorRate = 6; 
 	public GammaPrior nuPrior = new GammaPrior(nuPriorShape,nuPriorRate);
-	
+	HierarchicalContinuousPositiveStructAlignMove nuMove = null;
+
 	// priors for rotation and translation are uniform
 	// so do not need to be included in M-H ratio
 	 	
@@ -180,7 +184,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	int tauWeight = 10;
 	int sigma2HierWeight = 10; // ORIGINAL
 	//int sigma2HierWeight = 0;
-	int nuWeight = 10; // ORIGINAL
+	int nuWeight = 0; // ORIGINAL
+	int nuWeightIncrement = 10; // ORIGINAL
 	//int nuWeight = 0;
 	//int epsilonWeight = 2;//10;
 	int epsilonWeight = 13; //
@@ -675,7 +680,6 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		}
 		
 		if (!fixedSigma2) {			
-			HierarchicalContinuousPositiveStructAlignMove nuMove = null;
 			if (!globalSigma) {
 				ParameterInterface sigma2HInterface = paramInterfaceGenerator.new Sigma2HInterface();
 				sigma2HMove = new HierarchicalContinuousPositiveStructAlignMove(this,sigma2HInterface,sigma2HPrior,new GammaProposal(0.001,0.001),"s2_g");
@@ -687,7 +691,13 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				nuMove = new HierarchicalContinuousPositiveStructAlignMove(this,nuInterface,nuPrior,new GammaProposal(0.001,0.001),"nu");
 				nuMove.moveParams.setPlottable();
 				nuMove.moveParams.setPlotSide(1);
-				addMcmcMove(nuMove,nuWeight);
+				nuMove.onlySampleIfAtLeastTwoChildrenNotFixed();
+				nuMove.setMinValue(0.1);
+				if (!globalSigmaSpike) {
+					nuWeight += nuWeightIncrement;
+					nuWeightIncrement = 0;
+				}
+				addMcmcMove(nuMove,nuWeight,nuWeightIncrement);
 			}
 			
 			for (int j=0; j<sigma2.length; j++) {
@@ -771,6 +781,10 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			sigma2HMove.allowSpikeSelection();
 			zeroAllMoveCounts();
 		}
+	}
+	public void afterBurnin() {
+		nuMove.alwaysSample();
+		nuMove.setMinValue(0.001);
 	}
 	
 	public double computeLogLikeFactor(Tree tree) {

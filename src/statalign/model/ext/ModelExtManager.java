@@ -379,6 +379,10 @@ public class ModelExtManager {
 		for(ModelExtension plugin : activeList)
 			plugin.afterFirstHalfBurnin();		
 	}
+	public void afterBurnin() {
+		for(ModelExtension plugin : activeList)
+			plugin.afterBurnin();		
+	}
 	public void incrementWeights() {
 		for(ModelExtension plugin : activeList)
 			plugin.incrementWeights();		
@@ -406,6 +410,5 @@ public class ModelExtManager {
 		for(ModelExtension plugin : pluginList) {
 			plugin.dataAdded(file, data);
 		}
-	}
-	
+	}		
 }

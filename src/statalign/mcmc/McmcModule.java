@@ -27,6 +27,9 @@ public abstract class McmcModule {
 	public boolean isFirstHalfBurnin() {
 		return mcmc.firstHalfBurnin;
 	}
+	public boolean isBurnin() {
+		return mcmc.burnin;
+	}
 	/** Current log-likelihood contribution */
 	public double curLogLike = 0;
 	
@@ -174,5 +177,8 @@ public abstract class McmcModule {
 
 	public void afterFirstHalfBurnin() { 
 		for (McmcMove m : mcmcMoves) m.afterFirstHalfBurnin();
+	}
+	public void afterBurnin() { 
+		for (McmcMove m : mcmcMoves) m.afterBurnin();
 	}
 }

@@ -87,4 +87,5 @@ public abstract class McmcMove {
 		time += System.currentTimeMillis();
 	}
 	public void afterFirstHalfBurnin() { }
+	public void afterBurnin() { }
 }

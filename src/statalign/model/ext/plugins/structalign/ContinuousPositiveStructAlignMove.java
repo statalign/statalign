@@ -28,7 +28,6 @@ public class ContinuousPositiveStructAlignMove extends ContinuousPositiveParamet
 	 * such as spike and slab priors.  
 	 */
 	boolean fixedToParent = false;
-	int nFixedToParent = 0;
 
 	public StructAlignMoveParams moveParams = new StructAlignMoveParams();
 	
@@ -69,19 +68,27 @@ public class ContinuousPositiveStructAlignMove extends ContinuousPositiveParamet
 		proposalDistribution.updateProposal(proposalWidthControlVariable,param.get());
 		
 		double logProposalDensity = 0;
-		
+		boolean allowKeepingOfParameter = false;
 		if (parentPriors != null) {
 			for (HierarchicalContinuousPositiveStructAlignMove parent : parentPriors) {
 				if (parent.allowSpikeSelection) { 			
 					double[] spikeParams = parent.spikeParams;
-					int m = parent.countFixedToParent();
-					int n = parent.countChildren();
+					double m = (double) parent.countFixedToParent();
+					double n = (double) parent.countChildren();
+					allowKeepingOfParameter = owner.isBurnin() & (n-m < 2); 
+					// In this case the hierarchical variance could become very small, 
+					// so we need to allow switching of z_k to zero without resampling
+					// its parameter, during the burnin (where no adjustment to
+					// the M-H ratio is strictly necessary)
+					
 					double fixProb = spikeParams[0]/(spikeParams[0]+spikeParams[1]);
 					fixedToParent = (Utils.generator.nextDouble()<fixProb);
 					if (fixedToParent) {
 						param.set(parent.param.get());					 
 						if (!oldFixedToParent) { // z_k = 0 to begin with
+							// Ratio of proposal probabilities for z_k
 							logProposalDensity += Math.log((1-fixProb)/fixProb);
+							// Then also include ratio of priors for the vector z
 							logProposalDensity += Math.log((n-m)/(m+1) 
 											 	* (spikeParams[0]+m) 
 											 	/ (spikeParams[1]+n-m-1));
@@ -89,7 +96,9 @@ public class ContinuousPositiveStructAlignMove extends ContinuousPositiveParamet
 					}
 					else {
 						if (oldFixedToParent) { // z_k = 1 to begin with
-							logProposalDensity += Math.log(fixProb/(1-fixProb));
+							// Ratio of proposal probabilities for z_k
+							logProposalDensity += Math.log(fixProb/(1-fixProb));	
+							// Then also include ratio of priors for the vector z
 							logProposalDensity += Math.log(m/(n-m+1) 
 								 				* (spikeParams[1]+n-m) 
 								 				/ (spikeParams[0]+m-1));
@@ -97,26 +106,34 @@ public class ContinuousPositiveStructAlignMove extends ContinuousPositiveParamet
 					}
 					// Assume only one parent allows spikes, and break once we've
 					// found it.
+				
 					break;
 				}
 			}
 		}
 		moveParams.setFixedToParent(fixedToParent);
-		if (fixedToParent) nFixedToParent++;		
-		else param.set(proposalDistribution.sample());
-		
-		if (param.get() < minValue || param.get() > maxValue) {
-			return(Double.NEGATIVE_INFINITY);
-		}
-
-		/** - log p(new | old) */
-		if (!fixedToParent) logProposalDensity = -proposalDistribution.logDensity(param.get());
-		
-		proposalDistribution.updateProposal(proposalWidthControlVariable,param.get());
-		
-		/** + log p(old | new) */
-		if (!oldFixedToParent) logProposalDensity += proposalDistribution.logDensity(oldpar);
+		if (!allowKeepingOfParameter || (Utils.generator.nextDouble() < 0.8)) {
+			// If allowKeepingOfParameter, we still resample the parameter
+			// with 0.8 probability, to cover the cases where the non-spike
+			// density is lower at the mode. In the cases where it's higher,
+			// and the variance is very low (less likely), then we can 
+			// keep the current parameter and just allow switching to the higher 
+			// density.
+			if (!fixedToParent) param.set(proposalDistribution.sample());
 				
+			if (param.get() < minValue || param.get() > maxValue) {
+				return(Double.NEGATIVE_INFINITY);
+			}
+		
+			/** - log p(new | old) */
+			if (!fixedToParent) logProposalDensity -= proposalDistribution.logDensity(param.get());
+			
+			proposalDistribution.updateProposal(proposalWidthControlVariable,param.get());
+			
+			/** + log p(old | new) */
+			if (!oldFixedToParent) logProposalDensity += proposalDistribution.logDensity(oldpar);				
+		}
+		
 		return logProposalDensity;
 	}
 	@Override
@@ -125,13 +142,15 @@ public class ContinuousPositiveStructAlignMove extends ContinuousPositiveParamet
 			return(Double.NEGATIVE_INFINITY);
 		}
 		else {
-			// return 0;
+			// Contribution from independent prior on this variable
 			double logDensity = prior.logDensityUnnormalised(param.get());
 			// Since we're only using this in ratios, there's no
 			// need to compute the normalising constant, which is good, 
 			// because some priors may be improper.
 			// NB be careful with this though -- an improper prior should
 			// only be used if the posterior can be shown to be proper.
+
+			// Then add the contribution from the hierarchical prior
 			if (!fixedToParent && parentPriors != null) {
 				for (HierarchicalContinuousPositiveStructAlignMove parent : parentPriors) {
 					logDensity += parent.getLogChildDensity(this);

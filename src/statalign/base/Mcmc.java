@@ -639,6 +639,8 @@ public class Mcmc extends Stoppable {
 			
 			//both real burn-in and the one to determine the sampling rate have now been completed.
 			burnin = false;
+			coreModel.afterBurnin();
+			modelExtMan.afterBurnin();
 			coreModel.zeroAllMoveCounts();
 			modelExtMan.zeroAllMoveCounts();
 			
