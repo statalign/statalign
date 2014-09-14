@@ -42,7 +42,7 @@ public class RmsdTrace extends Postprocess {
 	
 	double maxLikelihood = Double.NEGATIVE_INFINITY;
 	int sampleNumberMLE;
-	String[] leafAlignMLE, leafAlignMLENames;
+	String[] alignMLE, alignMLENames;
 	double[] rmsdMLE, bFactorMLE;
 	double epsilonMLE;
 	
@@ -112,6 +112,9 @@ public class RmsdTrace extends Postprocess {
 		if(postprocessWrite) {
 		int leaves = structAlign.coords.length;
 		try {
+			outputFile.write("# Each row contains pairwise mean-square deviations (msd_ij)\n");
+			outputFile.write("# branch length distances (t_ij), and sequence identities (seqID_ij)\n");
+			outputFile.write("# for each MCMC sample.\n");			
 			for(int i = 0; i < leaves-1; i++)
 				for(int j = i+1; j < leaves; j++)
 					outputFile.write("msd" + i + "_" + j + "\t");
@@ -130,6 +133,7 @@ public class RmsdTrace extends Postprocess {
 //				outputFile.write(rad[i] + "\t"); 
 
 			outputFile.write("\n");
+			outputFile.flush();
 		} catch (IOException e){}
 		}
 		if (show) {			
@@ -152,8 +156,8 @@ public class RmsdTrace extends Postprocess {
 		if (!state.isBurnin && state.logLike > maxLikelihood) {
 			maxLikelihood = state.logLike;			
 			sampleNumberMLE = sampleNumber;
-			leafAlignMLE = state.getLeafAlign().clone();
-			leafAlignMLENames = state.name.clone();
+			alignMLE = curAli.showFullAlignment ? state.getFullAlign().clone() : state.getLeafAlign().clone();
+			alignMLENames = state.name.clone();
 			rmsdMLE = rmsdTrack.scores.clone();
 			bFactorMLE = bFactorTrack.scores.clone();
 			epsilonMLE = structAlign.epsilon;
@@ -196,16 +200,17 @@ public class RmsdTrace extends Postprocess {
 			outputFile.close();			
 		} catch (IOException e) {
 			e.printStackTrace();
-		}		
-		}
-		try { // Should this be printed if !postprocessWrite?
+		}				
+		try { 
 			if (rmsdMLE != null) {
 				FileWriter mle = new FileWriter(getBaseFileName()+getFileExtension()+".mle");
 				mle.write("# Maximum likelihood = "+maxLikelihood+" at sample "+sampleNumberMLE+"\n");
+				mle.write("# RMSD\tAverage B-factor\n");
+				mle.flush();
 				for (int i=0; i<rmsdMLE.length; i++) {
-					boolean allGap = true;
+					boolean allGap = true;					
 					for (int j=0; j<structAlign.rotCoords.length; j++) { // Assume first sequences are non-internals
-						if (leafAlignMLE[j].charAt(i) != '-') allGap = false;
+						if (alignMLE[j].charAt(i) != '-') allGap = false;
 					}
 					if (!allGap) {
 						mle.write(rmsdMLE[i]+"");
@@ -217,7 +222,9 @@ public class RmsdTrace extends Postprocess {
 				mle.close();
 				
 				FileWriter aliMLE = new FileWriter(getBaseFileName()+"mle.fasta");
-				String[] aln = Utils.alignmentTransformation(leafAlignMLE, leafAlignMLENames,
+
+				// Form an array from the leaves of the alignment 
+				String[] aln = Utils.alignmentTransformation(alignMLE, alignMLENames,
 						"Fasta", input);
 				for (int i = 0; i < aln.length; i++) {
 					aliMLE.write(aln[i] + "\n");
@@ -227,7 +234,7 @@ public class RmsdTrace extends Postprocess {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		//}
+		}
 	}
 	
 	public static void printMatrix(double[][] m) {
