@@ -88,4 +88,9 @@ public abstract class McmcMove {
 	}
 	public void afterFirstHalfBurnin() { }
 	public void afterBurnin() { }
+	
+	/**  
+	 * Can be optionally defined in order to print move info at end of MCMC run.
+	 */
+	public void printInfo() { }
 }

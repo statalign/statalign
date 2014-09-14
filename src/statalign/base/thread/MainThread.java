@@ -6,6 +6,7 @@ import statalign.base.MainManager;
 import statalign.base.Mcmc;
 import statalign.base.Tree;
 import statalign.base.TreeAlgo;
+import statalign.base.mcmc.StatAlignMcmc;
 import statalign.io.RawSequences;
 import statalign.ui.MainFrame;
 
@@ -89,7 +90,7 @@ public class MainThread extends StoppableThread {
 //					owner.inputData.model.attachedScoringScheme,
 //					new File(owner.fullPath).getName());
 			
-			Mcmc mcmc = new Mcmc(tree, owner.inputData.pars, owner.postProcMan, owner.modelExtMan);
+			Mcmc mcmc = new StatAlignMcmc(tree, owner.inputData.pars, owner.postProcMan, owner.modelExtMan);
 			int errorCode = mcmc.doMCMC();
 			owner.finished(errorCode, null);
 			System.out.println(errorCode == 0 ? "Ready." : "Stopped.");

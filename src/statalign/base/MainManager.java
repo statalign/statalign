@@ -9,6 +9,7 @@ import javax.swing.SwingUtilities;
 
 import mpi.MPI;
 import statalign.MPIUtils;
+import statalign.base.mcmc.StatAlignMcmc;
 import statalign.base.thread.MainThread;
 import statalign.base.thread.StoppedException;
 import statalign.io.DataManager;
@@ -206,7 +207,7 @@ public class MainManager {
 				tree = treeAlgo.buildNJTree(nongapped, seqs.getSeqnames().toArray(new String[seqs.size()]), 	
 						inputData.model, new File(fullPath).getName());
 			}
-			Mcmc mcmc = new Mcmc(tree, inputData.pars, postProcMan, modelExtMan, noOfProcesses, rank, heat);
+			Mcmc mcmc = new StatAlignMcmc(tree, inputData.pars, postProcMan, modelExtMan, noOfProcesses, rank, heat);
 			mcmc.doMCMC();
 
 			// Sets up a barrier.

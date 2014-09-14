@@ -5,8 +5,11 @@ import statalign.base.Utils;
 import statalign.base.Vertex;
 import statalign.mcmc.McmcModule;
 import statalign.mcmc.McmcMove;
+
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Locale;
+
 import statalign.mcmc.MultiplicativeProposal;
 import statalign.mcmc.PriorDistribution;
 import statalign.mcmc.UniformProposal;
@@ -326,6 +329,10 @@ public class TopologyMove extends McmcMove {
 		//throw new RuntimeException("Let's stop now and have a rest.");
 	}
 	
+	public void printInfo() {
+		System.out.println("Acceptance rate for Topology moves resulting in topology change = "+
+				String.format(Locale.US, "%.4f",(double)topologyChangeAcceptanceCount/(double)proposalCount));		
+	}
 	 
 	
 }

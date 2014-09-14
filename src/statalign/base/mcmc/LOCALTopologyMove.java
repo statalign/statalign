@@ -1,5 +1,7 @@
 package statalign.base.mcmc;
 
+import java.util.Locale;
+
 import statalign.base.Tree;
 import statalign.base.Utils;
 import statalign.base.Vertex;
@@ -223,6 +225,10 @@ public class LOCALTopologyMove extends McmcMove {
 		}
 	}
 	
-	 
+	public void printInfo() {
+		System.out.println("Acceptance rate for LOCAL moves resulting in topology change = "+
+				String.format(Locale.US, "%.4f",(double)nTopologyChanges/(double)proposalCount));
+	}
+
 	
 }

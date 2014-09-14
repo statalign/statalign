@@ -99,7 +99,13 @@ public abstract class McmcModule {
 		}
 		return info;
 	}
-	
+	public String getSummaryInfo() {
+		String info = "Acceptance rates: ";
+		for (McmcMove m : mcmcMoves) {
+			info += m.name+": "+String.format(Locale.US, "%f ", m.acceptanceRate());
+		}
+		return info;
+	}
 	/**
 	 * Called before the start of MCMC sampling, but after the initial tree, alignment etc. have been
 	 * generated. Override to initialise data structures etc.
@@ -107,7 +113,11 @@ public abstract class McmcModule {
 	 */
 	public void beforeSampling(Tree tree) {}
 	
-	public void afterSampling() {}
+	public void afterSampling() {
+		for (McmcMove m : mcmcMoves) {
+			m.printInfo();
+		}
+	}
 	
 	/**
 	 * This should return the log of the model's contribution to the likelihood, it will be added on to
