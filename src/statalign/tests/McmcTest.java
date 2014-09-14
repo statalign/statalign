@@ -1,4 +1,4 @@
-package tests;
+package statalign.tests;
 
 import java.io.FileWriter;
 import java.io.IOException;
