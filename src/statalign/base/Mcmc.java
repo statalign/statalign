@@ -601,7 +601,6 @@ public abstract class Mcmc extends Stoppable {
 		postprocMan.newSample(coreModel,getState(), no, total);
 	}
 	
-	// The functions below are used (and defined) only by the parallel version	
-	protected boolean isColdChain() { return false; }
+	// This function is used (and defined) only by the parallel version		
 	protected void doSwap() { }	
 }
