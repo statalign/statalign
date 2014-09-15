@@ -151,6 +151,7 @@ public abstract class Mcmc extends Stoppable {
 		ppm.mcmc = this;
 		this.modelExtMan.setMcmc(this);
 		this.tree = tree;
+		
 		tree.owner = this;
 		mcmcpars = pars;
 		this.tree.heat = 1.0d;
@@ -313,12 +314,9 @@ public abstract class Mcmc extends Stoppable {
 		
 		coreModel = new CoreMcmcModule(this,modelExtMan);
 		initCoreModel(tree);
-		
-		// initCoreModel() uses the weights, so they need to be defined
-		// and updated before this point.
 
-		// notifies model extension plugins of start of MCMC sampling
-		modelExtMan.beforeSampling(tree);
+		// notifies MCMC modules (including plugins) of start of MCMC sampling		
+		coreModel.beforeSampling(tree);
 
 		// Triggers a /before first sample/ of the plugins.
 		if ((isParallel && MPIUtils.isMaster(rank)) || !isParallel) {
@@ -649,11 +647,12 @@ public abstract class Mcmc extends Stoppable {
 		try {
 			if ((isParallel && MPIUtils.isMaster(rank)) || !isParallel) {
 				postprocMan.logFile.write(coreModel.getSummaryInfo() + "\n");
-				postprocMan.logFile.write("Report\tLogLikelihood\t"
-						+ (modelExtMan.totalLogLike(tree))
-						+ "\tR\t" + tree.hmm2.params[0] + "\tLambda\t"
-						+ tree.hmm2.params[1] + "\tMu\t" + tree.hmm2.params[2]
-								+ "\t" + tree.substitutionModel.print() + "\n");
+//				postprocMan.logFile.write("Report\tLogLikelihood\t"
+//						+ (modelExtMan.totalLogLike(tree))
+//						+ "\tR\t" + tree.hmm2.params[0] + "\tLambda\t"
+//						+ tree.hmm2.params[1] + "\tMu\t" + tree.hmm2.params[2]
+//								+ "\t" + tree.substitutionModel.print() + "\n");
+				coreModel.printParameters();
 				if (isParallel) {
 					postprocMan.logFile.write("Cold chain location: " + coldChainLocation + "\n");
 				}

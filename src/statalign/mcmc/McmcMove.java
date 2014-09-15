@@ -19,6 +19,7 @@ public abstract class McmcMove {
 	public int acceptanceCount = 0;
 	public boolean lastMoveAccepted = false;	
 	public boolean acceptAllDuringFirstHalfBurnin = false;
+	public boolean printableParam = false;
 	public boolean moveProposed = false;
 	/** Number of times that the acceptance rate has been 
 	 * recorded as being below the minimum. If this count
@@ -41,7 +42,9 @@ public abstract class McmcMove {
 	
 	public String name;
 	private long time = 0;
-
+	
+	public String getNameString() { return name; }
+	public String getParameterString() { return ""; };
 	
 	public long getTime() {
 		return time;

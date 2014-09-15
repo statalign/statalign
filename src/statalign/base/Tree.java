@@ -521,7 +521,7 @@ COLUMN:    	while (c != v.last) {
 		return 0;
 	}
 
-    /**
+    /*
      * Returns with a String array containing the alignment of sequences on the tree.
      * @param type This can be
      *             <ul>

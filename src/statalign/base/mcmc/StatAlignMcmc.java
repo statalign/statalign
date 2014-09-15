@@ -105,6 +105,8 @@ public class StatAlignMcmc extends Mcmc {
 				
 		coreModel.printExtraInfo = Utils.VERBOSE;
 		
+		coreModel.setOutputFile(postprocMan.getBaseFileName()); 
+		
 		if(tree.substitutionModel.params == null || tree.substitutionModel.params.length == 0) {
 			substWeight = 0;
 		}
@@ -112,11 +114,13 @@ public class StatAlignMcmc extends Mcmc {
 		
 		IndelMove rMove = new RMove(coreModel,new BetaPrior(1,1),new LogisticProposal(),"R");
 		rMove.proposalWidthControlVariable = 1.0;
+		rMove.printableParam = true;
 		coreModel.addMcmcMove(rMove,rWeight);				
 		
 		if (lambdaMuMove) {
 			IndelMove lambdaMove = new LambdaMove(coreModel,new GammaPrior(lambdaMuPriorParams[0],lambdaMuPriorParams[1]),new GaussianProposal(),"Lambda");
 			lambdaMove.proposalWidthControlVariable = 0.01;
+			lambdaMove.printableParam = true;
 			coreModel.addMcmcMove(lambdaMove,lambdaWeight);
 			IndelMove muMove = new MuMove(coreModel,new GammaPrior(lambdaMuPriorParams[0],lambdaMuPriorParams[0]),new GaussianProposal(),"Mu");
 			muMove.proposalWidthControlVariable = 0.01;
@@ -130,6 +134,7 @@ public class StatAlignMcmc extends Mcmc {
 			IndelMove lambdaMove = new LambdaMove(coreModel,new GammaPrior(lambdaMuPriorParams[0],lambdaMuPriorParams[1]),new GaussianProposal(),"Lambda");
 			coreModel.addMcmcMove(lambdaMove,lambdaWeight);
 			lambdaMove.proposalWidthControlVariable = 0.01;
+			lambdaMove.printableParam = true;
 		}
 		if (lambdaPhiMove) {
 			// phi = lambda/mu 
@@ -157,13 +162,16 @@ public class StatAlignMcmc extends Mcmc {
 			IndelMove thetaMove = new ThetaMove(coreModel,new BetaPrior(lambdaMuPriorParams[0],lambdaMuPriorParams[0]),new GaussianProposal(),"Theta");
 			thetaMove.setMaxValue(0.5);
 			thetaMove.proposalWidthControlVariable = 0.02;
+			thetaMove.printableParam = true;
 			coreModel.addMcmcMove(thetaMove,thetaWeight);
 		}
 		if (!lambdaMuMove && !lambdaPhiMove && !rhoThetaMove) {
 			throw new IllegalArgumentException("Invalid proposal scheme selected for indel parameters.");
 		}
-		
+			
 		SubstMove substMove = new SubstMove(coreModel,"Subst");
+		substMove.printableParam = (substWeight > 0);
+		substMove.tree = tree;
 		coreModel.addMcmcMove(substMove, substWeight);
 
 		if(!mcmcpars.fixAlign) {

@@ -1,5 +1,7 @@
 package statalign.mcmc;
 
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -20,10 +22,29 @@ import statalign.base.Utils;
 public abstract class McmcModule {
 	
 	protected Mcmc mcmc;
+	protected String moduleName = "";
+	public boolean logParametersToFile = false;
+	FileWriter parameterLog;
+	
+	public McmcModule() { }	
+	public McmcModule(String name) {
+		moduleName = name;
+		logParametersToFile = true;		
+	}
+	public void setOutputFile(String baseFileName) {
+		try {
+			parameterLog = new FileWriter(baseFileName+moduleName+".params");
+		}
+		catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
 	public void setMcmc(Mcmc m) {
 		mcmc = m;
 	}
-	public boolean printExtraInfo = false;
+	public boolean printExtraInfo = false;	
+	
 	public boolean isFirstHalfBurnin() {
 		return mcmc.firstHalfBurnin;
 	}
@@ -106,14 +127,51 @@ public abstract class McmcModule {
 		}
 		return info;
 	}
+	public void printParameters() {
+		String params = "";
+		for (McmcMove m : mcmcMoves) {			
+			if (m.printableParam) {
+				if (params != "") params += ", ";
+				params += m.getParameterString();			
+			}
+		}
+		try {
+			parameterLog.write(params+"\n");
+		}
+		catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
 	/**
 	 * Called before the start of MCMC sampling, but after the initial tree, alignment etc. have been
 	 * generated. Override to initialise data structures etc.
 	 * @param tree the starting tree
 	 */
-	public void beforeSampling(Tree tree) {}
+	public void beforeSampling(Tree tree) {
+		String paramNames = "";
+		for (McmcMove m : mcmcMoves) {			
+			if (m.printableParam) {
+				if (paramNames != "") paramNames += ", ";
+				paramNames += m.getNameString();
+			}
+		}
+		try {
+			parameterLog.write(paramNames+"\n");
+		}
+		catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
 	
 	public void afterSampling() {
+		if (parameterLog != null) {
+			try {
+				parameterLog.close();
+			}
+			catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 		for (McmcMove m : mcmcMoves) {
 			m.printInfo();
 		}

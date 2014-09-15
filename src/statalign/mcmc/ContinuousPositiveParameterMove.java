@@ -2,6 +2,7 @@ package statalign.mcmc;
 
 import java.util.List;
 import java.util.ArrayList;
+
 import statalign.base.Tree;
 import statalign.mcmc.ParameterInterface;
 import statalign.mcmc.PriorDistribution;
@@ -104,5 +105,11 @@ public abstract class ContinuousPositiveParameterMove extends McmcMove {
 	public void updateProposal(double proposalWidthControlVariable, 
 			Double currentParam) {
 		proposalDistribution.updateProposal(proposalWidthControlVariable, currentParam);
+	}
+	
+	@Override
+	public String getParameterString() { 
+		String s = "" + param.get();			
+		return s;
 	}
 }

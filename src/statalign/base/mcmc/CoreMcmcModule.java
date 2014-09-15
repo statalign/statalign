@@ -26,6 +26,7 @@ public class CoreMcmcModule extends McmcModule {
 	}
 	
 	public CoreMcmcModule (Mcmc mc, ModelExtManager m) {
+		super("coreModel");
 		setMcmc(mc);
 		modelExtMan = m;
 	}
@@ -57,4 +58,10 @@ public class CoreMcmcModule extends McmcModule {
 		}
 		return accepted;
 	}
-}
+	
+	@Override
+	public void beforeSampling(Tree tree) {
+		super.beforeSampling(tree);
+		modelExtMan.beforeSampling(tree);
+	}
+} 

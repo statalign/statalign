@@ -28,6 +28,17 @@ public class SubstMove extends McmcMove {
 		//autoTune = false;
 	}
 
+	@Override
+	public String getNameString() {
+		String s = "Substitution model (" + tree.substitutionModel.getMenuName() + ")";
+//		for (int i=0; i<tree.substitutionModel.params.length; i++) {
+//			s += " " + name + "_" + i;
+//		}
+		return s;
+	}
+	public String getParameterString () {
+		return tree.substitutionModel.print();
+	}
 	public void copyState(Object externalState) {
 		if (externalState instanceof Tree) {
 			if (tree == null) {
