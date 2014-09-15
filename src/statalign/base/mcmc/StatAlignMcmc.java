@@ -29,11 +29,7 @@ public class StatAlignMcmc extends Mcmc {
 	
 	public StatAlignMcmc(Tree tree, MCMCPars pars, PostprocessManager ppm, ModelExtManager modelExtMan) {
 		super(tree,pars,ppm,modelExtMan);		
-	}
-	public StatAlignMcmc(Tree tree, MCMCPars pars, PostprocessManager ppm, ModelExtManager modelExtMan,
-			int noOfProcesses, int rank, double heat) {
-		super(tree,pars,ppm,modelExtMan,noOfProcesses,rank,heat);
-	}
+	}	
 	// TODO Move the parameters below into MCMCPars. Would be nice to have
 	// a set of sliding bars in a menu in the GUI that go from 0 to 100, 
 	// to select the relative frequency of the different moves etc.
@@ -238,5 +234,5 @@ public class StatAlignMcmc extends Mcmc {
 			coreModel.addMcmcMove(allEdgeMove, allEdgeWeight);
 						
 		}
-	}
+	}	
 }
