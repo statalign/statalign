@@ -90,8 +90,8 @@ public class MainManager {
 	 * Implemented formats currently are <tt>StatAlign</tt> (our own format),
 	 * <tt>Clustal</tt>, <tt>Fasta</tt>, <tt>Phylip</tt>, <tt>Nexus</tt>
 	 */
-	public static String[] alignmentTypes = new String[] { "StatAlign",
-			"Clustal", "Fasta", "Phylip", "Nexus" };
+	public static String[] alignmentTypes = new String[] { "Fasta", "StatAlign",
+			"Clustal",  "Phylip", "Nexus" };
 
 	/**
 	 * A trivial constructor that only sets <tt>MainFrame</tt> and substModels.
