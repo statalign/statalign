@@ -688,14 +688,14 @@ public class MainFrame extends JFrame implements ActionListener {
 					new BufferedReader(
 						new InputStreamReader(con.getInputStream()));
 				String s = br.readLine();
-				if(s.compareTo(StatAlign.version) < 0) {
+				if(s.compareTo(StatAlign.version) > 0) {
 					JOptionPane.showMessageDialog(this, "You are using StatAlign "+StatAlign.version+
 													". StatAlign "+s+" is now available!\n"+
 													"To download the new version, please visit "
 													+ StatAlign.webPageURL,
 													"New version available!",
 													JOptionPane.INFORMATION_MESSAGE);
-				}
+				}				
 				else {
 					JOptionPane.showMessageDialog(this, "You are using StatAlign "+StatAlign.version+".",
 							"Version up-to-date.\n",
