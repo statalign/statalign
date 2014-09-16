@@ -682,13 +682,13 @@ public class MainFrame extends JFrame implements ActionListener {
     public void checkForUpdates() {
 	    if(StatAlign.allowVersionCheck && checkPage()) {	
 	    	try {
-		    	URL urlVersion = new URL("https://raw.github.com/statalign/statalign/master/version.txt");
+		    	URL urlVersion = new URL("https://raw.github.com/statalign/statalign/master/release_version.txt");
 		    	HttpsURLConnection con = (HttpsURLConnection)urlVersion.openConnection();
 				BufferedReader br = 
 					new BufferedReader(
 						new InputStreamReader(con.getInputStream()));
 				String s = br.readLine();
-				if(!s.equals(StatAlign.version)) {
+				if(s.compareTo(StatAlign.version) < 0) {
 					JOptionPane.showMessageDialog(this, "You are using StatAlign "+StatAlign.version+
 													". StatAlign "+s+" is now available!\n"+
 													"To download the new version, please visit "

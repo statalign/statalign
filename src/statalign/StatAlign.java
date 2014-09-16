@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.file.Files;
 
 import javax.swing.JOptionPane;
 
@@ -29,8 +30,8 @@ public class StatAlign{
 	 */
 
 	public static final int majorVersion = 3;
-	public static final int minorVersion = 1;
-	public static final String version = "v3.1";
+	public static final int minorVersion = 2;
+	public static final String version = "v3.2b";
 	
 	public static boolean allowVersionCheck = true;
 	
@@ -46,7 +47,7 @@ public class StatAlign{
 	 * @throws IOException
 	 */
 	public static void main(String args[]) {
-			
+					
 		System.out.println("StatAlign "+version);
 		
 		if(args.length != 0) {
