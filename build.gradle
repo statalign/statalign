@@ -1,0 +1,68 @@
+apply plugin: 'java'
+apply plugin: 'distribution'
+
+version = '3.2'
+
+repositories {
+    flatDir {
+       dirs 'lib'
+    }
+}
+
+buildscript {
+  repositories {
+    jcenter()
+  }
+  dependencies {
+    classpath "com.github.jengelman.gradle.plugins:shadow:1.1.2"
+  }
+}
+
+apply plugin: "com.github.johnrengelman.shadow"
+
+dependencies {
+  compile name: 'options'
+  compile name: 'mpj'
+  compile name: 'colt'
+  compile name: 'Jama-1.0.3'
+  compile name: 'VARNAv3-8-API'
+  compile name: 'commons-math-3.0-SNAPSHOT'
+}
+
+sourceSets {
+    main {
+        java {
+            srcDir 'src'
+        }
+        resources {
+            srcDir 'resources'
+        }
+    }
+    test {
+        java {
+            srcDir 'test'
+        }
+    }
+}
+
+jar.archiveName = "StatAlign-3.2.jar"
+
+distributions {
+    main {
+        baseName = 'StatAlign'
+        contents {
+            from projectDir
+            exclude 'build', 'bin'
+        }
+    }
+}
+
+jar {
+    manifest {
+        attributes 'Main-Class': 'statalign.StatAlign'
+    }
+}
+
+shadowJar {
+  baseName = 'StatAlign'
+}
