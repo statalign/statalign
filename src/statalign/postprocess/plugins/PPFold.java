@@ -562,8 +562,9 @@ public class PPFold extends statalign.postprocess.Postprocess {
 		//System.out.println(t.length+" "+curAlig.leafNames.length+" "+curAlig.leafAlignment.length);
 		//System.out.println(curAlig.leafNames);
 		for (int i = 0; i < t.length; i++) {
-			//System.out.println(i+" "+curAlig.leafNames[i]);
-			t[i] = new String[]{curAlig.leafNames[i],curAlig.leafAlignment[i]};
+			//System.out.println(i+" "+curAlig.leafNames[i]);			
+			String unpaddedName = curAlig.leafNames[i].replace(" ","");			
+			t[i] = new String[]{unpaddedName,curAlig.leafAlignment[i]};
 		}
 		Arrays.sort(t, compStringArr);	
 		
@@ -1400,12 +1401,12 @@ public class PPFold extends statalign.postprocess.Postprocess {
 		}
 	}
 
-	public static String getSequenceByName(String[][] sequences, String name) {
-		for (int i = 0; i < sequences.length; i++) {
+	public static String getSequenceByName(String[][] sequences, String name) {		
+		for (int i = 0; i < sequences.length; i++) {		
 			if (sequences[i] != null && sequences[i][0].equals(name)) {
 				return sequences[i][1];
 			}
-		}
+		}		
 		return null;
 	}
 

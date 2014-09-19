@@ -34,6 +34,7 @@ public abstract class McmcModule {
 	public void setOutputFile(String baseFileName) {
 		try {
 			parameterLog = new FileWriter(baseFileName+moduleName+".params");
+			System.out.println(baseFileName+moduleName+".params");
 		}
 		catch (IOException e) {
 			e.printStackTrace();
@@ -127,19 +128,23 @@ public abstract class McmcModule {
 		}
 		return info;
 	}
-	public void printParameters() {
-		String params = "";
-		for (McmcMove m : mcmcMoves) {			
-			if (m.printableParam) {
-				if (params != "") params += ", ";
-				params += m.getParameterString();			
+	public void printParameters() {		
+		if (logParametersToFile) {
+			String params = "";
+			for (McmcMove m : mcmcMoves) {			
+				if (m.printableParam) {
+					if (params != "") params += ", ";
+					params += m.getParameterString();			
+				}
 			}
-		}
-		try {
-			parameterLog.write(params+"\n");
-		}
-		catch (IOException e) {
-			e.printStackTrace();
+			if (params != null) {
+				try {
+					parameterLog.write(params+"\n");
+				}
+				catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
 		}
 	}
 	/**
@@ -148,18 +153,23 @@ public abstract class McmcModule {
 	 * @param tree the starting tree
 	 */
 	public void beforeSampling(Tree tree) {
-		String paramNames = "";
-		for (McmcMove m : mcmcMoves) {			
-			if (m.printableParam) {
-				if (paramNames != "") paramNames += ", ";
-				paramNames += m.getNameString();
+		if (logParametersToFile) {
+			String paramNames = "";
+			for (McmcMove m : mcmcMoves) {			
+				if (m.printableParam) {
+					if (paramNames != "") paramNames += ", ";
+					paramNames += m.getNameString();
+				}
 			}
-		}
-		try {
-			parameterLog.write(paramNames+"\n");
-		}
-		catch (IOException e) {
-			e.printStackTrace();
+			if (paramNames != null) {
+				try {
+					if (parameterLog == null) System.out.println("null log");
+					parameterLog.write(paramNames+"\n");
+				}
+				catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
 		}
 	}
 	
