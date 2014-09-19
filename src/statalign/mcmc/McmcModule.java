@@ -34,7 +34,7 @@ public abstract class McmcModule {
 	public void setOutputFile(String baseFileName) {
 		try {
 			parameterLog = new FileWriter(baseFileName+moduleName+".params");
-			System.out.println(baseFileName+moduleName+".params");
+			//System.out.println(baseFileName+moduleName+".params");
 		}
 		catch (IOException e) {
 			e.printStackTrace();
