@@ -245,6 +245,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		structTrace.postprocessWrite = active;
 		structTrace.setSelected(active);
 		rmsdTrace.active = active;
+		rmsdTrace.setSelected(active);
 		//rmsdTrace.postprocessWrite = active;
 		rmsdTrace.postprocessWrite = false; 
 		// probably the average GUI user doesn't want massive files 
@@ -1288,6 +1289,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			structTrace.postprocessWrite = active;
 			structTrace.setSelected(active);
 			rmsdTrace.active = active;
+			rmsdTrace.setSelected(active);
 			//rmsdTrace.postprocessWrite = active;
 			rmsdTrace.postprocessWrite = false;
 			

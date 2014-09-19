@@ -79,7 +79,7 @@ public class OutputPreferences extends JDialog implements ActionListener{
 		
 		if(owner.manager.postProcMan.rnaMode) {
 			for(Postprocess p : postprocess){
-				if(p.outputable){
+				if(p.selected && p.outputable){
 					list.add(p);
 				}
 			}
@@ -87,7 +87,7 @@ public class OutputPreferences extends JDialog implements ActionListener{
 		
 		else {
 			for(Postprocess p : postprocess) {
-				if(p.outputable && !p.rnaAssociated) {
+				if(p.selected && p.outputable && !p.rnaAssociated) {
 					list.add(p);
 				}
 			}
@@ -117,15 +117,15 @@ public class OutputPreferences extends JDialog implements ActionListener{
 		
 		if(owner.manager.postProcMan.rnaMode) {
 			for(Postprocess p : postprocess){
-				if(p.postprocessable){
+				if(p.selected && p.postprocessable){
 					list.add(p);
 				}
 			}
 		}
 		
 		else {
-			for(Postprocess p : postprocess) {
-				if(p.postprocessable && !p.rnaAssociated) {
+			for(Postprocess p : postprocess) {				
+				if(p.selected && p.postprocessable && !p.rnaAssociated) {
 					list.add(p);
 				}
 			}

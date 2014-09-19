@@ -81,6 +81,7 @@ public class RmsdTrace extends Postprocess {
 				structAlign.connectRmsdTrace(this);
 			}
 		}
+		active = structAlign.isActive();
 		postprocessWrite = active;
 	}
 	
