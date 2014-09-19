@@ -39,7 +39,7 @@ public class AboutDlg extends JDialog {
 			"<font face='Arial'><center>" +
 			"<p><font size=+2>StatAlign</font><br><font size=+1>"+StatAlign.version+"</font>" +
 			
-			"<p>(c) 2008&ndash;2013 &Aacute;d&aacute;m Nov&aacute;k et al.<br>"+
+			"<p>&copy; 2008&ndash;2014 &Aacute;d&aacute;m Nov&aacute;k et al.<br>"+
 			"<a href='http://STATALIGN-www'>"+StatAlign.webPageURL+"</a><br><br>" +
 			
 			"<p><b>Core software by</b><br>"+
