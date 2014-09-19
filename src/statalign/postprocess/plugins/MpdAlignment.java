@@ -71,12 +71,12 @@ public class MpdAlignment extends statalign.postprocess.Postprocess {
 
 	@Override
 	public String getTabName() {
-		return "MPD";
+		return "Summary alignment";
 	}
 
 	@Override
 	public String getTip() {
-		return "Maximum Posterior Decoding (consensus) alignment";
+		return "Summary (consensus) alignment";
 	}
 
 	@Override
@@ -88,12 +88,23 @@ public class MpdAlignment extends statalign.postprocess.Postprocess {
 	public String getFileExtension() {
 		return "mpd";
 	}
+	
+	@Override
+	public ArrayList<String> getAdditionalFileExtensions() {
+		ArrayList<String> result = new ArrayList<String>();
+		result.add("mpd.scores");
+		return result;
+	}
 
 	@Override
 	public String[] getDependences() {
 		return new String[] { "statalign.postprocess.plugins.CurrentAlignment" };
 	}
 
+	@Override 
+	public boolean createsMultipleOutputFiles() {
+		return true;
+	}
 
 	@Override
 	public void refToDependences(Postprocess[] plugins) {
@@ -285,19 +296,21 @@ public class MpdAlignment extends statalign.postprocess.Postprocess {
 				for (int i = 0; i < aln.length; i++) {
 					outputFile.write(aln[i] + "\n");
 				}
-				outputFile.write("\n#scores\n\n");
+				outputFile.close();
+				
+				//additionalOutputFiles.get(0).write("\n#scores\n\n");
 				if (decoding != null) {
 					for (int i = 0; i < decoding.length; i++) {
-						outputFile.write(decoding[i]+"");
+						additionalOutputFiles.get(0).write(decoding[i]+"");
 						for (Track track : tracks) {
-							outputFile.write("\t"+track.scores[i]);
+							additionalOutputFiles.get(0).write("\t"+track.scores[i]);
 						}
-						outputFile.write("\n");
+						additionalOutputFiles.get(0).write("\n");
 					}
 				} else {
-					outputFile.write("No posterior values so far\n");
+					additionalOutputFiles.get(0).write("No posterior values so far\n");
 				}
-				outputFile.close();
+				additionalOutputFiles.get(0).close();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}

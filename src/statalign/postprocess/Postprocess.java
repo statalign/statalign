@@ -128,6 +128,10 @@ public abstract class Postprocess {
 	 */
 	public FileWriter outputFile;
 		
+	/**
+	 * Optional array for additional output files.
+	 */
+	public ArrayList<FileWriter> additionalOutputFiles;
 
 	/**
 	 * Called by {@link PostprocessManager} after setting the {@link #show} field to allow initialisation,
@@ -191,6 +195,14 @@ public abstract class Postprocess {
 	 * file name to get the file this plugin is writing into.
 	 */
 	public String getFileExtension() {
+		return null;
+	}
+	
+	/**
+	 * Returns addotopma; file extensions to appendeto the input
+	 * file name to get the additional filenames this plugin is writing to.
+	 */
+	public ArrayList<String> getAdditionalFileExtensions() {
 		return null;
 	}
 	
@@ -286,5 +298,9 @@ public abstract class Postprocess {
     protected String getBaseFileName() {
     	return postprocessManager.getBaseFileName();
     }
+
+	public boolean createsMultipleOutputFiles() {
+		return false;
+	}
 
 }

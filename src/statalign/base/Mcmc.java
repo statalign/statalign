@@ -384,7 +384,7 @@ public abstract class Mcmc extends Stoppable {
 						postprocMan.newPeek();
 					}
 				}
-				if (mcmcpars.doReportDuringBurnin && (i % mcmcpars.sampRate == 0)) {
+				if (i>0 && mcmcpars.doReportDuringBurnin && (i % mcmcpars.sampRate == 0)) {
 					report(i, mcmcpars.cycles / mcmcpars.sampRate);
 				}
 //				if(AutomateParameters.shouldAutomateBurnIn() && i % 50 == 0){

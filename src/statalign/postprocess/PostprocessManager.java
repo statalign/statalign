@@ -112,7 +112,16 @@ public class PostprocessManager {
 				String name = baseFileName + p.getFileExtension();
 				System.out.println("Output file for " + p.getTabName()
 						+ ": " + name);
-				p.outputFile = new FileWriter(name);					
+				p.outputFile = new FileWriter(name);
+				if (p.createsMultipleOutputFiles()) {
+					for (String extension : p.getAdditionalFileExtensions()) {
+						name = baseFileName + extension;
+					}
+					System.out.println("Additional output file for " + p.getTabName()
+							+ ": " + name);
+					p.additionalOutputFiles = new ArrayList<FileWriter>();
+					p.additionalOutputFiles.add(new FileWriter(name));
+				}					
 			}
 		}		
 		} catch (IOException e) {

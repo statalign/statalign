@@ -25,7 +25,7 @@ public class CurrentTreeVisualizer extends TreeVisualizer {
         outputable = true;
         postprocessable = true;
         postprocessWrite = true;
-        sampling = true;
+        sampling = false;
         rnaAssociated = false;
     }
     

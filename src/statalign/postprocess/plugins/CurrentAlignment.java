@@ -16,6 +16,7 @@ import statalign.base.Utils;
 import statalign.postprocess.Postprocess;
 import statalign.postprocess.Track;
 import statalign.postprocess.gui.AlignmentGUI;
+import statalign.ui.ErrorMessage;
 
 /**
  * This is the postprocessmanager for showing the current alignment.
@@ -53,7 +54,8 @@ public class CurrentAlignment extends statalign.postprocess.Postprocess{
 	public CurrentAlignment(){
 		screenable = true;
 		outputable = true;
-		postprocessable = false;
+		postprocessable = true;
+		postprocessWrite = false;
 		sampling = true;
 		rnaAssociated = false;
 	}		
@@ -100,7 +102,7 @@ public class CurrentAlignment extends statalign.postprocess.Postprocess{
 
 	@Override
 	public String getFileExtension() {
-		return "aln";
+		return "ali";
 	}
 	
 	/**
@@ -187,7 +189,18 @@ public class CurrentAlignment extends statalign.postprocess.Postprocess{
 		//System.out.println("THIS IS THE CURRENT ALIGNMENT" + state.getFullAlign());
 		updateAlignment(state);
 		
-		if(sampling){
+		if(postprocessWrite) {
+			try {
+				String[] alignment = Utils.alignmentTransformation(allAlignment, seqNames, alignmentType, input);
+				for(int i = 0; i < alignment.length; i++){
+					if (state.isBurnin) outputFile.write("Burnin "+no+"\tAlignment:"+"\t"+alignment[i]+"\n");
+					else outputFile.write("Sample "+no+"\tAlignment:"+"\t"+alignment[i]+"\n");
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		else if(sampling){
 			try {
 				String[] alignment = Utils.alignmentTransformation(allAlignment, seqNames, alignmentType, input);
 				for(int i = 0; i < alignment.length; i++){
@@ -212,6 +225,18 @@ public class CurrentAlignment extends statalign.postprocess.Postprocess{
 				for(int i = 0; i < alignment.length; i++){
 					file.write(alignment[i]+"\n");
 				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	@Override
+	public void afterLastSample() {
+		if (postprocessWrite) {
+			try {				
+				outputFile.flush();
+				outputFile.close();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
