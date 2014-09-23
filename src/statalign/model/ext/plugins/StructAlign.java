@@ -51,8 +51,10 @@ import statalign.model.ext.plugins.structalign.RotationProposal;
 import statalign.model.ext.plugins.structalign.StructAlignParameterInterface;
 import statalign.model.ext.plugins.structalign.TranslationMove;
 import statalign.model.subst.SubstitutionModel;
+import statalign.postprocess.plugins.TreeNode;
 import statalign.postprocess.plugins.structalign.RmsdTrace;
 import statalign.postprocess.plugins.structalign.StructTrace;
+import statalign.postprocess.plugins.structalign.StructTreeVisualizer;
 import statalign.utils.LinkFunction;
 
 public class StructAlign extends ModelExtension implements ActionListener {
@@ -220,7 +222,9 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	// reference to the postprocessing plugin
 	private StructTrace structTrace;
 	private RmsdTrace rmsdTrace;
-	private boolean printRmsd = false; 
+	private StructTreeVisualizer structTree;
+	public boolean printRmsd = false;
+	public boolean showStructTree = false;
 
 	public StructAlign() {
 		// By default this plugin is unselectable unless we read in 
@@ -241,15 +245,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		setActive(myButton.isSelected());		
-		structTrace.active = active;
-		structTrace.postprocessWrite = active;
-		structTrace.setSelected(active);
-		rmsdTrace.active = active;
-		rmsdTrace.setSelected(active);
-		//rmsdTrace.postprocessWrite = active;
-		rmsdTrace.postprocessWrite = false; 
-		// probably the average GUI user doesn't want massive files 
-		// with pairwise RMSD printed at every sample
+		activateAssociatedPlugins();
 	}
 	
 
@@ -262,6 +258,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		usage.append("java -jar statalign.jar -plugin:structal[OPTION1,OPTION2,...]\n");
 		usage.append("OPTIONS: \n");
 		usage.append("\tprintRmsd=true\t\t(Prints RMSD and sequence identity for each sample.)\n");
+		usage.append("\tprintTree=true\t\t(Prints tree with edge lengths replaced by structural diffusivity.)\n");
 		usage.append("\tsigma2=X\t\t(Fixes sigma2 at X)\n");
 		usage.append("\tepsilon=X\t\t(Fixes epsilon at X)\n");
 		usage.append("\tminEpsilon=X\t\t(Sets minimum value for epsilon to X) [default 0.01]\n");
@@ -375,6 +372,9 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		}
 		else if (paramName.equals("printRmsd")) {
 			printRmsd = true;			
+		}
+		else if (paramName.equals("printTree")) {
+			showStructTree = true;			
 		}
 		else if (paramName.equals("useLibrary")) {
 			useLibrary = true;
@@ -535,6 +535,9 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			rotProp = new RotationProposal(this);
 		}
 		
+		if (globalSigma && showStructTree) {
+			System.out.println("structTree option can only be used in conjunction with localSigma. ");
+		}
 		
 		rotCoords = new double[coords.length][][];
 		axes = new double[coords.length][];
@@ -1033,8 +1036,9 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		}
 	}
 	// TODO Change visibility of this to package, after moving
-	// StructAlign.java into statalign.model.ext.plugins.structalign.
+	// StructAlign.java into statalign.model.ext.plugins.structalign.	
 
+	
 	/**
 	 * return the full covariance matrix for the tree topology and branch lengths
 	 */	
@@ -1047,7 +1051,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		if (printRmsd) {
 			rmsdTrace.distanceMatrix = new double[tree.names.length][tree.names.length];
 			calcUnweightedDistanceMatrix(tree.root,rmsdTrace.distanceMatrix);
-		}
+		}		
 		
 		// for hierarchical sigma, distance matrix calculation already incorporates multiplication 
 		// by theta_i = sigma_i^2 / (2 tau)
@@ -1202,6 +1206,9 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	
 	@Override
 	public void afterTreeChange(Tree tree, Vertex nephew, boolean accepted) {
+		if (showStructTree) {
+			structTree.updateStructTree(tree.root,sigma2);
+		}
 		if(accepted)	// accepted, do nothing
 			return;
 		// rejected, restore
@@ -1210,7 +1217,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		curAlign = oldAlign;
 		curLogLike = oldLogLi;
 		if (localEpsilon) multiNormsLocal = oldMultiNormsLocal;
-		else multiNorms = oldMultiNorms;
+		else multiNorms = oldMultiNorms;		
 	}
 	
 	public void beforeContinuousParamChange(Tree tree) {
@@ -1271,11 +1278,17 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	public void connectStructTrace(StructTrace structTrace) {
 		this.structTrace = structTrace;
 	}
+	public void connectStructTree(StructTreeVisualizer structTree) {
+		this.structTree = structTree;
+	}
 	public void connectRmsdTrace(RmsdTrace _rmsdTrace) {
 		rmsdTrace = _rmsdTrace;
 		rmsdTrace.active = printRmsd;
 	}
 	
+	/**
+	 * This method is called when structures are added in the GUI.
+	 */
 	@Override
 	public void dataAdded(File file, DataType data) {
 		if(data instanceof ProteinSkeletons) {
@@ -1284,17 +1297,11 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			
 			setActive(true);			
 			selectable = true;
-								
-			structTrace.active = active;
-			structTrace.postprocessWrite = active;
-			structTrace.setSelected(active);
-			rmsdTrace.active = active;
-			rmsdTrace.setSelected(active);
-			//rmsdTrace.postprocessWrite = active;
-			rmsdTrace.postprocessWrite = false;
 			
 			// By default we'll switch on localSigma mode in GUI
 			globalSigma = false;
+								
+			activateAssociatedPlugins();
 			
 			// If there is B-factor information in the .coor file
 			// then we will also switch on localEpsilon by default
@@ -1302,6 +1309,29 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				localEpsilon = true;
 			}
 		}
+	}
+	
+	/** 
+	 * Called when this plugin is activated in GUI mode, either
+	 * by toggling the StructAlign button, or by reading in
+	 * protein structure(s) from file.
+	 */
+	private void activateAssociatedPlugins() {
+		structTrace.active = active;
+		structTrace.postprocessWrite = active;
+		structTrace.setSelected(active);
+		
+		// StructTree is activated by default in GUI mode, where possible
+		showStructTree = !globalSigma;
+		structTree.active = active & showStructTree;
+		structTree.setSelected(active & showStructTree);
+		structTree.postprocessWrite = active & showStructTree;
+		
+		// RMSDTrace is activated by default in GUI mode, but does not print to file
+		rmsdTrace.active = active;
+		rmsdTrace.setSelected(active);
+		//rmsdTrace.postprocessWrite = active;
+		rmsdTrace.postprocessWrite = false;
 	}
 	
 

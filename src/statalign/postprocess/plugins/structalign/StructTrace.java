@@ -103,7 +103,7 @@ public class StructTrace extends Postprocess {
 	
 	@Override
 	public String getFileExtension() {
-		return "struct";
+		return "struct.params";
 	}
 
 	@Override
@@ -126,7 +126,7 @@ public class StructTrace extends Postprocess {
 			for (McmcMove mcmcMove : structAlign.getMcmcMoves()) {
 				if (mcmcMove.getParam() != null) {
 					outputFile.write(mcmcMove.name+"\t");
-					outputFile.write(mcmcMove.name+" (Proposed)\t");
+					//outputFile.write(mcmcMove.name+" (Proposed)\t");
 				}
 			}				
 			outputFile.write("\n");
@@ -178,12 +178,12 @@ public class StructTrace extends Postprocess {
 				for (McmcMove mcmcMove : structAlign.getMcmcMoves()) {
 					if (mcmcMove.getParam() != null) {
 						outputFile.write(mcmcMove.getParam().get()+"\t");
-						if (mcmcMove.moveProposed) {
-							outputFile.write(mcmcMove.getParam().get()+"\t");
-						}
-						else {
-							outputFile.write(-1+"\t");
-						}
+//						if (mcmcMove.moveProposed) {
+//							outputFile.write(mcmcMove.getParam().get()+"\t");
+//						}
+//						else {
+//							outputFile.write(-1+"\t");
+//						}
 					}
 				}				
 				outputFile.write("\n");
@@ -206,7 +206,7 @@ public class StructTrace extends Postprocess {
 		}
 		if (coorMLE != null) {
 			try {
-				FileWriter mle = new FileWriter(getBaseFileName()+getFileExtension()+".super.pdb");
+				FileWriter mle = new FileWriter(getBaseFileName()+"mle.super.pdb");
 				PDBReader.writePDB(coorMLE, seqs, names, mle);				
 				mle.close();
 			}catch (IOException e) {

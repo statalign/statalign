@@ -882,7 +882,7 @@ public class MainFrame extends JFrame implements ActionListener {
         tabPluginMap.clear();
         for (int i = 0; i < pluginTabs.size(); i++) {
             Postprocess plugin = pluginTabs.get(i);
-            if (plugin.selected) {
+            if (plugin.selected && plugin.screenable) {
                 tabPluginMap.put(tab.getTabCount(), plugin);
                 tab.addTab(plugin.getTabName(), plugin.getIcon(), plugin.getJPanel(), plugin.getTip());
             }

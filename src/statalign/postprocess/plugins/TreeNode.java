@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 
+import statalign.base.Vertex;
+
 public class TreeNode {
 
     // Variables
@@ -34,6 +36,36 @@ public class TreeNode {
      */
     public TreeNode() {
         this(null, 0.0d);
+    }
+    
+//    /**
+//     * Copy constructor
+//     */
+//    public TreeNode(TreeNode other) {
+//        this(other.name, other.edgeLength);
+//        System.out.print(this+"="+name);
+//        if (other.isLeaf()) {
+//        	children.clear();
+//        }
+//        else {          	
+//	        for (int i=0; i<children.size(); i++) {
+//	        	System.out.print("(");
+//	        	children.set(i,new TreeNode(other.children.get(i)));
+//	        	System.out.print("):"+edgeLength);
+//	        }
+//        }
+//    }     
+    
+    public TreeNode(Vertex v) {
+        this(v.name, v.edgeLength);
+//        System.out.print(System.identityHashCode(this)+"="+name+"["+v.leafCount+"]");           	
+//        System.out.print("(");
+        if (v.left != null) children.add(new TreeNode(v.left));        
+        if (v.right != null) children.add(new TreeNode(v.right));
+        for (int i=0; i<children.size(); i++) {
+        	children.get(i).parent = this;
+        }        
+//        System.out.print("):"+edgeLength);	                 
     }
 
     /**

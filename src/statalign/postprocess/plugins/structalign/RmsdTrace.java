@@ -55,7 +55,7 @@ public class RmsdTrace extends Postprocess {
 	InputData input;
 
 	public RmsdTrace() {
-		screenable = true;
+		screenable = false;
 		outputable = true;
 		postprocessable = true;
 		postprocessWrite = false;
@@ -81,8 +81,11 @@ public class RmsdTrace extends Postprocess {
 				structAlign.connectRmsdTrace(this);
 			}
 		}
-		active = structAlign.isActive();
-		postprocessWrite = active;
+		// Either this is active already because we're in GUI mode, 
+		// or it is not activated yet, and we only activate if printRmsd
+		// is true.
+		active |= structAlign.isActive() & structAlign.printRmsd;
+		postprocessWrite = active & structAlign.printRmsd;
 	}
 	
 	@Override
@@ -105,7 +108,7 @@ public class RmsdTrace extends Postprocess {
 //			if(modExt instanceof StructAlign) {
 //				structAlign = (StructAlign) modExt;
 //			}
-//		}				
+//		}	
 		if(!active)	return;		
 		input = inputData;
 		
@@ -204,7 +207,7 @@ public class RmsdTrace extends Postprocess {
 		}				
 		try { 
 			if (rmsdMLE != null) {
-				FileWriter mle = new FileWriter(getBaseFileName()+getFileExtension()+".mle");
+				FileWriter mle = new FileWriter(getBaseFileName()+"mle." + getFileExtension());
 				mle.write("# Maximum likelihood = "+maxLikelihood+" at sample "+sampleNumberMLE+"\n");
 				mle.write("# RMSD\tAverage B-factor\n");
 				mle.flush();
@@ -222,7 +225,7 @@ public class RmsdTrace extends Postprocess {
 				}
 				mle.close();
 				
-				FileWriter aliMLE = new FileWriter(getBaseFileName()+"mle.fasta");
+				FileWriter aliMLE = new FileWriter(getBaseFileName()+"mle.ali");
 
 				// Form an array from the leaves of the alignment 
 				String[] aln = Utils.alignmentTransformation(alignMLE, alignMLENames,

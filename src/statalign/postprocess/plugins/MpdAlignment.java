@@ -86,7 +86,7 @@ public class MpdAlignment extends statalign.postprocess.Postprocess {
 
 	@Override
 	public String getFileExtension() {
-		return "mpd";
+		return "mpd.ali";
 	}
 	
 	@Override
