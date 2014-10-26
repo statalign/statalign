@@ -28,7 +28,7 @@ public class HorizontalCladogramTreeView extends TreeView {
     public JToggleButton getToolBarButton() {
         JToggleButton button = new JToggleButton(
         		new ImageIcon(ClassLoader.getSystemResource("icons/align.png")));
-        button.setToolTipText("Consensus tree visualized without branch lengths");
+        button.setToolTipText("Tree visualized without branch lengths");
         return button;
     }
 

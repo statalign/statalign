@@ -27,7 +27,7 @@ public class HorizontalPhylogramTreeView extends TreeView {
     public JToggleButton getToolBarButton() {
         JToggleButton button = new JToggleButton(new ImageIcon(
         		ClassLoader.getSystemResource("icons/phylogram.png")));
-        button.setToolTipText("Consensus tree visualized with branch lengths");
+        button.setToolTipText("Tree visualized with branch lengths");
         return button;
     }
 
