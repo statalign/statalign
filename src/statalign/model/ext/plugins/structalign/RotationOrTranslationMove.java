@@ -38,12 +38,15 @@ public abstract class RotationOrTranslationMove extends McmcMove {
 		nLeaves = structAlign.coords.length;
 		subtreeLeaves = Subtree.getSubtreeLeaves(tree, subtreeRoot, nLeaves);
 		index = subtreeLeaves.get(Utils.generator.nextInt(subtreeLeaves.size()));
-		oldaxes = new double[structAlign.axes.length][structAlign.axes[0].length];
+		int refInd = 0;
+		while (structAlign.axes[refInd]==null) ++refInd;
+		oldaxes = new double[structAlign.axes.length][structAlign.axes[refInd].length];
 		oldangles = new double[structAlign.angles.length];
 		oldxlats = new double[structAlign.xlats.length][structAlign.xlats.length];
-		oldrots = new double[structAlign.rotCoords.length][structAlign.rotCoords[0].length][structAlign.rotCoords[0][0].length];
+		oldrots = new double[structAlign.rotCoords.length][structAlign.rotCoords[refInd].length][structAlign.rotCoords[refInd][refInd].length];
 		for(int i = 0; i < subtreeLeaves.size(); i++){
 			int j = subtreeLeaves.get(i);
+			if (structAlign.axes[j] == null) continue;
 			oldaxes[j] = MathArrays.copyOf(structAlign.axes[j]);
 			oldangles[j] = structAlign.angles[j];
 			oldxlats[j] = MathArrays.copyOf(structAlign.xlats[j]);
@@ -62,6 +65,7 @@ public abstract class RotationOrTranslationMove extends McmcMove {
 	public void updateLikelihood(Object externalState) {
 		for(int i = 0; i < subtreeLeaves.size(); i++){
 			int j = subtreeLeaves.get(i);
+			if (structAlign.coords[j] == null) continue;
 			structAlign.rotCoords[j] = null;	// so that calcRotation creates new array
 			structAlign.calcRotation(j);
 		}

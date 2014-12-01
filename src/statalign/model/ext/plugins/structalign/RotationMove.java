@@ -29,6 +29,7 @@ public class RotationMove extends RotationOrTranslationMove {
 		Rotation Q = new Rotation(new Vector3D(randomAxis.toArray()), smallAngle);
 		for(int i = 0; i < subtreeLeaves.size(); i++){
 			int j = subtreeLeaves.get(i);
+			if (structAlign.coords[j] == null) continue;
 			Rotation R = new Rotation(new Vector3D(structAlign.axes[j]), structAlign.angles[j]);
 		
 			R = Q.applyTo(R);

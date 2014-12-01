@@ -259,7 +259,7 @@ public class RmsdTrace extends Postprocess {
 				for(int k = 0; k < align[0].length(); k++){
 					igap = align[i].charAt(k) == '-';
 					jgap = align[j].charAt(k) == '-';
-					if(!igap & !jgap){
+					if(!igap & !jgap & !(coor[i]==null) & !(coor[j]==null)){
 						msd[i][j] += sqDistance(coor[i][ii], coor[j][jj]);
 						n++;
 					}
@@ -305,7 +305,7 @@ public class RmsdTrace extends Postprocess {
 				for(int j = i+1; j < leaves; j++){													
 					igap = align[i].charAt(k) == '-';
 					jgap = align[j].charAt(k) == '-';
-					if(!igap & !jgap){
+					if(!igap & !jgap & !(coor[i]==null) & !(coor[j]==null)){
 						rmsdTrack.scores[kk] += sqDistance(coor[i][index[i]], coor[j][index[j]]);
 						++n;
 					}					
@@ -324,6 +324,7 @@ public class RmsdTrace extends Postprocess {
 			int nBfactor = 0;
 			for(int i = 0; i < leaves; i++) {
 				if (align[i].charAt(k) != '-') {
+					if(structAlign.coords[i]==null) continue;
 					if (structAlign.localEpsilon) bFactorTrack.scores[kk] += Math.pow(structAlign.bFactors[i][index[i]],2) * structAlign.epsilon;
 					nBfactor++;
 					index[i]++;

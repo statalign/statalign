@@ -109,6 +109,10 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	public double[] angles;
 	/** Translation vector for each protein */
 	public double[][] xlats;
+	
+	/** The structure used as the reference for rotations. */
+	private int refIndex = 0;
+	
 
 	/** Parameters of structural drift */
 	public double[] sigma2;
@@ -485,7 +489,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			if (localEpsilon && ps.bFactors.size() == 0) {
 				throw new RuntimeException("No B-factor data available: cannot use localEpsilon mode.");
 			}
-			for(i = 0; i < ps.names.size(); i++) {
+			for(i = 0; i < ps.names.size(); i++) {				
 				String name = ps.names.get(i).toUpperCase();
 				if(!seqMap.containsKey(name))
 					throw new IllegalArgumentException("structalign: missing sequence or duplicate structure for "+name);
@@ -501,7 +505,6 @@ public class StructAlign extends ModelExtension implements ActionListener {
 					throw new IllegalArgumentException("structalign: sequence length mismatch with structure file for seq "+name);
 				coords[ind] = new double[len][];
 				if (localEpsilon) bFactors[ind] = new double[len];
-				// center all coordinates to mean zero so that rotations are around center of gravity
 				double bFactorMean = 0;
 				for(int j = 0; j < len; j++) {
 					 coords[ind][j] = Utils.copyOf(cl.get(j));
@@ -520,7 +523,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 						}						
 					}
 				}
-				
+				// center all coordinates to mean zero so that rotations are around center of gravity
 				RealMatrix temp = new Array2DRowRealMatrix(coords[ind]);
 				RealVector mean = Funcs.meanVector(temp);
 				for(int j = 0; j < len; j++)
@@ -528,8 +531,10 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				seqMap.remove(name);
 			}
 		}
-		if(seqMap.size() > 0)
-			throw new IllegalArgumentException("structalign: missing structure for sequence "+seqMap.keySet().iterator().next());
+		while (coords[refIndex]==null) ++refIndex;	
+		
+//		if(seqMap.size() > 0)
+//			throw new IllegalArgumentException("structalign: missing structure for sequence "+seqMap.keySet().iterator().next());
 		
 		if (useLibrary) {
 			rotProp = new RotationProposal(this);
@@ -544,9 +549,9 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		angles = new double[coords.length];
 		xlats = new double[coords.length][];
 
-		axes[0] = new double[] { 1, 0, 0 };
-		angles[0] = 0;
-		xlats[0] = new double[] { 0, 0, 0 };
+		axes[refIndex] = new double[] { 1, 0, 0 };
+		angles[refIndex] = 0;
+		xlats[refIndex] = new double[] { 0, 0, 0 };
 						
 		sigma2Hier = 1;
 		nu = 1;
@@ -705,6 +710,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			}
 			
 			for (int j=0; j<sigma2.length; j++) {
+				if (j<=sigma2.length/2 && coords[j]==null) continue; 
 				String sigmaName;
 				if (sigma2.length == 1) {
 					sigmaName = "s2";
@@ -761,13 +767,14 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		/* check for protein with no residues aligned to reference protein, resample alignment if any found */
 		boolean stop = false;
 		while(!stop){
-			String[] align = tree.getState().getLeafAlign();
-			String ref = align[0];
+			String[] align = tree.getState().getLeafAlign();	
+			String ref = align[refIndex];
 			proteinLoop:
-			for(int i = 1; i < align.length; i++){
+			for(int i = 0; i < align.length; i++){
+				if (i==refIndex) continue; 				
 				String other = align[i];
 				int countAligned = 0;
-				for(int j = 0; j < align[0].length(); j++)
+				for(int j = 0; j < align[refIndex].length(); j++)
 					countAligned += (ref.charAt(j) != '-' & other.charAt(j) != '-') ? 1 : 0;
 				if(countAligned == 0){
 					tree.root.selectAndResampleAlignment();
@@ -800,7 +807,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		checkConsCovar(covar); 
 		fullCovar = covar;
 		
-		if(!checkConsRots() && rotCoords[0] == null)
+		if(!checkConsRots() && rotCoords[refIndex] == null)
 			calcAllRotations();
 		
 		double logli = calcAllColumnContrib();
@@ -834,7 +841,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		double logli = 0;
 		int[] inds = new int[align.length];		// current char indices
 		int[] col = new int[align.length];  
-		for(int i = 0; i < align[0].length(); i++) {
+		for(int i = 0; i < align[refIndex].length(); i++) {
 			for(int j = 0; j < align.length; j++)
 				col[j] = align[j].charAt(i) == '-' ? -1 : inds[j]++;
 			double ll = columnContrib(col); 
@@ -912,7 +919,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		//System.out.print("\t");
 		for(int i = 0; i < col.length; i++){
 			//System.out.print(col[i]+" ");
-			if(col[i] != -1)
+			if(col[i]!=-1 && coords[i]!=null)
 				numMatch++;
 		}
 		//System.out.println();
@@ -923,13 +930,15 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		int columnCode = 0;
 		int j = 0;		
 		for(int i = 0; i < col.length; i++)  {
-			if(col[i] != -1) {
+			if(col[i]!=-1 && coords[i]!=null) {
 				notgap[j++] = i;
 				columnCode |= (1 << i);
 			}						
 		}
 		
+		// TODO ?
 		/*
+		 *
 		 * Under localEpsilon mode, the covariance depends on the column,
 		 * not just the indel pattern of the column, but we can still
 		 * cache the Cholesky decompositions to be re-used for columns
@@ -1022,8 +1031,10 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	 */
 		
 	private void calcAllRotations() {
-		for(int i = 0; i < coords.length; i++)
+		for(int i = 0; i < coords.length; i++) {
+			if (coords[i]==null) continue;
 			calcRotation(i);
+		}
 	}
 	
 	public void calcRotation(int ind) {

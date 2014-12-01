@@ -150,6 +150,7 @@ public class Funcs{
 			FileWriter fstream3 = new FileWriter("rots.txt");
 			BufferedWriter out3 = new BufferedWriter(fstream3);
 			for(int i = 0; i < coords.length; i++){
+				if (coords[i]==null) continue;
 				Transformation trans = new Transformation(axes[i], angles[i], xlats[i]);
 				RealMatrix temp = trans.getRealRotation();
 				for(int j = 0; j < 3; j++){
@@ -168,15 +169,21 @@ public class Funcs{
 	
 	public static void initLSRotations(Tree tree, double[][][] coords, 
 			double[][] xlats, double[][] axes, double[] angles){
-		String[] align = tree.getState().getLeafAlign();
-		String ref = align[0];
-		for(int i = 1; i < align.length; i++){
+		String[] align = tree.getState().getLeafAlign();		
+		int refIndex = 0;
+		while (coords[refIndex]==null) ++refIndex;		
+		String ref = align[refIndex];
+		axes[refIndex] = new double[] { 1, 0, 0 };
+		angles[refIndex] = 0;
+		xlats[refIndex] = new double[] { 0, 0, 0 };
+		for(int i = 0; i < align.length; i++){
+			if (i==refIndex || coords[i]==null) continue; 
 			ArrayList<Integer> refInds = new ArrayList<Integer>(0);
 			ArrayList<Integer> otherInds = new ArrayList<Integer>(0);
 			String other = align[i];
 			
 			int r = 0, o = 0;
-			for(int j = 0; j < align[0].length(); j++){
+			for(int j = 0; j < align[refIndex].length(); j++){
 				if(ref.charAt(j) != '-' & other.charAt(j) != '-'){
 					refInds.add(r);
 					otherInds.add(o);
@@ -185,7 +192,7 @@ public class Funcs{
 				o += other.charAt(j) != '-' ? 1 : 0;
 			}
 			
-			double[][] refSub = getRowSub(coords[0], refInds);
+			double[][] refSub = getRowSub(coords[refIndex], refInds);
 			double[][] otherSub = getRowSub(coords[i], otherInds);
 			
 			Transformation trans = new Transformation();

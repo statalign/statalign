@@ -18,6 +18,7 @@ public class TranslationMove extends RotationOrTranslationMove {
 			shift[i] = Utils.generator.nextGaussian() * proposalWidthControlVariable;
 		for(int l = 0; l < subtreeLeaves.size(); l++){
 			int j = subtreeLeaves.get(l);
+			if (structAlign.coords[j] == null) continue;
 			for(int i = 0; i < 3; i++)
 				structAlign.xlats[j][i] += shift[i];  
 		}	

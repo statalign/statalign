@@ -96,6 +96,7 @@ public class PDBReader extends DataReader {
 		String format2 = "TER   %5d      %3s %1c%4d\n";
 		try {
 			for (int i=0; i<coors.length; i++) {
+				if (coors[i]==null) continue; 
 				char chain = (char) ('A' + i);
 				fw.write("HEADER "+names[i]+"\n");
 				int j=0;
