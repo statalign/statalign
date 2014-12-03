@@ -189,12 +189,12 @@ public class PPFold extends statalign.postprocess.Postprocess {
 	}
 
 	@Override
-	public String[] getDependences() {
+	public String[] getDependencies() {
 		return new String[] { "statalign.postprocess.plugins.CurrentAlignment", "statalign.postprocess.plugins.MpdAlignment"};
 	}
 
 	@Override
-	public void refToDependences(Postprocess[] plugins) {
+	public void refToDependencies(Postprocess[] plugins) {
 		curAlig = (CurrentAlignment) plugins[0];
 		mpdAlignment = (MpdAlignment) plugins[1];
 	}

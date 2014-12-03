@@ -40,11 +40,11 @@ public class PDBReader extends DataReader {
 				if(++lineNumber == 1) {										 
 					if (line.startsWith("HEADER") && line.length() > 62) {
 						if (line.length() > 66)
-							data.names.set(0,line.substring(62,67).toLowerCase());
+							data.names.set(0,line.substring(62,67).toLowerCase().replaceAll("\\s+",""));
 						else 
 							data.names.set(0,line.substring(62,66).toLowerCase());
 					}
-					else { // If HEADER lines have been removed from PDB
+					else { // If HEADER lines have been removed from PDB						
 						if (filename.length() > 4) 
 							data.names.set(0,filename.toLowerCase().substring(0,5));
 						else 
@@ -100,7 +100,7 @@ public class PDBReader extends DataReader {
 				char chain = (char) ('A' + i);
 				fw.write("HEADER "+names[i]+"\n");
 				int j=0;
-				for (; j<coors[i].length; j++) {					
+				for (; j<coors[i].length; j++) {						
 					fw.write(String.format(format, j+1,mp13.get(seqs[i].substring(j,j+1)),chain,j+1,coors[i][j][0],coors[i][j][1],coors[i][j][2]));
 				}			
 				fw.write(String.format(format2,j+1,mp13.get(seqs[i].substring(j-1,j)),chain,j));

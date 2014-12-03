@@ -532,6 +532,13 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			}
 		}
 		while (coords[refIndex]==null) ++refIndex;	
+		int nStructures=0; 
+		for (int ii=0; ii<coords.length; ii++) {
+			if (coords[ii]!=null) ++nStructures;
+		}
+		if (nStructures < 2) {
+			throw new RuntimeException("Cannot run StructAlign with fewer than two structures.");
+		}
 		
 //		if(seqMap.size() > 0)
 //			throw new IllegalArgumentException("structalign: missing structure for sequence "+seqMap.keySet().iterator().next());
@@ -883,16 +890,19 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			return false;
 		double[][][] rots = new double[rotCoords.length][][];
 		for(int i = 0; i < rots.length; i++) {
+			if (rotCoords[i]==null) continue; 
 			rots[i] = new double[rotCoords[i].length][];
 			for(int j = 0; j < rots[i].length; j++)
 				rots[i][j] = MathArrays.copyOf(rotCoords[i][j]);
 		}
 		calcAllRotations();
-		for(int i = 0; i < rots.length; i++)
+		for(int i = 0; i < rots.length; i++) {
+			if (rots[i]==null) continue;
 			for(int j = 0; j < rots[i].length; j++)
 				for(int k = 0; k < rots[i][j].length; k++)
 					if(Math.abs(rots[i][j][k]-rotCoords[i][j][k]) > 1e-5)
 						throw new Error("Inconsistency in StructAlign, rotation "+i+","+j+","+k+": "+rots[i][j][k]+" vs "+rotCoords[i][j][k]);
+		}
 		return true;
 	}
 
@@ -913,40 +923,36 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	 * @param col the column, id of the residue for each sequence (or -1 if gapped in column)
 	 * @return the likelihood contribution
 	 */		
-	public double columnContrib(int[] col) {
+	public double columnContrib(int[] _col) {
 		// count the number of ungapped positions in the column
 		int numMatch = 0;
-		//System.out.print("\t");
+		int[] col = _col.clone();
 		for(int i = 0; i < col.length; i++){
-			//System.out.print(col[i]+" ");
-			if(col[i]!=-1 && coords[i]!=null)
+			if (coords[i]==null) col[i] = -1;	
+			if(col[i]!=-1)
 				numMatch++;
 		}
-		//System.out.println();
 		if(numMatch == 0) 
-			return 1;
+			return 0;
 		// collect indices of ungapped positions
 		int[] notgap = new int[numMatch];
 		int columnCode = 0;
 		int j = 0;		
 		for(int i = 0; i < col.length; i++)  {
-			if(col[i]!=-1 && coords[i]!=null) {
+			if(col[i]!=-1) {
 				notgap[j++] = i;
 				columnCode |= (1 << i);
 			}						
 		}
 		
-		// TODO ?
-		/*
-		 *
+		/*		 
 		 * Under localEpsilon mode, the covariance depends on the column,
 		 * not just the indel pattern of the column, but we can still
 		 * cache the Cholesky decompositions to be re-used for columns
 		 * that do not change (since most of the alignment columns do 
 		 * not change during an alignment move, this could still yield
 		 * a significant speedup).
-		 */
-			
+		 */			
 		
 		MultiNormCholesky multiNorm = null;
 		if (localEpsilon) multiNorm = multiNormsLocal.get(new Column(col));
@@ -1034,7 +1040,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		for(int i = 0; i < coords.length; i++) {
 			if (coords[i]==null) continue;
 			calcRotation(i);
-		}
+		}		
 	}
 	
 	public void calcRotation(int ind) {

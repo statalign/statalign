@@ -28,6 +28,7 @@ public class RawSequences implements DataType {
 	 * Dynamic array of sequence names. Any name can be null.
 	 */
 	private List<String> seqNames = new ArrayList<String>();
+	public List<String> getNames() { return seqNames; }
 
 	/**
 	 * Sorted string of characters present in sequences. Does not contain the
@@ -87,14 +88,19 @@ public class RawSequences implements DataType {
 
 	/**
 	 * Add a name and a sequence, that belong together. If another sequence with
-	 * the same name is already added then it won't be added.
+	 * the same name is already added then it will be updated.
 	 */
 	public void add(String name, String sequence) {
 //		if (name != null && seqNames.contains(name))
 //			throw new Error("Name collision! (" + name
 //					+ "), please edit your input files to resolve it.");
-		seqNames.add(name);
-		sequences.add(sequence);
+		if (seqNames.contains(name)) {
+			sequences.set(sequences.indexOf(name),sequence);						
+		}
+		else {
+			seqNames.add(name);
+			sequences.add(sequence);
+		}
 	}
 
 	public void addOrReplace(String name, String sequence) {
@@ -107,7 +113,7 @@ public class RawSequences implements DataType {
 	public void add(RawSequences more) {
 		// so that names are checked
 		for (int i = 0; i < more.seqNames.size(); i++) {
-			add(more.seqNames.get(i), more.sequences.get(i)); // adddOrReplace?
+			add(more.seqNames.get(i), more.sequences.get(i)); // addOrReplace?
 		}
 
 		String alpha1 = getAlphabet();
@@ -228,8 +234,7 @@ public class RawSequences implements DataType {
 	public boolean remove(int i) {
 		if (size() > i && i >= 0) {
 			sequences.remove(i);
-			seqNames.remove(i);
-			alphabet = null;
+			seqNames.remove(i);			
 			maxNameLength = -1;
 			return true;
 		} else {

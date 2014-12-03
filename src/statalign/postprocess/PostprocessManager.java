@@ -137,7 +137,7 @@ public class PostprocessManager {
 		if(!plugin.selected)
 			return plugin.active;
 		plugin.selected = false;
-		String[] deps = plugin.getDependences();
+		String[] deps = plugin.getDependencies();
 		Postprocess[] refs = null;
 		if(deps != null) {
 			refs = new Postprocess[deps.length];
@@ -148,7 +148,7 @@ public class PostprocessManager {
 				refs[i] = plugins.get(ind);
 			}
 		}
-		plugin.refToDependences(refs);
+		plugin.refToDependencies(refs);
 		plugin.active = false;
 		workingPlugins.add(plugin);
 		return false;

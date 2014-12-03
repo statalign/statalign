@@ -51,7 +51,7 @@ public class CoorReader extends DataReader {
 					if(line.isEmpty())
 						continue;
 					if(cur < 0)
-						throw new IllegalFormatException("CoorReader: structure given without sequence name");
+						throw new IllegalFormatException("CoorReader: unnamed structure detected");
 					String[] tokens = line.split("[:,; \t]+");
 					if(tokens.length < allowDimMin || tokens.length > allowDimMax)
 						throw new IllegalFormatException("CoorReader: number of dimensions incorrect");
@@ -75,7 +75,7 @@ public class CoorReader extends DataReader {
 		if(cur < 0)
 			throw new IllegalFormatException("CoorReader: empty file");
 		if(data.coords.get(cur).size() == 0)
-			throw new IllegalFormatException("CoorReader: sequence "+data.names.get(cur)+" is without a structure");
+			throw new IllegalFormatException("CoorReader: structure "+data.names.get(cur)+" contains no atoms.");
 		
 		return data;
 	}

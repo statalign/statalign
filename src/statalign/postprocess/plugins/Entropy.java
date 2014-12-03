@@ -104,12 +104,12 @@ public class Entropy extends statalign.postprocess.Postprocess{
 	}
 	
 	@Override
-	public String[] getDependences() {
+	public String[] getDependencies() {
 		return new String[] { "statalign.postprocess.plugins.PPFold" };
 	}
 	
 	@Override
-	public void refToDependences(Postprocess[] plugins) {
+	public void refToDependencies(Postprocess[] plugins) {
 		ppFold = (PPFold)plugins[0];
 	}
 

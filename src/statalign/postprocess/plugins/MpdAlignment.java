@@ -97,7 +97,7 @@ public class MpdAlignment extends statalign.postprocess.Postprocess {
 	}
 
 	@Override
-	public String[] getDependences() {
+	public String[] getDependencies() {
 		return new String[] { "statalign.postprocess.plugins.CurrentAlignment" };
 	}
 
@@ -107,7 +107,7 @@ public class MpdAlignment extends statalign.postprocess.Postprocess {
 	}
 
 	@Override
-	public void refToDependences(Postprocess[] plugins) {
+	public void refToDependencies(Postprocess[] plugins) {
 		curAlig = (CurrentAlignment) plugins[0];
 		curAlig.mpdAli = this;
 	}
@@ -289,7 +289,7 @@ public class MpdAlignment extends statalign.postprocess.Postprocess {
 
 	@Override
 	public void afterLastSample() {
-		if (postprocessWrite) {
+		if (postprocessWrite && sequences != null) {
 			try {
 				String[] aln = Utils.alignmentTransformation(alignment, sequenceNames,
 						alignmentType, input);

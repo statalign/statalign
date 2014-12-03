@@ -210,7 +210,7 @@ public abstract class Postprocess {
 	 * Override this and return an array of full-qualified class names of the plugins
 	 * this plugin depends on.
 	 */
-	public String[] getDependences() {
+	public String[] getDependencies() {
 		return null;
 	}
 	
@@ -222,7 +222,7 @@ public abstract class Postprocess {
 	 * @param plugins  reference to Postprocess objects in the order they are specified
 	 *                 in getDependences() or null if it returns null
 	 */
-	public void refToDependences(Postprocess[] plugins) {
+	public void refToDependencies(Postprocess[] plugins) {
 	}
 	
 	/**

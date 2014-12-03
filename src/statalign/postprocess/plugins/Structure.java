@@ -105,13 +105,13 @@ public class Structure extends statalign.postprocess.Postprocess {
 	}
 	
 	@Override
-	public String[] getDependences() {
+	public String[] getDependencies() {
 		return new String[] { "statalign.postprocess.plugins.PPFold"};
 	}
 	
 	public PPFold ppfold;
 	@Override
-	public void refToDependences(Postprocess[] plugins) {
+	public void refToDependencies(Postprocess[] plugins) {
 		ppfold = (PPFold) plugins[0];
 	}
 

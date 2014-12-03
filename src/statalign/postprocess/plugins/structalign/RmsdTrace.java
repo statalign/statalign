@@ -89,7 +89,7 @@ public class RmsdTrace extends Postprocess {
 	}
 	
 	@Override
-	public String[] getDependences() {
+	public String[] getDependencies() {
 		return new String[] { "statalign.postprocess.plugins.CurrentAlignment", 
 							  "statalign.postprocess.plugins.MpdAlignment"};
 	}
@@ -97,7 +97,7 @@ public class RmsdTrace extends Postprocess {
 	CurrentAlignment curAli;
 	MpdAlignment mpdAli;
 	@Override
-	public void refToDependences(Postprocess[] plugins) {
+	public void refToDependencies(Postprocess[] plugins) {
 		curAli = (CurrentAlignment) plugins[0];
 		mpdAli = (MpdAlignment) plugins[1];
 	}
@@ -251,15 +251,19 @@ public class RmsdTrace extends Postprocess {
 		double[][][] coor = structAlign.rotCoords;
 		String[] align = structAlign.curAlign;
 		int leaves = coor.length;
+		boolean[] hasStructure = new boolean[leaves];		
 		boolean igap, jgap;
 		double[][] msd = new double[leaves][leaves];
-		for(int i = 0; i < leaves-1; i++){
+		for (int i=0; i<leaves; i++) {
+			hasStructure[i] = (structAlign.coords[i]!=null);				
+		}
+		for(int i = 0; i < leaves-1; i++){		
 			for(int j = i+1; j < leaves; j++){
 				int ii = 0, jj = 0, n = 0;
 				for(int k = 0; k < align[0].length(); k++){
 					igap = align[i].charAt(k) == '-';
 					jgap = align[j].charAt(k) == '-';
-					if(!igap & !jgap & !(coor[i]==null) & !(coor[j]==null)){
+					if(!igap & !jgap & hasStructure[i] & hasStructure[j]){
 						msd[i][j] += sqDistance(coor[i][ii], coor[j][jj]);
 						n++;
 					}
