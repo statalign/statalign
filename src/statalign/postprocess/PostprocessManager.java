@@ -280,12 +280,9 @@ public class PostprocessManager {
 	 * It calls plug-ins to finalize their postprocessing activities.
 	 */
 	public void afterLastSample() {
-		if(rnaMode) {
-			for(Postprocess plugin : plugins) {
-				if(plugin.rnaAssociated) {
-					plugin.afterLastSample();
-				}
-
+		if(rnaMode) {			
+			for(Postprocess plugin : plugins) {					
+				plugin.afterLastSample();	
 			}
 		}
 		else {

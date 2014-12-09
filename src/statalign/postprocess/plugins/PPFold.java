@@ -9,6 +9,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -139,6 +140,7 @@ public class PPFold extends statalign.postprocess.Postprocess {
 	ArrayList<Double> distanceList;
 
 	public String outDir;
+	PrintStream logFile;
 	
 	String rnaAlifoldParameters = "";
 	boolean samplingAndAveragingPPfold = false;
@@ -239,6 +241,12 @@ public class PPFold extends statalign.postprocess.Postprocess {
 		if(input.pars.seed != 1)
 		{
 			title = input.title + "_seed"+input.pars.seed;
+		}
+		try {
+			logFile = new PrintStream(new File(outDir+"/"+title+".ppfold.log"));
+		}
+		catch(FileNotFoundException e) {
+			e.printStackTrace();
 		}
 		selectReferenceSequence(input);
 		
@@ -640,7 +648,10 @@ public class PPFold extends statalign.postprocess.Postprocess {
 				
 				if(samplingAndAveragingPPfold)
 				{
+					System.setOut(logFile);
 					ResultBundle sampleResult = PPfoldMain.fold2(progress, align.getSequences(),	align.getNames(), tree, param, extradata);
+					logFile.flush();
+					System.setOut(System.out);
 					entropySample = sampleResult.entropyVal;
 					float[][] basePairProb = sampleResult.finalmatrix;
 					float[] singleBaseProb = new float[basePairProb.length];
