@@ -111,8 +111,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	public double[][] xlats;
 	
 	/** The structure used as the reference for rotations. */
-	private int refIndex = 0;
-	
+	private int refIndex = 0;	
 
 	/** Parameters of structural drift */
 	public double[] sigma2;
@@ -129,13 +128,16 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	/** Current alignment between all leaf sequences */
 	public String[] curAlign;
 	
-	/** independence rotation proposal distribution */
-	public RotationProposal rotProp;
-
 	public double[][] oldCovar;
 	public double[][] oldDist;
 	public String[] oldAlign;
 	public double oldLogLi;
+	
+	/** For caching purposes */
+	public HashMap<Integer, MultiNormCholesky> multiNorms;	
+	public HashMap<Column, MultiNormCholesky> multiNormsLocal;
+	private HashMap<Integer, MultiNormCholesky> oldMultiNorms;
+	public HashMap<Column, MultiNormCholesky> oldMultiNormsLocal;
 	
 	/** Relates the structural and sequence evolutionary timescales */
 	private LinkFunction<Double> linkFunction; 
@@ -156,8 +158,8 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	public PriorDistribution<Double> epsilonPrior;
 	boolean epsilonPriorInitialised = false;
 	
-	
-	
+	/** independence rotation proposal distribution */
+	public RotationProposal rotProp;
 	
 	private double tauPriorShape = 0.001;
 	private double tauPriorRate = 0.001;
@@ -470,12 +472,25 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	public void init() {
 	}
 	
+	@Override
+	protected void resetData() {
+		super.resetData();
+		distanceMatrix = null;		
+		fullCovar = null;		
+		curAlign = null;
+		
+		oldCovar = null;
+		oldDist = null;
+		oldAlign = null;
+		oldLogLi = Double.NEGATIVE_INFINITY;
+	}
 //	@Override
 //	public ModelExtension reset() {
 //		return new StructAlign();
 //	}
 	@Override
 	public void initRun(InputData inputData) throws IllegalArgumentException {
+		super.initRun(inputData);
 		HashMap<String, Integer> seqMap = new HashMap<String, Integer>();
 		int i = 0;
 		for(String name : inputData.seqs.getSeqnames())
@@ -560,6 +575,12 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		angles[refIndex] = 0;
 		xlats[refIndex] = new double[] { 0, 0, 0 };
 						
+		multiNorms = new HashMap<Integer, MultiNormCholesky>();	
+		multiNormsLocal = new HashMap<Column, MultiNormCholesky>();
+		oldMultiNorms = new HashMap<Integer, MultiNormCholesky>();
+		oldMultiNormsLocal = new HashMap<Column, MultiNormCholesky>();
+		
+		// MCMC parameters
 		sigma2Hier = 1;
 		nu = 1;
 		tau = 50;
@@ -630,8 +651,11 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		if(!linkType.equals("linear")){
 			globalSigma = true;
 		}
-		
-		/* Add alignment and rotation/translation moves */
+	}
+	
+	@Override
+	protected void initMcmc(InputData inputData) {
+		/* Add alignment and rotation/translation moves */		
 		RotationMove rotationMove = new RotationMove(this,"rotation"); 
 		addMcmcMove(rotationMove,rotationWeight); 
 		
@@ -765,8 +789,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 					addMcmcMove(sigmaEpsilonMove,sigmaEpsilonWeight);
 				}
 			}
-		}
-	
+		}		
 	}
 	
 	@Override
@@ -789,8 +812,9 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				} else if (i == align.length - 1) {stop = true;}
 			}
 		}
-
 		Funcs.initLSRotations(tree,coords,xlats,axes,angles);
+		//calcAllRotations();
+		computeLogLikeFactor(tree);
 	}
 	
 	@Override
@@ -913,11 +937,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			throw new Error("Inconsistency in StructAlign, log-likelihood "+logli+" vs "+curLogLike);
 		return true;
 	}
-
-	public HashMap<Integer, MultiNormCholesky> multiNorms = new HashMap<Integer, MultiNormCholesky>();	
-	public HashMap<Column, MultiNormCholesky> multiNormsLocal = new HashMap<Column, MultiNormCholesky>();
-	private HashMap<Integer, MultiNormCholesky> oldMultiNorms = new HashMap<Integer, MultiNormCholesky>();
-	public HashMap<Column, MultiNormCholesky> oldMultiNormsLocal = new HashMap<Column, MultiNormCholesky>();
+	
 	/**
 	 * Calculates the structural likelihood contribution of a single alignment column
 	 * @param col the column, id of the residue for each sequence (or -1 if gapped in column)
@@ -977,10 +997,10 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			
 		double logli = 0;
 		double[] vals = new double[numMatch];
-		
+				
 		// loop over all 3 coordinates
 		for(j = 0; j < 3; j++){
-			for(int i = 0; i < numMatch; i++)
+			for(int i = 0; i < numMatch; i++) 
 				vals[i] = rotCoords[notgap[i]][col[notgap[i]]][j];
 			
 			if (Utils.DEBUG  && multiNorm.logDensity(vals) != multiNorm2.logDensity(vals)) {
@@ -1060,7 +1080,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	 * return the full covariance matrix for the tree topology and branch lengths
 	 */	
 	public double[][] calcFullCovar(Tree tree) {
-		// tree.names.length is equal to the number of vertices
+		// tree.names.length is equal to the number of vertices		
 		distanceMatrix = new double[tree.names.length][tree.names.length];
 		double[][] covar = new double[tree.names.length][tree.names.length];
 		calcDistanceMatrix(tree.root, distanceMatrix);

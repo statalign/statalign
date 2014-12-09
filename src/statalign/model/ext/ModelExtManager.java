@@ -112,8 +112,9 @@ public class ModelExtManager {
 		activeList = new ArrayList<ModelExtension>();
 		for(ModelExtension plugin : pluginList) {
 			if(plugin.isActive()) {
-				activeList.add(plugin);
+				if (!activeList.contains(plugin)) activeList.add(plugin);
 				plugin.initRun(inputData);
+				plugin.initMcmc(inputData);
 			}
 		}
 		propWeights = new int[activeList.size()];

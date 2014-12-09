@@ -29,8 +29,13 @@ public abstract class ModelExtension extends McmcModule {
 	private ModelExtManager manager;
 	
 	protected boolean active;
+	
+	/** Whether the plugin's <code>initRun</code> method has already been run. */
+	protected boolean initComplete = false;
+	
 	/** Determines whether the plugin is selectable by default in GUI mode.*/
-	protected boolean selectable = true;	
+	protected boolean selectable = true;
+	
 	public boolean isSelectable() { return selectable; 	}	
 	public void addToFilenameExtension(String s) {
 		manager.addToFilenameExtension(s);
@@ -145,13 +150,28 @@ public abstract class ModelExtension extends McmcModule {
 	/**
 	 * Called during the initialisation of a run if plugin is active. Override to process input data.
 	 * 
-	 * @param input the input data
+	 * @param inputData the input data
 	 * @exception IllegalArgumentException if the run should be terminated as input data is illegal
 	 */
-	public void initRun(InputData inputData) throws IllegalArgumentException {}
-	
-	
-	
+	public void initRun(InputData inputData) throws IllegalArgumentException {
+		// If this is not the first run then reset first		
+		if (initComplete) resetData();
+		initComplete = true;	
+	}
+	/** 
+	 * Called after initRun, to set up the MCMC moves for the plugin. 
+	 *  
+	 * @param inputData
+	 */
+	protected void initMcmc(InputData inputData) { }
+
+	protected void resetData() {		
+		mcmcMoves = new ArrayList<McmcMove>();				
+		mcmcMoveWeights = new ArrayList<Integer>();
+		mcmcMoveWeightIncrements = new ArrayList<Integer>();
+		setAllMovesNotProposed();
+		zeroAllMoveCounts();
+	}
 	/**
 	 * Returns the weight for choosing a parameter change for this model extension in the MCMC kernel.
 	 * By default, returns 0, preventing {@link #proposeParamChange(Tree)} from ever being called.
