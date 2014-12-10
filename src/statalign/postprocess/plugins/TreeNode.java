@@ -160,7 +160,7 @@ public class TreeNode {
     public String toStringWithProbs(int noOfSamples) {
         StringBuilder sb = new StringBuilder();
         if (!children.isEmpty()) {
-            sb.append('(').append(children.get(0));
+            sb.append('(').append(children.get(0).toStringWithProbs(noOfSamples));
             for (int i = 1; i < children.size(); i++)
                 sb.append(',').append(children.get(i).toStringWithProbs(noOfSamples));
             sb.append(')');
