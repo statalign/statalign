@@ -232,10 +232,11 @@ public class RawSequences implements DataType {
 	 * @return true on success
 	 */
 	public boolean remove(int i) {
-		if (size() > i && i >= 0) {
+		if (size() > i) {
 			sequences.remove(i);
 			seqNames.remove(i);			
 			maxNameLength = -1;
+			if(i==0) alphabet = null;
 			return true;
 		} else {
 			return false;

@@ -76,7 +76,7 @@ public class CoorReader extends DataReader {
 			throw new IllegalFormatException("CoorReader: empty file");
 		if(data.coords.get(cur).size() == 0)
 			throw new IllegalFormatException("CoorReader: structure "+data.names.get(cur)+" contains no atoms.");
-		
+
 		return data;
 	}
 	
