@@ -1,4 +1,4 @@
-StatAlign v3.1
+StatAlign v3.2
 
 http://statalign.github.io/
  
@@ -41,7 +41,7 @@ If you would like to compile and package your own runnable jar file you can do s
   1. b) (Linux) If you have a linux system with bash, you can run the "install-gradle.sh" script (can be found in the root of the repo). Then you have to issue "source  ~/.bashrc" to update the environment, or just start a new terminal.
 2. Gradle makes it really easy to compile the sources:
   2. a) (Any system) Use the command "gradle shadowJar" to create a runnable jar file. It's location will be "build/libs/StatAlign*.jar"
-  2. b) (Linux) You can just run the "build-jar.sh" script. It will copy the newly created jar file to the root directory of the project with the name "StatAlign.jar"
+  2. b) (Linux / Windows+Cygwin) You can just run the "build-jar.sh" script. It will copy the newly created jar file to the root directory of the project with the name "StatAlign.jar"
   
 
 *** LICENSE ***
