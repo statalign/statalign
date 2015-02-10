@@ -259,7 +259,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	public String getUsageInfo() {
 		StringBuilder usage = new StringBuilder();
 		usage.append("___________________________\n\n");
-		usage.append("  StructAlign version 1.0\n\n");
+		usage.append("  StructAlign version 1.1\n\n");
 		usage.append("^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\n");
 		usage.append("java -jar statalign.jar -plugin:structal[OPTION1,OPTION2,...]\n");
 		usage.append("OPTIONS: \n");
