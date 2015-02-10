@@ -2,6 +2,28 @@ This file lists major changes between StatAlign releases.
 
 ------------------------------------------------------------------------------
 
+StatAlign v3.2 on 10 Feb 2015
+
+  New features:
+    * Build process automated using Gradle
+    * Consensus tree output includes percentage support for all internal nodes
+    * Core model parameters printed to a separate log file
+	* Minimum-risk summary alignment and column scores outputted to separate files
+
+  Updates to StructAlign plugin (v1.1):
+    * Analysis now possible for cases where not all sequences have known structure
+    * Fix to spike mixture prior (relevant only to runs carried out using the 'sigmaSpike' option)
+    * Fixed behaviour when stopping and restarting in GUI mode
+
+  Bugfixes:
+    * Fixed errors occuring in certain cases after removing sequences in GUI 
+    * Check for version update now works correctly
+    * Plugin panels now no longer show in GUI when deactivated
+    * Fixed issue where postprocessing files could be empty in RNA mode
+    * Topology moves deactivated when only two sequences present
+
+------------------------------------------------------------------------------
+
 StatAlign v3.1 on 24 Nov 2013
 
   New features:
