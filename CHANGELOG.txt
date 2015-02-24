@@ -8,11 +8,12 @@ StatAlign v3.2 on 10 Feb 2015
     * Build process automated using Gradle
     * Consensus tree output includes percentage support for all internal nodes
     * Core model parameters printed to a separate log file
-	* Minimum-risk summary alignment and column scores outputted to separate files
+    * Minimum-risk summary alignment and column scores outputted to separate files
 
   Updates to StructAlign plugin (v1.1):
     * Analysis now possible for cases where not all sequences have known structure
-    * Fix to spike mixture prior (relevant only to runs carried out using the 'sigmaSpike' option)
+    * Fix to spike mixture prior (relevant only to runs carried out using the
+      'sigmaSpike' option)
     * Fixed behaviour when stopping and restarting in GUI mode
 
   Bugfixes:
