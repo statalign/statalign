@@ -94,8 +94,8 @@ public class RawSequences implements DataType {
 //		if (name != null && seqNames.contains(name))
 //			throw new Error("Name collision! (" + name
 //					+ "), please edit your input files to resolve it.");
-		if (seqNames.contains(name)) {
-			sequences.set(sequences.indexOf(name),sequence);						
+		if (seqNames.contains(name)) {			
+			sequences.set(seqNames.indexOf(name),sequence);						
 		}
 		else {
 			seqNames.add(name);
@@ -112,7 +112,7 @@ public class RawSequences implements DataType {
 
 	public void add(RawSequences more) {
 		// so that names are checked
-		for (int i = 0; i < more.seqNames.size(); i++) {
+		for (int i = 0; i < more.seqNames.size(); i++) {		
 			add(more.seqNames.get(i), more.sequences.get(i)); // addOrReplace?
 		}
 
