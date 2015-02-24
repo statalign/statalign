@@ -172,14 +172,19 @@ public class CommandLine {
 				if(data == null) {
 					return error("input file does not appear to be in a known format: "+inputFile);
 				} else if(data.getSeqs() != null) {
-					manager.inputData.seqs.add(data.getSeqs());
+					if (!(data instanceof RawSequences)) {
+						manager.inputData.seqs.addOrReplace(data.getSeqs());
+					}
+					else {
+						manager.inputData.seqs.add(data.getSeqs());
+					}
 				} else if(data instanceof Tree) {
 					if(manager.inputData.tree != null)
 						return error("more than one initial tree has been given!");
 					manager.inputData.tree = (Tree) data;
 				} 
 				if (!(data instanceof RawSequences)) {
-					manager.inputData.auxData.add(data);
+					manager.inputData.auxData.add(data);				
 				}
 			}
 			

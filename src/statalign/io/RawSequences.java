@@ -86,36 +86,38 @@ public class RawSequences implements DataType {
 		return len;
 	}
 
+	public void add(String name, String sequence) {
+		add(name,sequence,false);
+	}
 	/**
 	 * Add a name and a sequence, that belong together. If another sequence with
 	 * the same name is already added then it will be updated.
 	 */
-	public void add(String name, String sequence) {
+	public void add(String name, String sequence, boolean overwrite) {
 //		if (name != null && seqNames.contains(name))
 //			throw new Error("Name collision! (" + name
 //					+ "), please edit your input files to resolve it.");
-		if (seqNames.contains(name)) {			
-			sequences.set(seqNames.indexOf(name),sequence);						
+		if (seqNames.contains(name)) {
+			if (overwrite) {
+				sequences.set(seqNames.indexOf(name),sequence);
+			}
 		}
 		else {
 			seqNames.add(name);
 			sequences.add(sequence);
 		}
 	}
-
-	public void addOrReplace(String name, String sequence) {
-		if (seqNames.contains(name)) {
-			removeByName(name);
-		}
-		add(name, sequence);
-	}
-
 	public void add(RawSequences more) {
+		add(more,false);
+	}
+	public void addOrReplace(RawSequences more) {
+		add(more,true);
+	}
+	public void add(RawSequences more, boolean overwrite) {
 		// so that names are checked
 		for (int i = 0; i < more.seqNames.size(); i++) {		
-			add(more.seqNames.get(i), more.sequences.get(i)); // addOrReplace?
+			add(more.seqNames.get(i), more.sequences.get(i),overwrite);
 		}
-
 		String alpha1 = getAlphabet();
 		String alpha2 = more.getAlphabet();
 		int len1 = alpha1.length(), len2 = alpha2.length();
