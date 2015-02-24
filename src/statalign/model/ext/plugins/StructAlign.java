@@ -825,8 +825,10 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		}
 	}
 	public void afterBurnin() {
-		nuMove.alwaysSample();
-		nuMove.setMinValue(0.001);
+		if (nuMove != null) {
+			nuMove.alwaysSample();
+			nuMove.setMinValue(0.001);
+		}
 	}
 	
 	public double computeLogLikeFactor(Tree tree) {
