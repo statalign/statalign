@@ -91,12 +91,19 @@ public class PDBReader extends DataReader {
 	}
 	
 	public static void writePDB(double[][][] coors, String[] seqs, String[] names, FileWriter fw) throws IOException {
+		
 		initialiseMp13();
 		String format = "ATOM  %5d  CA  %3s %1c%4d    %8.3f%8.3f%8.3f\n";
 		String format2 = "TER   %5d      %3s %1c%4d\n";
+		System.out.println(coors.length);
 		try {
 			for (int i=0; i<coors.length; i++) {
-				if (coors[i]==null) continue; 
+				if (coors[i]==null) continue;
+				double coorSum = 0;
+				for (int j=0; j<coors[i].length; j++) {
+					coorSum += coors[i][j][0];
+				}
+				if (coorSum==0) continue;				
 				char chain = (char) ('A' + i);
 				fw.write("HEADER "+names[i]+"\n");
 				int j=0;
