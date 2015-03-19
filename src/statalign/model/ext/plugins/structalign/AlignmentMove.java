@@ -22,9 +22,9 @@ public class AlignmentMove extends McmcMove {
 	double heat = 1.0;
 	double secondHeat = 1.0;
 	
-	boolean autoTunable = true;
+	boolean autoTunable = true;	
 	
-	Vertex subtreeRoot;
+	public Vertex subtreeRoot;
 	int nLeaves;
 	ArrayList<Integer> subtreeLeaves;
 	int index;
@@ -37,10 +37,13 @@ public class AlignmentMove extends McmcMove {
 		owner = s;
 		name = n;
 		autoTune = false; 
-		proposalWidthControlVariable = 1.0;
+		proposalWidthControlVariable = 1.0;		
 		// This move gets autoTune'd via the core AlignmentMove
 	}
-	
+
+	public Vertex getSubtreeRoot() { 
+		return subtreeRoot;
+	}
 	public void copyState(Object externalState) {
 		if (externalState instanceof Tree) {
 			tree = (Tree) externalState;
@@ -95,6 +98,8 @@ public class AlignmentMove extends McmcMove {
 		owner.setLogLike(oldll);
 	}
 	public void afterMove(Object externalState) {
+		//if (lastMoveAccepted && (owner.curLogLike == oldll)) acceptanceCount--;
+
 		if (Utils.DEBUG) {
 //			tree.root.calcFelsenRecursively(); 
 //			tree.root.calcOrphanRecursively(); 

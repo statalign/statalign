@@ -2,6 +2,8 @@ package statalign.mcmc;
 
 import java.util.List;
 import java.util.ArrayList;
+
+import statalign.base.Utils;
 import static statalign.utils.Reversed.reversed;
 
 public class McmcCombinationMove extends McmcMove {
@@ -20,18 +22,27 @@ public class McmcCombinationMove extends McmcMove {
 		}
 	}
 	public void copyState(Object externalState) {
+		if (Utils.DEBUG) System.out.println(name+" "+proposalWidthControlVariable);
 		for (McmcMove mcmcMove : mcmcMoves) {
+			mcmcMove.inCombination = true;
 			mcmcMove.copyState(externalState);
+			mcmcMove.inCombination = false;
 		}
 	}
 	public double proposal(Object externalState) {
 		double logProposalRatio = 0;
 		for (McmcMove mcmcMove : mcmcMoves) {
+			if (Utils.DEBUG) System.out.print(mcmcMove.name+" "+mcmcMove.proposalWidthControlVariable+" ");
+			mcmcMove.inCombination = true;			
 			double oldProposalWidthControlVariable = mcmcMove.proposalWidthControlVariable;
 			mcmcMove.proposalWidthControlVariable *= proposalWidthControlVariable;
+			//mcmcMove.proposalCount++;
 			logProposalRatio += mcmcMove.proposal(externalState); 
 			mcmcMove.proposalWidthControlVariable = oldProposalWidthControlVariable;
+			mcmcMove.inCombination = false;
+			// In combination moves, the counts of the sub-moves are not incremented
 		}
+		if (Utils.DEBUG) System.out.println();
 		// We implicitly assume here that the order of the proposals
 		// does not matter.
 		return logProposalRatio;
@@ -50,23 +61,32 @@ public class McmcCombinationMove extends McmcMove {
 	public double logPriorDensity(Object externalState) {
 		double logPriorDensity = 0;
 		for (McmcMove mcmcMove : mcmcMoves) {
+			mcmcMove.inCombination = true;
 			logPriorDensity += mcmcMove.logPriorDensity(externalState);
+			mcmcMove.inCombination = false;
 		}
 		return logPriorDensity;
 	}
 	public void updateLikelihood(Object externalState) {
 		for (McmcMove mcmcMove : mcmcMoves) {
+			mcmcMove.inCombination = true;
 			mcmcMove.updateLikelihood(externalState);
+			mcmcMove.inCombination = false;
 		}
 	}
 	public void afterMove(Object externalState) {
+		if (Utils.DEBUG) System.out.println((this.lastMoveAccepted ? "Accepted (" : "Rejected (") + this.acceptanceRate() + ")");		
 		for (McmcMove mcmcMove : mcmcMoves) {
-			mcmcMove.afterMove(externalState);
+			mcmcMove.inCombination = true;			
+			mcmcMove.afterMove(externalState);			
+			mcmcMove.inCombination = false;
 		}
 	}
 	public void restoreState(Object externalState) {
 		for (McmcMove mcmcMove : reversed(mcmcMoves)) {
+			mcmcMove.inCombination = true;
 			mcmcMove.restoreState(externalState);
+			mcmcMove.inCombination = false;
 		}
 	}
 }

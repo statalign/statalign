@@ -96,8 +96,9 @@ public class Funcs{
 		} else
 			return tree.root; */
 		Vertex v = tree.vertex[Utils.generator.nextInt(tree.vertex.length)];
-		while (v == tree.root) {
+		while (v == tree.root) {			
 			v = tree.vertex[Utils.generator.nextInt(tree.vertex.length)];
+			//System.out.println(v.index);
 		}
 		return  v;
 	}

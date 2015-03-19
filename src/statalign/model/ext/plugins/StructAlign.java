@@ -213,10 +213,10 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	// This is reallocated to sigma2Weight if epsilon is being fixed 
 	
 	
-	/** Starting value for rotation proposal tuning parameter. */
-	public final double angleP = 1000;
+	/** Starting value for 1 / rotation proposal tuning parameter. */
+	public double angleP = 1000;
 	/** Starting value for translation proposal tuning parameter. */
-	public final double xlatP = .1;
+	public double xlatP = .1;
 	
 	/** Value to fix sigma at if we're not estimating it. */
 	public double fixedSigma2Value = 0.0;
@@ -314,6 +314,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		}
 		else if (paramName.equals("sigma2")) {
 			fixedSigma2 = true;
+			globalSigma = true;
 			fixedSigma2Value = Double.parseDouble(paramValue);
 			addToFilenameExtension("sigma2_"+fixedSigma2Value);
 			System.out.println("Fixing sigma2 to "+fixedSigma2Value+".");
@@ -594,9 +595,9 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			//epsilon = 20;
 		}
 		
-		if (fixedSigma2) {
-			globalSigma = true;
-		}
+//		if (fixedSigma2) {
+//			globalSigma = true;
+//		}
 		// number of branches in the tree is 2*leaves - 1
 		if (globalSigma) {
 			sigma2 = new double[1];
@@ -608,7 +609,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		for(i = 0; i < sigma2.length; i++) {
 			sigma2[i] = 1;
 		}
-		if (fixedSigma2) {
+		if (fixedSigma2) {			
 			sigma2[0] = fixedSigma2Value;
 			epsilonWeight += sigmaEpsilonWeight;
 		}
@@ -671,20 +672,24 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		if (!inputData.pars.fixAlign) {
 			AlignmentMove alignmentMove = new AlignmentMove(this,"alignment");
 			addMcmcMove(alignmentMove,alignmentWeight,alignmentWeightIncrement); 
-			
+					
 			/* Combination moves */
 			ArrayList<McmcMove> alignmentRotation = new ArrayList<McmcMove>();
 			alignmentRotation.add(alignmentMove);
+			rotationMove.shareSubtreeRoot(alignmentMove);
 			alignmentRotation.add(rotationMove);
 			McmcCombinationMove alignmentRotationMove = 
 				new McmcCombinationMove(alignmentRotation);
+			alignmentRotationMove.autoTune = false;
 			addMcmcMove(alignmentRotationMove,alignmentRotationWeight); 
 			
 			ArrayList<McmcMove> alignmentTranslation = new ArrayList<McmcMove>(); 
 			alignmentTranslation.add(alignmentMove);
-			alignmentTranslation.add(translationMove);
+			translationMove.shareSubtreeRoot(alignmentMove);
+			alignmentTranslation.add(translationMove);			
 			McmcCombinationMove alignmentTranslationMove = 
 				new McmcCombinationMove(alignmentTranslation);
+			alignmentTranslationMove.autoTune = false;
 			addMcmcMove(alignmentTranslationMove,alignmentTranslationWeight);
 				
 			if (useLibrary) { 
@@ -694,7 +699,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				McmcCombinationMove alignmentLibraryMove = 
 					new McmcCombinationMove(alignmentLibrary);
 				addMcmcMove(alignmentLibraryMove,alignmentLibraryWeight);
-			}
+			}		
 		}
 		
 		/** Add moves for scalar parameters */
@@ -1339,6 +1344,14 @@ public class StructAlign extends ModelExtension implements ActionListener {
 			
 			// By default we'll switch on localSigma mode in GUI
 			globalSigma = false;
+			
+			
+//			/// For hardcoding fixed-sigma in GUI mode:
+//			fixedSigma2 = true;
+//			globalSigma = true;
+//			fixedSigma2Value = 0.0;
+//			addToFilenameExtension("sigma2_"+fixedSigma2Value);
+//			////////////////
 								
 			activateAssociatedPlugins();
 			

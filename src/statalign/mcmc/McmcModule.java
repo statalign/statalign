@@ -222,8 +222,10 @@ public abstract class McmcModule {
 	public void modifyProposalWidths() {
 		for (McmcMove m : mcmcMoves) {
 			if (!m.autoTune) { continue; }
+			if (Utils.DEBUG) System.out.println(m.name+" ("+m.acceptanceCount+"/"+m.proposalCount+") "+m.proposalWidthControlVariable+" ");
 			if (m.proposalCount > Utils.MIN_SAMPLES_FOR_ACC_ESTIMATE) {
-				if (m.acceptanceRate() < m.minAcceptance) {
+				if (m.acceptanceRate() < m.minAcceptance &&
+						m.proposalWidthControlVariable >= m.minProposalWidthControlVariable) {
 					m.proposalWidthControlVariable *= m.spanMultiplier;
 					m.proposalCount = 0;
 					m.acceptanceCount = 0;

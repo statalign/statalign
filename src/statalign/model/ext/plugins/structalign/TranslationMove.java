@@ -13,6 +13,8 @@ public class TranslationMove extends RotationOrTranslationMove {
 	}
 
 	public double proposal(Object externalState) {
+		double logProposalRatio = super.proposal(externalState);
+		
 		double[] shift = new double[3];
 		for(int i = 0; i < 3; i++)
 			shift[i] = Utils.generator.nextGaussian() * proposalWidthControlVariable;
@@ -22,7 +24,7 @@ public class TranslationMove extends RotationOrTranslationMove {
 			for(int i = 0; i < 3; i++)
 				structAlign.xlats[j][i] += shift[i];  
 		}	
-		return 0;
+		return logProposalRatio;
 		// logProposalRatio is 0 because prior is uniform and proposal is symmetric
 	}
 

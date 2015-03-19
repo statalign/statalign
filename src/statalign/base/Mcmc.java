@@ -411,7 +411,12 @@ public abstract class Mcmc extends Stoppable {
 //					}
 					frame.statusText.setText(text);
 				} else if (i % 1000 == 999) {
-					System.out.println("Burn in: " + (i + 1));
+					if (Utils.DEBUG) {
+						System.err.println("Burn in: " + (i + 1));
+					}
+					else {
+						System.out.println("Burn in: " + (i + 1));
+					}
 				}
 //				if( AutomateParameters.shouldAutomateStepRate() && (i >= realBurnIn) && i % SAMPLE_RATE_WHEN_DETERMINING_THE_SPACE == 0)   {
 //					String[] align = getState().getLeafAlign();
@@ -505,7 +510,12 @@ public abstract class Mcmc extends Stoppable {
 					}
 				}
 				if (frame == null && !isParallel) {
-					System.out.println("Sample: " + (i + 1));
+					if (Utils.DEBUG) {
+						System.err.println("Sample: " + (i + 1));	
+					}
+					else {
+						System.out.println("Sample: " + (i + 1));
+					}
 				}
 //				if(AutomateParameters.shouldAutomateNumberOfSamples()){
 //					alignment = new AlignmentData(getState().getLeafAlign());
