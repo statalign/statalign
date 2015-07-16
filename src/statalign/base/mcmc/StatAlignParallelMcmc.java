@@ -48,12 +48,15 @@ public class StatAlignParallelMcmc extends StatAlignMcmc {
 		super(tree,pars,ppm,modelExtMan);
 		this.noOfProcesses = noOfProcesses;
 		this.rank = rank;
-		this.tree.heat = heat;
+		this.heat = heat;
 		isParallel = true;
 	}
 	protected boolean isMaster() {
 		return MPIUtils.isMaster(rank);
 	}
+	protected boolean isColdChain() {
+		return heat == 1.0d;
+	}	
 	protected void postprocSample(int no, int total) {
 		int[] ranks = new int[] { (isColdChain() ? rank : 0) };
 		int[] coldChainLoc = new int[1];
@@ -68,15 +71,19 @@ public class StatAlignParallelMcmc extends StatAlignMcmc {
 
 		if (isColdChain() && MPIUtils.isMaster(rank)) {
 			// Sample normally.
-			postprocMan.newSample(coreModel,getState(), no, total);
+			postprocMan.newSample(coreModel,getState(), no, total);			
+			
 		} else if (isColdChain() && !MPIUtils.isMaster(rank)) {
-			// Send state.
-			State state = getState();
-			MPIStateSend(state);
-		} else if (!isColdChain() && MPIUtils.isMaster(rank)) {
-			// Receive state.
-			State state = MPIStateReceieve(coldChainLocation);
-			postprocMan.newSample(coreModel,state, no, total);
+			/*
+			 * TODO: We don't want to be passing around the full state for each postprocessing
+			 * plugin, in the case where the cold chain is in a non-master process, 
+			 * because we won't know in general what needs to be passed, and it'll be very slow.
+			 * 
+			 * Perhaps easiest to just write to separate files for each chain, although
+			 * need to figure out how this can be achieved via MPI (can slave processes
+			 * do IO without using MPI-IO?)
+			 */
+			postprocMan.newSample(coreModel,getState(), no, total);
 		}
 		if (MPIUtils.isMaster(rank)) {
 			try {
@@ -90,7 +97,7 @@ public class StatAlignParallelMcmc extends StatAlignMcmc {
 	protected void beforeMCMC() {
 		String str = String.format(
 				"Starting MCMC chain no. %d/%d (heat: %.2f)\n\n", 
-				rank + 1, noOfProcesses, tree.heat);
+				rank + 1, noOfProcesses, heat);
 		MPIUtils.println(rank, str);
 		swapGenerator = new Random(mcmcpars.swapSeed);
 		Utils.generator = new Well19937c(mcmcpars.seed + rank);
@@ -111,7 +118,7 @@ public class StatAlignParallelMcmc extends StatAlignMcmc {
 			myStateInfo[0] = totalLogLike;
 			myStateInfo[1] = modelExtMan.totalLogPrior(tree);
 			//myStateInfo[1] = coreModel.totalLogPrior(tree) + modelExtMan.totalLogPrior(tree);
-			myStateInfo[2] = tree.heat;
+			myStateInfo[2] = heat;
 
 			double[] partnerStateInfo = new double[3];
 
@@ -167,137 +174,5 @@ public class StatAlignParallelMcmc extends StatAlignMcmc {
 			// + " my state.");
 		}
 
-	}
-	protected boolean isColdChain() {
-		return tree.heat == 1.0d;
-	}
-		
-	protected State MPIStateReceieve(int peer) {
-		// Creates a new, uninitialized state and initializes the variables.
-		State state = new State(tree.vertex.length);
-
-		// We already know the names
-		for (int i = 0; i < state.nl; i++) {
-			state.name[i] = tree.vertex[i].name;
-		}
-
-		int nn = state.nn;
-		int tag = 0;
-
-		// left
-		MPI.COMM_WORLD.Recv(state.left, 0, nn, MPI.INT, peer, tag++);
-		// right
-		MPI.COMM_WORLD.Recv(state.right, 0, nn, MPI.INT, peer, tag++);
-		// parent
-		MPI.COMM_WORLD.Recv(state.parent, 0, nn, MPI.INT, peer, tag++);
-		// edgeLen
-		MPI.COMM_WORLD.Recv(state.edgeLen, 0, nn, MPI.DOUBLE, peer, tag++);
-
-		// sequences
-		int[] seqLengths = new int[nn];
-		MPI.COMM_WORLD.Recv(seqLengths, 0, nn, MPI.INT, peer, tag++);
-
-		for (int i = 0; i < nn; i++) {
-			char[] c = new char[seqLengths[i]];
-			MPI.COMM_WORLD.Recv(c, 0, seqLengths[i], MPI.CHAR, peer, tag++);
-			state.seq[i] = new String(c);
-		}
-
-		// align
-		Object[] recvObj = new Object[1];
-		MPI.COMM_WORLD.Recv(recvObj, 0, 1, MPI.OBJECT, peer, tag++);
-		state.align = (int[][]) recvObj[0];
-
-		// felsen
-		MPI.COMM_WORLD.Recv(recvObj, 0, 1, MPI.OBJECT, peer, tag++);
-		state.felsen = (double[][][]) recvObj[0];
-
-		// indelParams
-		final int noOfIndelParameter = 3;
-		state.indelParams = new double[noOfIndelParameter];
-		MPI.COMM_WORLD.Recv(state.indelParams, 0, noOfIndelParameter,
-				MPI.DOUBLE, peer, tag++);
-
-		// substParams
-		int l = tree.substitutionModel.params.length;
-		state.substParams = new double[l];
-		MPI.COMM_WORLD.Recv(state.substParams, 0, l, MPI.DOUBLE, peer, tag++);
-
-		// log-likelihood
-		double[] d = new double[1];
-		MPI.COMM_WORLD.Recv(d, 0, 1, MPI.DOUBLE, peer, tag++);
-		state.logLike = d[0];
-
-		// root
-		int[] root = new int[1];
-		MPI.COMM_WORLD.Recv(root, 0, 1, MPI.INT, peer, tag++);
-		state.root = root[0];
-
-		return state;
-	}
-
-	protected void MPIStateSend(State state) {
-
-		String[] seq = state.seq;
-		int[][] align = state.align;
-		double[][][] felsen = state.felsen;
-		int nn = state.nn;
-		int tag = 0;
-
-		// left
-		MPI.COMM_WORLD.Send(state.left, 0, nn, MPI.INT, 0, tag++);
-		// right
-		MPI.COMM_WORLD.Send(state.right, 0, nn, MPI.INT, 0, tag++);
-		// parent
-		MPI.COMM_WORLD.Send(state.parent, 0, nn, MPI.INT, 0, tag++);
-		// edgeLen
-		MPI.COMM_WORLD.Send(state.edgeLen, 0, nn, MPI.DOUBLE, 0, tag++);
-
-		// TODO: START OF OPTIMIZATION.
-
-		// sequences
-		int[] seqLength = new int[nn];
-		char[][] seqChars = new char[nn][];
-		for (int i = 0; i < nn; i++) {
-			seqLength[i] = seq[i].length();
-			seqChars[i] = seq[i].toCharArray();
-		}
-		MPI.COMM_WORLD.Send(seqLength, 0, nn, MPI.INT, 0, tag++);
-		for (int i = 0; i < nn; i++) {
-			MPI.COMM_WORLD.Send(seqChars[i], 0, seqLength[i], MPI.CHAR, 0, tag++);
-		}
-
-		// align
-		Object[] alignObj = new Object[1];
-		alignObj[0] = align;
-		MPI.COMM_WORLD.Send(alignObj, 0, 1, MPI.OBJECT, 0, tag++);
-		/*
-		 * int[] alignLength = new int[align.length]; for (int i = 0; i <
-		 * seq.length; i++) { alignLength[i] = align[i].length; }
-		 * MPI.COMM_WORLD.Send(alignLength, 0, nn, MPI.INT, 0, tag++); for (int
-		 * i = 0; i < align.length; i++) { MPI.COMM_WORLD.Send(align[i], 0,
-		 * alignLength[i], MPI.INT, 0, tag++); }
-		 */
-
-		// felsen
-		Object[] felsenObj = new Object[] { felsen };
-		MPI.COMM_WORLD.Send(felsenObj, 0, 1, MPI.OBJECT, 0, tag++);
-
-		// indelParams
-		MPI.COMM_WORLD.Send(state.indelParams, 0, 3, MPI.DOUBLE, 0, tag++);
-
-		// substParams
-		MPI.COMM_WORLD.Send(state.substParams, 0, state.substParams.length,
-				MPI.DOUBLE, 0, tag++);
-
-		// loglikelihood
-		MPI.COMM_WORLD.Send(new double[] { state.logLike }, 0, 1, MPI.DOUBLE,
-				0, tag++);
-
-		// root
-		MPI.COMM_WORLD.Send(new int[] { state.root }, 0, 1, MPI.INT, 0, tag++);
-
-		// TODO: END OF OPTIMIZATION.
-
-	}
+	}	
 }

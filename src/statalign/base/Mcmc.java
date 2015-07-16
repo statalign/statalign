@@ -68,6 +68,8 @@ public abstract class Mcmc extends Stoppable {
 
 	/** Current tree in the MCMC chain. */
 	public Tree tree;
+	
+	protected double heat;
 
 	/** Total log-likelihood of the current state, cached for speed */
 	protected double totalLogLike;
@@ -138,7 +140,7 @@ public abstract class Mcmc extends Stoppable {
 		
 		tree.owner = this;
 		mcmcpars = pars;
-		this.tree.heat = 1.0d;
+		heat = 1.0d;
 		randomisationPeriod = mcmcpars.randomisationPeriod;
 	}	
 	
@@ -235,7 +237,7 @@ public abstract class Mcmc extends Stoppable {
 			return (newLogLikelihood > Double.NEGATIVE_INFINITY);
 		}
 		return (Math.log(Utils.generator.nextDouble()) < 
-				(cumulativeLogProposalRatio + tree.heat*(newLogLikelihood - oldLogLikelihood))
+				(cumulativeLogProposalRatio + heat*(newLogLikelihood - oldLogLikelihood))
 				+ (cumulativeLogProposalRatio=0));
 	}	
 	
@@ -298,9 +300,7 @@ public abstract class Mcmc extends Stoppable {
 		coreModel.beforeSampling(tree);
 
 		// Triggers a /before first sample/ of the plugins.
-		if (isMaster()) {
-			postprocMan.beforeFirstSample();
-		}
+		postprocMan.beforeFirstSample();		
 
 		long currentTime, start = System.currentTimeMillis();
 
@@ -361,7 +361,7 @@ public abstract class Mcmc extends Stoppable {
 					coreModel.incrementWeights();
 					modelExtMan.incrementWeights();
 					if (simulatedAnnealing) {
-						tree.heat = 1;
+						heat = 1;
 					}
 				}
 				else {
@@ -375,7 +375,7 @@ public abstract class Mcmc extends Stoppable {
 
 				// Triggers a /new step/ and a /new peek/ (if appropriate) of
 				// the plugins.
-				if (isMaster()) {
+				//if (isMaster()) {
 					// TODO do above inside sample() and add more info
 					mcmcStep.newLogLike = modelExtMan.totalLogLike(tree);
 					mcmcStep.burnIn = burnin;
@@ -383,7 +383,7 @@ public abstract class Mcmc extends Stoppable {
 					if (i % mcmcpars.sampRate == 0) {
 						postprocMan.newPeek();
 					}
-				}
+				//}
 				if (i>0 && mcmcpars.doReportDuringBurnin && (i % mcmcpars.sampRate == 0)) {
 					report(i, mcmcpars.cycles / mcmcpars.sampRate);
 				}
@@ -485,14 +485,14 @@ public abstract class Mcmc extends Stoppable {
 
 					// Triggers a /new step/ and a /new peek/ (if appropriate)
 					// of the plugins.
-					if (isMaster()) {
+					//if (isMaster()) {
 						mcmcStep.newLogLike = totalLogLike;
 						mcmcStep.burnIn = burnin;
 						postprocMan.newStep(mcmcStep);
 						if (burnIn + i * period + j % mcmcpars.sampRate == 0) {
 							postprocMan.newPeek();
 						}
-					}
+					//}
 
 					currentTime = System.currentTimeMillis();
 					if (frame != null) {
@@ -540,12 +540,9 @@ public abstract class Mcmc extends Stoppable {
 			// stopped: report and save state
 		}
 
-		//if(Utils.DEBUG) {
-			printMcmcInfo();
-		//}
-
 		// Triggers a /after first sample/ of the plugins.
 		if (isMaster()) {
+			printMcmcInfo();
 			postprocMan.afterLastSample();
 		}
 		
@@ -593,11 +590,9 @@ public abstract class Mcmc extends Stoppable {
 
 		if (useSample) postprocSample(no,total);		
 		// Log the accept ratios/params to the (.log) file. TODO: move to a plugin.
-		try {
-			if (isMaster()) {
-				postprocMan.logFile.write(coreModel.getSummaryInfo() + "\n");
-				coreModel.printParameters();
-			}
+		try {			
+			postprocMan.logFile.write(coreModel.getSummaryInfo() + "\n");
+			coreModel.printParameters();			
 		} catch (IOException e) {
 			if (postprocMan.mainManager.frame != null) {
 				ErrorMessage.showPane(postprocMan.mainManager.frame, e, true);

@@ -4,7 +4,6 @@ import java.util.Arrays;
 
 import mpi.MPI;
 import statalign.base.MainManager;
-import statalign.postprocess.Postprocess;
 
 public class StatAlignParallel {
 
@@ -55,7 +54,7 @@ public class StatAlignParallel {
         // Sets up a barrier to synchronize the processes here.
         MPI.COMM_WORLD.Barrier();
         
-        manager.startParallel(noOfProcesses, rank);
+        manager.start(noOfProcesses, rank);
 
         MPI.Finalize();
     }

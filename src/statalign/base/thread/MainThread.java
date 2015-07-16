@@ -7,6 +7,7 @@ import statalign.base.Mcmc;
 import statalign.base.Tree;
 import statalign.base.TreeAlgo;
 import statalign.base.mcmc.StatAlignMcmc;
+import statalign.base.mcmc.StatAlignParallelMcmc;
 import statalign.io.RawSequences;
 import statalign.ui.MainFrame;
 
@@ -22,6 +23,8 @@ public class MainThread extends StoppableThread {
 	 * that an MCMC run depends on.
 	 */
 	public MainManager owner;
+	public int rank;
+	public int noOfProcesses;
 	
 	/**
 	 * Constructs a new MainThread that can be used to fire a background MCMC calculation.
@@ -30,6 +33,14 @@ public class MainThread extends StoppableThread {
 	 */
 	public MainThread(MainManager owner) {
 		this.owner = owner;
+		this.rank = 1;
+		this.noOfProcesses = 1;
+	}
+	
+	public MainThread(MainManager owner, int rank, int noOfProcesses) {
+		this.owner = owner;
+		this.rank = rank;
+		this.noOfProcesses = noOfProcesses;
 	}
 	/**
 	 * Start background MCMC calculation.
@@ -90,24 +101,41 @@ public class MainThread extends StoppableThread {
 //					owner.inputData.model.attachedScoringScheme,
 //					new File(owner.fullPath).getName());
 			
-			Mcmc mcmc = new StatAlignMcmc(tree, owner.inputData.pars, owner.postProcMan, owner.modelExtMan);
+						
+			Mcmc mcmc;
+			
+			if (noOfProcesses==1) {
+				mcmc = new StatAlignMcmc(tree, owner.inputData.pars, owner.postProcMan, owner.modelExtMan);
+			}
+			else {
+				double heat = 1.0d / (1.0d + ((double) rank / noOfProcesses));
+				mcmc = new StatAlignParallelMcmc(tree, owner.inputData.pars, owner.postProcMan, owner.modelExtMan,
+								noOfProcesses,rank,heat);
+			}
+			
 			int errorCode = mcmc.doMCMC();
+			
 			owner.finished(errorCode, null);
+			
 			System.out.println(errorCode == 0 ? "Ready." : "Stopped.");
-		} catch(StoppedException e) {
+			
+		} 
+		catch(StoppedException e) {
 			if (owner.frame != null) {
 				owner.frame.statusText.setText(MainFrame.IDLE_STATUS_MESSAGE);
 			}
 			owner.finished(2, null);
 			System.out.println("Stopped.");
-		} catch (IllegalArgumentException e) {
+		} 
+		catch (IllegalArgumentException e) {
 			e.printStackTrace();
 			printStateInfo();
 
 			String msg = e.getMessage();
 			if(msg != null)
 				System.err.println("Plugin error: "+msg);
-		} catch(Exception e) {
+		} 
+		catch(Exception e) {
 			e.printStackTrace();
 			printStateInfo();
 

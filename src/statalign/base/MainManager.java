@@ -121,123 +121,36 @@ public class MainManager {
 		postProcMan.init(modelExtMan);
 	}
 
+	public void start() {
+		start(1,1);
+	}
 	/**
 	 * This function starts a new MCMC run.
 	 * 
 	 * It asks files for writing outputs, and it launches a <tt>MainThread</tt>
 	 * that handles the MCMC run.
 	 */
-	public void start() {
+	public void start(int noOfProcesses, int rank) {
 
 		try {
 			String filenameExtension = modelExtMan.getFilenameExtension();
+			if (noOfProcesses > 1) {
+				filenameExtension += "_chain"+rank;
+			}
 			if (!filenameExtension.isEmpty()) {
 				filenameExtension += ".";
 			}
 			postProcMan.logFile = new FileWriter(fullPath + "." + filenameExtension + "log");					
 			postProcMan.setBaseFileName(fullPath + "." + filenameExtension);
-			postProcMan.createPluginFiles();		
+			postProcMan.createPluginFiles();					
 
-			thread = new MainThread(this);
+			thread = new MainThread(this,rank,noOfProcesses);
 			thread.start();
 			
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 
-	}
-
-	public void startParallel(int noOfProcesses, int rank) {
-
-		// TODO: Parallel GUI.
-		if (frame != null) {
-			frame.statusText.setText(" Generating initial tree and alignment...");
-		}
-		
-		// Sets up the logging for the master process.
-		if (MPIUtils.isMaster(rank)) {
-			MPIUtils.println(rank, "Setting up log files for the plugins:");
-			try {
-				postProcMan.logFile = new FileWriter(fullPath + ".log");
-
-				for (Postprocess p : postProcMan.getPlugins()) {
-					if (p.postprocessWrite) {
-						String name = fullPath + "." + p.getFileExtension();
-						MPIUtils.println(rank, 
-								"Output file for " + p.getTabName() + ": " + name);
-						p.outputFile = new FileWriter(name);
-					}
-				}
-			} catch (IOException ioex) {
-				ioex.printStackTrace();
-			}
-			MPIUtils.println(rank, "Generating initial tree and alignment...");
-		}
-		
-		// Determines the heat of the chain.
-		double heat = 1.0d / (1.0d + ((double) rank / noOfProcesses));;
-		
-		try {
-			// remove gaps and whitespace
-			RawSequences seqs = inputData.seqs;
-			inputData.title = new File(fullPath).getName();
-			String[] nongapped = new String[seqs.size()];
-			StringBuilder builder = new StringBuilder();
-			int i, j;
-			char ch;
-			for(i = 0; i < nongapped.length; i++) {
-				builder.setLength(0);
-				String seq = seqs.getSequence(i);
-				for(j = 0; j < seq.length(); j++) {
-					ch = seq.charAt(j);
-					if(Character.isWhitespace(ch) || ch == '-')
-						continue;
-					builder.append(ch);
-				}
-				nongapped[i] = builder.toString();
-			}
-			String[] names = seqs.getSeqnames().toArray(new String[seqs.size()]);
-
-			TreeAlgo treeAlgo = new TreeAlgo();
-			Tree tree;
-			if(inputData.useTree > 0) {
-				tree = treeAlgo.rearrangeTree(inputData.tree, names);
-				treeAlgo.addAlignSeqsToTree(tree, nongapped, names,
-						inputData.model, new File(fullPath).getName());
-			} else {
-				tree = treeAlgo.buildNJTree(nongapped, seqs.getSeqnames().toArray(new String[seqs.size()]), 	
-						inputData.model, new File(fullPath).getName());
-			}
-			Mcmc mcmc = new StatAlignParallelMcmc(tree, inputData.pars, postProcMan, modelExtMan, noOfProcesses, rank, heat);
-			mcmc.doMCMC();
-
-			// Sets up a barrier.
-			MPI.COMM_WORLD.Barrier();
-
-			// Retrieve the log-likelihood ratio from all of the workers
-			double[] logLikelihood = new double[] { modelExtMan.totalLogLike(tree) };
-			double[] maxLogLikelihood = new double[1];
-			MPI.COMM_WORLD.Reduce(logLikelihood, 0, maxLogLikelihood, 0, 1,
-					MPI.DOUBLE, MPI.MAX, 0);
-
-			MPIUtils.println(
-					rank,
-					"My loglikelihood ratio: "
-							+ Double.toString(logLikelihood[0]));
-			if (MPIUtils.isMaster(rank)) {
-				MPIUtils.println(rank, "Max loglikelihood ratio: "
-						+ Double.toString(maxLogLikelihood[0]));
-			}
-
-			System.out.println(mcmc.getInfoString() + " Heat: " + mcmc.tree.heat);
-
-			finished(0, null);
-			System.out.println("Ready.");
-
-		} catch (StoppedException stex) {
-			stex.printStackTrace(System.err);
-			 finished(1, null);
-		}
 	}
 
 	/**
