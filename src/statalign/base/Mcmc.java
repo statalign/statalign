@@ -69,7 +69,7 @@ public abstract class Mcmc extends Stoppable {
 	/** Current tree in the MCMC chain. */
 	public Tree tree;
 	
-	protected double heat;
+	protected double heat, heatWhenHot;
 
 	/** Total log-likelihood of the current state, cached for speed */
 	protected double totalLogLike;
@@ -355,18 +355,21 @@ public abstract class Mcmc extends Stoppable {
 			for (int i = 0; i < burnIn; i++) {
 								
 				if (firstHalfBurnin && i > burnIn / 2) {
-					firstHalfBurnin = false;
+					firstHalfBurnin = false;					
 					coreModel.afterFirstHalfBurnin();
 					modelExtMan.afterFirstHalfBurnin();
 					coreModel.incrementWeights();
 					modelExtMan.incrementWeights();
 					if (simulatedAnnealing) {
-						heat = 1;
+						heat = 1;						
+					}
+					if (isParallel) {
+						heat = heatWhenHot;
 					}
 				}
 				else {
 					if (simulatedAnnealing) {
-						tree.heat = Math.log(i) / Math.log(burnIn / 2); 
+						heat = Math.log(i) / Math.log(burnIn / 2); 
 					}
 				}
 				// Perform an MCMC move

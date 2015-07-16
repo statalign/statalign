@@ -2,7 +2,7 @@ package statalign;
 
 import java.util.Arrays;
 
-import mpi.MPI;
+import mpi.*;
 import statalign.base.MainManager;
 
 public class StatAlignParallel {
@@ -28,14 +28,17 @@ public class StatAlignParallel {
         int rank = MPI.COMM_WORLD.Rank();
         int noOfProcesses = MPI.COMM_WORLD.Size();
         
-        if (MPIUtils.isMaster(rank)) {
+        //if (MPIUtils.isMaster(rank)) {
             System.out.println("\n    StatAlign " + StatAlign.version + " - parallel version\n");
             System.out.println("    Arguments: " + Arrays.toString(realArguments));
             System.out.println("    No of processes: " + noOfProcesses + "");
-        }
+        //}
 
+        // TODO Set the classpath automatically without this hack            
+        System.setProperty("java.class.path","/home/seth/workspace/statalign/bin:/home/seth/workspace/statalign/lib/commons-math-3.0-SNAPSHOT.jar:/home/seth/workspace/statalign/lib/Jama-1.0.3.jar:/home/seth/workspace/statalign/lib/options.jar:"+System.getProperty("java.class.path"));
         MainManager manager = new MainManager(null);
-        CommandLine cl = new CommandLine(true);
+        boolean parallel = true;
+        CommandLine cl = new CommandLine(parallel);
         
         // Only get INFO messages (errors and warnings excluded) from the master.
         if (MPIUtils.isMaster(rank)) {

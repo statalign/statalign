@@ -53,6 +53,10 @@ public class ModelExtManager {
 		this.mainMan = mainMan;
 	}
 	
+	public boolean withGui() {
+		return (mainMan.frame!=null);
+	}
+	
 	/**
 	 * Discovers model extension plugins and initialises them.
 	 */

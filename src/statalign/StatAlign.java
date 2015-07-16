@@ -53,10 +53,13 @@ public class StatAlign{
 					
 		System.out.println("StatAlign "+version);
 		
+        System.out.println(System.getProperty("java.class.path"));
+
 		if(args.length != 0) {
 			// console mode
 			MainManager manager = new MainManager(null);
-			CommandLine cl = new CommandLine(false);
+			boolean parallel = false;
+			CommandLine cl = new CommandLine(parallel);			
 			cl.setVerbose(true);
 			if(cl.fillParams(args, manager) > 0)
 				System.exit(1);

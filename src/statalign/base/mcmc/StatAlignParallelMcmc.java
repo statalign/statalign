@@ -39,7 +39,7 @@ public class StatAlignParallelMcmc extends StatAlignMcmc {
 
 	/** The rank of the process. */
 	protected int rank;
-
+	
 	/** The random number generator used for swapping. */
 	protected Random swapGenerator;
 
@@ -48,7 +48,7 @@ public class StatAlignParallelMcmc extends StatAlignMcmc {
 		super(tree,pars,ppm,modelExtMan);
 		this.noOfProcesses = noOfProcesses;
 		this.rank = rank;
-		this.heat = heat;
+		heatWhenHot = heat;
 		isParallel = true;
 	}
 	protected boolean isMaster() {
@@ -109,7 +109,7 @@ public class StatAlignParallelMcmc extends StatAlignMcmc {
 			swapB = swapGenerator.nextInt(noOfProcesses);
 		} while (swapA == swapB);
 
-		System.out.printf("SwapNo: %d - SwapA: %d - SwapB: %d\n",swapA, swapB);
+		System.out.printf("SwapA = %d, SwapB = %d\n",swapA, swapB);
 
 		double swapAccept = swapGenerator.nextDouble();
 
@@ -140,7 +140,7 @@ public class StatAlignParallelMcmc extends StatAlignMcmc {
 
 			System.out
 			.printf("[Worker %d] Heat: [%f] - Sent: [%f,%f,%f] - Recv: [%f,%f,%f]\n",
-					rank, tree.heat, myStateInfo[0], myStateInfo[1],
+					rank, heat, myStateInfo[0], myStateInfo[1],
 					myStateInfo[2], partnerStateInfo[0],
 					partnerStateInfo[1], partnerStateInfo[2]);
 
@@ -165,7 +165,7 @@ public class StatAlignParallelMcmc extends StatAlignMcmc {
 				MPIUtils.println(rank,
 						"Just swapped heat with my partner. New heat: "
 								+ hisTemp);
-				tree.heat = hisTemp;
+				heat = hisTemp;
 			}
 
 			// MPI.COMM_WORLD.Send(myStateInfo, 0, 3, MPI.DOUBLE,

@@ -734,7 +734,7 @@ public class Utils{
         // TODO: FIX the classpath stuff.
 //		String[] paths = new String[]{ System.getProperty("user.dir") + "/bin" };
 		String[] paths = System.getProperty("java.class.path").split(File.pathSeparator);
-		for(String path : paths) {
+		for(String path : paths) {			
 			try {
 				File file = new File(path);
 

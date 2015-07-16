@@ -60,7 +60,7 @@ public class Structure extends statalign.postprocess.Postprocess {
 	@Override
 	public void init(ModelExtManager manager) {
 		toolbar = new ArrayList<JComponent>();
-		createToolBar();
+		if (manager.withGui()) createToolBar();
 	}
 
 	@Override

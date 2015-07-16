@@ -6,6 +6,7 @@ import java.util.ArrayList;
 
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
+import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
@@ -13,6 +14,7 @@ import statalign.base.InputData;
 import statalign.base.McmcStep;
 import statalign.base.State;
 import statalign.base.Utils;
+import statalign.model.ext.ModelExtManager;
 import statalign.postprocess.Postprocess;
 import statalign.postprocess.Track;
 import statalign.postprocess.gui.AlignmentGUI;
@@ -39,7 +41,7 @@ public class CurrentAlignment extends statalign.postprocess.Postprocess{
 	/** We will refer to this to get the posterior probabilities of the current alignment. */
 	MpdAlignment mpdAli; 
 	double[] decoding;
-	boolean plotPosterior = true;
+	boolean plotPosterior = false;
 	
 	/** Whether to plot the full alignment with internal nodes. */
 	public boolean showFullAlignment = true;
@@ -60,6 +62,9 @@ public class CurrentAlignment extends statalign.postprocess.Postprocess{
 		rnaAssociated = false;
 	}		
 		
+	public void init(ModelExtManager manager) {		
+		if (manager.withGui()) plotPosterior = true;
+	}
 	/**
 	 * It constructs a new JPanel, and returns with it
 	 */

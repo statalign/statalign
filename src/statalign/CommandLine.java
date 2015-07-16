@@ -165,6 +165,7 @@ public class CommandLine {
 //				} catch (IOException e) {
 //					return error("error reading input file " + inputFile);
 //				}
+				System.out.println(inputFile);
 				File file = new File(inputFile);
 				if(!file.exists())
 					return error("input file does not exist: "+inputFile);

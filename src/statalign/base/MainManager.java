@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.SwingUtilities;
 
@@ -15,6 +16,7 @@ import statalign.base.thread.MainThread;
 import statalign.base.thread.StoppedException;
 import statalign.io.DataManager;
 import statalign.io.RawSequences;
+import statalign.io.input.DataReader;
 import statalign.model.ext.ModelExtManager;
 import statalign.model.subst.SubstitutionModel;
 import statalign.postprocess.Postprocess;
@@ -131,11 +133,11 @@ public class MainManager {
 	 * that handles the MCMC run.
 	 */
 	public void start(int noOfProcesses, int rank) {
-
+		
 		try {
 			String filenameExtension = modelExtMan.getFilenameExtension();
 			if (noOfProcesses > 1) {
-				filenameExtension += "_chain"+rank;
+				filenameExtension += "chain"+rank;
 			}
 			if (!filenameExtension.isEmpty()) {
 				filenameExtension += ".";
