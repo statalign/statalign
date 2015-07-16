@@ -9,7 +9,9 @@ public class TranslationMove extends RotationOrTranslationMove {
 		owner = s;
 		structAlign = s;
 		name = n;
-		proposalWidthControlVariable = structAlign.xlatP;
+		proposalWidthControlVariable = structAlign.xlatP;		
+		minProposalWidthControlVariable = 1e-5;
+		maxProposalWidthControlVariable = 1e3;
 	}
 
 	public double proposal(Object externalState) {

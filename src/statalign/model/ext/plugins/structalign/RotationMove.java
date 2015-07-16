@@ -1,13 +1,10 @@
 package statalign.model.ext.plugins.structalign;
 
-import java.io.IOException;
-
 import org.apache.commons.math3.geometry.euclidean.threed.Rotation;
 import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
 
-import statalign.base.Tree;
 import statalign.base.Utils;
 import statalign.model.ext.plugins.StructAlign;
 import statalign.model.ext.plugins.structalign.vonMises;
@@ -19,7 +16,8 @@ public class RotationMove extends RotationOrTranslationMove {
 		structAlign = s;
 		name = n;
 		proposalWidthControlVariable = 1.0/structAlign.angleP;
-		//minProposalWidthControlVariable = 1e-5;
+		minProposalWidthControlVariable = 1e-5;
+		maxProposalWidthControlVariable = 1e3;
 	}
 
 	public double proposal(Object externalState) {
