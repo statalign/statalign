@@ -17,7 +17,8 @@ public abstract class McmcMove {
 	
 	public int proposalCount = 0;
 	public int acceptanceCount = 0;
-	public boolean lastMoveAccepted = false;	
+	public boolean lastMoveAccepted = false;
+	protected double lastLogProposalRatio;
 	public boolean acceptAllDuringFirstHalfBurnin = false;
 	public boolean printableParam = false;
 	public boolean moveProposed = false;
@@ -77,6 +78,7 @@ public abstract class McmcMove {
 		double logProposalRatio = -logPriorDensity(externalState);
 		logProposalRatio += proposal(externalState); 
 		logProposalRatio += logPriorDensity(externalState);
+		lastLogProposalRatio = logProposalRatio;
 		if (logProposalRatio != Double.NEGATIVE_INFINITY) {
 			updateLikelihood(externalState);
 		}

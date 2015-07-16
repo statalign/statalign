@@ -98,8 +98,8 @@ public class AlignmentMove extends McmcMove {
 		owner.setLogLike(oldll);
 	}
 	public void afterMove(Object externalState) {
-		//if (lastMoveAccepted && (owner.curLogLike == oldll)) acceptanceCount--;
-
+		if (lastMoveAccepted && lastLogProposalRatio == 0) acceptanceCount--;
+		
 		if (Utils.DEBUG) {
 //			tree.root.calcFelsenRecursively(); 
 //			tree.root.calcOrphanRecursively(); 

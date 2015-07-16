@@ -169,7 +169,7 @@ public class AlignmentMove extends McmcMove {
 	public void afterFirstHalfBurnin() {
 		if (autoTunable) {
 			autoTune = true;
-		}
+		}		
 	}
 	 
 	
