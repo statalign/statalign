@@ -81,7 +81,7 @@ public class ConsensusTreeVisualizer extends TreeVisualizer {
         TreeNode root = parser.parse();
         
         // Initialization (only happens in the beginning)
-        if (no == 0) { // The first sample has arrived - initialize!
+        if (!main.initialized) { // The first sample has arrived - initialize!
             main.initialize(root, total);
             main.addNewTree(root);
             return;

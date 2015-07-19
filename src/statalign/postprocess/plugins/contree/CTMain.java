@@ -56,6 +56,7 @@ public class CTMain {
     
     private TreeNode root; 	// The tree root of the input tree.
 
+    public boolean initialized = false;
     // Functions
     /**
      * Initialise the class
@@ -110,6 +111,7 @@ public class CTMain {
         partitions.add(entry);
         // Majority threshold initialisation
         updateInterestThreshold(); 
+        initialized = true;
     } 
     /**
      * Simply update our interest threshold

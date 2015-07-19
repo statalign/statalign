@@ -184,7 +184,7 @@ public class MpdAlignment extends statalign.postprocess.Postprocess {
 			previousDescriptor = nextDescriptor;
 		}//j (length of alignments)
 
-		if(no == 0) {		// add last vector once only
+		if(no == 0 || lastVector==null) { // add last vector once only
 			int[] lastDescriptor =  new int[sizeOfAlignments];
 			for(j = 0; j < sizeOfAlignments; j++){
 				lastDescriptor[j] = ColumnKey.colNext(previousDescriptor[j])+1;
