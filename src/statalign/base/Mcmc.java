@@ -60,7 +60,7 @@ import statalign.utils.BetaDistribution;
 public abstract class Mcmc extends Stoppable {
 
 	/** Is this a parallel chain? By-default false. */
-	protected boolean isParallel = false;
+	public boolean isParallel = false;
 	
 	private boolean simulatedAnnealing = false;
 
@@ -84,6 +84,10 @@ public abstract class Mcmc extends Stoppable {
 	 */
 	boolean acceptAllMoves = false;
 	
+	protected int iter = 0;
+	public int getIter() {
+		return iter;
+	}
 	/**
 	 * Number of steps in which the chain will be allowed to move randomly
 	 * with all moves accepted, in order to create a random starting
@@ -353,7 +357,7 @@ public abstract class Mcmc extends Stoppable {
 			totalLogLike = modelExtMan.totalLogLike(tree);
 			
 			for (int i = 0; i < burnIn; i++) {
-								
+				iter = i;		
 				if (firstHalfBurnin && i > burnIn / 2) {
 					firstHalfBurnin = false;					
 					coreModel.afterFirstHalfBurnin();
@@ -362,10 +366,7 @@ public abstract class Mcmc extends Stoppable {
 					modelExtMan.incrementWeights();
 					if (simulatedAnnealing) {
 						heat = 1;						
-					}
-					if (isParallel) {
-						heat = heatWhenHot;
-					}
+					}					
 				}
 				else {
 					if (simulatedAnnealing) {
@@ -378,7 +379,7 @@ public abstract class Mcmc extends Stoppable {
 
 				// Triggers a /new step/ and a /new peek/ (if appropriate) of
 				// the plugins.
-				//if (isMaster()) {
+				//if (heat==1.0d) {
 					// TODO do above inside sample() and add more info
 					mcmcStep.newLogLike = modelExtMan.totalLogLike(tree);
 					mcmcStep.burnIn = burnin;
@@ -438,6 +439,10 @@ public abstract class Mcmc extends Stoppable {
 			coreModel.zeroAllMoveCounts();
 			modelExtMan.zeroAllMoveCounts();
 			
+			if (isParallel) {
+				heat = heatWhenHot;
+			}
+			
 			//Utils.DEBUG = true;
 			
 			int period;
@@ -483,12 +488,13 @@ public abstract class Mcmc extends Stoppable {
 					
 					// Proposes a swap.
 					if (isParallel && ((i*sampRate + j) % mcmcpars.swapRate == 0)) {
-						doSwap();						
+						postprocMan.flushAll();
+						doSwap();				
 					}
 
 					// Triggers a /new step/ and a /new peek/ (if appropriate)
 					// of the plugins.
-					//if (isMaster()) {
+					//if (heat==1.0d) {
 						mcmcStep.newLogLike = totalLogLike;
 						mcmcStep.burnIn = burnin;
 						postprocMan.newStep(mcmcStep);
@@ -546,8 +552,8 @@ public abstract class Mcmc extends Stoppable {
 		// Triggers a /after first sample/ of the plugins.
 		if (isMaster()) {
 			printMcmcInfo();
-			postprocMan.afterLastSample();
 		}
+		postprocMan.afterLastSample();		
 		
 		// notifies model extension plugins of the end of sampling
 		modelExtMan.afterSampling();		
@@ -591,6 +597,7 @@ public abstract class Mcmc extends Stoppable {
 	}
 	protected void report(int no, int total, boolean useSample) {
 
+		//if (heat!=1.0d) return; // Only report the cold chain
 		if (useSample) postprocSample(no,total);		
 		// Log the accept ratios/params to the (.log) file. TODO: move to a plugin.
 		try {			
@@ -610,5 +617,7 @@ public abstract class Mcmc extends Stoppable {
 	}
 	
 	// This function is used (and defined) only by the parallel version		
-	protected void doSwap() { }	
+	protected void doSwap() { }
+
+	public double getHeat() { return heat; }
 }
