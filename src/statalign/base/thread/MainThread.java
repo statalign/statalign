@@ -110,6 +110,10 @@ public class MainThread extends StoppableThread {
 			else {
 				//double heat = 1.0d / (1.0d + ((double) rank / noOfProcesses));
 				double heat = 1.0d - 0.05 * (double) rank / (noOfProcesses-1);
+				if (owner.inputData.pars.seed == 0) {
+					owner.inputData.pars.seed = 1;
+				}
+				owner.inputData.pars.seed = (long) (Math.pow(2,owner.inputData.pars.seed) * Math.pow(3,rank));
 				mcmc = new StatAlignParallelMcmc(tree, owner.inputData.pars, owner.postProcMan, owner.modelExtMan,
 								noOfProcesses,rank,heat);
 			}
