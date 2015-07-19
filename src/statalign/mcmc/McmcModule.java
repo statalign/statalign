@@ -131,6 +131,9 @@ public abstract class McmcModule {
 	public void printParameters() {		
 		if (logParametersToFile) {
 			String params = "";
+			if (mcmc.isParallel) {
+				params += mcmc.getHeat();
+			}			
 			for (McmcMove m : mcmcMoves) {			
 				if (m.printableParam) {
 					if (params != "") params += ", ";
@@ -155,6 +158,9 @@ public abstract class McmcModule {
 	public void beforeSampling(Tree tree) {
 		if (logParametersToFile) {
 			String paramNames = "";
+			if (mcmc.isParallel) {
+				paramNames += "heat";
+			}
 			for (McmcMove m : mcmcMoves) {			
 				if (m.printableParam) {
 					if (paramNames != "") paramNames += ", ";

@@ -40,6 +40,8 @@ public class StatAlignParallelMcmc extends StatAlignMcmc {
 	/** The rank of the process. */
 	protected int rank;
 	
+	protected boolean verbose = false;
+	
 	/** The random number generator used for swapping. */
 	protected Random swapGenerator;
 
@@ -68,31 +70,8 @@ public class StatAlignParallelMcmc extends StatAlignMcmc {
 		if (MPIUtils.isMaster(rank)) {
 			MPIUtils.println(rank, "Cold chain is at: " + coldChainLocation);
 		}
-
-		if (isColdChain() && MPIUtils.isMaster(rank)) {
-			// Sample normally.
-			postprocMan.newSample(coreModel,getState(), no, total);			
-			
-		} else if (isColdChain() && !MPIUtils.isMaster(rank)) {
-			/*
-			 * TODO: We don't want to be passing around the full state for each postprocessing
-			 * plugin, in the case where the cold chain is in a non-master process, 
-			 * because we won't know in general what needs to be passed, and it'll be very slow.
-			 * 
-			 * Perhaps easiest to just write to separate files for each chain, although
-			 * need to figure out how this can be achieved via MPI (can slave processes
-			 * do IO without using MPI-IO?)
-			 */
-			postprocMan.newSample(coreModel,getState(), no, total);
-		}
-		if (MPIUtils.isMaster(rank)) {
-			try {
-				postprocMan.logFile.write("Cold chain location: " + coldChainLocation + "\n");
-			}
-			catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
+		
+		postprocMan.newSample(coreModel,getState(), no, total);			
 	}
 	protected void beforeMCMC() {
 		String str = String.format(
@@ -109,7 +88,9 @@ public class StatAlignParallelMcmc extends StatAlignMcmc {
 			swapB = swapGenerator.nextInt(noOfProcesses);
 		} while (swapA == swapB);
 
-		System.out.printf("SwapA = %d, SwapB = %d\n",swapA, swapB);
+		if (verbose) {
+			System.out.printf("SwapA = %d, SwapB = %d\n",swapA, swapB);
+		}
 
 		double swapAccept = swapGenerator.nextDouble();
 
@@ -136,13 +117,17 @@ public class StatAlignParallelMcmc extends StatAlignMcmc {
 						MPI.DOUBLE, swapA, 0);
 			}
 
+			// TODO: Should also swap the proposal variance variables
+			
 			mpi.Request.Waitall(new mpi.Request[] { send, recieve });
 
-			System.out
-			.printf("[Worker %d] Heat: [%f] - Sent: [%f,%f,%f] - Recv: [%f,%f,%f]\n",
-					rank, heat, myStateInfo[0], myStateInfo[1],
-					myStateInfo[2], partnerStateInfo[0],
-					partnerStateInfo[1], partnerStateInfo[2]);
+			if (verbose) {
+				System.out
+				.printf("[Worker %d] Heat: [%f] - Sent: [%f,%f,%f] - Recv: [%f,%f,%f]\n",
+						rank, heat, myStateInfo[0], myStateInfo[1],
+						myStateInfo[2], partnerStateInfo[0],
+						partnerStateInfo[1], partnerStateInfo[2]);
+			}
 
 			double myLogLike = myStateInfo[0];
 			double myLogPrior = myStateInfo[1];
@@ -156,18 +141,21 @@ public class StatAlignParallelMcmc extends StatAlignMcmc {
 			acceptance -= hisTemp * (hisLogLike + hisLogPrior) + myTemp
 					* (myLogLike + myLogPrior);
 
-			MPIUtils.println(rank,
-					"Math.log(swapAccept): " + Math.log(swapAccept));
-			MPIUtils.println(rank, "acceptance:           "
-					+ acceptance);
-
-			if (acceptance > Math.log(swapAccept)) {
+			if (verbose) {
 				MPIUtils.println(rank,
-						"Just swapped heat with my partner. New heat: "
-								+ hisTemp);
+						"Math.log(swapAccept): " + Math.log(swapAccept));
+				MPIUtils.println(rank, "acceptance:           "
+						+ acceptance);				
+			}
+			if (acceptance > Math.log(swapAccept)) {
+				if (verbose) {
+					MPIUtils.println(rank,
+							"Just swapped heat with my partner. New heat: "
+									+ hisTemp);
+				}
 				heat = hisTemp;
 			}
-
+			
 			// MPI.COMM_WORLD.Send(myStateInfo, 0, 3, MPI.DOUBLE,
 			// swapB, 0);
 			// statalign.Utils.printLine(swapA, "Just sent " + swapB
