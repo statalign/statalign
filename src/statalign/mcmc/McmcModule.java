@@ -3,6 +3,7 @@ package statalign.mcmc;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 
@@ -248,6 +249,24 @@ public abstract class McmcModule {
 			}
 		}
 	}
+	
+	public double[] getProposalWidths() {
+		double[] proposalWidths = new double[mcmcMoves.size()]; 
+		for (int i=0; i<mcmcMoves.size(); i++) {
+			McmcMove m = mcmcMoves.get(i);
+			if (!m.autoTune) { continue; }
+			proposalWidths[i] = m.proposalWidthControlVariable;
+		}
+		return proposalWidths;
+	}	
+	public void setProposalWidths(double[] proposalWidths) {		 
+		for (int i=0; i<mcmcMoves.size(); i++) {
+			McmcMove m = mcmcMoves.get(i);
+			if (!m.autoTune) { continue; }
+			m.proposalWidthControlVariable = proposalWidths[i];
+		}		
+	}
+			
 	public boolean isParamChangeAccepted(double logProposalRatio,McmcMove m) {
 		return mcmc.isParamChangeAccepted(logProposalRatio,m);
 	}

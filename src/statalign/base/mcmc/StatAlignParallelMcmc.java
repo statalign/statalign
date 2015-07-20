@@ -79,48 +79,37 @@ public class StatAlignParallelMcmc extends StatAlignMcmc {
 				rank + 1, noOfProcesses, heat);
 		MPIUtils.println(rank, str);
 		swapGenerator = new Random(mcmcpars.swapSeed);
+		// the above ensures that all chains are using the same
+		// uniform random numbers to decide whether to switch temp
 		Utils.generator = new Well19937c(mcmcpars.seed + rank);
 	}
 	protected void doSwap() {
-		int swapA, swapB;
-		swapA = swapGenerator.nextInt(noOfProcesses);
+		int chainA, chainB;
+		chainA = swapGenerator.nextInt(noOfProcesses);
 		do {
-			swapB = swapGenerator.nextInt(noOfProcesses);
-		} while (swapA == swapB);
-
+			chainB = swapGenerator.nextInt(noOfProcesses);
+		} while (chainA == chainB);
+		
+		// TODO: Should only attempt to swap chains with similar heat?		
 		if (verbose) {
-			System.out.printf("SwapA = %d, SwapB = %d\n",swapA, swapB);
+			System.out.printf("chainA = %d, chainB = %d\n",chainA, chainB);
 		}
 
-		double swapAccept = swapGenerator.nextDouble();
+		double logU = Math.log(swapGenerator.nextDouble());
+		// this has to be outside the if condition below,
+		// to ensure that all chains advance their generators
+		// at the same rate.
 
-		if (rank == swapA || rank == swapB) {
+		if (rank == chainA || rank == chainB) {
+						
 			double[] myStateInfo = new double[3];
 			myStateInfo[0] = totalLogLike;
 			myStateInfo[1] = modelExtMan.totalLogPrior(tree);
 			//myStateInfo[1] = coreModel.totalLogPrior(tree) + modelExtMan.totalLogPrior(tree);
 			myStateInfo[2] = heat;
 
-			double[] partnerStateInfo = new double[3];
-
-			mpi.Request send, recieve;
-
-			if (rank == swapA) {
-				send = MPI.COMM_WORLD.Isend(myStateInfo, 0, 3, MPI.DOUBLE,
-						swapB, 0);
-				recieve = MPI.COMM_WORLD.Irecv(partnerStateInfo, 0, 3,
-						MPI.DOUBLE, swapB, 1);
-			} else {
-				send = MPI.COMM_WORLD.Isend(myStateInfo, 0, 3, MPI.DOUBLE,
-						swapA, 1);
-				recieve = MPI.COMM_WORLD.Irecv(partnerStateInfo, 0, 3,
-						MPI.DOUBLE, swapA, 0);
-			}
-
-			// TODO: Should also swap the proposal variance variables
+			double[] partnerStateInfo = MPI_exchange(chainA,chainB,myStateInfo); 
 			
-			mpi.Request.Waitall(new mpi.Request[] { send, recieve });
-
 			if (verbose) {
 				System.out
 				.printf("[Worker %d] Heat: [%f] - Sent: [%f,%f,%f] - Recv: [%f,%f,%f]\n",
@@ -134,33 +123,56 @@ public class StatAlignParallelMcmc extends StatAlignMcmc {
 			double myTemp = myStateInfo[2];
 			double hisLogLike = partnerStateInfo[0];
 			double hisLogPrior = partnerStateInfo[1];
-			double hisTemp = partnerStateInfo[2];
-
-			double acceptance = myTemp * (hisLogLike + hisLogPrior) + hisTemp
+			double hisTemp = partnerStateInfo[2];			
+			
+			if (heat == hisTemp) return;
+						
+			double logRatio = myTemp * (hisLogLike + hisLogPrior) + hisTemp
 					* (myLogLike + myLogPrior);
-			acceptance -= hisTemp * (hisLogLike + hisLogPrior) + myTemp
-					* (myLogLike + myLogPrior);
-
+			logRatio -= hisTemp * (hisLogLike + hisLogPrior) + myTemp
+					* (myLogLike + myLogPrior);			
+			
 			if (verbose) {
 				MPIUtils.println(rank,
-						"Math.log(swapAccept): " + Math.log(swapAccept));
+						"logU: " + logU);
 				MPIUtils.println(rank, "acceptance:           "
-						+ acceptance);				
+						+ logRatio);				
 			}
-			if (acceptance > Math.log(swapAccept)) {
+			if (logU < logRatio) {				
 				if (verbose) {
 					MPIUtils.println(rank,
 							"Just swapped heat with my partner. New heat: "
 									+ hisTemp);
 				}
+				
+				// Swap the heats
 				heat = hisTemp;
-			}
-			
-			// MPI.COMM_WORLD.Send(myStateInfo, 0, 3, MPI.DOUBLE,
-			// swapB, 0);
-			// statalign.Utils.printLine(swapA, "Just sent " + swapB
-			// + " my state.");
+								
+				// Swap the proposal width variables
+				double[] myProposalWidths, partnerProposalWidths; 
+				
+				myProposalWidths = modelExtMan.getProposalWidths();
+				partnerProposalWidths = MPI_exchange(chainA,chainB,myProposalWidths);							
+				modelExtMan.setProposalWidths(partnerProposalWidths);
+				
+				myProposalWidths = coreModel.getProposalWidths();
+				partnerProposalWidths = MPI_exchange(chainA,chainB,myProposalWidths);							
+				coreModel.setProposalWidths(partnerProposalWidths);
+			}			
 		}
-
 	}	
+	
+	public double[] MPI_exchange(int rankA, int rankB, double[] x) {
+		mpi.Request send, recieve;
+		double[] y = new double[x.length];
+		if (rank == rankA) {
+			send = MPI.COMM_WORLD.Isend(x,0,x.length, MPI.DOUBLE,rankB,0);
+			recieve = MPI.COMM_WORLD.Irecv(y,0,x.length,MPI.DOUBLE,rankB, 1);
+		} else {
+			send = MPI.COMM_WORLD.Isend(x,0,x.length,MPI.DOUBLE,rankA, 1);
+			recieve = MPI.COMM_WORLD.Irecv(y,0,x.length,MPI.DOUBLE,rankA, 0);
+		}		
+		mpi.Request.Waitall(new mpi.Request[] { send, recieve });
+		return y;
+	}
 }

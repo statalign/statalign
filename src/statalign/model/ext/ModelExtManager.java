@@ -216,6 +216,35 @@ public class ModelExtManager {
 			modExt.modifyProposalWidths();
 		}
 	}
+	
+	public double[] getProposalWidths() {
+		ArrayList<double[]> tmp = new ArrayList<double[]>();
+		int length = 0;
+		for(int i=0; i<activeList.size(); i++) {
+			tmp.add(activeList.get(i).getProposalWidths());			
+			length += tmp.get(i).length;
+		}
+		double[] proposalWidths = new double[length];
+		int index = 0;
+		for(int i=0; i<activeList.size(); i++) {
+			for (int j=0; j<tmp.get(i).length; j++, index++) {
+				proposalWidths[index] = tmp.get(i)[j];
+			}
+		}
+		return proposalWidths;
+	}
+	
+	public void setProposalWidths(double[] proposalWidths) {
+		int offset = 0;
+		for(ModelExtension modExt : activeList) {
+			double[] tmp = new double[modExt.getMcmcMoves().size()];
+			for (int i=0; i<tmp.length; i++) {
+				tmp[i] = proposalWidths[offset + i];
+			}
+			modExt.setProposalWidths(tmp);
+			offset += tmp.length;
+		}
+	}
 
 	public void zeroAllMoveCounts() {
 		for(ModelExtension modExt : activeList) {
