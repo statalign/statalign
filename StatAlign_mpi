@@ -1,0 +1,6 @@
+#!/bin/bash
+
+NCORES=2
+export MPJ_HOME=/path/to/mpj-v0_44 
+export STATALIGN=/path/to/statalign
+java -jar ${MPJ_HOME}/lib/starter.jar -cp ${STATALIGN}/bin -np $NCORES ${STATALIGN}/StatAlignMPI.jar "$@"
