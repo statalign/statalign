@@ -366,12 +366,21 @@ public abstract class Mcmc extends Stoppable {
 					modelExtMan.incrementWeights();
 					if (simulatedAnnealing) {
 						heat = 1;						
-					}					
+					}
+					if (isParallel) {
+						heat = heatWhenHot;
+						// To allow time for equilibration at the hot temperature
+					}
 				}
 				else {
 					if (simulatedAnnealing) {
 						heat = Math.log(i) / Math.log(burnIn / 2); 
-					}
+					}					
+				}
+				if (isParallel && !firstHalfBurnin && (i % mcmcpars.swapRate == 0)) {						
+					doSwap();
+					// Otherwise the hot chains may wander off 
+					// into oblivion during the burnin.
 				}
 				// Perform an MCMC move
 				sample(0);
@@ -439,9 +448,9 @@ public abstract class Mcmc extends Stoppable {
 			coreModel.zeroAllMoveCounts();
 			modelExtMan.zeroAllMoveCounts();
 			
-			if (isParallel) {
-				heat = heatWhenHot;
-			}
+//			if (isParallel) {
+//				heat = heatWhenHot;
+//			}
 			
 			//Utils.DEBUG = true;
 			
