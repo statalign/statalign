@@ -81,7 +81,10 @@ public class StatAlignParallelMcmc extends StatAlignMcmc {
 		swapGenerator = new Random(mcmcpars.swapSeed);
 		// the above ensures that all chains are using the same
 		// uniform random numbers to decide whether to switch temp
-		Utils.generator = new Well19937c(mcmcpars.seed + rank);
+
+		//Utils.generator = new Well19937c(mcmcpars.seed + rank);
+		Utils.generator = new Well19937c(mcmcpars.seed); 
+		// seed is already changed on a per-chain basis inside MainThread.java 
 	}
 	protected void doSwap() {
 		int chainA, chainB;
