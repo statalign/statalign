@@ -81,6 +81,8 @@ public class CommandLine {
 				.addOption("reportBurnin", Separator.EQUALS)
 				.addOption("subst", Separator.EQUALS)
 				.addOption("mcmc", Separator.EQUALS)
+				.addOption("tempDiff", Separator.EQUALS)
+				.addOption("minTemp", Separator.EQUALS)
 				.addOption("seed", Separator.EQUALS)
 				.addOption("usealign", Separator.EQUALS)
 				.addOption("usetree", Separator.EQUALS)
@@ -288,7 +290,22 @@ public class CommandLine {
 					return error("MCMC parameters not recognized: " + mcmcPars);
 				}
 			}
-
+			if(set.isSet("tempDiff")) {
+				String tempDiff = set.getOption("tempDiff").getResultValue(0);
+				try {
+					manager.inputData.pars.tempDiff = Double.parseDouble(tempDiff);
+				} catch (NumberFormatException e) {
+					return error("error parsing tempDiff parameter: " + tempDiff);
+				}
+			}
+			if(set.isSet("minTemp")) {
+				String minTemp = set.getOption("minTemp").getResultValue(0);
+				try {
+					manager.inputData.pars.minTemp = Double.parseDouble(minTemp);
+				} catch (NumberFormatException e) {
+					return error("error parsing minTemp parameter: " + minTemp);
+				}
+			}
 			if (set.isSet("seed")) {
 				String seedPar = set.getOption("seed").getResultValue(0);
 				try {
@@ -458,6 +475,13 @@ public class CommandLine {
 				sb.append("        and (optionally) initial randomisation period.\n");
 				sb.append("          Abbreviations k and m mean 1e3 and 1e6 factors.\n");
 				sb.append("        Default: 20k,50k,100,0,100\n\n");
+				sb.append("    -tempDiff=X\n");
+				sb.append("        Sets inverse temperature difference between parallel chains.\n");
+				sb.append("        Default: min(0.05,(1-minTemp)/(nCores-1))\n\n");
+				sb.append("    -minTemp=X\n");
+				sb.append("        Sets minimum chain inverse temperature.\n");
+				sb.append("        Default: 0.5\n\n");
+				
 			} else {
 				sb.append("    -mcmc=burn,cycl,rate[,randomisationPeriod]\n");
 				sb.append("        Sets MCMC parameters: burn-in, cycles after burn-in, sampling rate,\n");

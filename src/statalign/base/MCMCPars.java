@@ -41,6 +41,16 @@ public class MCMCPars {
 	public int swapRate;
 	
 	/**
+	 * Difference in temperature between adjacent parallel chains.
+	 */
+	public double tempDiff;
+	
+	/**
+	 * Minimum chain temperature.
+	 */
+	public double minTemp;
+	
+	/**
 	 * Length of the period in which the MCMC chain should be allowed to 
 	 * drift randomly, with all moves accepted, before starting the 
 	 * burnin. This can be useful for generating different starting 
@@ -75,9 +85,9 @@ public class MCMCPars {
 	 * @param burnIn this.burnIn is set to this value.
 	 * @param cycles this.cycles is set to this value.
 	 * @param sampRate this.sampRate is set to this value.
-	 * @param randomisationPeriod this.randomisationPeriod is set to this value.
+	 * @param randomisationPeriod this.randomisationPeriod is set to this value.	 
 	 */
-	public MCMCPars(int burnIn, int cycles, int sampRate, long seed, long swapSeed, int swapRate, int randomisationPeriod) {
+	public MCMCPars(int burnIn, int cycles, int sampRate, long seed, long swapSeed, int swapRate, int randomisationPeriod, double tempDiff, double minTemp) {
 		this.burnIn = burnIn;
 		this.cycles = cycles;
 		this.sampRate = sampRate;
@@ -85,6 +95,8 @@ public class MCMCPars {
 		this.seed = seed;
 		this.swapSeed = swapSeed;
 		this.randomisationPeriod = randomisationPeriod;
+		this.tempDiff = tempDiff;
+		this.minTemp = minTemp;
 	}
 	
 	/*public MCMCPars(int burnIn, int cycles, int sampRate, long seed) {
