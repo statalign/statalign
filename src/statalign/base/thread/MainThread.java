@@ -113,7 +113,7 @@ public class MainThread extends StoppableThread {
 				if (1-(noOfProcesses-1)*tempDiff < owner.inputData.pars.minTemp) {
 					tempDiff = (1-owner.inputData.pars.minTemp) / (noOfProcesses-1); 
 				}
-				double heat = 1.0d - tempDiff * (double) rank / (noOfProcesses-1);
+				double heat = 1.0d - tempDiff * (double) rank;
 				if (owner.inputData.pars.seed == 0) {
 					owner.inputData.pars.seed = 1;
 				}
