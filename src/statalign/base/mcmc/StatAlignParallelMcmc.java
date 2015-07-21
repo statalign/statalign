@@ -80,7 +80,7 @@ public class StatAlignParallelMcmc extends StatAlignMcmc {
 		MPIUtils.println(rank, str);
 		swapGenerator = new Random(mcmcpars.swapSeed);
 		// the above ensures that all chains are using the same
-		// uniform random numbers to decide whether to switch temp
+		// uniform random numbers 
 
 		//Utils.generator = new Well19937c(mcmcpars.seed + rank);
 		Utils.generator = new Well19937c(mcmcpars.seed); 
