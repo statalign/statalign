@@ -427,7 +427,7 @@ public abstract class Mcmc extends Stoppable {
 					if (Utils.DEBUG) {
 						System.err.println("Burn in: " + (i + 1));
 					}
-					else {
+					else if (isMaster()) {
 						System.out.println("Burn in: " + (i + 1));
 					}
 				}
@@ -527,7 +527,7 @@ public abstract class Mcmc extends Stoppable {
 						frame.statusText.setText(text );
 					}
 				}
-				if (frame == null && !isParallel) {
+				if (frame == null && isMaster()) {
 					if (Utils.DEBUG) {
 						System.err.println("Sample: " + (i + 1));	
 					}
