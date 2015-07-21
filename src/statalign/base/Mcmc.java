@@ -13,7 +13,6 @@ import mpi.MPI;
 import org.apache.commons.math3.random.RandomGenerator;
 import org.apache.commons.math3.random.Well19937c;
 
-import statalign.MPIUtils;
 import statalign.base.mcmc.AlignmentMove;
 import statalign.base.mcmc.AllEdgeMove;
 import statalign.base.mcmc.CoreMcmcModule;

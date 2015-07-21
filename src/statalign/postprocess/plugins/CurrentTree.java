@@ -16,11 +16,11 @@ import statalign.postprocess.gui.treeviews.TreeView;
 import statalign.postprocess.gui.treeviews.VerticalPhylogramTreeView;
 import statalign.postprocess.utils.NewickParser;
 
-public class CurrentTreeVisualizer extends TreeVisualizer {
+public class CurrentTree extends TreeVisualizer {
 
     // Functions
 
-    public CurrentTreeVisualizer() {
+    public CurrentTree() {
         // Configuration
         outputable = true;
         postprocessable = true;

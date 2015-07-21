@@ -63,7 +63,7 @@ public class PostprocessManager {
 	 * This constructor recognizes the plugins
 	 * @param mainManager The MainManager that manages the MCMC run.
 	 */
-	public PostprocessManager(MainManager mainManager) {
+	public PostprocessManager(MainManager mainManager, boolean parallel) {
 		this.mainManager = mainManager;
 		List<String> pluginNames = Utils.classesInPackage(Postprocess.class.getPackage().getName()+".plugins");
 		HashMap<String,Integer> nameMap = new HashMap<String,Integer>();
@@ -86,11 +86,23 @@ public class PostprocessManager {
 			}
 		}
 		ArrayList<Postprocess> workingPlugins = new ArrayList<Postprocess>();
-		for(Postprocess plugin : plugins)
+		for(Postprocess plugin : plugins) 
 			dependProb(plugin, nameMap, workingPlugins);
-
+					
+		// reassign the list of working plugins
 		plugins = workingPlugins;
-
+		
+		for(Postprocess plugin : plugins) {
+			// If we're running in parallel mode, deactivate the plugins that are not used
+			if (parallel && !plugin.useInParallelMode) {
+				plugin.active = false;
+				plugin.postprocessWrite = false;
+				// If at some point we want to add cold-chain output to GUI, for example,
+				// we could activate just the master process.
+			}
+			else plugin.active = true;
+		}
+		
 		boolean show = mainManager.frame != null;
 		for(Postprocess plugin : plugins){
 			plugin.selected = selectedMap.get(plugin);
@@ -107,7 +119,7 @@ public class PostprocessManager {
 	
 	public void createPluginFiles() {
 		try{
-		for (Postprocess p : plugins) {
+		for (Postprocess p : plugins) {			
 			if (p.postprocessWrite) {				
 				String name = baseFileName + p.getFileExtension();
 				System.out.println("Output file for " + p.getTabName()
@@ -168,7 +180,7 @@ public class PostprocessManager {
 		
 		if(rnaMode) {
 			for(Postprocess plugin : plugins){
-				plugin.mcmc = mcmc;
+				plugin.mcmc = mcmc; // TODO Change RNA plugins so this is not needed
 				plugin.file = logFile;
 				plugin.alignmentType = MainManager.alignmentTypes[mainManager.inputData.currentAlignmentType];
 				plugin.beforeFirstSample(mainManager.inputData);
@@ -177,8 +189,7 @@ public class PostprocessManager {
 		
 		else {
 			for(Postprocess plugin : plugins) {
-				if(!plugin.rnaAssociated) {
-					plugin.mcmc = mcmc;
+				if(!plugin.rnaAssociated) {					
 					plugin.file = logFile;
 					plugin.alignmentType = MainManager.alignmentTypes[mainManager.inputData.currentAlignmentType];
 					plugin.beforeFirstSample(mainManager.inputData);

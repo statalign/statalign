@@ -9,6 +9,7 @@ import javax.swing.JScrollPane;
 
 import statalign.base.InputData;
 import statalign.base.State;
+import statalign.postprocess.Postprocess;
 import statalign.postprocess.gui.CNetworkView;
 import statalign.postprocess.plugins.contree.CNetwork;
 import statalign.postprocess.plugins.contree.CTMain;
@@ -103,6 +104,17 @@ public class ConsensusNetwork extends statalign.postprocess.Postprocess{
 		
 	}
 
+	@Override
+	public String[] getDependencies() {
+		return new String[] { "statalign.postprocess.plugins.ConsensusTree"};
+	}
+
+	ConsensusTree curTree;	
+	@Override
+	public void refToDependencies(Postprocess[] plugins) {
+		curTree = (ConsensusTree) plugins[0];
+	}
+	
 	/**
 	 * At each MCMC sampling point, the current alignment is shown on the GUI.
 	 * Also, it writes the current alignment into the log file when in
@@ -110,9 +122,8 @@ public class ConsensusNetwork extends statalign.postprocess.Postprocess{
 	 */
 	@Override
 	public void newSample(State state, int no, int total) {
-		if(show) {
-			CNetwork outputNetwork = mcmc.tree.network;
-			gui.network = outputNetwork;
+		if(show) {			
+			gui.network = curTree.network;
 			// gui.redraw();
 			gui.repaint();
 		}

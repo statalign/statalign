@@ -2,7 +2,6 @@ package statalign.postprocess.plugins;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -54,7 +53,8 @@ public class MpdAlignment extends statalign.postprocess.Postprocess {
 		outputable = true;
 		postprocessable = true;
 		postprocessWrite = true;
-		rnaAssociated = false;		
+		rnaAssociated = false;
+		useInParallelMode = false;
 	}
 	
 	@Override
@@ -120,6 +120,7 @@ public class MpdAlignment extends statalign.postprocess.Postprocess {
 
 	@Override
 	public void beforeFirstSample(InputData input) {
+		if(!active)	return;
 		if(show) {
 			pan.removeAll();
 			title = input.title;
@@ -153,6 +154,7 @@ public class MpdAlignment extends statalign.postprocess.Postprocess {
 
 	@Override
 	public void newSample(State state, int no, int total) {
+		if(!active)	return;
 		//System.out.println(curAlig);
 		//System.out.println(curAlig.leafAlignment);
 		if (state.isBurnin) return; 
@@ -289,6 +291,7 @@ public class MpdAlignment extends statalign.postprocess.Postprocess {
 
 	@Override
 	public void afterLastSample() {
+		if(!active)	return;
 		if (postprocessWrite && sequences != null) {
 			try {
 				String[] aln = Utils.alignmentTransformation(alignment, sequenceNames,

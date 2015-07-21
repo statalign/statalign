@@ -99,6 +99,10 @@ public abstract class Postprocess {
 	 */
 	public boolean rnaAssociated;
 	
+	/**
+	 * Plugins with this value = false will not be activated in parallel mode.
+	 */
+	public boolean useInParallelMode = true;	
 	
 	protected ArrayList<Track> tracks = new ArrayList<Track>();
 	/** The extra tracks to be plotted */	
@@ -230,6 +234,7 @@ public abstract class Postprocess {
 	 * to access internal data structure
 	 */
 	public void beforeFirstSample(InputData inputData) {
+		if (!active) return;
 	}
 	
 	/**
@@ -238,6 +243,7 @@ public abstract class Postprocess {
 	 * use too much memory. We use, for example, in drawing the loglikelihood trace.
 	 */
 	public void newStep(McmcStep mcmcStep) {
+		if (!active) return;
 	}
 	
 	/**
@@ -249,6 +255,7 @@ public abstract class Postprocess {
 	 * @param state A {@link State} object representing the current state of the chain
 	 */
 	public void newPeek(State state) {
+		if (!active) return;
 	}
 	
 	/**
@@ -262,6 +269,7 @@ public abstract class Postprocess {
 	 * @param total The number of the total samples
 	 */
 	public void newSample(State state, int no, int total) {
+		if (!active) return;
 	}
 	public void newSample(McmcModule coreModel, State state, int no, int total) {		
 		newSample(state,no,total);
@@ -277,6 +285,7 @@ public abstract class Postprocess {
 	 * This function is called after the MCMC runs.
 	 */
 	public void afterLastSample() {
+		if (!active) return;
 	}
 
     /**
@@ -284,10 +293,6 @@ public abstract class Postprocess {
      */
     public ArrayList<JComponent> getToolBarItems() {
         return null;
-    }
-    
-    public List<ModelExtension> getModExtPlugins() {
-    	return mcmc.modelExtMan.getPluginList();
     }
 	
     public void setSelected(boolean selected) {

@@ -164,7 +164,8 @@ public class MainFrame extends JFrame implements ActionListener {
         }
 
         substModels = (Class<? extends SubstitutionModel>[]) substModList.toArray(new Class<?>[substModList.size()]);
-        manager = new MainManager(this);
+        boolean parallel = false;
+        manager = new MainManager(this,parallel);
 
         manager.init(null);
         //mcmcSettingsDlg = new McmcSettingsDlg(this);

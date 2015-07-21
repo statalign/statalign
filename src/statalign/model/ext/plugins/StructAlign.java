@@ -54,7 +54,7 @@ import statalign.model.subst.SubstitutionModel;
 import statalign.postprocess.plugins.TreeNode;
 import statalign.postprocess.plugins.structalign.RmsdTrace;
 import statalign.postprocess.plugins.structalign.StructTrace;
-import statalign.postprocess.plugins.structalign.StructTreeVisualizer;
+import statalign.postprocess.plugins.structalign.StructTree;
 import statalign.utils.LinkFunction;
 
 public class StructAlign extends ModelExtension implements ActionListener {
@@ -228,7 +228,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	// reference to the postprocessing plugin
 	private StructTrace structTrace;
 	private RmsdTrace rmsdTrace;
-	private StructTreeVisualizer structTree;
+	private StructTree structTree;
 	public boolean printRmsd = false;
 	public boolean showStructTree = false;
 
@@ -1322,7 +1322,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	public void connectStructTrace(StructTrace structTrace) {
 		this.structTrace = structTrace;
 	}
-	public void connectStructTree(StructTreeVisualizer structTree) {
+	public void connectStructTree(StructTree structTree) {
 		this.structTree = structTree;
 	}
 	public void connectRmsdTrace(RmsdTrace _rmsdTrace) {

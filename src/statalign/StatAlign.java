@@ -57,8 +57,8 @@ public class StatAlign{
 
 		if(args.length != 0) {
 			// console mode
-			MainManager manager = new MainManager(null);
-			boolean parallel = false;
+	        boolean parallel = false;
+			MainManager manager = new MainManager(null,parallel);			
 			CommandLine cl = new CommandLine(parallel);			
 			cl.setVerbose(true);
 			if(cl.fillParams(args, manager) > 0)

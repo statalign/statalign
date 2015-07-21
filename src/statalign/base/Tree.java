@@ -56,11 +56,6 @@ public class Tree extends Stoppable implements DataType {
     /** The name of the sequences */
     public String[] names;
 
-    /** The heat parameter for this MCMC chain. */
-	public double heat = 1.0d;
-
-    public CNetwork network;
-
     //boolean changingTree = false;
     boolean changingTree = true;
     

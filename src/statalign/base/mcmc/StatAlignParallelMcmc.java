@@ -7,7 +7,6 @@ import java.util.Random;
 import org.apache.commons.math3.random.Well19937c;
 
 import mpi.MPI;
-import statalign.MPIUtils;
 import statalign.base.MCMCPars;
 import statalign.base.Mcmc;
 import statalign.base.State;
@@ -54,7 +53,7 @@ public class StatAlignParallelMcmc extends StatAlignMcmc {
 		isParallel = true;
 	}
 	protected boolean isMaster() {
-		return MPIUtils.isMaster(rank);
+		return rank == 0;
 	}
 	protected boolean isColdChain() {
 		return heat == 1.0d;
@@ -67,8 +66,8 @@ public class StatAlignParallelMcmc extends StatAlignMcmc {
 		coldChainLocation = coldChainLoc[0];
 
 		// TODO: Remove - for debugging purposes
-		if (MPIUtils.isMaster(rank)) {
-			MPIUtils.println(rank, "Cold chain is at: " + coldChainLocation);
+		if (rank==0) {
+			System.out.println("Cold chain is at: " + coldChainLocation);
 		}
 		
 		postprocMan.newSample(coreModel,getState(), no, total);			
@@ -77,7 +76,7 @@ public class StatAlignParallelMcmc extends StatAlignMcmc {
 		String str = String.format(
 				"Starting MCMC chain no. %d/%d (heat: %.2f)\n\n", 
 				rank + 1, noOfProcesses, heat);
-		MPIUtils.println(rank, str);
+		System.out.println(str);
 		swapGenerator = new Random(mcmcpars.swapSeed);
 		// the above ensures that all chains are using the same
 		// uniform random numbers 
@@ -136,16 +135,12 @@ public class StatAlignParallelMcmc extends StatAlignMcmc {
 					* (myLogLike + myLogPrior);			
 			
 			if (verbose) {
-				MPIUtils.println(rank,
-						"logU: " + logU);
-				MPIUtils.println(rank, "acceptance:           "
-						+ logRatio);				
+				System.out.println("logU: " + logU);
+				System.out.println("acceptance: " + logRatio);				
 			}
 			if (logU < logRatio) {				
 				if (verbose) {
-					MPIUtils.println(rank,
-							"Just swapped heat with my partner. New heat: "
-									+ hisTemp);
+					System.out.println("Just swapped heat with my partner. New heat: "+ hisTemp);
 				}
 				
 				// Swap the heats

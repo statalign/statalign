@@ -9,30 +9,35 @@ import javax.swing.ImageIcon;
 import statalign.base.InputData;
 import statalign.base.State;
 import statalign.model.ext.ModelExtManager;
+import statalign.postprocess.Postprocess;
 import statalign.postprocess.TreeVisualizer;
 import statalign.postprocess.gui.treeviews.HorizontalCladogramTreeView;
 import statalign.postprocess.gui.treeviews.HorizontalPhylogramTreeView;
 import statalign.postprocess.gui.treeviews.TreeView;
+import statalign.postprocess.plugins.contree.CNetwork;
 import statalign.postprocess.plugins.contree.CTMain;
 import statalign.postprocess.plugins.contree.CTree;
 import statalign.postprocess.utils.NewickParser;
 
-public class ConsensusTreeVisualizer extends TreeVisualizer {
+public class ConsensusTree extends TreeVisualizer {
 
     // Variables
 
     private CTMain main;
+	public CNetwork network;
+
     //private ArrayList<String> consensusTrees;
 
     // Functions
 
-    public ConsensusTreeVisualizer() {
+    public ConsensusTree() {
         // Configuration
         outputable = true;
         postprocessable = true;
         postprocessWrite = true;
         rnaAssociated = false;
         noOfSamples = 1;
+		useInParallelMode = false;
     }
     
     @Override
@@ -73,6 +78,7 @@ public class ConsensusTreeVisualizer extends TreeVisualizer {
 
     @Override
     public void newSample(State state, int no, int total) {
+		if (!active) return;
     	if (state.isBurnin) return;
     	
     	++noOfSamples;
@@ -91,7 +97,7 @@ public class ConsensusTreeVisualizer extends TreeVisualizer {
         TreeNode outputRoot = output.getRoot();
         String outputRootString = outputRoot.toStringWithProbs(noOfSamples);       
         
-        mcmc.tree.network = main.constructNetwork(output); 
+        network = main.constructNetwork(output); 
         
         // Logging.
         if (sampling) {

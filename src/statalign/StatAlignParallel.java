@@ -29,7 +29,7 @@ public class StatAlignParallel {
         int rank = MPI.COMM_WORLD.Rank();
         int noOfProcesses = MPI.COMM_WORLD.Size();
         
-        if (MPIUtils.isMaster(rank)) {
+        if (rank==0) {
             System.out.println("\n    StatAlign " + StatAlign.version + " - parallel version\n");
             System.out.println("    Arguments: " + Arrays.toString(realArguments));
             System.out.println("    No of processes: " + noOfProcesses + "");
@@ -47,13 +47,13 @@ public class StatAlignParallel {
         statalign_bin = statalign_bin.replaceFirst("file:",""); 
         System.setProperty("java.class.path",statalign_bin);
         System.out.println(System.getProperty("java.class.path"));
-        
-        MainManager manager = new MainManager(null);
+
         boolean parallel = true;
+        MainManager manager = new MainManager(null,parallel);
         CommandLine cl = new CommandLine(parallel);
         
         // Only get INFO messages (errors and warnings excluded) from the master.
-        if (MPIUtils.isMaster(rank)) {
+        if (rank==0) {
         	cl.setVerbose(true);
         }
         

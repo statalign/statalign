@@ -9,7 +9,6 @@ import java.util.List;
 import javax.swing.SwingUtilities;
 
 import mpi.MPI;
-import statalign.MPIUtils;
 import statalign.base.mcmc.StatAlignMcmc;
 import statalign.base.mcmc.StatAlignParallelMcmc;
 import statalign.base.thread.MainThread;
@@ -105,9 +104,9 @@ public class MainManager {
 	 *            The owner of the MainManager, the main window of the graphical
 	 *            interface.
 	 */
-	public MainManager(MainFrame frame) {
+	public MainManager(MainFrame frame, boolean parallel) {
 		this.frame = frame;
-		postProcMan = new PostprocessManager(this);
+		postProcMan = new PostprocessManager(this,parallel);
 		dataMan = new DataManager();
 		dataMan.init();
 		modelExtMan = new ModelExtManager(this);

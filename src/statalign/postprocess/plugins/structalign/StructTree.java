@@ -8,15 +8,15 @@ import statalign.model.ext.ModelExtManager;
 import statalign.model.ext.ModelExtension;
 import statalign.model.ext.plugins.StructAlign;
 import statalign.postprocess.gui.treeviews.TreeView;
-import statalign.postprocess.plugins.CurrentTreeVisualizer;
+import statalign.postprocess.plugins.CurrentTree;
 import statalign.postprocess.plugins.TreeNode;
 
-public class StructTreeVisualizer extends CurrentTreeVisualizer {
+public class StructTree extends CurrentTree {
 
 	public StructAlign structAlign;
 	public TreeNode node;
 	
-    public StructTreeVisualizer() {
+    public StructTree() {
     	screenable = true;
 		outputable = true;
 		postprocessable = true;
