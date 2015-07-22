@@ -2,6 +2,7 @@ package statalign.base.mcmc;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Random;
 
 import org.apache.commons.math3.random.Well19937c;
@@ -59,16 +60,16 @@ public class StatAlignParallelMcmc extends StatAlignMcmc {
 		return heat == 1.0d;
 	}	
 	protected void postprocSample(int no, int total) {
-		int[] ranks = new int[] { (isColdChain() ? rank : 0) };
-		int[] coldChainLoc = new int[1];
-		int coldChainLocation = -1;
-		MPI.COMM_WORLD.Reduce(ranks, 0, coldChainLoc, 0, 1, MPI.INT, MPI.SUM, 0);
-		coldChainLocation = coldChainLoc[0];
-
-		// TODO: Remove - for debugging purposes
-		if (rank==0) {
-			System.out.println("Cold chain is at: " + coldChainLocation);
-		}
+//		int[] ranks = new int[] { (isColdChain() ? rank : 0) };
+//		int[] coldChainLoc = new int[1];
+//		int coldChainLocation = -1;
+//		MPI.COMM_WORLD.Reduce(ranks, 0, coldChainLoc, 0, 1, MPI.INT, MPI.SUM, 0);
+//		coldChainLocation = coldChainLoc[0];
+//
+//		// TODO: Remove - for debugging purposes
+//		if (rank==0) {
+//			System.out.println("Cold chain is at: " + coldChainLocation);
+//		}
 		
 		postprocMan.newSample(coreModel,getState(), no, total);			
 	}
@@ -149,13 +150,22 @@ public class StatAlignParallelMcmc extends StatAlignMcmc {
 				// Swap the proposal width variables
 				double[] myProposalWidths, partnerProposalWidths; 
 				
-				myProposalWidths = modelExtMan.getProposalWidths();
-				partnerProposalWidths = MPI_exchange(chainA,chainB,myProposalWidths);							
-				modelExtMan.setProposalWidths(partnerProposalWidths);
+				double[] modelExtProposalWidths = modelExtMan.getProposalWidths();				
+				double[] coreModelProposalWidths = coreModel.getProposalWidths();
 				
-				myProposalWidths = coreModel.getProposalWidths();
+				// Combine the two arrays into one, to reduce the number of communication
+				// operations required.
+				myProposalWidths = new double[modelExtProposalWidths.length + 
+				                              coreModelProposalWidths.length];
+				System.arraycopy(modelExtProposalWidths, 0, myProposalWidths, 
+						0, modelExtProposalWidths.length);
+				System.arraycopy(coreModelProposalWidths, 0, myProposalWidths, 
+						modelExtProposalWidths.length, coreModelProposalWidths.length);
+
 				partnerProposalWidths = MPI_exchange(chainA,chainB,myProposalWidths);							
-				coreModel.setProposalWidths(partnerProposalWidths);
+				modelExtMan.setProposalWidths(Arrays.copyOfRange(partnerProposalWidths,0,modelExtProposalWidths.length));											
+				coreModel.setProposalWidths(Arrays.copyOfRange(partnerProposalWidths,modelExtProposalWidths.length,
+						modelExtProposalWidths.length+coreModelProposalWidths.length));
 			}			
 		}
 	}	
