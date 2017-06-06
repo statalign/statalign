@@ -88,10 +88,15 @@ public class StatAlignParallelMcmc extends StatAlignMcmc {
 	}
 	protected void doSwap() {
 		int chainA, chainB;
-		chainA = swapGenerator.nextInt(noOfProcesses);
-		do {
-			chainB = swapGenerator.nextInt(noOfProcesses);
-		} while (chainA == chainB);
+		//chainA = swapGenerator.nextInt(noOfProcesses);
+		chainA = rank;
+		if (rank < (noOfProcesses-1)) {
+		    chainB = rank+1;
+		}
+		else return;
+		// do {
+		// 	chainB = swapGenerator.nextInt(noOfProcesses);
+		// } while (chainA == chainB); 
 		
 		// TODO: Should only attempt to swap chains with similar heat?		
 		if (verbose) {
@@ -103,7 +108,7 @@ public class StatAlignParallelMcmc extends StatAlignMcmc {
 		// to ensure that all chains advance their generators
 		// at the same rate.
 
-		if (rank == chainA || rank == chainB) {
+		//if (rank == chainA || rank == chainB) {
 						
 			double[] myStateInfo = new double[3];
 			myStateInfo[0] = totalLogLike;
@@ -167,7 +172,7 @@ public class StatAlignParallelMcmc extends StatAlignMcmc {
 				coreModel.setProposalWidths(Arrays.copyOfRange(partnerProposalWidths,modelExtProposalWidths.length,
 						modelExtProposalWidths.length+coreModelProposalWidths.length));
 			}			
-		}
+		//}
 	}	
 	
 	public double[] MPI_exchange(int rankA, int rankB, double[] x) {
