@@ -7,44 +7,19 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Random;
-
-import mpi.MPI;
-
 import org.apache.commons.math3.random.RandomGenerator;
 import org.apache.commons.math3.random.Well19937c;
 
-import statalign.base.mcmc.AlignmentMove;
-import statalign.base.mcmc.AllEdgeMove;
 import statalign.base.mcmc.CoreMcmcModule;
-import statalign.base.mcmc.EdgeMove;
-import statalign.base.mcmc.IndelMove;
-import statalign.base.mcmc.LOCALTopologyMove;
-import statalign.base.mcmc.LambdaMove;
-import statalign.base.mcmc.MuMove;
-import statalign.base.mcmc.PhiMove;
-import statalign.base.mcmc.RMove;
-import statalign.base.mcmc.RhoMove;
-import statalign.base.mcmc.SilentIndelMove;
-import statalign.base.mcmc.SubstMove;
-import statalign.base.mcmc.ThetaMove;
-import statalign.base.mcmc.TopologyMove;
 import statalign.base.thread.Stoppable;
 import statalign.base.thread.StoppedException;
-import statalign.mcmc.BetaPrior;
-import statalign.mcmc.GammaPrior;
-import statalign.mcmc.GaussianProposal;
-import statalign.mcmc.LogisticProposal;
-import statalign.mcmc.McmcCombinationMove;
 import statalign.mcmc.McmcModule;
 import statalign.mcmc.McmcMove;
-import statalign.mcmc.MultiplicativeProposal;
-import statalign.mcmc.UniformProposal;
 import statalign.model.ext.ModelExtManager;
 import statalign.postprocess.PostprocessManager;
 import statalign.postprocess.plugins.contree.CNetwork;
 import statalign.ui.ErrorMessage;
 import statalign.ui.MainFrame;
-import statalign.utils.BetaDistribution;
 
 /**
  * 
@@ -68,7 +43,12 @@ public abstract class Mcmc extends Stoppable {
 	/** Current tree in the MCMC chain. */
 	public Tree tree;
 	
-	protected double heat, heatWhenHot;
+	/** 
+	 *  Inverse temperature parameter, for parallel tempering.
+	 *  beta = current value of inverse temp
+	 *  betaWhenHot = target value for this chain (may vary e.g. simulated annealing)
+	 **/
+	protected double beta, betaWhenHot;
 
 	/** Total log-likelihood of the current state, cached for speed */
 	protected double totalLogLike;
@@ -143,7 +123,7 @@ public abstract class Mcmc extends Stoppable {
 		
 		tree.owner = this;
 		mcmcpars = pars;
-		heat = 1.0d;
+		beta = 1.0d;
 		randomisationPeriod = mcmcpars.randomisationPeriod;
 	}	
 	
@@ -240,7 +220,7 @@ public abstract class Mcmc extends Stoppable {
 			return (newLogLikelihood > Double.NEGATIVE_INFINITY);
 		}
 		return (Math.log(Utils.generator.nextDouble()) < 
-				(cumulativeLogProposalRatio + heat*(newLogLikelihood - oldLogLikelihood))
+				(cumulativeLogProposalRatio + beta*(newLogLikelihood - oldLogLikelihood))
 				+ (cumulativeLogProposalRatio=0));
 	}	
 	
@@ -364,19 +344,19 @@ public abstract class Mcmc extends Stoppable {
 					coreModel.incrementWeights();
 					modelExtMan.incrementWeights();
 					if (simulatedAnnealing) {
-						heat = 1;						
+						beta = 1;
 					}
 					if (isParallel) {
-						heat = heatWhenHot;
+						beta = betaWhenHot;
 						// To allow time for equilibration at the hot temperature
 					}
 				}
 				else {
 					if (simulatedAnnealing) {
-						heat = Math.log(i) / Math.log(burnIn / 2); 
+						beta = Math.log(i) / Math.log(burnIn / 2); 
 					}					
 				}
-				if (isParallel && !firstHalfBurnin && (i % mcmcpars.swapRate == 0)) {						
+				if (isParallel && !firstHalfBurnin && (i % mcmcpars.swapRate == 0)) {					
 					doSwap();
 					// Otherwise the hot chains may wander off 
 					// into oblivion during the burnin.
@@ -387,18 +367,21 @@ public abstract class Mcmc extends Stoppable {
 
 				// Triggers a /new step/ and a /new peek/ (if appropriate) of
 				// the plugins.
-				//if (heat==1.0d) {
-					// TODO do above inside sample() and add more info
 					mcmcStep.newLogLike = modelExtMan.totalLogLike(tree);
 					mcmcStep.burnIn = burnin;
 					postprocMan.newStep(mcmcStep);
 					if (i % mcmcpars.sampRate == 0) {
 						postprocMan.newPeek();
 					}
-				//}
 				if (i>0 && mcmcpars.doReportDuringBurnin && (i % mcmcpars.sampRate == 0)) {
 					report(i, mcmcpars.cycles / mcmcpars.sampRate);
 				}
+
+				// Don't do this, because it can bias the distribution by favouring 
+				// stopping in sticky regions of the posterior. Leaving the code here
+				// in case we want to adapt it to use another method of automating the
+				// number of required iterations (e.g. comparing across multiple chains).
+
 //				if(AutomateParameters.shouldAutomateBurnIn() && i % 50 == 0){
 //					// every 50 steps, add the current loglikelihood to a list
 //					// and check if we find a major decline in that list 
@@ -502,14 +485,12 @@ public abstract class Mcmc extends Stoppable {
 
 					// Triggers a /new step/ and a /new peek/ (if appropriate)
 					// of the plugins.
-					//if (heat==1.0d) {
 						mcmcStep.newLogLike = totalLogLike;
 						mcmcStep.burnIn = burnin;
 						postprocMan.newStep(mcmcStep);
 						if (burnIn + i * period + j % mcmcpars.sampRate == 0) {
 							postprocMan.newPeek();
 						}
-					//}
 
 					currentTime = System.currentTimeMillis();
 					if (frame != null) {
@@ -558,18 +539,16 @@ public abstract class Mcmc extends Stoppable {
 		}
 
 		// Triggers a /after first sample/ of the plugins.
-		if (isMaster()) {
-			printMcmcInfo();
-		}
+		if (isMaster()) printMcmcInfo();
 		postprocMan.afterLastSample();		
 		
 		// notifies model extension plugins of the end of sampling
 		modelExtMan.afterSampling();		
-		System.out.println(coreModel.getSummaryInfo());
+		System.out.println("Heat = "+beta+", "+coreModel.getSummaryInfo());
 		coreModel.afterSampling();
 		
 		if (frame != null) {
-			frame.statusText.setText(MainFrame.IDLE_STATUS_MESSAGE);
+			if (isMaster()) frame.statusText.setText(MainFrame.IDLE_STATUS_MESSAGE);
 		}
 		return errorCode;
 	}
@@ -604,13 +583,11 @@ public abstract class Mcmc extends Stoppable {
 		report(no,total,false);
 	}
 	protected void report(int no, int total, boolean useSample) {
-
-		//if (heat!=1.0d) return; // Only report the cold chain
-		if (useSample) postprocSample(no,total);		
-		// Log the accept ratios/params to the (.log) file. TODO: move to a plugin.
-		try {			
-			postprocMan.logFile.write(coreModel.getSummaryInfo() + "\n");
-			coreModel.printParameters();			
+		try {
+			coreModel.printParameters(no);
+			if (mcmcpars.reportOnlyColdChain && beta!=1.0d) return;
+			// Log the accept ratios/params to the (.log) file. TODO: move to a plugin.
+			postprocMan.logFile.write(coreModel.getSummaryInfo() + "\n");						
 		} catch (IOException e) {
 			if (postprocMan.mainManager.frame != null) {
 				ErrorMessage.showPane(postprocMan.mainManager.frame, e, true);
@@ -618,6 +595,7 @@ public abstract class Mcmc extends Stoppable {
 				e.printStackTrace(System.out);
 			}
 		}
+		if (useSample) postprocSample(no,total);
 	}
 	
 	protected void postprocSample(int no, int total) {
@@ -627,5 +605,5 @@ public abstract class Mcmc extends Stoppable {
 	// This function is used (and defined) only by the parallel version		
 	protected void doSwap() { }
 
-	public double getHeat() { return heat; }
+	public double getBeta() { return beta; }
 }
