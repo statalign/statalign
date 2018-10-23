@@ -50,14 +50,14 @@ public class CurrentAlignment extends statalign.postprocess.Postprocess{
 	
 	/**
 	 * It construct a postprocess that is screenable (=can be shown on the GUI),
-	 * outputable (= can be written into th elog file) but not postprocessable
+	 * outputable (= can be written into the log file) but not postprocessable
 	 * (= cannot generate its own output file).
 	 */
 	public CurrentAlignment(){
 		screenable = true;
 		outputable = true;
 		postprocessable = true;
-		postprocessWrite = false;
+		postprocessWrite = true;
 		sampling = true;
 		rnaAssociated = false;
 	}		
@@ -107,7 +107,7 @@ public class CurrentAlignment extends statalign.postprocess.Postprocess{
 
 	@Override
 	public String getFileExtension() {
-		return "ali";
+		return "length";
 	}
 	
 	/**
@@ -166,6 +166,14 @@ public class CurrentAlignment extends statalign.postprocess.Postprocess{
 		leafNames = new String[input.seqs.size()];
 		this.input = input;
 		
+		if(postprocessWrite) {
+			try {
+				outputFile.write("sample\tali.length\n");				
+			} catch (IOException e) {
+				new ErrorMessage(null," "+e.getLocalizedMessage(),true);
+			}
+		}
+
 		// seqNames
 		int nl = input.seqs.size();
 		int nn = nl*2-1, i;
@@ -196,16 +204,12 @@ public class CurrentAlignment extends statalign.postprocess.Postprocess{
 		
 		if(postprocessWrite) {
 			try {
-				String[] alignment = Utils.alignmentTransformation(allAlignment, seqNames, alignmentType, input);
-				for(int i = 0; i < alignment.length; i++){
-					if (state.isBurnin) outputFile.write("Burnin "+no+"\tAlignment:"+"\t"+alignment[i]+"\n");
-					else outputFile.write("Sample "+no+"\tAlignment:"+"\t"+alignment[i]+"\n");
-				}
+				outputFile.write(no+"\t"+allAlignment[0].length()+"\n");
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 		}
-		else if(sampling){
+		if(sampling && state.beta==1.0d){
 			try {
 				String[] alignment = Utils.alignmentTransformation(allAlignment, seqNames, alignmentType, input);
 				for(int i = 0; i < alignment.length; i++){
