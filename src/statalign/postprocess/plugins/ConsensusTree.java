@@ -34,7 +34,7 @@ public class ConsensusTree extends TreeVisualizer {
         // Configuration
         outputable = true;
         postprocessable = true;
-        postprocessWrite = true;
+        postprocessWrite = false;
         rnaAssociated = false;
         noOfSamples = 1;
 		useInParallelMode = false;
