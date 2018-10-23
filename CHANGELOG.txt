@@ -2,6 +2,22 @@ This file lists major changes between StatAlign releases.
 
 ------------------------------------------------------------------------------
 
+StatAlign v3.3 on 24 Oct 2018
+
+  New features:
+    * MPI-based parallel version now available
+    * Improvements to MCMC output files, to facilitate downstream analysis
+    * Default is now to use branch-specific structural diffusivity parameters and B-factor-weighted baseline variance in command-line mode as well as with the GUI
+
+  Bug fixes:
+    * Removed static variable tempDoubleArray to avoid potential race condition
+    * Bugfix to length=1 case in linearizerWeight
+    * Errors in Utils.java now reported to STDERR rather than generating a popup window
+    * Output PDB files now contain HIS instead of HSD
+    * ModelExtension plugins now only contribute to the emission probability after the initial alignment has been generated
+
+------------------------------------------------------------------------------
+
 StatAlign v3.2 on 10 Feb 2015
 
   New features:
