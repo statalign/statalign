@@ -52,7 +52,7 @@ public class MpdAlignment extends statalign.postprocess.Postprocess {
 		screenable = true;
 		outputable = true;
 		postprocessable = true;
-		postprocessWrite = true;
+		postprocessWrite = false;
 		rnaAssociated = false;
 		useInParallelMode = false;
 	}
@@ -155,16 +155,7 @@ public class MpdAlignment extends statalign.postprocess.Postprocess {
 	@Override
 	public void newSample(State state, int no, int total) {
 		if(!active)	return;
-		//System.out.println(curAlig);
-		//System.out.println(curAlig.leafAlignment);
 		if (state.isBurnin) return; 
-		for(int i = 0; i < curAlig.leafAlignment.length; i++){
-            if (curAlig == null || curAlig.leafAlignment[i] == null) {
-                System.out.println();
-            }
-			//t[i] = curAlig.leafAlignment[i].split("\t");
-		}
-		//Arrays.sort(t, compStringArr);
 
 		int[] previousDescriptor = firstDescriptor;
 
