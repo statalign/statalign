@@ -25,7 +25,7 @@ public class ErrorMessage extends JDialog implements ActionListener {
 	Container cp = getContentPane();
     private JButton btOK;
 
-    protected static String except2String(Exception ex) {
+    public static String except2String(Exception ex) {
 			StackTraceElement[] ste = ex.getStackTrace();
 			String s = "";
 			for(int i = 0; i < ste.length; i++){
