@@ -80,13 +80,6 @@ public class PDBReader extends DataReader {
 			throw new IllegalFormatException("PDBReader: sequence "+data.names.get(0)+" is without a structure");
 		
 		data.seqs = new RawSequences(sequence,data.names.get(0));
-//		for (int i=0; i<data.bFactors.get(0).size(); i++) {				
-//			System.out.println(i+"\t"+data.seqs.getSequence(0).charAt(i)+"\t"
-//									+data.coords.get(0).get(i)[0]+"\t"
-//									+data.coords.get(0).get(i)[1]+"\t"
-//									+data.coords.get(0).get(i)[2]+"\t"
-//									+data.bFactors.get(0).get(i));
-//		}
 		return data;
 	}
 	
@@ -168,7 +161,6 @@ public class PDBReader extends DataReader {
         mp13.put("Z","GLX");
         mp13.put("G","GLY");
         mp13.put("H","HIS");
-        mp13.put("H","HSD");
         mp13.put("I","ILE");
         mp13.put("L","LEU");
         mp13.put("K","LYS");
