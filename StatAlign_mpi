@@ -1,7 +1,0 @@
-#!/bin/bash
-
-NCORES=$1
-export MPJ_HOME=/path/to/mpj-v0_44 
-export STATALIGN=/path/to/statalign
-NCORES=$1
-java -jar ${MPJ_HOME}/lib/starter.jar -cp ${STATALIGN}/StatAlignMPI.jar -np $NCORES ${STATALIGN}/StatAlignMPI.jar ${*:2}
