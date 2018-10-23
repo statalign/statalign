@@ -1,7 +1,5 @@
 package statalign.base.mcmc;
 
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Random;
 
@@ -9,18 +7,8 @@ import org.apache.commons.math3.random.Well19937c;
 
 import mpi.MPI;
 import statalign.base.MCMCPars;
-import statalign.base.Mcmc;
-import statalign.base.State;
 import statalign.base.Tree;
 import statalign.base.Utils;
-import statalign.mcmc.BetaPrior;
-import statalign.mcmc.GammaPrior;
-import statalign.mcmc.GaussianProposal;
-import statalign.mcmc.LogisticProposal;
-import statalign.mcmc.McmcCombinationMove;
-import statalign.mcmc.McmcMove;
-import statalign.mcmc.MultiplicativeProposal;
-import statalign.mcmc.UniformProposal;
 import statalign.model.ext.ModelExtManager;
 import statalign.postprocess.PostprocessManager;
 
@@ -46,18 +34,18 @@ public class StatAlignParallelMcmc extends StatAlignMcmc {
 	protected Random swapGenerator;
 
 	public StatAlignParallelMcmc(Tree tree, MCMCPars pars, PostprocessManager ppm, ModelExtManager modelExtMan,
-			int noOfProcesses, int rank, double heat) {
+			int noOfProcesses, int rank, double beta) {
 		super(tree,pars,ppm,modelExtMan);
 		this.noOfProcesses = noOfProcesses;
 		this.rank = rank;
-		heatWhenHot = heat;
+		betaWhenHot = beta;
 		isParallel = true;
 	}
 	protected boolean isMaster() {
 		return rank == 0;
 	}
 	protected boolean isColdChain() {
-		return heat == 1.0d;
+		return beta == 1.0d;
 	}	
 	protected void postprocSample(int no, int total) {
 //		int[] ranks = new int[] { (isColdChain() ? rank : 0) };
@@ -65,18 +53,13 @@ public class StatAlignParallelMcmc extends StatAlignMcmc {
 //		int coldChainLocation = -1;
 //		MPI.COMM_WORLD.Reduce(ranks, 0, coldChainLoc, 0, 1, MPI.INT, MPI.SUM, 0);
 //		coldChainLocation = coldChainLoc[0];
-//
-//		// TODO: Remove - for debugging purposes
-//		if (rank==0) {
-//			System.out.println("Cold chain is at: " + coldChainLocation);
-//		}
 		
 		postprocMan.newSample(coreModel,getState(), no, total);			
 	}
 	protected void beforeMCMC() {
 		String str = String.format(
-				"Starting MCMC chain no. %d/%d (heat: %.2f)\n\n", 
-				rank + 1, noOfProcesses, heat);
+				"Starting MCMC chain no. %d/%d (beta: %.2f)\n\n", 
+				rank + 1, noOfProcesses, beta);
 		System.out.println(str);
 		swapGenerator = new Random(mcmcpars.swapSeed);
 		// the above ensures that all chains are using the same
@@ -86,58 +69,53 @@ public class StatAlignParallelMcmc extends StatAlignMcmc {
 		Utils.generator = new Well19937c(mcmcpars.seed); 
 		// seed is already changed on a per-chain basis inside MainThread.java 
 	}
+
 	protected void doSwap() {
 		int chainA, chainB;
-		//chainA = swapGenerator.nextInt(noOfProcesses);
-		chainA = rank;
-		if (rank < (noOfProcesses-1)) {
-		    chainB = rank+1;
-		}
-		else return;
-		// do {
-		// 	chainB = swapGenerator.nextInt(noOfProcesses);
-		// } while (chainA == chainB); 
 		
-		// TODO: Should only attempt to swap chains with similar heat?		
+		double logU = Math.log(swapGenerator.nextDouble());
+
+		// each chain starts with the same seed, so they all
+		// generate the same sequence of integers
+		chainA = swapGenerator.nextInt(noOfProcesses-1);
+		do {
+			chainB = swapGenerator.nextInt(noOfProcesses);
+		} while(chainB==chainA);
+
 		if (verbose) {
 			System.out.printf("chainA = %d, chainB = %d\n",chainA, chainB);
 		}
 
-		double logU = Math.log(swapGenerator.nextDouble());
-		// this has to be outside the if condition below,
-		// to ensure that all chains advance their generators
-		// at the same rate.
-
-		//if (rank == chainA || rank == chainB) {
+		if (rank == chainA || rank == chainB) {
 						
 			double[] myStateInfo = new double[3];
 			myStateInfo[0] = totalLogLike;
 			myStateInfo[1] = modelExtMan.totalLogPrior(tree);
 			//myStateInfo[1] = coreModel.totalLogPrior(tree) + modelExtMan.totalLogPrior(tree);
-			myStateInfo[2] = heat;
+			myStateInfo[2] = beta;
 
 			double[] partnerStateInfo = MPI_exchange(chainA,chainB,myStateInfo); 
 			
 			if (verbose) {
 				System.out
-				.printf("[Worker %d] Heat: [%f] - Sent: [%f,%f,%f] - Recv: [%f,%f,%f]\n",
-						rank, heat, myStateInfo[0], myStateInfo[1],
+				.printf("[Worker %d] Beta: [%f] - Sent: [%f,%f,%f] - Recv: [%f,%f,%f]\n",
+						rank, beta, myStateInfo[0], myStateInfo[1],
 						myStateInfo[2], partnerStateInfo[0],
 						partnerStateInfo[1], partnerStateInfo[2]);
 			}
 
 			double myLogLike = myStateInfo[0];
 			double myLogPrior = myStateInfo[1];
-			double myTemp = myStateInfo[2];
+			double myBeta = myStateInfo[2];
 			double hisLogLike = partnerStateInfo[0];
 			double hisLogPrior = partnerStateInfo[1];
-			double hisTemp = partnerStateInfo[2];			
+			double hisBeta = partnerStateInfo[2];
 			
-			if (heat == hisTemp) return;
+			if (beta == hisBeta) return;
 						
-			double logRatio = myTemp * (hisLogLike + hisLogPrior) + hisTemp
+			double logRatio = myBeta * (hisLogLike + hisLogPrior) + hisBeta
 					* (myLogLike + myLogPrior);
-			logRatio -= hisTemp * (hisLogLike + hisLogPrior) + myTemp
+			logRatio -= hisBeta * (hisLogLike + hisLogPrior) + myBeta
 					* (myLogLike + myLogPrior);			
 			
 			if (verbose) {
@@ -146,11 +124,11 @@ public class StatAlignParallelMcmc extends StatAlignMcmc {
 			}
 			if (logU < logRatio) {				
 				if (verbose) {
-					System.out.println("Just swapped heat with my partner. New heat: "+ hisTemp);
+					System.out.println("Just swapped beta with my partner. New beta: "+ hisBeta);
 				}
 				
-				// Swap the heats
-				heat = hisTemp;
+				// Swap the betas
+				beta = hisBeta;
 								
 				// Swap the proposal width variables
 				double[] myProposalWidths, partnerProposalWidths; 
@@ -172,10 +150,10 @@ public class StatAlignParallelMcmc extends StatAlignMcmc {
 				coreModel.setProposalWidths(Arrays.copyOfRange(partnerProposalWidths,modelExtProposalWidths.length,
 						modelExtProposalWidths.length+coreModelProposalWidths.length));
 			}			
-		//}
+		}
 	}	
 	
-	public double[] MPI_exchange(int rankA, int rankB, double[] x) {
+	public double[] MPI_exchange(int rankA, int rankB, double[] x) {		
 		mpi.Request send, recieve;
 		double[] y = new double[x.length];
 		if (rank == rankA) {
