@@ -190,9 +190,6 @@ public class Utils{
 	//public static final double SILENT_INSERT_PROB = 0.05;	
 	public static final double SILENT_INSERT_PROB = 0.5;
 
-	
-	private static double[] tempDoubleArray;
-
 	public static boolean VERBOSE = false;
 
 	/**
@@ -208,21 +205,23 @@ public class Utils{
 	 * @return A random integer as described above
 	 */
 	public static int linearizerWeight(int length, MuDouble selectLike, double expectedLength){
-		if(tempDoubleArray == null || tempDoubleArray.length < length){
-			tempDoubleArray = new double[length];
+		if (length==1) {
+			selectLike.value = 1.0;
+			return 1;
 		}
+		double[] tempDoubleArray = new double[length]; // For efficiency, could pre-initialise this on a per-chain basis
 		double p = 1.0/(1+expectedLength);
 		double q = 1.0 - p;
-		tempDoubleArray[1] = p;
-		double sum = tempDoubleArray[1];
-		for(int i = 2; i < length; i++){
+		tempDoubleArray[0] = p;
+		double sum = tempDoubleArray[0];
+		for(int i=1; i<length; i++){
 			tempDoubleArray[i] = tempDoubleArray[i-1] * q;
 			sum += tempDoubleArray[i];
 		}
 		double w = generator.nextDouble() * sum;
-		int k = 1;
-		double x = tempDoubleArray[1];
-		while(x < w && k < length - 1){
+		int k = 0;
+		double x = tempDoubleArray[0];
+		while(x < w && k<(length-1)){
 			k++;
 			x += tempDoubleArray[k];
 		}
@@ -230,7 +229,7 @@ public class Utils{
 		//	System.out.println((tempDoubleArray[k]/sum));
 		selectLike.value = (tempDoubleArray[k]/sum); 
 
-		return k;
+		return k+1;
 	}
 
 	/**
@@ -239,23 +238,23 @@ public class Utils{
 	 * The value returned is equal to mu.value when linearizerWeight(length, mu) returns 'index'.
 	 * 
 	 * @param length Distribution parameter as in linearizerWeight
-	 * @param index Selected index
+	 * @param index Selected index, in range [1,length]
 	 * @return Probability of the selection
 	 */
 	public static double linearizerWeightProb(int length, int index, double expectedLength){
-		if(tempDoubleArray == null || tempDoubleArray.length < length){
-			tempDoubleArray = new double[length];
-		}
+		if (index==0) return 0;
+		if (length==1) return 1;
+		double[] tempDoubleArray = new double[length]; // For efficiency, could pre-initialise this on a per-chain basis
 		double p = 1.0/(1+expectedLength);
 		double q = 1.0 - p;
-		tempDoubleArray[1] = p;
-		double sum = tempDoubleArray[1];
-		for(int i = 2; i < length; i++){
+		tempDoubleArray[0] = p;
+		double sum = tempDoubleArray[0];
+		for(int i=1; i<length; i++){
 			tempDoubleArray[i] = tempDoubleArray[i-1] * q;
 			sum += tempDoubleArray[i];
 		}
 
-		return tempDoubleArray[index]/sum;
+		return tempDoubleArray[index-1]/sum;
 	}
 
 	/**
@@ -769,7 +768,8 @@ public class Utils{
 					} // for dirs
 				} // if !cpFile.isDir
 			} catch(IOException e) {
-				ErrorMessage.showPane(null, e, true);
+				System.err.println(ErrorMessage.except2String(e));
+				//ErrorMessage.showPane(null, e, true);
 			}
 		} // for classpath
 		
