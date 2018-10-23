@@ -78,6 +78,8 @@ public class State {
 	private String newickString;
 	/** <code>true</code> if this state comes from the burnin.*/
 	public boolean isBurnin;
+	/** The inverse temperature parameter associated with the chain that produced this State.*/
+	public double beta;
 	
 	/**
 	 * Constructs a new {@link State} object, filling the given parameter and

@@ -493,6 +493,7 @@ COLUMN:    	while (c != v.last) {
 		state.substParams = substitutionModel.params.clone();
 		state.logLike = getLogLike();
 		state.isBurnin = this.owner.burnin;
+		state.beta = this.owner.getBeta();
 		
 		return state;
 	}
