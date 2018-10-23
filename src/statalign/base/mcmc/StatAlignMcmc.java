@@ -201,7 +201,7 @@ public class StatAlignMcmc extends Mcmc {
 		double multiplicativeProposalWidthControlVariable = 0.5;
 		
 		topologyMove = null;
-		double fastSwapProb = 0.05;
+		double fastSwapProb = 0.0;
 		if (mcmcpars.fixAlign) fastSwapProb = 0.0;
 		
 		if(!mcmcpars.fixTopology && !mcmcpars.fixEdge && tree.vertex.length > 3) {
