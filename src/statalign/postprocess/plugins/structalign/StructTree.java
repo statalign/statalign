@@ -20,7 +20,7 @@ public class StructTree extends CurrentTree {
     	screenable = true;
 		outputable = true;
 		postprocessable = true;
-		postprocessWrite = false;
+		postprocessWrite = true;
 		selected = false;
 		active = false;		
 	}
