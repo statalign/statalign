@@ -125,7 +125,11 @@ public class StructTrace extends Postprocess {
 		try {
 			for (McmcMove mcmcMove : structAlign.getMcmcMoves()) {
 				if (mcmcMove.getParam() != null) {
-					outputFile.write(mcmcMove.name+"\t");
+					outputFile.write(mcmcMove.name);
+					// print a tab separator after all but the last column
+					if (mcmcMove != structAlign.getMcmcMoves().get(structAlign.getMcmcMoves().size()-1)) {
+						outputFile.write("\t");
+					}
 					//outputFile.write(mcmcMove.name+" (Proposed)\t");
 				}
 			}				
@@ -152,7 +156,7 @@ public class StructTrace extends Postprocess {
 		
 	}
 	private void doUpdate(State state, int sampleNumber) {				
-		if (!state.isBurnin && state.logLike > maxLikelihood) {
+		if (!state.isBurnin && state.beta==1.0d && state.logLike > maxLikelihood) {
 			maxLikelihood = state.logLike;			
 			sampleNumberMLE = sampleNumber;
 			coorMLE = structAlign.rotCoords.clone();
@@ -177,7 +181,11 @@ public class StructTrace extends Postprocess {
 			try {
 				for (McmcMove mcmcMove : structAlign.getMcmcMoves()) {
 					if (mcmcMove.getParam() != null) {
-						outputFile.write(mcmcMove.getParam().get()+"\t");
+						outputFile.write(mcmcMove.getParam().get()+"");
+						// print a tab separator after all but the last column
+						if (mcmcMove != structAlign.getMcmcMoves().get(structAlign.getMcmcMoves().size()-1)) {
+							outputFile.write("\t");
+						}
 //						if (mcmcMove.moveProposed) {
 //							outputFile.write(mcmcMove.getParam().get()+"\t");
 //						}
