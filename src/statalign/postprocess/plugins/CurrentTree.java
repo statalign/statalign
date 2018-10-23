@@ -132,7 +132,8 @@ public class CurrentTree extends TreeVisualizer {
                 e.printStackTrace();
             }
         }
-        if (postprocessWrite) {
+        if (postprocessWrite && state.beta==1.0d) { 
+        	// ok to use equals on floating point here, because it's initialised exactly to 1.0d 
             try {
                 outputFile.write("[" + no + "] tree 'tree_" + no + "'= "
         				+ sampledTree + "\n");
