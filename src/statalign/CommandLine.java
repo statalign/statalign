@@ -8,7 +8,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
+import java.util.regex.Pattern;
 import ml.options.OptionData;
 import ml.options.OptionSet;
 import ml.options.Options;
@@ -79,6 +79,7 @@ public class CommandLine {
 				.addOption("debug", Separator.EQUALS)
 				.addOption("verbose", Separator.EQUALS)
 				.addOption("reportBurnin", Separator.EQUALS)
+				.addOption("reportOnlyColdChain", Separator.EQUALS)
 				.addOption("subst", Separator.EQUALS)
 				.addOption("mcmc", Separator.EQUALS)
 				.addOption("tempDiff", Separator.EQUALS)
@@ -98,16 +99,20 @@ public class CommandLine {
 			return usage(null,manager);
 		}
 		if (set.isSet("debug")) {
-			Utils.DEBUG = true;
-			System.out.println("Debug mode enabled.");
+			Utils.DEBUG = Boolean.parseBoolean(set.getOption("debug").getResultValue(0));
+			if (Utils.DEBUG) System.out.println("Debug mode enabled.");
 		}
 		if (set.isSet("verbose")) {
-			Utils.VERBOSE = true;
-			System.out.println("Verbose output enabled.");
+			Utils.VERBOSE = Boolean.parseBoolean(set.getOption("verbose").getResultValue(0));
+			if (Utils.VERBOSE) System.out.println("Verbose output enabled.");
 		}
 		if (set.isSet("reportBurnin")) {
-			manager.inputData.doReportDuringBurnin = true;
-			System.out.println("Enabled printing of logging information during burnin.");
+			manager.inputData.doReportDuringBurnin = Boolean.parseBoolean(set.getOption("reportBurnin").getResultValue(0));
+			if (manager.inputData.doReportDuringBurnin) System.out.println("Enabled printing of logging information during burnin.");
+		}
+		if (set.isSet("reportOnlyColdChain")) {
+			manager.inputData.reportOnlyColdChain = Boolean.parseBoolean(set.getOption("reportOnlyColdChain").getResultValue(0));
+			if (manager.inputData.reportOnlyColdChain) System.out.println("MCMC output will be printed only for the cold chain.");
 		}
 		if (set.isSet("help")) {
 			OptionData help = set.getOption("help");
@@ -434,7 +439,7 @@ public class CommandLine {
 		return 0;
 	}
 
-	private String getUsageString(ArrayList<String> args, MainManager man) {
+	public String getUsageString(ArrayList<String> args, MainManager man) {
 		StringBuilder sb = new StringBuilder();
 		
 		if (args == null || args.size() == 0) {
@@ -442,10 +447,9 @@ public class CommandLine {
 			sb.append("Usage:\n\n");
 
 			if (isParallel) {
-				// TODO: this.
-				sb.append("    <depends> statalign.jar [options] seqfile1 [seqfile2 ...] [treefile]\n\n\n");
+				sb.append("    StatAlign_mpi [options] seqfile1 [seqfile2 ...] [treefile]\n\n\n");
 			} else {
-				sb.append("    java -Xmx512m -jar statalign.jar [options] seqfiles [treefile]\n\n");
+				sb.append("    java -Xmx512m -jar StatAlign.jar [options] seqfiles [treefile]\n\n");
 			}
 	
 			sb.append("Description:\n\n")
@@ -534,10 +538,15 @@ public class CommandLine {
 	
 			  .append("    -reportBurnin=true\n")
 			  .append("        Enables the printing of logging information during the burnin.\n")
-			  .append("        Default: false\n\n")
-	
+			  .append("        Default: false\n\n");
+
+			if (isParallel) {
+			  sb.append("    -reportOnlyColdChain=true\n" )
+			  .append("        Only output MCMC samples for plugins for cold chain.\n")
+			  .append("        Default: true\n\n");
+			}
 			  
-			  .append("    -ot=OUTTYPE\n")
+			  sb.append("    -ot=OUTTYPE\n")
 			  .append("        Sets output alignment type.\n")
 			  .append("          (One of: "
 					+ Utils.joinStrings(MainManager.alignmentTypes, ", ") + ")\n")
@@ -700,11 +709,13 @@ public class CommandLine {
 		StringBuilder build = new StringBuilder();
 		List<Postprocess> plugins = man.postProcMan.getPlugins();
 		for (String key : postprocAbbr.keySet()) {
+			String[] packageName = plugins.get(postprocAbbr.get(key)).getClass().getPackage().getName().split(Pattern.quote("plugins."));			
 			build.append(linePrefix);
 			build.append(key);
 			build.append(": ");
 			build.append(plugins.get(postprocAbbr.get(key))
 					.getTip());
+			if (packageName.length > 1) build.append(" ("+packageName[1]+")");
 			build.append("\n");
 		}
 		return build.toString();
