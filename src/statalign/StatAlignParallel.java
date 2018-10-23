@@ -1,10 +1,12 @@
 package statalign;
 
+import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Arrays;
 
 import mpi.*;
 import statalign.base.MainManager;
+import statalign.base.Utils;
 
 public class StatAlignParallel {
 
@@ -12,8 +14,13 @@ public class StatAlignParallel {
 
     	// The MPJ framework appends (at least) three parameters in front of the normal 
     	// parameters when it is initializing the processes. We want to separate those
-    	// from the normal parameters (mpiArgs = [0, 1, 'mpidev'], realArgs = [....]).
-    	
+    	// from the normal parameters (mpiArgs = [0, 1, 'mpidev'], realArgs = [....]).    	
+    	if (args.length < 3) {
+            boolean parallel = true;
+            CommandLine cl = new CommandLine(parallel);
+            MainManager manager = new MainManager(null,parallel);
+            System.out.println(cl.getUsageString(null, manager));
+    	}
         String[] mpiArgs = new String[3];
         String[] realArguments = new String[args.length - 3];
         for (int i = 0; i < 3; i++) {
@@ -34,19 +41,25 @@ public class StatAlignParallel {
             System.out.println("    Arguments: " + Arrays.toString(realArguments));
             System.out.println("    No of processes: " + noOfProcesses + "");
         }
+        if (rank==1) {
+        	//Utils.DEBUG = true;
+        }
+       
+        // in case we're running on a headless server
+        System.setProperty("java.awt.headless", "true");
 
         /*
          * Set java.class.path so that we can locate plugins.
          * This is necessary when StatAlign is invoked via MPJ's starter.jar.
          */
-        System.out.println(System.getProperty("java.class.path"));
+//        System.out.println(System.getProperty("java.class.path"));
+//        URL[] urls = ((URLClassLoader) (Thread.currentThread().getContextClassLoader())).getURLs();
+//        for (URL url : urls) {
+//        	System.out.println(url.toString());
+//        }
         String statalign_bin = ((URLClassLoader) (Thread.currentThread().getContextClassLoader())).getURLs()[1].toString();
-        // QUESTION: will this always be the second element of the vector above? Seems like
-        // the first element is always the path to this jar, and then the last elements are
-        // the paths to the mpj jars, but not sure if this order will be preserved in all cases.
         statalign_bin = statalign_bin.replaceFirst("file:",""); 
         System.setProperty("java.class.path",statalign_bin);
-        System.out.println(System.getProperty("java.class.path"));
 
         boolean parallel = true;
         MainManager manager = new MainManager(null,parallel);
@@ -62,7 +75,7 @@ public class StatAlignParallel {
             System.exit(1);
         }
         
-        // TODO cf. comment in StatAlign
+        // TODO cf. comment in StatAlign.java
 		manager.init(cl.pluginParameters);
 		//manager.init(Postprocess.pluginParameters);
 
