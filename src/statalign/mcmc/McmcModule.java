@@ -129,15 +129,15 @@ public abstract class McmcModule {
 		}
 		return info;
 	}
-	public void printParameters() {		
+	public void printParameters(int sample) {
 		if (logParametersToFile) {
-			String params = "";
+			String params = ""+sample;
 			if (mcmc.isParallel) {
-				params += mcmc.getHeat();
+				params += "\t"+mcmc.getBeta();
 			}			
 			for (McmcMove m : mcmcMoves) {			
 				if (m.printableParam) {
-					if (params != "") params += ", ";
+					if (params != "") params += "\t";
 					params += m.getParameterString();			
 				}
 			}
@@ -158,13 +158,13 @@ public abstract class McmcModule {
 	 */
 	public void beforeSampling(Tree tree) {
 		if (logParametersToFile) {
-			String paramNames = "";
+			String paramNames = "sample";
 			if (mcmc.isParallel) {
-				paramNames += "heat";
+				paramNames += "\tbeta";
 			}
 			for (McmcMove m : mcmcMoves) {			
 				if (m.printableParam) {
-					if (paramNames != "") paramNames += ", ";
+					if (paramNames != "") paramNames += "\t";
 					paramNames += m.getNameString();
 				}
 			}
