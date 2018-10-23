@@ -71,10 +71,11 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	
 	JToggleButton myButton;
 	
-	public boolean globalSigma = true;
+	public boolean globalSigma = false;
 	public boolean useLibrary = false;
 	public boolean fixedEpsilon = false;
 	public boolean fixedSigma2 = false;
+	public boolean localEpsilon = true;
 	
 	/** 
 	 *  If globalSigma = false then this switches on a spike prior at sigma2Hier. 
@@ -82,9 +83,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	 * */
 	public boolean globalSigmaSpike = false; 
 	double[] globalSigmaSpikeParams = {1.35,1.1};
-	
-	public boolean localEpsilon = false;
-	
+
 	double structTemp = 1;	
 	
 	private boolean USE_IN_ALIGNMENT_PROPOSALS = true;
@@ -263,16 +262,16 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		usage.append("^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\n");
 		usage.append("java -jar statalign.jar -plugin:structal[OPTION1,OPTION2,...]\n");
 		usage.append("OPTIONS: \n");
-		usage.append("\tprintRmsd=true\t\t(Prints RMSD and sequence identity for each sample.)\n");
-		usage.append("\tprintTree=true\t\t(Prints tree with edge lengths replaced by structural diffusivity.)\n");
+		usage.append("\tprintRmsd\t\t(Prints RMSD and sequence identity for each sample.)\n");
+		usage.append("\tprintTree\t\t(Prints tree with edge lengths replaced by structural diffusivity.)\n");
 		usage.append("\tsigma2=X\t\t(Fixes sigma2 at X)\n");
 		usage.append("\tepsilon=X\t\t(Fixes epsilon at X)\n");
 		usage.append("\tminEpsilon=X\t\t(Sets minimum value for epsilon to X) [default 0.01]\n");
-		usage.append("\tlocalEpsilon\t\t(Uses B-factor information [if available] to scale epsilon per site.)\n");
-		usage.append("\tlocalSigma\t\t(Allows each branch to have its own sigma parameter)\n");
+		usage.append("\tglobalEpsilon\t\t(Use single epsilon parameter for all sites)\n");
+		usage.append("\tglobalSigma\t\t(Force single sigma parameter for all branches)\n");
 		usage.append("\tuseLibrary\t\t(Allows rotation library moves to be used)\n");
 		usage.append("\tsigmaSpike\t(Activates spike mixture prior for local sigmas)\n");		
-		usage.append("\tsigmaSpike={a_b}\t(Specifies parameters for the Beta prior on spike probability) [default (3.1,1.1) ]\n");		
+		usage.append("\tsigmaSpike={a_b}\t(Specifies parameters for the Beta prior on spike probability) [default (1.35,1.1) ]\n");		
 		usage.append("\tsigma2Prior=PRIOR\t(Sets the prior and hyperparameters for sigma2)\n");
 		usage.append("\tepsilonPrior=PRIOR\t(Sets the prior and hyperparameters for epsilon)\n");
 		usage.append("\tPRIOR can be one of:\n");
@@ -370,12 +369,11 @@ public class StructAlign extends ModelExtension implements ActionListener {
 	}
 	@Override
 	public void setParam(String paramName, boolean paramValue) {
-		if (paramName.equals("localSigma")) {
-			globalSigma = false;
+		if (paramName.equals("globalSigma")) {
+			globalSigma = true;
 		}
-		else if (paramName.equals("localEpsilon")) {
-			localEpsilon = true;
-			System.out.println("Using B-factor information to scale epsilon.");
+		else if (paramName.equals("globalEpsilon")) {
+			localEpsilon = false;			
 		}
 		else if (paramName.equals("printRmsd")) {
 			printRmsd = true;			
@@ -503,7 +501,7 @@ public class StructAlign extends ModelExtension implements ActionListener {
 				continue;
 			ProteinSkeletons ps = (ProteinSkeletons) data;
 			if (localEpsilon && ps.bFactors.size() == 0) {
-				throw new RuntimeException("No B-factor data available: cannot use localEpsilon mode.");
+				throw new RuntimeException("No B-factor data available: cannot use localEpsilon mode. Try re-running with the 'globalEpsilon' option.");
 			}
 			for(i = 0; i < ps.names.size(); i++) {				
 				String name = ps.names.get(i).toUpperCase();
@@ -1092,10 +1090,10 @@ public class StructAlign extends ModelExtension implements ActionListener {
 		double[][] covar = new double[tree.names.length][tree.names.length];
 		calcDistanceMatrix(tree.root, distanceMatrix);
 		
-		if (printRmsd) {
-			rmsdTrace.distanceMatrix = new double[tree.names.length][tree.names.length];
-			calcUnweightedDistanceMatrix(tree.root,rmsdTrace.distanceMatrix);
-		}		
+//		if (printRmsd) {
+//			rmsdTrace.distanceMatrix = new double[tree.names.length][tree.names.length];
+//			calcUnweightedDistanceMatrix(tree.root,rmsdTrace.distanceMatrix);
+//		}		
 		
 		// for hierarchical sigma, distance matrix calculation already incorporates multiplication 
 		// by theta_i = sigma_i^2 / (2 tau)
