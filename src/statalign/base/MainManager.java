@@ -135,11 +135,11 @@ public class MainManager {
 		
 		try {
 			String filenameExtension = modelExtMan.getFilenameExtension();
-			if (noOfProcesses > 1) {
-				filenameExtension += "chain"+rank;
-			}
 			if (!filenameExtension.isEmpty()) {
 				filenameExtension += ".";
+			}
+			if (noOfProcesses > 1) {
+				filenameExtension += "chain"+rank+".";
 			}
 			postProcMan.logFile = new FileWriter(fullPath + "." + filenameExtension + "log");					
 			postProcMan.setBaseFileName(fullPath + "." + filenameExtension);
