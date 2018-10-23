@@ -1,8 +1,10 @@
 package statalign;
 
 import java.io.BufferedReader;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.file.Files;
@@ -13,6 +15,7 @@ import statalign.base.MainManager;
 import statalign.postprocess.Postprocess;
 import statalign.ui.ErrorMessage;
 import statalign.ui.MainFrame;
+
 
 /**
  * <p>The entry point of the application. If the program is called from command line and
@@ -30,13 +33,13 @@ public class StatAlign{
 	 */
 
 	public static final int majorVersion = 3;
-	public static final int minorVersion = 2;
-	public static final String version = "v3.2";
+	public static final int minorVersion = 3;
+	public static final String version = "v3.3";
 	
 	public static boolean allowVersionCheck = true;
 	
 	public static final String webPageURL = "http://statalign.github.io/";
-
+	
 	/** 
 	 * If command line arguments are provided, terminal mode is launched
 	 * (without graphical interface). Running with no arguments launches 
@@ -47,14 +50,15 @@ public class StatAlign{
 	 * java -jar StatAlign.jar -help
 	 * 
 	 * @param args (optional)
+	 * @throws FileNotFoundException 
 	 * @throws IOException
 	 */
-	public static void main(String args[]) {
+	public static void main(String args[]) throws FileNotFoundException {
 					
 		System.out.println("StatAlign "+version);
 		
-        System.out.println(System.getProperty("java.class.path"));
-
+        System.out.println(System.getProperty("java.class.path"));       
+        
 		if(args.length != 0) {
 			// console mode
 	        boolean parallel = false;
