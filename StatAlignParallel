@@ -1,0 +1,12 @@
+#!/bin/bash
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+STATALIGN_JAR=$DIR/StatAlign.jar
+export MPJ_HOME=$DIR/lib/mpj-v0_44
+
+NCORES=$1
+
+if [[ -z "$NCORES" ]]; then 
+    NCORES=1
+fi
+java -jar $MPJ_HOME/lib/starter.jar -np $NCORES -cp $STATALIGN_JAR statalign.StatAlignParallel "${@:2}"
