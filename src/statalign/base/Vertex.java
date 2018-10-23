@@ -1770,11 +1770,11 @@ public class Vertex {
     /** This function cuts out a window and realigns in the selected subtree. */
     public double selectAndResampleAlignment() {    	   	
     	
-    	if (Utils.DEBUG) {
-	    	System.out.println(index+" "+name+" "+edgeLength);
-	    	System.out.println(owner.hmm2.params[0]+" "+owner.hmm2.params[1]+" "+owner.hmm2.params[2]);
-	    	System.out.println(owner.printedTreeWithNumbers());
-    	}
+//		if (Utils.DEBUG) {
+//	    	System.out.println(index+" "+name+" "+edgeLength);
+//	    	System.out.println(owner.hmm2.params[0]+" "+owner.hmm2.params[1]+" "+owner.hmm2.params[2]);
+//	    	System.out.println(owner.printedTreeWithNumbers());
+//    	}
         //if (Utils.DEBUG) printToScreenAlignment(0,0,true);
     	//printToScreenAlignment(0,0,true);
     	StringBuffer sb = new StringBuffer();
@@ -1805,7 +1805,7 @@ public class Vertex {
         if (Utils.DEBUG) 	print(sb);
 //    	}
         if (Utils.DEBUG) System.out.println(sb.toString());
-        
+
         // this code below checks pointer integrity...
         //    for(int i = 0; i < owner.vertex.length - 1; i++){
         //	owner.vertex[i].calcIndelLogLikeUp();//
@@ -1816,15 +1816,9 @@ public class Vertex {
         MuDouble p = new MuDouble(1.0);
         winLength = Utils.linearizerWeight(length, p, Utils.WINDOW_MULTIPLIER*Math.sqrt(length));
         if (Utils.USE_FULL_WINDOWS) { winLength = length; p.value = 1.0; } 
-        if (Utils.DEBUG) {
-	        if (winLength > length) {
-	        	System.err.println("vertex = "+index);
-	        	System.err.println("Length: "+length+"\t");
-	        	System.err.println("Window length: "+winLength+"\t");
-	        }
-        }
         int b = (length - winLength == 0 ? 0 : Utils.generator.nextInt(length - winLength + 1));
         if (Utils.DEBUG) System.out.println("Initial window length\t "+winLength);
+
         //System.out.print("b: "+b+"\t");
         AlignColumn actualAC = first;
         for (int i = 0; i < b; i++) {
@@ -1835,7 +1829,7 @@ public class Vertex {
             actualAC = actualAC.next;
         }
         winLast = actualAC;
-        
+
 //        if (Utils.USE_UPPER) {
 //        	//owner.root.calcFelsenRecursively();
 //        	owner.root.calcUpperRecursively();
@@ -1854,7 +1848,7 @@ public class Vertex {
         	right.selectWindow();
         }
         selectWindowUp();
-	
+
 //        owner.root.calcFelsenRecursively();
 //        owner.root.calcOrphanRecursively();
 //        owner.root.calcIndelLogLikeRecursively();
@@ -1875,7 +1869,36 @@ public class Vertex {
 //        	updateAlignedRecursively();
 //        	updateAlignedParent();
 //        }
-        
+
+
+//        System.out.print("vertex = "+index+"\t");
+//    	System.out.print("Length: "+length+"\t");
+//    	System.out.print("Window length: "+winLength+"\n");
+//    	//if (index==35) {
+//    		System.out.println("winFirst: ");
+//    		System.out.print(""+winFirst.mostLikely());
+//    		if (winFirst.next != null) {
+//    			System.out.println(""+winFirst.next.mostLikely());
+//    			//if (winFirst.next.next != null) System.out.print(""+winFirst.next.next.mostLikely());
+//    		}    	
+//    		//System.out.println(""+winFirst.left.mostLikely()+winFirst.left.next.mostLikely()+winFirst.left.next.next.mostLikely());
+//    		if (winLast != last) {    		
+//	    		System.out.println("winLast: ");
+//	    		System.out.println(""+winLast.mostLikely());
+//	    		if (winLast.left != null) System.out.println(""+winLast.left.mostLikely());
+//    		}
+//    		if (left != null) {
+//	    		String[] s0 = left.printedAlignment(false);
+//	    		System.out.println("parent\t"+s0[0]);
+//	    		System.out.println("left\t"+s0[1]+"\n");
+//    		}
+//    		if (right != null) {
+//	    		String[] s1 = right.printedAlignment(false);
+//	    		System.out.println("parent\t"+s1[0]);
+//	    		System.out.println("right\t"+s1[1]+"\n");
+//    		}
+       // }
+
         //printToScreenAlignment(b,b+winLength);
         // compute alignment backproposal
         //bpp += doRecBackprop();
@@ -1891,6 +1914,21 @@ public class Vertex {
 
         // align the sequences
         double bppProp = doRecAlign();
+
+    	//if (index==35) {
+//    		System.out.print("after doRecAlign:\n");	
+//	    	System.out.print("Length: "+length+"\t");
+//	    	System.out.print("Window length: "+winLength+"\n");
+//    		System.out.println("winFirst: ");
+//    		System.out.print(""+winFirst.mostLikely());
+//    		if (winLast != null) {
+//    			System.out.println("winLast: ");
+//    			System.out.println(""+winLast.mostLikely());
+//    			if (winLast.left != null) System.out.println(""+winLast.left.mostLikely());
+//    		}
+    		//System.out.println(""+winFirst.left.mostLikely()+winFirst.left.next.mostLikely()+winFirst.left.next.next.mostLikely());    		
+       // }
+
         if (Utils.DEBUG) System.out.println("bppProp after doRecAlign()\t "+bppProp);
         if (parent != null) {
         	//bppProp += hmm2AlignWithSave();
@@ -1903,6 +1941,23 @@ public class Vertex {
             calcOrphan();
         }
         
+       // if (index==35) {
+//    		System.out.print("after hmm2Align:\n");	
+//	    	System.out.print("Length: "+length+"\t");
+//	    	System.out.print("Window length: "+winLength+"\n");	
+//	    	
+//    		if (left != null) {
+//	    		String[] s0 = left.printedAlignment(false);
+//	    		System.out.println("parent\t"+s0[0]);
+//	    		System.out.println("left\t"+s0[1]+"\n");
+//    		}
+//    		if (right != null) {
+//	    		String[] s1 = right.printedAlignment(false);
+//	    		System.out.println("parent\t"+s1[0]);
+//	    		System.out.println("right\t"+s1[1]+"\n");
+//    		}
+        //}
+    	  
 //        owner.root.calcFelsenRecursively();
 //        owner.root.calcOrphanRecursively();
 //        owner.root.calcIndelLogLikeRecursively();
@@ -1915,9 +1970,6 @@ public class Vertex {
 //        }   
         //owner.root.recomputeCheckLogLike();
         //if (Utils.USE_UPPER) owner.checkUppFelsProducts();
-
-        if (Utils.DEBUG) printToScreenAlignment(0,0,true);
-
         bpp += bppProp;
 
         if (Utils.DEBUG) {
@@ -1945,6 +1997,8 @@ public class Vertex {
         if (Utils.DEBUG) System.out.println("Final window length\t "+winLength);
         double windowProb = 0;
         if (!(Utils.USE_FULL_WINDOWS)) {
+//        	System.out.print("Length: "+length+"\t");
+//	        System.out.print("Window length: "+winLength+"\n");
         	windowProb = Math.log(Utils.linearizerWeightProb(length, winLength, Utils.WINDOW_MULTIPLIER*Math.sqrt(length)) 
            		/ (length - winLength + 1));
         }
@@ -1985,10 +2039,12 @@ public class Vertex {
         if(!useCurrentWin) {
         	MuDouble p = new MuDouble(1.0);
 	        winLength = Utils.linearizerWeight(length, p, Utils.WINDOW_MULTIPLIER*Math.sqrt(length));
-	        //System.out.print("Length: "+length+"\t");
-	        //System.out.print("Window length: "+winLength+"\t");
-	        int b = (length - winLength == 0 ? 0 : Utils.generator.nextInt(length - winLength + 1));
-	        //System.out.print("b: "+b+"\t");
+//	        System.out.print("Length: "+length+"\t");
+//	        System.out.print("Window length: "+winLength+"\t");
+
+	        // randomly select a start point for the window
+	        int b = (length - winLength == 0 ? 0 : Utils.generator.nextInt(length - winLength + 1));	        
+
 	        AlignColumn actualAC = first;
 	        for (int i = 0; i < b; i++) {
 	            actualAC = actualAC.next;
@@ -2003,6 +2059,7 @@ public class Vertex {
 	        winLast = actualAC;
 	        
 	        //double bpp = -Math.log(p.value * (length - winLength == 0 ? 1 : length - winLength));
+	        // compute the probability of proposing the window size and location
 	        bpp -= Math.log(p.value / (length - winLength + 1));
         }
 
@@ -2053,6 +2110,7 @@ public class Vertex {
         // backproposal probability for cutting out the window
         //bpp += Math.log(Utils.linearizerWeightProb(length, winLength, Utils.WINDOW_MULTIPLIER*Math.sqrt(length)) 
         //		* (length - winLength));
+
         bpp += Math.log(Utils.linearizerWeightProb(length, winLength, Utils.WINDOW_MULTIPLIER*Math.sqrt(length)) 
                		/ (length - winLength + 1));
 
@@ -3048,14 +3106,6 @@ public class Vertex {
     		updateNextStates();
     		updateCurrStates();
     	}
-    }
-    private double[][] computeImputationProbabilities(String[] ali) {
-    	
-    	final int END = owner.hmm2.getEnd();
-    	double[][] logMarg = new double[ali[0].length()][END];
-    	
-    	
-    	return logMarg;
     }
     
     /** 
