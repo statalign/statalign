@@ -31,6 +31,7 @@ public class ModelExtManager {
 	private List<ModelExtension> activeList;
 	
 	private String filenameExtensionBase = "";
+	public boolean initialAlignmentStep = false;
 
 	public void addToFilenameExtension(String s) {
 		if (filenameExtensionBase.isEmpty()) {
@@ -431,7 +432,7 @@ public class ModelExtManager {
 	public double calcLogEm(int[] aligned) {
 		double logEm = 0;
 		for(ModelExtension plugin : activeList) {
-			logEm += plugin.calcLogEm(aligned);
+			if (!initialAlignmentStep) logEm += plugin.calcLogEm(aligned);				
 		}
 		return logEm;
 	}

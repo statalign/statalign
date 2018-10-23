@@ -6,6 +6,7 @@ import statalign.base.MainManager;
 import statalign.base.Mcmc;
 import statalign.base.Tree;
 import statalign.base.TreeAlgo;
+import statalign.base.Utils;
 import statalign.base.mcmc.StatAlignMcmc;
 import statalign.base.mcmc.StatAlignParallelMcmc;
 import statalign.io.RawSequences;
@@ -53,6 +54,7 @@ public class MainThread extends StoppableThread {
 			owner.inputData.pars.fixTopology = owner.inputData.useTree >= 2;
 			owner.inputData.pars.fixEdge = owner.inputData.useTree >= 3;
 			owner.inputData.pars.doReportDuringBurnin = owner.inputData.doReportDuringBurnin;
+			owner.inputData.pars.reportOnlyColdChain = owner.inputData.reportOnlyColdChain;
 
 			// initialise model extension plugins for run
 			owner.modelExtMan.initRun(owner.inputData);
@@ -92,8 +94,13 @@ public class MainThread extends StoppableThread {
 				treeAlgo.addAlignSeqsToTree(tree, nongapped, names,
 						owner.inputData.model, new File(owner.fullPath).getName());
 			} else {
+				owner.modelExtMan.initialAlignmentStep = true;
+				// to stop ModelExtension plugins contributing to the emission probability,
+				// because they won't have had a chance to re-adjust based on a reasonable
+				// initial alignment (e.g. protein structures won't be properly superposed)
 				tree = treeAlgo.buildNJTree(nongapped, seqs.getSeqnames().toArray(new String[seqs.size()]), 	
 						owner.inputData.model, new File(owner.fullPath).getName());
+				owner.modelExtMan.initialAlignmentStep = false;
 			}
 			System.out.println("Initial tree: "+tree.printedTree()+"\n");
 //			Tree tree = new Tree(nongapped, seqs.seqNames.toArray(new String[seqs.seqNames.size()]), 	
