@@ -62,11 +62,10 @@ public class RmsdTrace extends Postprocess {
 		selected = false;
 		active = false;		
 	}
-
 	
 	@Override
 	public String getFileExtension() {
-		return "rmsd";
+		return "msd";
 	}
 
 	@Override
@@ -115,21 +114,17 @@ public class RmsdTrace extends Postprocess {
 		//double[] rad = calcGyration();
 		if(postprocessWrite) {
 		int leaves = structAlign.coords.length;
-		try {
-			outputFile.write("# Each row contains pairwise mean-square deviations (msd_ij)\n");
-			outputFile.write("# branch length distances (t_ij), and sequence identities (seqID_ij)\n");
-			outputFile.write("# for each MCMC sample.\n");			
+		try {	
 			for(int i = 0; i < leaves-1; i++)
 				for(int j = i+1; j < leaves; j++)
-					outputFile.write("msd" + i + "_" + j + "\t");
-			for(int i = 0; i < leaves-1; i++)
-				for(int j = i+1; j < leaves; j++)
-					outputFile.write("t" + i + "_" + j + "\t");
-			for(int i = 0; i < leaves-1; i++)
-				for(int j = i+1; j < leaves; j++)
-					outputFile.write("seqID" + i + "_" + j + "\t");
-			
-			
+					outputFile.write(inputData.seqs.getNames().get(i) + "_" + inputData.seqs.getNames().get(j) + "\t");						
+//			for(int i = 0; i < leaves-1; i++)
+//				for(int j = i+1; j < leaves; j++)
+//					outputFile.write(inputData.seqs.getNames().get(i) + "_" + inputData.seqs.getNames().get(j) + "\t");	
+//			for(int i = 0; i < leaves-1; i++)
+//				for(int j = i+1; j < leaves; j++)
+//					outputFile.write(inputData.seqs.getNames().get(i) + "_" + inputData.seqs.getNames().get(j) + "\t");	
+
 //			for(int i = 0; i < rad.length; i++)
 //				outputFile.write(mcmc.tree.names[i] + "\t");
 //			outputFile.write("\n");
@@ -157,7 +152,7 @@ public class RmsdTrace extends Postprocess {
 	
 	private void doUpdate(State state, int sampleNumber) {				
 		updateTracks(curAli.showFullAlignment ? state.getFullAlign() : state.getLeafAlign());
-		if (!state.isBurnin && state.logLike > maxLikelihood) {
+		if (!state.isBurnin && state.beta==1.0d && state.logLike > maxLikelihood) {
 			maxLikelihood = state.logLike;			
 			sampleNumberMLE = sampleNumber;
 			alignMLE = curAli.showFullAlignment ? state.getFullAlign().clone() : state.getLeafAlign().clone();
@@ -173,18 +168,20 @@ public class RmsdTrace extends Postprocess {
 			return;
 		if(postprocessWrite) {
 			double[][] msd = calcMSD();
-			double[][] seqID = calcSeqID();			
+//			double[][] seqID = calcSeqID();			
 			
 			try {
 				for(int i = 0; i < msd.length-1; i++)
-					for(int j = i+1; j < msd.length; j++)
-						outputFile.write(msd[i][j] + "\t");
-				for(int i = 0; i < msd.length-1; i++)
-					for(int j = i+1; j < msd.length; j++) 
-						outputFile.write(distanceMatrix[i][j] + "\t");
-				for(int i = 0; i < msd.length-1; i++)
-					for(int j = i+1; j < msd.length; j++)
-						outputFile.write(seqID[i][j] + "\t");
+					for(int j = i+1; j < msd.length; j++) {
+						outputFile.write(msd[i][j]+"");
+						if (j<(msd.length-1))  outputFile.write("\t");
+					}
+//				for(int i = 0; i < msd.length-1; i++)
+//					for(int j = i+1; j < msd.length; j++) 
+//						outputFile.write(distanceMatrix[i][j] + "\t");
+//				for(int i = 0; i < msd.length-1; i++)
+//					for(int j = i+1; j < msd.length; j++)
+//						outputFile.write(seqID[i][j] + "\t");
 				outputFile.write("\n");
 			} catch (IOException e){
 				e.printStackTrace();
@@ -207,25 +204,30 @@ public class RmsdTrace extends Postprocess {
 		}				
 		try { 
 			if (rmsdMLE != null) {
-				FileWriter mle = new FileWriter(getBaseFileName()+"mle." + getFileExtension());
-				mle.write("# Maximum likelihood = "+maxLikelihood+" at sample "+sampleNumberMLE+"\n");
-				mle.write("# RMSD\tAverage B-factor\n");
-				mle.flush();
+				FileWriter rmsdFile = new FileWriter(getBaseFileName()+"mle.rmsd");
+				FileWriter bfactorFile = new FileWriter(getBaseFileName()+"mle.bfactors");
 				for (int i=0; i<rmsdMLE.length; i++) {
 					boolean allGap = true;					
 					for (int j=0; j<structAlign.rotCoords.length; j++) { // Assume first sequences are non-internals
 						if (alignMLE[j].charAt(i) != '-') allGap = false;
 					}
 					if (!allGap) {
-						mle.write(rmsdMLE[i]+"");
-						if (structAlign.localEpsilon) mle.write("\t"+3*epsilonMLE*bFactorMLE[i]);
-						mle.write("\n");
+						rmsdFile.write(rmsdMLE[i]+"\n");
+						if (structAlign.localEpsilon) bfactorFile.write(Math.sqrt(3)*bFactorMLE[i]+"\n");						
+					}
+					else { // remove the column from the alignment
+						for (int j=0; j<structAlign.rotCoords.length; j++) {
+							StringBuilder sb = new StringBuilder(alignMLE[j]);
+							sb.deleteCharAt(i);
+							alignMLE[j] = sb.toString();
+						}
 					}
 					
 				}
-				mle.close();
+				rmsdFile.close();
+				bfactorFile.close();
 				
-				FileWriter aliMLE = new FileWriter(getBaseFileName()+"mle.ali");
+				FileWriter aliMLE = new FileWriter(getBaseFileName()+"mle.fasta");
 
 				// Form an array from the leaves of the alignment 
 				String[] aln = Utils.alignmentTransformation(alignMLE, alignMLENames,
@@ -401,7 +403,6 @@ public class RmsdTrace extends Postprocess {
 		return "RMSD trace";
 	}
 
-
 	@Override
 	public Icon getIcon() {
 		// TODO Auto-generated method stub
@@ -419,6 +420,6 @@ public class RmsdTrace extends Postprocess {
 	@Override
 	public String getTip() {
 		// TODO Auto-generated method stub
-		return "";
+		return "Root-mean-squared deviation for superposed structures";
 	}
 }
