@@ -1,7 +1,8 @@
 #!/bin/bash
-thisDir=$(dirname $0) || false
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-pushd ${thisDir} > /dev/null
-    gradle clean build shadowJar
-    cp build/libs/StatAlign-3.2-all.jar ./StatAlign.jar
+version=$( cat release_version.txt | sed 's/v//' )
+pushd $DIR > /dev/null
+    gradle clean build shadowJar -DmainClass=statalign.StatAlign -DbaseName=StatAlign
+    cp build/libs/StatAlign-$version-all.jar ./StatAlign.jar
 popd > /dev/null

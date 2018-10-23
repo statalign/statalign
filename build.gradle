@@ -1,7 +1,7 @@
 apply plugin: 'java'
 apply plugin: 'distribution'
 
-version = '3.2'
+version = '3.3'
 
 repositories {
     flatDir {
@@ -27,6 +27,9 @@ dependencies {
   compile name: 'Jama-1.0.3'
   compile name: 'VARNAv3-8-API'
   compile name: 'commons-math-3.0-SNAPSHOT'
+  compile name: 'log4j-1.2-api-2.3'
+  compile name: 'log4j-core-2.3'
+  compile name: 'log4j-api-2.3'
 }
 
 sourceSets {
@@ -45,7 +48,7 @@ sourceSets {
     }
 }
 
-jar.archiveName = "StatAlign-3.2.jar"
+jar.archiveName = "StatAlign.jar"
 
 distributions {
     main {
@@ -57,12 +60,9 @@ distributions {
     }
 }
 
-jar {
-    manifest {
-        attributes 'Main-Class': 'statalign.StatAlign'
-    }
-}
-
 shadowJar {
-  baseName = 'StatAlign'
+  baseName = System.properties.getProperty('baseName')
+  manifest {
+    attributes 'Main-Class': System.properties.getProperty('mainClass')
+  }
 }
