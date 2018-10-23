@@ -1,6 +1,7 @@
 package statalign.postprocess.plugins.contree;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -11,10 +12,16 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 
+import ml.options.OptionSet;
+import ml.options.Options;
+import ml.options.Options.Multiplicity;
+import ml.options.Options.Separator;
+import statalign.base.Utils;
 import statalign.postprocess.plugins.TreeNode;
 import statalign.postprocess.plugins.contree.hash.HashEntry;
 import statalign.postprocess.plugins.contree.hash.HashTable;
 import statalign.postprocess.plugins.contree.hash.HashUtils;
+import statalign.postprocess.utils.NewickParser;
 /**
  * The main thread for calculating consensus trees and networks.
  * Note that networks is dependent on the initial tree...
@@ -692,31 +699,82 @@ public class CTMain {
     }
 
     public static String[] readTreesFromFile(String fileName, int n) throws IOException {
+    	BufferedReader reader = new BufferedReader(new FileReader(fileName));    
+    	String[] trees = new String[n];
+    	for (int i = 0; i < n; i++) {
+    		trees[i] = reader.readLine();
+    	}
+        return trees;
+    }
+
+    public static List<String> readTreesFromNexus(String fileName, int start) throws IOException {    	   
         BufferedReader reader = new BufferedReader(new FileReader(fileName));
-        String[] trees = new String[n];
-        for (int i = 0; i < n; i++) {
-            trees[i] = reader.readLine();
-        }
+        List<String> trees = new ArrayList<String>();
+        String line;        
+        int sample = 0;
+		while((line = reader.readLine()) != null) {
+			if (line.isEmpty()) continue;										
+			String token = line;			
+			if (line.contains(" tree ")) {
+				String[] s = line.split("=");
+				token = s[1];
+				sample = Integer.parseInt(s[0].replaceAll("\\[(\\d+)\\].*$", "$1"));				
+			}
+			else continue;						
+			token = token.replaceAll("\\[\\d+\\]", "");
+			if (sample>=start) trees.add(token);			
+		}        
+		reader.close();
         return trees;
     }
 
     private static void printUsage() {
-        System.out.println("Usage: java CTMain <file containing trees> <no. of trees>");
+        System.out.println("Usage: java -cp StatAlign.jar statalign.postprocess.plugins.contree.CTMain [OPTIONS] NEXUS_FILE_1 [NEXUS_FILE_2] ... [NEXUS_FILE_N]");
+        System.out.println("OPTIONS:");
+        System.out.println("\t-start=N\n\t\tonly sample N and greater will be used to compute the consensus");
+        
     }
 
     public static void main(String[] args) throws IOException {
-        if (args.length != 2) {
-            printUsage();
+        int start = 0;
+        Options opt = new Options(args, Multiplicity.ZERO_OR_ONE, 0, Integer.MAX_VALUE);
+		opt.addSet("run")
+				.addOption("start", Separator.EQUALS);
+		
+		OptionSet set;
+		if ((set = opt.getMatchingSet(false, false)) == null) {
+			printUsage();
             System.exit(-1);
-        }
+		}
+		ArrayList<String> data = set.getData();
+		for(String input : data)
+			if(!new File(input).exists()) throw new IOException("input file '"+input+"' does not exist.");		
+		
+		if (set.isSet("start")) {
+			start = Integer.parseInt(set.getOption("start").getResultValue(0));			
+		}
 
-        //CTMain main = new CTMain();
-        //String[] trees = readTreesFromFile(args[0], Integer.parseInt(args[1]));
-        //System.out.println(main.start(trees));
+        CTMain main = new CTMain();
+        int nTrees = 0;
+        List<String> allTrees = new ArrayList<String>();
+		for (String nexus : data) {
+			List<String> trees = readTreesFromNexus(nexus,start);
+			nTrees += trees.size();
+			allTrees.addAll(trees);
+		}		
+	    for (String tree : allTrees) {
+	    	NewickParser parser = new NewickParser(tree);
+	    	TreeNode root = parser.parse();
+	    	if (!main.initialized) main.initialize(root, nTrees);	
+	    	main.addNewTree(root);
+	    }	    
+        CTree output = main.constructMajorityTree();
+        TreeNode outputRoot = output.getRoot();
+        String outputRootString = outputRoot.toStringWithProbs(nTrees);    
+        System.out.println(outputRootString);
     }
 
     // Getters and setters
-
     public double getResPercentage() {
         return resPercentage;
     }
