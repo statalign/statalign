@@ -64,6 +64,9 @@ public class MCMCPars {
 	/** If <code>true</true> then logging information is also printed during the burnin. */
 	public boolean doReportDuringBurnin = false;
 	
+	/** If <code>true</true> then output is printed for each parallel chain only when its temperature is 1.0d. */
+	public boolean reportOnlyColdChain = false;
+
 	/**
 	 * This constructor sets the values in the class
 	 * 

@@ -29,7 +29,7 @@ public class InputData {
 	 * MCMC parameters such as the number of burn-in cycles, number of
 	 * steps and sampling rate
 	 */
-	public MCMCPars pars = new MCMCPars(20000, 50000, 100, 1, 1, 100, 0, 0.05, 0.5);
+	public MCMCPars pars = new MCMCPars(20000, 50000, 100, 1, 1, 100, 0, 0.01, 0.5);
 	
 	/**
 	 * Specifies how the alignment of the input sequences in {@link #seqs} is used.<br><br>
@@ -55,6 +55,9 @@ public class InputData {
 	
 	/** If <code>true</true> then logging information is also printed during the burnin. */
 	public boolean doReportDuringBurnin = false;
+
+	/** If <code>true</true> then output is printed for each parallel chain only when its temperature is 1.0d. */
+	public boolean reportOnlyColdChain = false;
 
 	/**
 	 * The current substitution model that is used to analyse the sequences.
