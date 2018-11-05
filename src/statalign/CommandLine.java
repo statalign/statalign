@@ -447,9 +447,9 @@ public class CommandLine {
 			sb.append("Usage:\n\n");
 
 			if (isParallel) {
-				sb.append("    StatAlign_mpi [options] seqfile1 [seqfile2 ...] [treefile]\n\n\n");
+				sb.append("    StatAlignParallel [OPTIONS] SEQFILE1 [SEQFILE2 ...] [TREEFILE]\n\n\n");
 			} else {
-				sb.append("    java -Xmx512m -jar StatAlign.jar [options] seqfiles [treefile]\n\n");
+				sb.append("    java -Xmx512m -jar StatAlign.jar [OPTIONS] SEQFILE1 [SEQFILE2 ...] [TREEFILE]\n\n");
 			}
 	
 			sb.append("Description:\n\n")
@@ -458,9 +458,9 @@ public class CommandLine {
 			  .append("    parameters are co-estimated in a Markov Chain Monte Carlo framework.\n\n")
 			
 			  .append("Parameters:\n\n")
-			  .append("    seqfiles\n")
-			  .append("        Files with the input sequences to align, they must be in Fasta format.\n")
-			  .append("    treefile\n")
+			  .append("    SEQFILE1 [SEQFILE2 ...]\n")
+			  .append("        Names of files containing input sequences to align, in Fasta or PDB format.\n")
+			  .append("    TREEFILE\n")
 			  .append("        An optional tree file in Newick format. When given, the tree is used\n")
 			  .append("          as the initial tree of the MCMC analysis.\n")
 			  .append("        Default: the initial tree is built using the NJ algorithm\n\n")
