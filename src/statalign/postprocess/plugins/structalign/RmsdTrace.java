@@ -152,7 +152,7 @@ public class RmsdTrace extends Postprocess {
 	
 	private void doUpdate(State state, int sampleNumber) {				
 		updateTracks(curAli.showFullAlignment ? state.getFullAlign() : state.getLeafAlign());
-		if (!state.isBurnin && state.logLike > maxLikelihood) {
+		if (!state.isBurnin && state.beta==1.0d && state.logLike > maxLikelihood) {
 			maxLikelihood = state.logLike;			
 			sampleNumberMLE = sampleNumber;
 			alignMLE = state.getLeafAlign().clone();
