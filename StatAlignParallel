@@ -4,9 +4,14 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 STATALIGN_JAR=$DIR/StatAlign.jar
 export MPJ_HOME=$DIR/lib/mpj-v0_44
 
+USAGE="  Usage: StatAlignParallel NCORES STATALIGN_ARGS"
+
 NCORES=$1
 
-if [[ -z "$NCORES" ]]; then 
-    NCORES=1
+if [[ "$NCORES" = "1" ]]; then
+    echo "Parallel mode must be run using at least two processors."
+    echo $USAGE
+    exit 1
+else 
+    java -jar $MPJ_HOME/lib/starter.jar -np $NCORES -cp $STATALIGN_JAR statalign.StatAlignParallel "${@:2}"
 fi
-java -jar $MPJ_HOME/lib/starter.jar -np $NCORES -cp $STATALIGN_JAR statalign.StatAlignParallel "${@:2}"
