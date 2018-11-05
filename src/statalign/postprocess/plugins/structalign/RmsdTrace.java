@@ -152,10 +152,10 @@ public class RmsdTrace extends Postprocess {
 	
 	private void doUpdate(State state, int sampleNumber) {				
 		updateTracks(curAli.showFullAlignment ? state.getFullAlign() : state.getLeafAlign());
-		if (!state.isBurnin && state.beta==1.0d && state.logLike > maxLikelihood) {
+		if (!state.isBurnin && state.logLike > maxLikelihood) {
 			maxLikelihood = state.logLike;			
 			sampleNumberMLE = sampleNumber;
-			alignMLE = curAli.showFullAlignment ? state.getFullAlign().clone() : state.getLeafAlign().clone();
+			alignMLE = state.getLeafAlign().clone();
 			alignMLENames = state.name.clone();
 			rmsdMLE = rmsdTrack.scores.clone();
 			bFactorMLE = bFactorTrack.scores.clone();
@@ -206,10 +206,18 @@ public class RmsdTrace extends Postprocess {
 			if (rmsdMLE != null) {
 				FileWriter rmsdFile = new FileWriter(getBaseFileName()+"mle.rmsd");
 				FileWriter bfactorFile = new FileWriter(getBaseFileName()+"mle.bfactors");
+				int offset = 0;				
 				for (int i=0; i<rmsdMLE.length; i++) {
-					boolean allGap = true;					
-					for (int j=0; j<structAlign.rotCoords.length; j++) { // Assume first sequences are non-internals
-						if (alignMLE[j].charAt(i) != '-') allGap = false;
+					if (Double.isNaN(rmsdMLE[i])) { 
+						// These cases correspond to columns that only have characters at internal
+						// nodes (i.e. silent indels), which have not yet been excised from the alignment.
+						++offset;
+						continue;
+					}
+					boolean allGap = true;															
+					for (int j=0; j<structAlign.rotCoords.length; j++) { 
+						// Due to ordering convention, we can assume first sequences are the leaves
+						if (alignMLE[j].charAt(i-offset) != '-') allGap = false;
 					}
 					if (!allGap) {
 						rmsdFile.write(rmsdMLE[i]+"\n");
@@ -218,7 +226,7 @@ public class RmsdTrace extends Postprocess {
 					else { // remove the column from the alignment
 						for (int j=0; j<structAlign.rotCoords.length; j++) {
 							StringBuilder sb = new StringBuilder(alignMLE[j]);
-							sb.deleteCharAt(i);
+							sb.deleteCharAt(i-offset);
 							alignMLE[j] = sb.toString();
 						}
 					}
@@ -287,8 +295,9 @@ public class RmsdTrace extends Postprocess {
 		int leafAlignmentLength = align[0].length();
 		boolean[] allGapped = new boolean[alignmentLength];
 		boolean[] allGappedLeaf = new boolean[alignmentLength];
-		for(int k = 0; k < align[0].length(); k++){
+		for(int k = 0; k < alignmentLength; k++){
 			allGapped[k] = true;
+			allGappedLeaf[k] = true;
 			for(int i = 0; i < align.length; i++){
 				allGapped[k] &= (align[i].charAt(k) == '-');				
 				if (i < leaves) allGappedLeaf[k] &= (align[i].charAt(k) == '-');
