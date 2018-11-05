@@ -156,7 +156,7 @@ public class StructTrace extends Postprocess {
 		
 	}
 	private void doUpdate(State state, int sampleNumber) {				
-		if (!state.isBurnin && state.logLike > maxLikelihood) {
+		if (!state.isBurnin && state.beta==1.0d && state.logLike > maxLikelihood) {
 			maxLikelihood = state.logLike;			
 			sampleNumberMLE = sampleNumber;
 			coorMLE = structAlign.rotCoords.clone();
