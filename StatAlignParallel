@@ -7,6 +7,7 @@ export MPJ_HOME=$DIR/lib/mpj-v0_44
 USAGE="  Usage: StatAlignParallel NCORES STATALIGN_ARGS"
 
 NCORES=$1
+: ${NCORES:?"Number of processors must be specified"}
 
 if [[ "$NCORES" = "1" ]]; then
     echo "Parallel mode must be run using at least two processors."
@@ -14,4 +15,5 @@ if [[ "$NCORES" = "1" ]]; then
     exit 1
 else 
     java -jar $MPJ_HOME/lib/starter.jar -np $NCORES -cp $STATALIGN_JAR statalign.StatAlignParallel "${@:2}"
+
 fi
