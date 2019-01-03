@@ -55,7 +55,7 @@ distributions {
         baseName = 'StatAlign'
         contents {
             from projectDir
-            exclude 'build', 'bin'
+            exclude 'build', 'bin', 'src'
         }
     }
 }
