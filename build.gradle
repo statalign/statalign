@@ -1,35 +1,12 @@
-apply plugin: 'java'
-apply plugin: 'distribution'
+plugins {
+  id "java"
+  id "distribution"
+}
 
 version = '3.3'
 
-repositories {
-    flatDir {
-       dirs 'lib'
-    }
-}
-
-buildscript {
-  repositories {
-    jcenter()
-  }
-  dependencies {
-    classpath "com.github.jengelman.gradle.plugins:shadow:1.1.2"
-  }
-}
-
-apply plugin: "com.github.johnrengelman.shadow"
-
 dependencies {
-  compile name: 'options'
-  compile name: 'mpj'
-  compile name: 'colt'
-  compile name: 'Jama-1.0.3'
-  compile name: 'VARNAv3-8-API'
-  compile name: 'commons-math-3.0-SNAPSHOT'
-  compile name: 'log4j-1.2-api-2.3'
-  compile name: 'log4j-core-2.3'
-  compile name: 'log4j-api-2.3'
+  compile fileTree(include: ['*.jar'], dir: 'lib')
 }
 
 sourceSets {
@@ -48,24 +25,27 @@ sourceSets {
     }
 }
 
-jar.archiveName = "StatAlign.jar"
-
 distributions {
     main {
         baseName = 'StatAlign'
         contents {
 	    from ('examples') { into ('examples') }
 	    from ('scripts') { into ('scripts') }
-	    from ('.') { include '*.txt' }
-	    from shadowJar
+	    from ('lib/mpj-v0_44') { into ('lib/mpj-v0_44') }
+	    from ('.') { include '*.txt','StatAlignParallel' }
+	    from jar
         }
     }
 }
 
-shadowJar {
-  baseName = 'StatAlign'
-  manifest {
-    attributes 'Main-Class': 'StatAlign.StatAlign'
-  }
-  archiveName = 'StatAlign.jar'
-}  
+jar {
+    baseName = 'StatAlign'
+    archiveName = 'StatAlign.jar'
+    manifest {
+        attributes "Main-Class": "statalign.StatAlign"
+    }
+    from {
+        configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+    exclude 'META-INF/*.RSA', 'META-INF/*.SF','META-INF/*.DSA' 
+}
