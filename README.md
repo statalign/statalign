@@ -32,7 +32,7 @@ The -Xmx512m option is a standard JVM argument that sets the memory limit of the
 
 # Installation from source
 
-To compile (and package) StatAlign from source, you will need Gradle version 2.0 or later (see http://www.gradle.com/installation).
+To compile (and package) StatAlign from source, you will need to install Gradle (see http://www.gradle.com/installation).
 
 1. Install StatAlign in the directory `./build/install/StatAlign`:
 ```bash
