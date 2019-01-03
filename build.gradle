@@ -54,15 +54,18 @@ distributions {
     main {
         baseName = 'StatAlign'
         contents {
-            from projectDir
-            exclude 'build', 'bin', 'src'
+	    from ('examples') { into ('examples') }
+	    from ('scripts') { into ('scripts') }
+	    from ('.') { include '*.txt' }
+	    from shadowJar
         }
     }
 }
 
 shadowJar {
-  baseName = System.properties.getProperty('baseName')
+  baseName = 'StatAlign'
   manifest {
-    attributes 'Main-Class': System.properties.getProperty('mainClass')
+    attributes 'Main-Class': 'StatAlign'
   }
-}
+  archiveName = 'StatAlign.jar'
+}  
