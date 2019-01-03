@@ -32,7 +32,9 @@ distributions {
 	    from ('examples') { into ('examples') }
 	    from ('scripts') { into ('scripts') }
 	    from ('lib/mpj-v0_44') { into ('lib/mpj-v0_44') }
-	    from ('.') { include '*.txt','StatAlignParallel' }
+	    from ('.') { 
+		include 'LICENSE.txt', 'CHANGELOG.txt', 'README.md', 'StatAlignParallel' 
+	    }
 	    from jar
         }
     }
