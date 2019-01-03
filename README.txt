@@ -1,7 +1,4 @@
-StatAlign v3.2
-
-http://statalign.github.io/
- 
+For more information, visit http://statalign.github.io
  
 *** INTRODUCTION ***
 
@@ -33,16 +30,18 @@ An example command line setup:
 The -Xmx512m option is a standard JVM argument that sets the memory limit of the program at 512 MiBs. This is our recommended minimum, and increase it as necessary for large inputs. The -ot options selects the output alignment format, -mcmc sets MCMC parameters such as the number of burn-in steps and the number of samples, see the user documentation in the Help menu and on-line for tips on how to set these values. The input file must contain the sequences to align in Fasta format.
 
 
-*** HOW TO COMPILE ***
+*** COMPILING FROM SOURCE ***
 
-If you would like to compile and package your own runnable jar file you can do so by following these steps:
-1. Install Gradle (unless you have at least version 2.0 already installed; check by running "gradle -version"). To install it, you have two options:
-  1. a) (Any system) Manual installation: help can be found here: http://www.gradle.org/installation 
-  1. b) (Linux) If you have a linux system with bash, you can run the "install-gradle.sh" script (can be found in the root of the repo). Then you have to issue "source  ~/.bashrc" to update the environment, or just start a new terminal.
-2. Gradle makes it really easy to compile the sources:
-  2. a) (Any system) Use the command "gradle shadowJar" to create a runnable jar file. It's location will be "build/libs/StatAlign*.jar"
-  2. b) (Linux / Windows+Cygwin) You can just run the "build-jar.sh" script. It will copy the newly created jar file to the root directory of the project with the name "StatAlign.jar"
-  
+To compile (and package) StatAlign from source, you will need Gradle version 2.0 or later (see http://www.gradle.com/installation).
+
+1. Create a runnable JAR file with the name 'StatAlign.jar':
+
+  gradle clean build shadowJar
+
+2. [Optional] Create a zip archive containing the newly compiled distribution (consisting of the JAR file plus examples, scripts, and documentation files), located at 'build/distributions/StatAlign-X.X.zip':
+
+  gradle distZip
+
 
 *** LICENSE ***
 
