@@ -65,7 +65,7 @@ distributions {
 shadowJar {
   baseName = 'StatAlign'
   manifest {
-    attributes 'Main-Class': 'StatAlign'
+    attributes 'Main-Class': 'StatAlign.StatAlign'
   }
   archiveName = 'StatAlign.jar'
 }  
