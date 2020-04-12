@@ -44,13 +44,10 @@ public class PDBReader extends DataReader {
 						else 
 							data.names.set(0,line.substring(62,66).toLowerCase());
 					}
-					else { // If HEADER lines have been removed from PDB						
-						if (filename.length() > 4) 
-							data.names.set(0,filename.toLowerCase().substring(0,5));
-						else 
-							data.names.set(0,filename.toLowerCase().substring(0,4));
-						
-						// then use the filename to define the name for this structure
+					else { 
+					    // If HEADER lines have been removed from PDB
+					    // then use the filename to define the name for this structure
+					    data.names.set(0,filename.toLowerCase());
 					}
 					continue;
 				}

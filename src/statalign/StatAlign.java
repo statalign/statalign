@@ -34,7 +34,7 @@ public class StatAlign{
 
 	public static final int majorVersion = 3;
 	public static final int minorVersion = 3;
-	public static final String version = "v3.3";
+	public static final String version = "v3.4";
 	
 	public static boolean allowVersionCheck = true;
 	

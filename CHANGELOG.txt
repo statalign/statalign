@@ -2,6 +2,13 @@ This file lists major changes between StatAlign releases.
 
 ------------------------------------------------------------------------------
 
+StatAlign v3.4 on 12 Apr 2020
+
+  Bug fixes:
+    * Removed restriction whereby only first five characters of PDB file name were used internally, causing issues for cases with multiple input files sharing the same first five characters
+ 
+------------------------------------------------------------------------------
+
 StatAlign v3.3 on 24 Oct 2018
 
   New features:
