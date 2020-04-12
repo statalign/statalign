@@ -3,7 +3,7 @@ plugins {
   id "distribution"
 }
 
-version = 'v3.3'
+version = 'v3.4'
 
 dependencies {
   compile fileTree(include: ['*.jar'], dir: 'lib')
